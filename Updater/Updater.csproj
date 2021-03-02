@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' != ''">
+    <Configuration>Release</Configuration>
+    <PublishSingleFile>true</PublishSingleFile>
+    <PublishDir>..\publish\$(RuntimeIdentifier)\$(AssemblyName)</PublishDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Mono.Posix.NETStandard" Version="1.0.0" />
+  </ItemGroup>
+
+</Project>

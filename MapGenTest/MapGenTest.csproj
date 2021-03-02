@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <ProjectGuid>{82CD32D3-966A-4F8A-877B-0E715079BB61}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>MapGenTest</RootNamespace>
+    <AssemblyName>MapGenTest</AssemblyName>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="DebugState.cs" />
+    <Compile Include="Example\Example.cs" />
+    <Compile Include="ExampleDebug.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Win32.Registry" Version="4.5.0" />
+    <ProjectReference Include="..\PMDO\PMDO.csproj" />
+    <ProjectReference Include="..\RogueEssence\RogueElements\RogueElements\RogueElements.csproj" />
+    <ProjectReference Include="..\RogueEssence\RogueEssence\RogueEssence.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+  </ItemGroup>
+</Project>

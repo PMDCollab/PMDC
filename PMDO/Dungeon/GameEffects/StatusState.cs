@@ -1,0 +1,102 @@
+﻿using System;
+using RogueEssence.Data;
+using RogueEssence;
+using RogueEssence.Dungeon;
+using RogueEssence.Dev;
+
+namespace PMDO.Dungeon
+{
+    [Serializable]
+    public class HPState : StatusState
+    {
+        public int HP;
+        public HPState() { }
+        public HPState(int hp) { HP = hp; }
+        protected HPState(HPState other) { HP = other.HP; }
+        public override GameplayState Clone() { return new HPState(this); }
+    }
+    [Serializable]
+    public class RecentState : StatusState
+    {
+        public RecentState() { }
+        public override GameplayState Clone() { return new RecentState(); }
+    }
+    [Serializable]
+    public class SlotState : StatusState
+    {
+        public int Slot;
+        public SlotState() { }
+        protected SlotState(SlotState other) { Slot = other.Slot; }
+        public override GameplayState Clone() { return new SlotState(this); }
+    }
+    [Serializable]
+    public class IndexState : StatusState
+    {
+        public int Index;
+        public IndexState() { }
+        public IndexState(int index) { Index = index; }
+        protected IndexState(IndexState other) { Index = other.Index; }
+        public override GameplayState Clone() { return new IndexState(this); }
+    }
+    [Serializable]
+    public class StatChangeState : StatusState
+    {
+        public Stat ChangeStat;
+        public StatChangeState() { }
+        public StatChangeState(Stat stat) { ChangeStat = stat; }
+        protected StatChangeState(StatChangeState other) { ChangeStat = other.ChangeStat; }
+        public override GameplayState Clone() { return new StatChangeState(this); }
+    }
+    [Serializable]
+    public class BadStatusState : StatusState
+    {
+        public BadStatusState() { }
+        public override GameplayState Clone() { return new BadStatusState(); }
+    }
+    [Serializable]
+    public class GoodStatusState : StatusState
+    {
+        public GoodStatusState() { }
+        public override GameplayState Clone() { return new GoodStatusState(); }
+    }
+    [Serializable]
+    public class TransferStatusState : StatusState
+    {
+        public TransferStatusState() { }
+        public override GameplayState Clone() { return new TransferStatusState(); }
+    }
+    [Serializable]
+    public class MajorStatusState : StatusState
+    {
+        public MajorStatusState() { }
+        public override GameplayState Clone() { return new MajorStatusState(); }
+    }
+    [Serializable]
+    public class ParalyzeState : StatusState
+    {
+        public bool Recent;
+        public ParalyzeState() { }
+        public ParalyzeState(bool recent) { Recent = recent; }
+        protected ParalyzeState(ParalyzeState other) { Recent = other.Recent; }
+        public override GameplayState Clone() { return new ParalyzeState(this); }
+    }
+    [Serializable]
+    public class CategoryState : StatusState
+    {
+        public BattleData.SkillCategory Category;
+        public CategoryState() { }
+        public CategoryState(BattleData.SkillCategory category) { Category = category; }
+        protected CategoryState(CategoryState other) { Category = other.Category; }
+        public override GameplayState Clone() { return new CategoryState(this); }
+    }
+    [Serializable]
+    public class ElementState : StatusState
+    {
+        [DataType(0, DataManager.DataType.Element, false)]
+        public int Element;
+        public ElementState() { }
+        public ElementState(int element) { Element = element; }
+        protected ElementState(ElementState other) { Element = other.Element; }
+        public override GameplayState Clone() { return new ElementState(this); }
+    }
+}
