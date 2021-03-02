@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using RogueElements;
 using RogueEssence;
 using RogueEssence.Data;
