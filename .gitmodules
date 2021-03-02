@@ -1,0 +1,6 @@
+[submodule "RogueEssence"]
+	path = RogueEssence
+	url = https://github.com/RogueCollab/RogueEssence.git
+[submodule "RawAsset"]
+	path = RawAsset
+	url = https://github.com/PMDCollab/RawAsset.git
