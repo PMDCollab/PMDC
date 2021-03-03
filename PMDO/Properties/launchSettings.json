@@ -2,7 +2,7 @@
   "profiles": {
     "PMDO": {
       "commandName": "Project",
-      "commandLineArgs": "-dev -lang en"
+      "commandLineArgs": "-asset ../../../../../../Asset/ -raw ../../../../../RawAsset/ -convert icon"
     }
   }
 }

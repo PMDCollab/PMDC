@@ -5,7 +5,6 @@
     <RootNamespace>PMDO</RootNamespace>
     <AssemblyName>PMDO</AssemblyName>
     <TargetFramework>netcoreapp3.0</TargetFramework>
-    <UseWindowsForms>true</UseWindowsForms>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <Deterministic>true</Deterministic>
     <RuntimeIdentifiers>win-x64;osx-x64;linux-x64</RuntimeIdentifiers>
@@ -31,7 +30,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Asset\**\*">
+    <None Include="..\..\Asset\**\*">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </None>

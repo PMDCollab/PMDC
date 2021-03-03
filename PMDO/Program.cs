@@ -37,11 +37,8 @@ namespace PMDO
             AppContext.SetSwitch("Switch.System.Runtime.Serialization.SerializationGuard.AllowFileWrites", true);
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
-            DiagManager.InitInstance();
-            GraphicsManager.InitParams();
-            Text.Init();
-            Text.SetCultureCode("");
 
+            DiagManager.InitInstance();
 
             try
             {
@@ -51,20 +48,23 @@ namespace PMDO
                 DiagManager.Instance.LogInfo(Versioning.GetDotNetInfo());
                 DiagManager.Instance.LogInfo("=========================================");
 
-                string[] args = System.Environment.GetCommandLineArgs();
+
+                string[] args = Environment.GetCommandLineArgs();
                 bool logInput = true;
                 bool guideBook = false;
                 GraphicsManager.AssetType convertAssets = GraphicsManager.AssetType.None;
                 DataManager.DataType convertIndices = DataManager.DataType.None;
                 DataManager.DataType reserializeIndices = DataManager.DataType.None;
                 string langArgs = "";
+                bool dev = false;
+                string playInputs = null;
                 for (int ii = 1; ii < args.Length; ii++)
                 {
                     if (args[ii] == "-dev")
-                        DiagManager.Instance.DevMode = true;
+                        dev = true;
                     else if (args[ii] == "-play" && args.Length > ii + 1)
                     {
-                        DiagManager.Instance.LoadInputs(args[ii + 1]);
+                        playInputs = args[ii + 1];
                         ii++;
                     }
                     else if (args[ii] == "-lang" && args.Length > ii + 1)
@@ -76,6 +76,16 @@ namespace PMDO
                         logInput = false;
                     else if (args[ii] == "-guide")
                         guideBook = true;
+                    else if (args[ii] == "-asset")
+                    {
+                        PathMod.ASSET_PATH = args[ii + 1];
+                        ii++;
+                    }
+                    else if (args[ii] == "-raw")
+                    {
+                        PathMod.DEV_PATH = args[ii + 1];
+                        ii++;
+                    }
                     else if (args[ii] == "-mod")
                     {
                         PathMod.Mod = PathMod.MODS_PATH + args[ii + 1];
@@ -149,6 +159,28 @@ namespace PMDO
                     }
                 }
 
+
+                GraphicsManager.InitParams();
+
+                DiagManager.Instance.DevMode = dev;
+                if (playInputs != null)
+                    DiagManager.Instance.LoadInputs(playInputs);
+
+
+                Text.Init();
+                if (langArgs != "" && DiagManager.Instance.CurSettings.Language == "")
+                {
+                    if (langArgs.Length > 0)
+                    {
+                        DiagManager.Instance.CurSettings.Language = langArgs.ToLower();
+                        Text.SetCultureCode(langArgs.ToLower());
+                    }
+                    else
+                        DiagManager.Instance.CurSettings.Language = "en";
+                }
+                Text.SetCultureCode(DiagManager.Instance.CurSettings.Language == "" ? "" : DiagManager.Instance.CurSettings.Language.ToString());
+
+
                 if (convertAssets != GraphicsManager.AssetType.None)
                 {
                     //run conversions
@@ -182,18 +214,6 @@ namespace PMDO
                     RogueEssence.Dev.DevHelper.RunIndexing(convertIndices);
                     return;
                 }
-
-                if (langArgs != "" && DiagManager.Instance.CurSettings.Language == "")
-                {
-                    if (langArgs.Length > 0)
-                    {
-                        DiagManager.Instance.CurSettings.Language = langArgs.ToLower();
-                        Text.SetCultureCode(langArgs.ToLower());
-                    }
-                    else
-                        DiagManager.Instance.CurSettings.Language = "en";
-                }
-                Text.SetCultureCode(DiagManager.Instance.CurSettings.Language == "" ? "" : DiagManager.Instance.CurSettings.Language.ToString());
 
 
                 if (guideBook)
