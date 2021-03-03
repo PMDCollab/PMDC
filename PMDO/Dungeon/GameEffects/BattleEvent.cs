@@ -12574,7 +12574,6 @@ namespace PMDO.Dungeon
                 DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
                 DungeonScene.Instance.AddCharToTeam(Faction.Player, 0, false, member);
                 member.RefreshTraits();
-
                 ZoneManager.Instance.CurrentMap.UpdateExploration(member);
                 if (DataManager.Instance.CurrentReplay == null)
                     yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(String.Format(new StringKey("MSG_ASSEMBLY_TAKE_ANY").ToLocal(), member.BaseName)));
@@ -12583,6 +12582,7 @@ namespace PMDO.Dungeon
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ASSEMBLY_TAKE_ANY").ToLocal(), member.BaseName));
                     yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
                 }
+                yield return CoroutineManager.Instance.StartCoroutine(member.OnMapStart());
 
                 if (DungeonScene.Instance.ActiveTeam.Players.Count > DungeonScene.Instance.ActiveTeam.GetMaxTeam(ZoneManager.Instance.CurrentZone))
                     yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AskToSendHome());
@@ -12790,6 +12790,7 @@ namespace PMDO.Dungeon
                         else
                             DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_RECRUIT_ANY").ToLocal(), context.Target.BaseName));
                         DataManager.Instance.Save.RegisterMonster(context.Target.BaseForm.Species);
+                        yield return CoroutineManager.Instance.StartCoroutine(context.Target.OnMapStart());
 
                         if (DungeonScene.Instance.ActiveTeam.Players.Count > DungeonScene.Instance.ActiveTeam.GetMaxTeam(ZoneManager.Instance.CurrentZone))
                             yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AskToSendHome());

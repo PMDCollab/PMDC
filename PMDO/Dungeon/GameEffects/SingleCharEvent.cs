@@ -688,6 +688,61 @@ namespace PMDO.Dungeon
         }
     }
 
+
+    [Serializable]
+    public class WeatherFormeEvent : SingleCharEvent
+    {
+        public int ReqSpecies;
+        public int DefaultForme;
+        public Dictionary<int, int> WeatherPair;
+
+        public WeatherFormeEvent() { WeatherPair = new Dictionary<int, int>(); }
+        public WeatherFormeEvent(int reqSpecies, int defaultForme, Dictionary<int, int> weather)
+        {
+            ReqSpecies = reqSpecies;
+            DefaultForme = defaultForme;
+            WeatherPair = weather;
+        }
+        protected WeatherFormeEvent(WeatherFormeEvent other) : this()
+        {
+            ReqSpecies = other.ReqSpecies;
+            DefaultForme = other.DefaultForme;
+
+            foreach (int weather in other.WeatherPair.Keys)
+                WeatherPair.Add(weather, other.WeatherPair[weather]);
+        }
+        public override GameEvent Clone() { return new WeatherFormeEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (character == null)
+                yield break;
+
+            if (character.CurrentForm.Species != ReqSpecies)
+                yield break;
+
+            //get the forme it should be in
+            int forme = DefaultForme;
+
+            foreach (int weather in WeatherPair.Keys)
+            {
+                if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(weather))
+                {
+                    forme = WeatherPair[weather];
+                    break;
+                }
+            }
+
+            if (forme != character.CurrentForm.Form)
+            {
+                //transform it
+                character.Transform(new MonsterID(character.CurrentForm.Species, forme, character.CurrentForm.Skin, character.CurrentForm.Gender));
+            }
+
+            yield break;
+        }
+    }
+
     [Serializable]
     public class ImpostorReviveEvent : SingleCharEvent
     {
@@ -2530,6 +2585,8 @@ namespace PMDO.Dungeon
                 yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
             }
             DataManager.Instance.Save.RegisterMonster(character.BaseForm.Species);
+            yield return CoroutineManager.Instance.StartCoroutine(character.OnMapStart());
+
             yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.CheckLevelSkills(character, character.Level - 1));
         }
     }
