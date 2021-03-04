@@ -11620,6 +11620,31 @@ namespace PMDO.Dungeon
 
 
     [Serializable]
+    public class ItemizerEvent : BattleEvent
+    {
+        public ItemizerEvent() { }
+        public override GameEvent Clone() { return new ItemizerEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.Target.Dead)
+                yield break;
+
+            if (ZoneManager.Instance.CurrentMap.ItemSpawns.CanPick)
+            {
+                //remove the target
+                yield return CoroutineManager.Instance.StartCoroutine(context.Target.DieSilent());
+
+                //drop an item
+                InvItem item = ZoneManager.Instance.CurrentMap.ItemSpawns.Pick(DataManager.Instance.Save.Rand);
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(item, context.Target.CharLoc));
+            }
+            else
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_NOTHING_HAPPENED").ToLocal()));
+        }
+    }
+
+    [Serializable]
     public class LandItemEvent : BattleEvent
     {
         public override GameEvent Clone() { return new LandItemEvent(); }
