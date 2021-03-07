@@ -2215,7 +2215,7 @@ namespace PMDO.Dungeon
                             //GameManager.Instance.BGM("", true);
                             GameManager.Instance.Fanfare("Battle/" + WarningSE1);
                             yield return new WaitForFrames(180);
-                            //GameManager.Instance.BGM("1 - Wind.ogg", true);
+                            //GameManager.Instance.BGM("C04. Wind.ogg", true);
                         }
                         else
                             GameManager.Instance.BattleSE(WarningSE1);
