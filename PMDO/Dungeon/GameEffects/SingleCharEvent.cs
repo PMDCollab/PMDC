@@ -194,7 +194,7 @@ namespace PMDO.Dungeon
 
             foreach (Character target in ZoneManager.Instance.CurrentMap.IterateCharacters())
             {
-                if (DungeonScene.Instance.GetMatchup(character, target) != Alignment.Foe && (character.CharLoc - target.CharLoc).Dist8() <= Range)
+                if (!character.Dead && DungeonScene.Instance.GetMatchup(character, target) != Alignment.Foe && (character.CharLoc - target.CharLoc).Dist8() <= Range)
                     yield return CoroutineManager.Instance.StartCoroutine(target.InflictDamage(((StatusEffect)owner).StatusStates.GetWithDefault<HPState>().HP));
             }
         }
@@ -1352,7 +1352,7 @@ namespace PMDO.Dungeon
             {
                 foreach (Character target in ZoneManager.Instance.CurrentMap.IterateCharacters())
                 {
-                    if (DungeonScene.Instance.GetMatchup(character, target) == Alignment.Friend && (character.CharLoc - target.CharLoc).Dist8() <= Range)
+                    if (!target.Dead && DungeonScene.Instance.GetMatchup(character, target) == Alignment.Friend && (character.CharLoc - target.CharLoc).Dist8() <= Range)
                     {
                         if (target.HP < target.MaxHP)
                             yield return CoroutineManager.Instance.StartCoroutine(target.RestoreHP(Math.Max(1, target.MaxHP / 16), false));
@@ -1892,7 +1892,7 @@ namespace PMDO.Dungeon
             List<int> candidateSpecies = new List<int>();
             foreach (Character target in ZoneManager.Instance.CurrentMap.IterateCharacters())
             {
-                if (character.CurrentForm.Species != target.CurrentForm.Species)
+                if (!character.Dead && character.CurrentForm.Species != target.CurrentForm.Species)
                     candidateSpecies.Add(target.CurrentForm.Species);
             }
             if (candidateSpecies.Count > 0)

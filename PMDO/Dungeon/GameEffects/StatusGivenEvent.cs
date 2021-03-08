@@ -1576,7 +1576,7 @@ namespace PMDO.Dungeon
 
                     foreach (Character character in ZoneManager.Instance.CurrentMap.IterateCharacters())
                     {
-                        if (DungeonScene.Instance.GetMatchup(context.Target, character) == Alignment.Foe && (context.Target.CharLoc - character.CharLoc).Dist8() <= Range)
+                        if (!character.Dead && DungeonScene.Instance.GetMatchup(context.Target, character) == Alignment.Foe && (context.Target.CharLoc - character.CharLoc).Dist8() <= Range)
                         {
                             StatusEffect newStatus = context.Status.Clone();
                             if (context.Status.TargetChar != null)

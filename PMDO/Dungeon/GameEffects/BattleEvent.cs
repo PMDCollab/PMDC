@@ -8935,7 +8935,7 @@ namespace PMDO.Dungeon
         {
             foreach (Character target in ZoneManager.Instance.CurrentMap.IterateCharacters())
             {
-                if (context.User != target && (context.User.CharLoc - target.CharLoc).Dist8() <= 1)
+                if (!target.Dead && context.User != target && (context.User.CharLoc - target.CharLoc).Dist8() <= 1)
                 {
                     List<int> badStatuses = new List<int>();
                     foreach (StatusEffect status in target.IterateStatusEffects())
@@ -9707,7 +9707,7 @@ namespace PMDO.Dungeon
             StablePriorityQueue<int, Character> targets = new StablePriorityQueue<int, Character>();
             foreach (Character character in ZoneManager.Instance.CurrentMap.IterateCharacters())
             {
-                if (DungeonScene.Instance.GetMatchup(character, context.Target) == Alignment.Friend)
+                if (!character.Dead && DungeonScene.Instance.GetMatchup(character, context.Target) == Alignment.Friend)
                     targets.Enqueue((FarthestFirst ? -1 : 1) *(character.CharLoc - context.Target.CharLoc).DistSquared(), character);
             }
             int totalWarp = 0;
@@ -9742,7 +9742,7 @@ namespace PMDO.Dungeon
             StablePriorityQueue<int, Character> targets = new StablePriorityQueue<int, Character>();
             foreach (Character character in ZoneManager.Instance.CurrentMap.IterateCharacters())
             {
-                if (DungeonScene.Instance.GetMatchup(character, context.User) == Alignment.Foe)
+                if (!character.Dead && DungeonScene.Instance.GetMatchup(character, context.User) == Alignment.Foe)
                     targets.Enqueue(-(character.CharLoc - context.TargetTile).DistSquared(), character);
             }
             int totalWarp = 0;
