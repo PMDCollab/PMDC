@@ -120,5 +120,9 @@ namespace PMDO.LevelGen
             }
         }
 
+        public override string ToString()
+        {
+            return string.Format("{0}: Vert:{1} Leg:{2}% Connect:{2}%", this.GetType().Name, this.Vertical, this.LegPercent, this.ConnectPercent);
+        }
     }
 }
