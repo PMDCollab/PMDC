@@ -1520,14 +1520,31 @@ namespace PMDO.Dungeon
     }
 
     [Serializable]
-    public class DoubleAttackEvent : BattleEvent
+    public class MultiStrikeEvent : BattleEvent
     {
-        public override GameEvent Clone() { return new DoubleAttackEvent(); }
+        public int StrikeMult;
+        public bool Div;
+
+        public MultiStrikeEvent() { }
+        public MultiStrikeEvent(int mult, bool div)
+        {
+            StrikeMult = mult;
+            Div = div;
+        }
+        protected MultiStrikeEvent(MultiStrikeEvent other)
+        {
+            StrikeMult = other.StrikeMult;
+            Div = other.Div;
+        }
+        public override GameEvent Clone() { return new MultiStrikeEvent(this); }
+
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.ActionType == BattleActionType.Skill && context.UsageSlot == BattleContext.DEFAULT_ATTACK_SLOT)
+            if (context.StrikesMade == 0)
             {
-                context.Strikes = 2;
+                context.Strikes *= StrikeMult;
+                if (Div && (context.Data.Category == BattleData.SkillCategory.Physical || context.Data.Category == BattleData.SkillCategory.Magical))
+                    context.AddContextStateMult<DmgMult>(false, 1, StrikeMult);
             }
             yield break;
         }
@@ -1539,11 +1556,11 @@ namespace PMDO.Dungeon
         public override GameEvent Clone() { return new HarvestEvent(); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.ActionType == BattleActionType.Item)
+            if (context.ActionType == BattleActionType.Item && context.StrikesMade == 0)
             {
                 ItemData itemData = DataManager.Instance.GetItem(context.Item.ID);
                 if (itemData.ItemStates.Contains<BerryState>())
-                    context.Strikes = 2;
+                    context.Strikes *= 2;
             }
             yield break;
         }
@@ -7377,6 +7394,37 @@ namespace PMDO.Dungeon
                 yield break;
 
             if (context.ActionType == BattleActionType.Skill && context.Data.ID > 0)
+            {
+                foreach (BattleEvent battleEffect in BaseEvents)
+                    yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
+            }
+        }
+    }
+
+
+    [Serializable]
+    public class OnDashActionEvent : BattleEvent
+    {
+        public List<BattleEvent> BaseEvents;
+
+        public OnDashActionEvent() { BaseEvents = new List<BattleEvent>(); }
+        public OnDashActionEvent(params BattleEvent[] effects)
+        {
+            BaseEvents = new List<BattleEvent>();
+            foreach (BattleEvent effect in effects)
+                BaseEvents.Add(effect);
+        }
+        protected OnDashActionEvent(OnDashActionEvent other)
+            : this()
+        {
+            foreach (BattleEvent battleEffect in other.BaseEvents)
+                BaseEvents.Add((BattleEvent)battleEffect.Clone());
+        }
+        public override GameEvent Clone() { return new OnDashActionEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.HitboxAction is DashAction)
             {
                 foreach (BattleEvent battleEffect in BaseEvents)
                     yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
