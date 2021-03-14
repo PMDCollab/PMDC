@@ -3205,37 +3205,41 @@ namespace PMDO.Dungeon
             EffectTile effectTile = (EffectTile)owner;
             //unlock the other doors
             //play the sound
-            List<Loc> locs = ((EffectTile)owner).TileStates.GetWithDefault<TileListState>().Tiles;
-            if (locs.Count > 0)
+            TileListState tilesState = ((EffectTile)owner).TileStates.GetWithDefault<TileListState>();
+            if (tilesState != null)
             {
-                GameManager.Instance.BattleSE("DUN_Open_Chamber");
-                //remove the tile, and create vfx for each one
-                foreach (Loc loc in locs)
+                List<Loc> locs = tilesState.Tiles;
+                if (locs.Count > 0)
                 {
-                    Tile exTile = ZoneManager.Instance.CurrentMap.Tiles[loc.X][loc.Y];
-                    exTile.Effect = new EffectTile(exTile.Effect.TileLoc);
-
-                    SingleEmitter altEmitter = new SingleEmitter(new AnimData("Vault_Open", 3));
-                    altEmitter.SetupEmit(loc * GraphicsManager.TileSize, loc * GraphicsManager.TileSize, Dir8.Down);
-                    DungeonScene.Instance.CreateAnim(altEmitter, DrawLayer.NoDraw);
-                }
-                yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
-
-                foreach (Loc loc in locs)
-                {
-                    Tile exTile = ZoneManager.Instance.CurrentMap.Tiles[loc.X][loc.Y];
+                    GameManager.Instance.BattleSE("DUN_Open_Chamber");
+                    //remove the tile, and create vfx for each one
+                    foreach (Loc loc in locs)
                     {
-                        exTile.Data = new TerrainTile(0);
-                        int distance = 0;
-                        Loc startLoc = exTile.Effect.TileLoc - new Loc(distance + 2);
-                        Loc sizeLoc = new Loc((distance + 2) * 2 + 1);
-                        ZoneManager.Instance.CurrentMap.MapModified(startLoc, sizeLoc);
+                        Tile exTile = ZoneManager.Instance.CurrentMap.Tiles[loc.X][loc.Y];
+                        exTile.Effect = new EffectTile(exTile.Effect.TileLoc);
+
+                        SingleEmitter altEmitter = new SingleEmitter(new AnimData("Vault_Open", 3));
+                        altEmitter.SetupEmit(loc * GraphicsManager.TileSize, loc * GraphicsManager.TileSize, Dir8.Down);
+                        DungeonScene.Instance.CreateAnim(altEmitter, DrawLayer.NoDraw);
+                    }
+                    yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
+
+                    foreach (Loc loc in locs)
+                    {
+                        Tile exTile = ZoneManager.Instance.CurrentMap.Tiles[loc.X][loc.Y];
+                        {
+                            exTile.Data = new TerrainTile(0);
+                            int distance = 0;
+                            Loc startLoc = exTile.Effect.TileLoc - new Loc(distance + 2);
+                            Loc sizeLoc = new Loc((distance + 2) * 2 + 1);
+                            ZoneManager.Instance.CurrentMap.MapModified(startLoc, sizeLoc);
+                        }
+
                     }
 
+                    //mention the other doors
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LOCK_OPEN_FLOOR").ToLocal()));
                 }
-
-                //mention the other doors
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LOCK_OPEN_FLOOR").ToLocal()));
             }
 
 
