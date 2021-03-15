@@ -166,9 +166,11 @@ namespace PMDO.Dungeon
                     return true;
             }
             TerrainData terrain = tile.Data.GetData();
-            if (terrain.BlockType == TerrainData.Mobility.Lava && !controlledChar.HasElement(07))//check for lava; NOTE: specialized AI code!
+            if (tile.Data.ID == 4 && !controlledChar.HasElement(07))//check for lava; NOTE: specialized AI code!
                 return true;
-            if (terrain.BlockType == TerrainData.Mobility.Block && controlledChar.MemberTeam is ExplorerTeam)//check for block; NOTE: specialized AI code!
+            if (tile.Data.ID == 6 && !controlledChar.HasElement(14) && !controlledChar.HasElement(17))//check for poison; NOTE: specialized AI code!
+                return true;
+            if (tile.Data.ID == 2 && controlledChar.MemberTeam is ExplorerTeam)//check for block; NOTE: specialized AI code!
                 return true;
 
             return false;

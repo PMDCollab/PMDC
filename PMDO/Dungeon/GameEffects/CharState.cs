@@ -67,6 +67,13 @@ namespace PMDO.Dungeon
     }
 
     [Serializable]
+    public class PoisonState : CharState
+    {
+        public PoisonState() { }
+        public override GameplayState Clone() { return new PoisonState(); }
+    }
+
+    [Serializable]
     public class MagicGuardState : CharState
     {
         public MagicGuardState() { }
