@@ -5,7 +5,7 @@ using RogueEssence.Dungeon;
 using RogueEssence.Data;
 using RogueEssence.LevelGen;
 
-namespace PMDO.LevelGen
+namespace PMDC.LevelGen
 {
     [Serializable]
     public class SaveVarsPostProc : ZonePostProc

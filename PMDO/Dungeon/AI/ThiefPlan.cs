@@ -4,7 +4,7 @@ using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Data;
 
-namespace PMDO.Dungeon
+namespace PMDC.Dungeon
 {
     /// <summary>
     /// will attack players if its original item is their current item, or if its has no item

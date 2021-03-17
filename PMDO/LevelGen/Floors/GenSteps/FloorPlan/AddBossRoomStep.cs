@@ -4,7 +4,7 @@ using System.Text;
 using RogueElements;
 using RogueEssence;
 
-namespace PMDO.LevelGen
+namespace PMDC.LevelGen
 {
     [Serializable]
     public class AddBossRoomStep<T> : FloorPlanStep<T>

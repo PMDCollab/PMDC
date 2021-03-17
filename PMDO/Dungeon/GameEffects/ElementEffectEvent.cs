@@ -5,7 +5,7 @@ using RogueEssence.Dungeon;
 using RogueEssence.Dev;
 using System.Collections.Generic;
 
-namespace PMDO.Dungeon
+namespace PMDC.Dungeon
 {
     [Serializable]
     public class PreTypeEvent : ElementEffectEvent

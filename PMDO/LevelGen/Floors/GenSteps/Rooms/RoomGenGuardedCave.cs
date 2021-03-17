@@ -5,7 +5,7 @@ using RogueEssence.Dungeon;
 using RogueEssence;
 using RogueEssence.LevelGen;
 
-namespace PMDO.LevelGen
+namespace PMDC.LevelGen
 {
     [Serializable]
     public class RoomGenGuardedCave<T> : RoomGen<T> where T : IUnbreakableGenContext, IPlaceableGenContext<MapItem>, IPlaceableGenContext<EffectTile>, IGroupPlaceableGenContext<Team>, IMobSpawnMap

@@ -2,7 +2,7 @@
 using RogueEssence.Data;
 using RogueEssence.Dungeon;
 
-namespace PMDO.Dungeon
+namespace PMDC.Dungeon
 {
 
     public enum ExclusiveItemType

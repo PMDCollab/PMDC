@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using RogueElements;
 using RogueEssence.Dungeon;
-using PMDO.Dungeon;
+using PMDC.Dungeon;
 using RogueEssence;
 using RogueEssence.LevelGen;
 
-namespace PMDO.LevelGen
+namespace PMDC.LevelGen
 {
     [Serializable]
     public class ChestStep<T> : MonsterHouseBaseStep<T> where T : ListMapGenContext

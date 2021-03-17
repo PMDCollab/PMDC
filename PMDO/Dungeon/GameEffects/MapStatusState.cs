@@ -2,6 +2,6 @@
 using RogueEssence;
 using RogueEssence.Dungeon;
 
-namespace PMDO.Dungeon
+namespace PMDC.Dungeon
 {
 }

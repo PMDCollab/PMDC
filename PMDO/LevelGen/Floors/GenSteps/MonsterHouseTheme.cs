@@ -7,7 +7,7 @@ using RogueEssence;
 using RogueEssence.LevelGen;
 using RogueEssence.Data;
 
-namespace PMDO.LevelGen
+namespace PMDC.LevelGen
 {
 
     //specify the chance of each theme, plus the purity of each theme

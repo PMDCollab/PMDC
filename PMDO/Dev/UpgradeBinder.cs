@@ -7,7 +7,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Reflection;
 
-namespace PMDO.Dev
+namespace PMDC.Dev
 {
     public sealed class UpgradeBinder : SerializationBinder
     {

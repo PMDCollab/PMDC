@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using RogueEssence;
 using RogueEssence.LevelGen;
 
-namespace PMDO.LevelGen
+namespace PMDC.LevelGen
 {
     [Serializable]
     public class RoomGenEvo<T> : RoomGen<T> where T : ITiledGenContext, IPostProcGenContext, IPlaceableGenContext<EffectTile>

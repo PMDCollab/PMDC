@@ -1,7 +1,7 @@
 ﻿using RogueElements;
 using System;
 
-namespace PMDO.LevelGen
+namespace PMDC.LevelGen
 {
     [Serializable]
     public class ConnectivityRoom : RoomComponent

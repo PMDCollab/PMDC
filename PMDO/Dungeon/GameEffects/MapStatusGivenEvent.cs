@@ -5,7 +5,7 @@ using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Dev;
 
-namespace PMDO.Dungeon
+namespace PMDC.Dungeon
 {
     [Serializable]
     public class MapStatusCharEvent : MapStatusGivenEvent

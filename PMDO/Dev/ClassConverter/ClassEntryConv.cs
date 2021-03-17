@@ -13,7 +13,7 @@ using System.Reactive.Subjects;
 using System.Reflection;
 using System.Text;
 
-namespace PMDO.Dev
+namespace PMDC.Dev
 {
     public class MapItemConv : ClassConverter<MapItem>
     {

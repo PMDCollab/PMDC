@@ -6,7 +6,7 @@ using RogueEssence.Data;
 using RogueEssence.LevelGen;
 using System.Text;
 
-namespace PMDO.LevelGen
+namespace PMDC.LevelGen
 {
     [Serializable]
     public class MapDataStep<T> : GenStep<T> where T : BaseMapGenContext

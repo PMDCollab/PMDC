@@ -4,9 +4,9 @@ using RogueElements;
 using RogueEssence.Dungeon;
 using RogueEssence;
 using RogueEssence.LevelGen;
-using PMDO.Dungeon;
+using PMDC.Dungeon;
 
-namespace PMDO.LevelGen
+namespace PMDC.LevelGen
 {
     [Serializable]
     public class CheckEventStep<T> : GenStep<T> where T : BaseMapGenContext

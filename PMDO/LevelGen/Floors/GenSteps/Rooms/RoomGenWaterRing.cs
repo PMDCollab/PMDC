@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using RogueElements;
 using RogueEssence.Dungeon;
 
-namespace PMDO.LevelGen
+namespace PMDC.LevelGen
 {
     [Serializable]
     public class RoomGenWaterRing<T> : PermissiveRoomGen<T> where T : ITiledGenContext, IPlaceableGenContext<MapItem>

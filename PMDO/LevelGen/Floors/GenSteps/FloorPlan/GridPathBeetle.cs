@@ -1,7 +1,7 @@
 ﻿using System;
 using RogueElements;
 
-namespace PMDO.LevelGen
+namespace PMDC.LevelGen
 {
     [Serializable]
     public class GridPathBeetle<T> : GridPathStartStepGeneric<T>

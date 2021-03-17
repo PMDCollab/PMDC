@@ -6,7 +6,7 @@ using System.Diagnostics;
 using RogueEssence.LevelGen;
 using RogueEssence.Dungeon;
 using RogueEssence.Data;
-using PMDO.Dungeon;
+using PMDC.Dungeon;
 
 namespace MapGenTest
 {

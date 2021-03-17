@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using RogueElements;
 using RogueEssence.Dungeon;
 
-namespace PMDO.LevelGen
+namespace PMDC.LevelGen
 {
     [Serializable]
     public class PatternTrapsStep<T> : GenStep<T> where T : class, IFloorPlanGenContext

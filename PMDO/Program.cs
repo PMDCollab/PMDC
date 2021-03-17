@@ -8,14 +8,14 @@ using RogueEssence.Dev;
 using RogueEssence.Dungeon;
 using RogueEssence.Script;
 using RogueEssence;
-using PMDO.Dev;
+using PMDC.Dev;
 using System.Reflection;
 using Microsoft.Xna.Framework;
 using Avalonia;
 using SDL2;
 #endregion
 
-namespace PMDO
+namespace PMDC
 {
     /// <summary>
     /// The main class.

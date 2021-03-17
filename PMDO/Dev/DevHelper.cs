@@ -14,10 +14,10 @@ using System.Reflection;
 using System.Linq;
 using RogueEssence;
 using RogueEssence.Dev;
-using PMDO.LevelGen;
+using PMDC.LevelGen;
 using System.Diagnostics;
 
-namespace PMDO.Dev
+namespace PMDC.Dev
 {
 
     public static class DevHelper

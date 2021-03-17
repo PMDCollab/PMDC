@@ -1,7 +1,7 @@
 ﻿using System;
 using RogueEssence.Dungeon;
 
-namespace PMDO.Dungeon
+namespace PMDC.Dungeon
 {
 
     [Serializable]

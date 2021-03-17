@@ -8,7 +8,7 @@ using RogueEssence;
 using RogueEssence.Data;
 using System.Xml;
 
-namespace PMDO.LevelGen
+namespace PMDC.LevelGen
 {
 
     [Serializable]

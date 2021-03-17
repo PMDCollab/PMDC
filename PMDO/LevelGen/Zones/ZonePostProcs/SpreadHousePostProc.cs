@@ -4,7 +4,7 @@ using RogueElements;
 using RogueEssence.Dungeon;
 using RogueEssence.LevelGen;
 
-namespace PMDO.LevelGen
+namespace PMDC.LevelGen
 {
     [Serializable]
     public class SpreadHousePostProc : ZonePostProc

@@ -4,8 +4,8 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("PMDO")]
-[assembly: AssemblyProduct("PMDO")]
+[assembly: AssemblyTitle("PMDC")]
+[assembly: AssemblyProduct("PMDC")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyDescription("Roguelike for desktop computers.")]
 [assembly: AssemblyCompany("")]

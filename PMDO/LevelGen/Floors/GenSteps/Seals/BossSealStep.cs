@@ -3,10 +3,10 @@ using RogueElements;
 using RogueEssence.Dungeon;
 using RogueEssence;
 using RogueEssence.LevelGen;
-using PMDO.Dungeon;
+using PMDC.Dungeon;
 using System.Collections.Generic;
 
-namespace PMDO.LevelGen
+namespace PMDC.LevelGen
 {
     [Serializable]
     public class BossSealStep<T> : BaseSealStep<T> where T : ListMapGenContext

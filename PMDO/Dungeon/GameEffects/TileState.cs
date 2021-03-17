@@ -6,7 +6,7 @@ using RogueEssence;
 using RogueEssence.Dev;
 using RogueEssence.Dungeon;
 
-namespace PMDO.Dungeon
+namespace PMDC.Dungeon
 {
 
     [Serializable]

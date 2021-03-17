@@ -5,7 +5,7 @@ using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Data;
 
-namespace PMDO.Dungeon
+namespace PMDC.Dungeon
 {
     [Serializable]
     public class ExplorePlan : AIPlan

@@ -3,10 +3,10 @@ using System;
 using System.Collections.Generic;
 using RogueElements;
 using RogueEssence.Dungeon;
-using PMDO.Dungeon;
+using PMDC.Dungeon;
 using RogueEssence.LevelGen;
 
-namespace PMDO.LevelGen
+namespace PMDC.LevelGen
 {
     [Serializable]
     public class RescueSpawner<T> : GenStep<T> where T : BaseMapGenContext

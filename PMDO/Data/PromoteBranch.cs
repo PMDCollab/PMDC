@@ -7,7 +7,7 @@ using RogueEssence;
 using RogueEssence.Data;
 using RogueEssence.Dev;
 
-namespace PMDO.Data
+namespace PMDC.Data
 {
     [Serializable]
     public class EvoLevel : PromoteDetail

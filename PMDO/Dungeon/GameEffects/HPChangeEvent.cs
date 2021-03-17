@@ -5,7 +5,7 @@ using RogueEssence.Data;
 using RogueEssence.Dev;
 using System.Collections.Generic;
 
-namespace PMDO.Dungeon
+namespace PMDC.Dungeon
 {
 
     [Serializable]

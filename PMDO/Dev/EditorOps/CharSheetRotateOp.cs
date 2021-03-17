@@ -8,7 +8,7 @@ using System.Xml;
 using RogueEssence.Content;
 using RogueEssence.Dev;
 
-namespace PMDO.Dev
+namespace PMDC.Dev
 {
     [Serializable]
     public class CharSheetRotateOp : CharSheetOp

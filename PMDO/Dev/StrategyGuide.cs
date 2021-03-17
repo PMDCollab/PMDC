@@ -8,7 +8,7 @@ using RogueEssence.Dungeon;
 using RogueEssence.LevelGen;
 using RogueEssence;
 
-namespace PMDO.Dev
+namespace PMDC.Dev
 {
     public static class StrategyGuide
     {

@@ -1,9 +1,9 @@
 ﻿//using System;
 //using System.Collections.Generic;
 //using RogueElements;
-//using PMDO.Dungeon;
+//using PMDC.Dungeon;
 
-//namespace PMDO.LevelGen
+//namespace PMDC.LevelGen
 //{
 //    //TODO: revive this trainwreck of a class after you've split it up
 

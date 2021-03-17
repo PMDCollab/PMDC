@@ -2,7 +2,7 @@
 using RogueEssence;
 using RogueEssence.Dungeon;
 
-namespace PMDO.Dungeon
+namespace PMDC.Dungeon
 {
     [Serializable]
     public class StickyHoldState : CharState

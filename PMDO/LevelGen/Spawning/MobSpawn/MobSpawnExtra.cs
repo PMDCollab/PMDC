@@ -4,9 +4,9 @@ using RogueEssence.Data;
 using RogueElements;
 using RogueEssence;
 using RogueEssence.LevelGen;
-using PMDO.Data;
+using PMDC.Data;
 
-namespace PMDO.LevelGen
+namespace PMDC.LevelGen
 {
     [Serializable]
     public class MobSpawnWeak : MobSpawnExtra
