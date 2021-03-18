@@ -2,8 +2,8 @@
   <PropertyGroup>
     <ProjectGuid>{BBF77001-98E9-4FCD-90FB-626B555CE418}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>PMDO</RootNamespace>
-    <AssemblyName>PMDO</AssemblyName>
+    <RootNamespace>PMDC</RootNamespace>
+    <AssemblyName>PMDC</AssemblyName>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <Deterministic>true</Deterministic>

@@ -21,7 +21,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Win32.Registry" Version="4.5.0" />
-    <ProjectReference Include="..\PMDO\PMDO.csproj" />
+    <ProjectReference Include="..\PMDC\PMDC.csproj" />
     <ProjectReference Include="..\RogueEssence\RogueElements\RogueElements\RogueElements.csproj" />
     <ProjectReference Include="..\RogueEssence\RogueEssence\RogueEssence.csproj" />
   </ItemGroup>

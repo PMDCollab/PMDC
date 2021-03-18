@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "PMDO": {
+    "PMDC": {
       "commandName": "Project",
       "commandLineArgs": "-asset ../../../../../../Asset/ -raw ../../../../../RawAsset/ -dev -lang en"
     }
