@@ -39,6 +39,7 @@ namespace PMDC
             Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
 
             DiagManager.InitInstance();
+            DiagManager.Instance.UpgradeBinder = new UpgradeBinder();
 
             try
             {
@@ -198,9 +199,10 @@ namespace PMDC
                     //TODO: remove when data is no longer hardcoded
                     LuaEngine.InitInstance();
                     DataManager.InitInstance();
-                    RogueEssence.Dev.DevHelper.Reserialize(reserializeIndices, new UpgradeBinder());
-                    RogueEssence.Dev.DevHelper.ReserializeData(DataManager.DATA_PATH + "Map/", DataManager.MAP_EXT, new UpgradeBinder());
-                    RogueEssence.Dev.DevHelper.ReserializeData(DataManager.DATA_PATH + "Ground/", DataManager.GROUND_EXT, new UpgradeBinder());
+                    RogueEssence.Dev.DevHelper.ReserializeBase();
+                    RogueEssence.Dev.DevHelper.Reserialize(reserializeIndices);
+                    RogueEssence.Dev.DevHelper.ReserializeData(DataManager.DATA_PATH + "Map/", DataManager.MAP_EXT);
+                    RogueEssence.Dev.DevHelper.ReserializeData(DataManager.DATA_PATH + "Ground/", DataManager.GROUND_EXT);
                     RogueEssence.Dev.DevHelper.RunIndexing(reserializeIndices);
                     return;
                 }

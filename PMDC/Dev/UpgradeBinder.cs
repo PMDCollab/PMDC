@@ -18,10 +18,10 @@ namespace PMDC.Dev
 
             if (typeToDeserialize == null)
             {
-                //typeName = typeName;
-                //assemblyName = assemblyName;
-                ////then the type moved to a new namespace
-                //typeToDeserialize = Type.GetType(String.Format("{0}, {1}", typeName, assemblyName));
+                typeName = typeName.Replace("PMDO", "PMDC");
+                assemblyName = assemblyName.Replace("PMDO", "PMDC");
+                //then the type moved to a new namespace
+                typeToDeserialize = Type.GetType(String.Format("{0}, {1}", typeName, assemblyName));
             }
             return typeToDeserialize;
         }
