@@ -4,7 +4,6 @@ Important notes
 
 
 *Run `git submodule update --init --remote -- RogueEssence` to get the RogueEssence submodule.
-*Run `git submodule update --init --remote -- RawAsset` to get the RawAsset submodule (65535 files!!).
 *Run `git submodule update --init --recursive` to get all the submodules.
 *You may need to regenerate NuGet packages for the RogueEssence solution first, before building.
 *If you switch to or from on the DotNetCore branch, remember to clear your obj folder.
