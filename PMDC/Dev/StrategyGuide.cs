@@ -16,7 +16,9 @@ namespace PMDC.Dev
 
         private static void writeHTMLGuide(string name, List<string[]> stats)
         {
-            string table = "			<thead>" +
+            string table =
+                "		<table class=\"base-table\">" + 
+                "			<thead>" +
                 "				<tr>";
 
             foreach (string title in stats[0])
@@ -34,68 +36,145 @@ namespace PMDC.Dev
                 table += "				</tr>";
             }
 
-            table += "			</tbody>";
+            table += "			</tbody>" +
+                "		</table>";
 
-            string html = "<!DOCTYPE html>" +
-                "<html>" +
-                "	<head>" +
-                "		<title>" +
-                "			" + name +
-                "		</title>" +
-                "	</head>" +
-                "	<style type=\"text/css\">" +
-                "header {" +
-                "	background-color:lightyellow;" +
-                "	color:darkblue;" +
-                "	text-align:center;" +
-                "	font-size: 30px;" +
-                "	font-weight: bold;" +
-                "	padding:5px;" +
-                "}" +
-                "table.base-table {" +
-                "	border: 1px solid #CCC;" +
-                "	font-size: 12px;" +
-                "	width: 100%;" +
-                "}" +
-                ".base-table td {" +
-                "	padding: 4px;" +
-                "	margin: 3px;" +
-                "	border: 1px solid #ccc;" +
-                "	text-align: center;" +
-                "}" +
-                ".base-table th {" +
-                "	background-color: #104E8B;" +
-                "	color: #FFF;" +
-                "	font-weight: bold;" +
-                "	text-align: center;" +
-                "}" +
-                "footer {" +
-                "	background-color:lightgreen;" +
-                "	color:black;" +
-                "	font-style: italic;" +
-                "	font-size:10px;" +
-                "	clear:both;" +
-                "	text-align:right;" +
-                "	padding:5px;" +
-                "}" +
-                "	</style>" +
-                "	<body>" +
-                "		<header>" +
-                "			" + name +
-                "		</header>" +
-                "		<br />" +
-                "		<table class=\"base-table\">" +
+            string html = 
+                "<!DOCTYPE html>\n" +
+                "<html>\n" +
+                "	<head>\n" +
+                "		<title>"+name+"</title>\n" +
+                "        <meta charset=\"UTF-8\">\n" +
+                "        <style type=\"text/css\">\n" +
+                "            @import url('https://fonts.googleapis.com/css2?family=Merriweather+Sans:wght@350;700&display=swap');\n" +
+                "            @import url('https://fonts.googleapis.com/css2?family=Acme&display=swap');\n" +
+                "\n" +
+                "            body {\n" +
+                "                font-family: \"Merriweather Sans\", \"Tahoma\", sans-serif;\n" +
+                "                font-weight: 350;\n" +
+                "                margin: 0;\n" +
+                "            }\n" +
+                "\n" +
+                "            header {\n" +
+                "                background-color: lightyellow;\n" +
+                "                border-bottom: 1px solid #cc9;\n" +
+                "                padding: 13px 5px;\n" +
+                "                text-align: center;\n" +
+                "                color: darkblue;	\n" +
+                "            }\n" +
+                "            h1 {\n" +
+                "                font-size: 32pt;	\n" +
+                "                font-weight: bold;	\n" +
+                "                font-family: \"Acme\", \"Verdana\", sans-serif;\n" +
+                "                margin: 0;\n" +
+                "            }\n" +
+                "\n" +
+                "            nav {\n" +
+                "                margin-top: 0.5em;\n" +
+                "                font-size: 12pt;\n" +
+                "            }\n" +
+                "            nav a, nav a:visited {\n" +
+                "                margin: 6pt 6pt 0 6pt;\n" +
+                "                text-decoration: none;\n" +
+                "                border-bottom: none;\n" +
+                "                color: darkblue;\n" +
+                "                border-bottom-color: lightyellow;\n" +
+                "                transition: border-bottom-color 0.2s;\n" +
+                "            }\n" +
+                "            nav a:hover {\n" +
+                "                border-bottom: 1px darkblue solid;\n" +
+                "                color: darkblue;\n" +
+                "            }\n" +
+                "            nav a:active {\n" +
+                "                border-bottom: 1px lightskyblue solid;\n" +
+                "                color: lightskyblue;\n" +
+                "                transition: border-bottom-color 0s;\n" +
+                "            }\n" +
+                "            nav a.current, nav a.current:hover {\n" +
+                "                font-weight: bold;\n" +
+                "                border-bottom: none;\n" +
+                "            }\n" +
+                "\n" +
+                "            table.base-table {	\n" +
+                "                border: 1px solid #999;	\n" +
+                "                font-size: 10pt;	\n" +
+                "                width: calc(100% - 16px);\n" +
+                "                border-collapse: collapse;\n" +
+                "                margin: 8px;\n" +
+                "            }\n" +
+                "            .base-table td {\n" +
+                "                padding: 5px;\n" +
+                "                margin: 3px;\n" +
+                "                /*text-align: center;*/\n" +
+                "            }\n" +
+                "            .base-table tr:nth-child(odd)\n" +
+                "            {\n" +
+                "                background-color: #ddd;\n" +
+                "                transition: background-color 0.2s;\n" +
+                "            }\n" +
+                "            .base-table tr:nth-child(even)\n" +
+                "            {\n" +
+                "                background-color: #fff;\n" +
+                "                transition: background-color 0.2s;\n" +
+                "            }\n" +
+                "            .base-table tr:hover {\n" +
+                "                background-color: #c9d5f0;\n" +
+                "                transition: background-color 0.2s;\n" +
+                "            }\n" +
+                "            .base-table th {\n" +
+                "                padding: 5px;\n" +
+                "                margin: 3px;\n" +
+                "                background-color: #104E8B;\n" +
+                "                border-bottom: 1px #013e73 solid;\n" +
+                "                color: #FFF;	\n" +
+                "                font-weight: bold;	\n" +
+                "                text-align: left;\n" +
+                "                top: 0;\n" +
+                "                position: sticky;\n" +
+                "            }\n" +
+                "\n" +
+                "            footer {	\n" +
+                "                background-color:lightgreen;\n" +
+                "                border-top: 1px #9c9 solid;	\n" +
+                "                color:black;	\n" +
+                "                font-style: italic;	\n" +
+                "                font-size: 8pt;		\n" +
+                "                text-align: right;	\n" +
+                "                padding: 8px 5px;\n" +
+                "            }	\n" +
+                "            </style>\n" +
+                "	</head>\n" +
+                "	<body>\n" +
+                "        <header>\n" +
+                "		    <h1>"+name+"</h1>\n" +
+                "            <nav>\n" +
+                "                <a href=\"Moves.html\" " + currentIfEqual(name, "Moves") + ">Moves</a>\n" +
+                "                <a href=\"Items.html\" " + currentIfEqual(name, "Items") + ">Items</a>\n" +
+                "                <a href=\"Abilities.html\" " + currentIfEqual(name, "Abilities") + ">Abilities</a>\n" +
+                "                <a href=\"Encounters.html\" " + currentIfEqual(name, "Encounters") + ">Encounters</a>\n" +
+                "            </nav>\n" +
+                "        </header>\n" +
+                "		<br>\n" +
+
                 table +
-                "		</table>" +
-                "		<br />" +
-                "		<footer>" +
-                "			v1.0.0" +
-                "		</footer>" +
-                "	</body>" +
-                "</html>";
 
-            using (StreamWriter file = new StreamWriter(name + ".html"))
+                "		<br>\n" +
+                "		<footer>PMDO v0.3.1</footer>\n" +
+                "	</body>\n" +
+                "</html>\n";
+
+            if (!Directory.Exists(AppDomain.CurrentDomain.BaseDirectory + "GUIDE/"))
+                Directory.CreateDirectory(AppDomain.CurrentDomain.BaseDirectory + "GUIDE/");
+
+            using (StreamWriter file = new StreamWriter(AppDomain.CurrentDomain.BaseDirectory + "GUIDE/" + name + ".html"))
                 file.Write(html);
+
+            DiagManager.Instance.LogInfo("Printed " + name);
+        }
+
+        public static string currentIfEqual(string name, string title)
+        {
+            return name == title ? "class=\"current\"" : "";
         }
 
         public static void PrintItemGuide()
