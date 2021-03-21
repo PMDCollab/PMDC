@@ -4,7 +4,7 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>PMDC</RootNamespace>
     <AssemblyName>PMDC</AssemblyName>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <Deterministic>true</Deterministic>
     <RuntimeIdentifiers>win-x64;osx-x64;linux-x64</RuntimeIdentifiers>
