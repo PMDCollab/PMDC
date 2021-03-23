@@ -163,12 +163,13 @@ namespace PMDC
 
                 GraphicsManager.InitParams();
 
-                DiagManager.Instance.DevMode = dev;
+                DiagManager.Instance.DevMode = true;
                 if (playInputs != null)
                     DiagManager.Instance.LoadInputs(playInputs);
 
 
                 Text.Init();
+                langArgs = "en";
                 if (langArgs != "" && DiagManager.Instance.CurSettings.Language == "")
                 {
                     if (langArgs.Length > 0)
