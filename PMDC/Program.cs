@@ -79,12 +79,12 @@ namespace PMDC
                         guideBook = true;
                     else if (args[ii] == "-asset")
                     {
-                        PathMod.ASSET_PATH = System.IO.Path.GetFullPath(AppDomain.CurrentDomain.BaseDirectory + args[ii + 1]);
+                        PathMod.ASSET_PATH = System.IO.Path.GetFullPath(AppContext.BaseDirectory + args[ii + 1]);
                         ii++;
                     }
                     else if (args[ii] == "-raw")
                     {
-                        PathMod.DEV_PATH = System.IO.Path.GetFullPath(AppDomain.CurrentDomain.BaseDirectory + args[ii + 1]);
+                        PathMod.DEV_PATH = System.IO.Path.GetFullPath(AppContext.BaseDirectory + args[ii + 1]);
                         ii++;
                     }
                     else if (args[ii] == "-mod")
