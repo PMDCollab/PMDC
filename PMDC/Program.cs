@@ -38,6 +38,8 @@ namespace PMDC
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
 
+            string[] args = System.Environment.GetCommandLineArgs();
+            PathMod.InitExePath(System.IO.Path.GetDirectoryName(args[0]));
             DiagManager.InitInstance();
             DiagManager.Instance.UpgradeBinder = new UpgradeBinder();
 
@@ -50,7 +52,6 @@ namespace PMDC
                 DiagManager.Instance.LogInfo("=========================================");
 
 
-                string[] args = Environment.GetCommandLineArgs();
                 bool logInput = true;
                 bool guideBook = false;
                 GraphicsManager.AssetType convertAssets = GraphicsManager.AssetType.None;
@@ -79,17 +80,17 @@ namespace PMDC
                         guideBook = true;
                     else if (args[ii] == "-asset")
                     {
-                        PathMod.ASSET_PATH = System.IO.Path.GetFullPath(AppDomain.CurrentDomain.BaseDirectory + args[ii + 1]);
+                        PathMod.ASSET_PATH = System.IO.Path.GetFullPath(PathMod.ExePath + args[ii + 1]);
                         ii++;
                     }
                     else if (args[ii] == "-raw")
                     {
-                        PathMod.DEV_PATH = System.IO.Path.GetFullPath(AppDomain.CurrentDomain.BaseDirectory + args[ii + 1]);
+                        PathMod.DEV_PATH = System.IO.Path.GetFullPath(PathMod.ExePath + args[ii + 1]);
                         ii++;
                     }
                     else if (args[ii] == "-mod")
                     {
-                        PathMod.Mod = PathMod.MODS_PATH + args[ii + 1];
+                        PathMod.Mod = PathMod.MODS_FOLDER + args[ii + 1];
                         ii++;
                     }
                     else if (args[ii] == "-convert")
