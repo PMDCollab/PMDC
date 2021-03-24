@@ -163,10 +163,10 @@ namespace PMDC.Dev
                 "	</body>\n" +
                 "</html>\n";
 
-            if (!Directory.Exists(AppContext.BaseDirectory + "GUIDE/"))
-                Directory.CreateDirectory(AppContext.BaseDirectory + "GUIDE/");
+            if (!Directory.Exists(PathMod.ExePath + "GUIDE/"))
+                Directory.CreateDirectory(PathMod.ExePath + "GUIDE/");
 
-            using (StreamWriter file = new StreamWriter(AppContext.BaseDirectory + "GUIDE/" + name + ".html"))
+            using (StreamWriter file = new StreamWriter(PathMod.ExePath + "GUIDE/" + name + ".html"))
                 file.Write(html);
 
             DiagManager.Instance.LogInfo("Printed " + name);

@@ -145,6 +145,9 @@ namespace Updater
                 else
                 {
                     excludedFiles.Clear();
+                    excludedFiles.Add("PMDO/Config.xml");
+                    excludedFiles.Add("PMDO/Keyboard.xml");
+                    excludedFiles.Add("PMDO/Gamepad.xml");
                     excludedFiles.Add("PMDO/Contacts.xml");
                     excludedFiles.Add("PMDO/LOG/");
                     excludedFiles.Add("PMDO/MODS/");
