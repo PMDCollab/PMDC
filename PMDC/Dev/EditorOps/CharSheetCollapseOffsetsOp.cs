@@ -13,8 +13,9 @@ namespace PMDC.Dev
     [Serializable]
     public class CharSheetCollapseOffsetsOp : CharSheetOp
     {
+        public override int[] Anims { get { return new int[0]; } }
         public override string Name { get { return "Collapse Offsets"; } }
-        public override void Apply(CharSheet sheet)
+        public override void Apply(CharSheet sheet, int anim)
         {
             sheet.CollapseOffsets();
         }
