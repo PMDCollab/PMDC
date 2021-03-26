@@ -50,7 +50,7 @@ namespace PMDC.Dev
                     sheet.AnimData[anim].Sequences[(int)flipDir].Frames = frames;
                 }
             }
-            sheet.RemoveUnused();
+            sheet.Collapse(false);
         }
     }
 
