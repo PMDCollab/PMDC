@@ -159,7 +159,7 @@ namespace PMDC.Dev
                 table +
 
                 "		<br>\n" +
-                "		<footer>PMDO v0.3.1</footer>\n" +
+                "		<footer>PMDC v"+ Versioning.GetVersion().ToString() + "</footer>\n" +
                 "	</body>\n" +
                 "</html>\n";
 
@@ -277,71 +277,98 @@ namespace PMDC.Dev
                 DevHelper.AddEvoFamily(foundSpecies, startchar, new ZoneLoc(0, SegLoc.Invalid));
 
             List<string[]> stats = new List<string[]>();
-            stats.Add(new string[3] { "###", "Name", "Found In" });
+            stats.Add(new string[4] { "###", "Name", "Join %", "Found In" });
 
             for (int ii = 1; ii < DataManager.Instance.DataIndices[DataManager.DataType.Monster].Count; ii++)
             {
-                string encounterStr = "UNKNOWN";
-                if (foundSpecies.ContainsKey(ii))
+                MonsterData data = DataManager.Instance.GetMonster(ii);
+                if (DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[ii].Released)
                 {
-                    bool evolve = false;
-                    bool starter = false;
-                    Dictionary<int, HashSet<int>> specialDict = new Dictionary<int, HashSet<int>>();
-                    Dictionary<int, Dictionary<int, HashSet<int>>> floorDict = new Dictionary<int, Dictionary<int, HashSet<int>>>();
-
-                    foreach (ZoneLoc encounter in foundSpecies[ii])
+                    string encounterStr = "UNKNOWN";
+                    if (foundSpecies.ContainsKey(ii))
                     {
-                        if (encounter.ID == 0)
-                            starter = true;
-                        else if (encounter.ID == -1)
-                            evolve = true;
-                        else if (encounter.StructID.ID == -1)
+                        bool evolve = false;
+                        bool starter = false;
+                        Dictionary<int, HashSet<int>> specialDict = new Dictionary<int, HashSet<int>>();
+                        Dictionary<int, Dictionary<int, HashSet<int>>> floorDict = new Dictionary<int, Dictionary<int, HashSet<int>>>();
+
+                        foreach (ZoneLoc encounter in foundSpecies[ii])
                         {
-                            if (!specialDict.ContainsKey(encounter.ID))
-                                specialDict[encounter.ID] = new HashSet<int>();
-                            specialDict[encounter.ID].Add(encounter.StructID.Segment);
-                        }
-                        else
-                        {
-                            if (!floorDict.ContainsKey(encounter.ID))
-                                floorDict[encounter.ID] = new Dictionary<int, HashSet<int>>();
-                            if (!floorDict[encounter.ID].ContainsKey(encounter.StructID.Segment))
-                                floorDict[encounter.ID][encounter.StructID.Segment] = new HashSet<int>();
-                            floorDict[encounter.ID][encounter.StructID.Segment].Add(encounter.StructID.ID);
-                        }
-                    }
-
-                    List<string> encounterMsg = new List<string>();
-
-                    for (int zz = 0; zz < DataManager.Instance.DataIndices[DataManager.DataType.Zone].Count; zz++)
-                    {
-                        ZoneData mainZone = DataManager.Instance.GetZone(zz);
-                        for (int yy = 0; yy < mainZone.Structures.Count; yy++)
-                        {
-                            if (specialDict.ContainsKey(zz) && specialDict[zz].Contains(yy))
-                                encounterMsg.Add(mainZone.Name.ToLocal() + " S:" + yy);
-
-
-                            if (floorDict.ContainsKey(zz) && floorDict[zz].ContainsKey(yy))
+                            if (encounter.ID == 0)
+                                starter = true;
+                            else if (encounter.ID == -1)
+                                evolve = true;
+                            else if (encounter.StructID.ID == -1)
                             {
-                                List<string> ranges = combineFloorRanges(floorDict[zz][yy]);
-                                encounterMsg.Add(mainZone.Name.ToLocal() + " S:" + yy + " F:"+String.Join(",",ranges.ToArray()));
+                                if (!specialDict.ContainsKey(encounter.ID))
+                                    specialDict[encounter.ID] = new HashSet<int>();
+                                specialDict[encounter.ID].Add(encounter.StructID.Segment);
+                            }
+                            else
+                            {
+                                if (!floorDict.ContainsKey(encounter.ID))
+                                    floorDict[encounter.ID] = new Dictionary<int, HashSet<int>>();
+                                if (!floorDict[encounter.ID].ContainsKey(encounter.StructID.Segment))
+                                    floorDict[encounter.ID][encounter.StructID.Segment] = new HashSet<int>();
+                                floorDict[encounter.ID][encounter.StructID.Segment].Add(encounter.StructID.ID);
                             }
                         }
-                        
+
+                        List<string> encounterMsg = new List<string>();
+
+                        for (int zz = 0; zz < DataManager.Instance.DataIndices[DataManager.DataType.Zone].Count; zz++)
+                        {
+                            ZoneData mainZone = DataManager.Instance.GetZone(zz);
+                            for (int yy = 0; yy < mainZone.Structures.Count; yy++)
+                            {
+                                if (specialDict.ContainsKey(zz) && specialDict[zz].Contains(yy))
+                                {
+                                    string locString = String.Format("{0} {1}S", mainZone.Name.ToLocal(), yy + 1);
+                                    foreach (var step in mainZone.Structures[yy].PostProcessingSteps)
+                                    {
+                                        var startStep = step as FloorNameIDPostProc;
+                                        if (startStep != null)
+                                        {
+                                            locString = LocalText.FormatLocalText(startStep.Name, "?").ToLocal().Replace('\n', ' ');
+                                            break;
+                                        }
+                                    }
+                                    encounterMsg.Add(locString);
+                                }
+
+                                if (floorDict.ContainsKey(zz) && floorDict[zz].ContainsKey(yy))
+                                {
+                                    List<string> ranges = combineFloorRanges(floorDict[zz][yy]);
+                                    string rangeString = String.Join(",", ranges.ToArray());
+                                    string locString = String.Format("{0} {1}S {2}F", mainZone.Name.ToLocal(), yy + 1, rangeString);
+                                    foreach (var step in mainZone.Structures[yy].PostProcessingSteps)
+                                    {
+                                        var startStep = step as FloorNameIDPostProc;
+                                        if (startStep != null)
+                                        {
+                                            locString = LocalText.FormatLocalText(startStep.Name, rangeString).ToLocal().Replace('\n', ' ');
+                                            break;
+                                        }
+                                    }
+                                    encounterMsg.Add(locString);
+                                }
+                            }
+
+                        }
+
+
+                        if (starter && encounterMsg.Count == 0)
+                            encounterMsg.Add("Starter");
+                        if (evolve && encounterMsg.Count == 0)
+                            encounterMsg.Add("Evolve");
+
+                        if (encounterMsg.Count > 0)
+                            encounterStr = String.Join("; ", encounterMsg.ToArray());
                     }
-
-
-                    if (starter && encounterMsg.Count == 0)
-                        encounterMsg.Add("Starter");
-                    if (evolve && encounterMsg.Count == 0)
-                        encounterMsg.Add("Evolve");
-
-                    if (encounterMsg.Count > 0)
-                        encounterStr = String.Join("; ", encounterMsg.ToArray());
+                    stats.Add(new string[4] { ii.ToString("D3"), data.Name.ToLocal(), data.JoinRate.ToString() + "%", encounterStr });
                 }
-                MonsterData data = DataManager.Instance.GetMonster(ii);
-                stats.Add(new string[3] { ii.ToString(), data.Name.ToLocal(), encounterStr });
+                else
+                    stats.Add(new string[4] { ii.ToString("D3"), data.Name.ToLocal(), "--%", "NO DATA" });
             }
             writeHTMLGuide("Encounters", stats);
         }
