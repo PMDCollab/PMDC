@@ -110,6 +110,21 @@ namespace PMDC.Dev
                     foreach (object val in array)
                         extractMobSpawnFromObject(foundSpecies, val, recruitableOnly, encounter);
                 }
+                else if (encounter.StructID.ID == -1 && type.GetInterfaces().Contains(typeof(ISpawnRangeList)))
+                {
+                    ISpawnRangeList enumerable = (ISpawnRangeList)member;
+                    for (int nn = 0; nn < enumerable.Count; nn++)
+                    {
+                        object val = enumerable.GetSpawn(nn);
+                        IntRange range = enumerable.GetSpawnRange(nn);
+                        for (int kk = range.Min; kk < range.Max; kk++)
+                        {
+                            ZoneLoc newEnc = encounter;
+                            newEnc.StructID.ID = kk;
+                            extractMobSpawnFromObject(foundSpecies, val, recruitableOnly, newEnc);
+                        }
+                    }
+                }
                 else if (type.GetInterfaces().Contains(typeof(IEnumerable)))
                 {
                     IEnumerable enumerable = (IEnumerable)member;
