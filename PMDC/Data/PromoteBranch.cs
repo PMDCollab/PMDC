@@ -77,7 +77,15 @@ namespace PMDC.Data
     [Serializable]
     public class EvoFriendship : PromoteDetail
     {
-        public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_ALLIES").ToLocal(), (ExplorerTeam.MAX_TEAM_SLOTS - 1)); }
+        public int Allies;
+
+        public EvoFriendship() { }
+        public EvoFriendship(int allies)
+        {
+            Allies = allies;
+        }
+
+        public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_ALLIES").ToLocal(), Allies); }
         public override bool GetReq(Character character)
         {
             ExplorerTeam team = character.MemberTeam as ExplorerTeam;
@@ -85,20 +93,18 @@ namespace PMDC.Data
             if (team == null)
                 return false;
 
-            if (character.MemberTeam.Players.Count < team.GetMaxTeam(ZoneManager.Instance.CurrentZone))
-                return false;
-
+            int count = 0;
             foreach (Character ally in character.MemberTeam.Players)
             {
                 if (ally != character)
                 {
                     MonsterData data = DataManager.Instance.GetMonster(ally.BaseForm.Species);
-                    if (data.PromoteFrom == -1 && data.Promotions.Count > 0)
-                        return false;
+                    if (data.PromoteFrom > -1)
+                        count++;
                 }
             }
 
-            return true;
+            return count >= Allies;
         }
     }
     [Serializable]
@@ -115,6 +121,7 @@ namespace PMDC.Data
     [Serializable]
     public class EvoWeather : PromoteDetail
     {
+        [DataType(0, DataManager.DataType.MapStatus, false)]
         public int Weather;
 
         public override bool GetGroundReq(Character character) { return false; }
@@ -144,6 +151,51 @@ namespace PMDC.Data
         }
     }
     [Serializable]
+    public class EvoCrits : PromoteDetail
+    {
+        [DataType(0, DataManager.DataType.Status, false)]
+        public int CritStatus;
+        public int Stack;
+
+        public override string GetReqString()
+        {
+            return String.Format(new StringKey("EVO_REQ_CRITS").ToLocal(), Stack);
+        }
+        public override bool GetReq(Character character)
+        {
+            StatusEffect status;
+            if (character.StatusEffects.TryGetValue(CritStatus, out status))
+            {
+                StackState state = status.StatusStates.Get<StackState>();
+                if (state.Stack >= Stack)
+                    return true;
+            }
+            return false;
+        }
+    }
+    [Serializable]
+    public class EvoStatBoost : PromoteDetail
+    {
+        [DataType(0, DataManager.DataType.Status, false)]
+        public int StatBoostStatus;
+
+        public override string GetReqString()
+        {
+            return String.Format(new StringKey("EVO_REQ_STAT_BOOST").ToLocal(), DataManager.Instance.GetStatus(StatBoostStatus).Name);
+        }
+        public override bool GetReq(Character character)
+        {
+            StatusEffect status;
+            if (character.StatusEffects.TryGetValue(StatBoostStatus, out status))
+            {
+                StackState state = status.StatusStates.Get<StackState>();
+                if (state.Stack > 0)
+                    return true;
+            }
+            return false;
+        }
+    }
+    [Serializable]
     public class EvoMove : PromoteDetail
     {
         public int MoveNum;
@@ -162,7 +214,6 @@ namespace PMDC.Data
     [Serializable]
     public class EvoMoveElement : PromoteDetail
     {
-        public override bool IsHardReq() { return false; }
         [DataType(0, DataManager.DataType.Element, false)]
         public int MoveElement;
 
@@ -186,9 +237,32 @@ namespace PMDC.Data
         }
     }
     [Serializable]
+    public class EvoForm : PromoteDetail
+    {
+        public int ReqForm;
+
+        public EvoForm() { }
+        public EvoForm(int form)
+        {
+            ReqForm = form;
+        }
+
+        public override bool IsHardReq() { return true; }
+        public override bool GetReq(Character character)
+        {
+            return character.BaseForm.Form == ReqForm;
+        }
+    }
+    [Serializable]
     public class EvoGender : PromoteDetail
     {
         public Gender ReqGender;
+
+        public EvoGender() { }
+        public EvoGender(Gender gender)
+        {
+            ReqGender = gender;
+        }
 
         public override bool IsHardReq() { return true; }
         public override bool GetReq(Character character)
@@ -197,10 +271,36 @@ namespace PMDC.Data
         }
     }
     [Serializable]
+    public class EvoHunger : PromoteDetail
+    {
+        public bool Hungry;
+
+        public EvoHunger() { }
+
+        public override string GetReqString()
+        {
+            if (Hungry)
+                return String.Format(new StringKey("EVO_REQ_HUNGER_LOW").ToLocal());
+            else
+                return String.Format(new StringKey("EVO_REQ_HUNGER_HIGH").ToLocal());
+        }
+
+        public override bool GetReq(Character character)
+        {
+            return Hungry ? (character.Fullness == 0) : (character.Fullness == 110);
+        }
+    }
+    [Serializable]
     public class EvoLocation : PromoteDetail
     {
         [DataType(0, DataManager.DataType.Element, false)]
         public int TileElement;
+
+        public EvoLocation() { }
+        public EvoLocation(int element)
+        {
+            TileElement = element;
+        }
 
         public override bool GetGroundReq(Character character) { return false; }
         public override string GetReqString()
@@ -323,21 +423,94 @@ namespace PMDC.Data
     }
 
     [Serializable]
-    public class EvoFormGender : PromoteDetail
+    public class EvoSetForm : PromoteDetail
     {
+        public List<PromoteDetail> Conditions;
+        public int Form;
+
+        public EvoSetForm()
+        {
+            Conditions = new List<PromoteDetail>();
+        }
+        public EvoSetForm(int form)
+        {
+            Conditions = new List<PromoteDetail>();
+            Form = form;
+        }
+
         public override void OnPromote(Character character)
         {
-            //set forme depending on gender
-            if (character.BaseForm.Gender == Gender.Female)
-                character.BaseForm.Form = 1;
+            MonsterData data = DataManager.Instance.GetMonster(character.BaseForm.Species);
+            if (!data.Forms[Form].Released)
+                return;
+
+            //set forme depending on location
+            foreach (PromoteDetail detail in Conditions)
+            {
+                if (!detail.GetReq(character))
+                    return;
+            }
+            character.BaseForm.Form = Form;
+            character.RestoreForm();
         }
     }
     [Serializable]
-    public class EvoFormLocation : PromoteDetail
+    public class EvoFormLocOrigin : PromoteDetail
     {
         public override void OnPromote(Character character)
         {
             //set forme depending on capture location
+        }
+    }
+    [Serializable]
+    public class EvoFormCream : PromoteDetail
+    {
+        public override bool GetReq(Character character)
+        {
+            return false;
+        }
+
+        public override void OnPromote(Character character)
+        {
+            //functions as an item check, AND sets the forme
+            //set forme depending on ???
+        }
+    }
+    [Serializable]
+    public class EvoFormDusk : PromoteDetail
+    {
+        public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_ITEM").ToLocal(), "???"); }
+
+        public override bool GetReq(Character character)
+        {
+            return false;
+        }
+
+        public override void OnPromote(Character character)
+        {
+            //functions as an item check, AND sets the forme
+            //set forme depending on the item donated
+            //sun ribbon? midday
+            //moon ribbon? midnight
+            //harmony scarf? dusk
+        }
+    }
+    [Serializable]
+    public class EvoFormScroll : PromoteDetail
+    {
+        public override string GetReqString()
+        {
+            return String.Format(new StringKey("EVO_REQ_TILE_ELEMENT").ToLocal(), "???");
+        }
+
+        public override bool GetReq(Character character)
+        {
+            return false;
+        }
+
+        public override void OnPromote(Character character)
+        {
+            //functions as a terrain check, AND sets the forme
         }
     }
 
