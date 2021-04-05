@@ -19,7 +19,10 @@ namespace PMDC.Dev
             {
                 List<int> all = new List<int>();
                 for (int ii = 0; ii < GraphicsManager.Actions.Count; ii++)
-                    all.Add(ii);
+                {
+                    if (ii != 3 && ii != 5)
+                        all.Add(ii);
+                }
                 return all.ToArray();
             }
         }

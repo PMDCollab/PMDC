@@ -4547,19 +4547,23 @@ namespace PMDC.Dungeon
         public int OtherHitStatusID;
         [DataType(0, DataManager.DataType.Status, false)]
         public int TargetStatusID;
+        [DataType(0, DataManager.DataType.Status, false)]
+        public int CritStatusID;
 
         public HitPostEvent() { }
-        public HitPostEvent(int recentHitStatusID, int otherHitStatusID, int targetStatusID)
+        public HitPostEvent(int recentHitStatusID, int otherHitStatusID, int targetStatusID, int critStatusID)
         {
             RecentHitStatusID = recentHitStatusID;
             OtherHitStatusID = otherHitStatusID;
             TargetStatusID = targetStatusID;
+            CritStatusID = critStatusID;
         }
         protected HitPostEvent(HitPostEvent other)
         {
             RecentHitStatusID = other.RecentHitStatusID;
             OtherHitStatusID = other.OtherHitStatusID;
             TargetStatusID = other.TargetStatusID;
+            CritStatusID = other.CritStatusID;
         }
         public override GameEvent Clone() { return new HitPostEvent(this); }
 
@@ -4589,9 +4593,22 @@ namespace PMDC.Dungeon
                         yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, recentHitStatus, null));
                     }
                     else
-                    {
                         recentHitStatus.StatusStates.GetWithDefault<StackState>().Stack = recentHitStatus.StatusStates.GetWithDefault<StackState>().Stack + 1;
+
+                }
+
+                if (context.ContextStates.Contains<AttackCrit>())
+                {
+                    StatusEffect recentCritStatus = context.User.GetStatusEffect(CritStatusID);
+                    if (recentCritStatus == null)
+                    {
+                        recentCritStatus = new StatusEffect(CritStatusID);
+                        recentCritStatus.LoadFromData();
+                        recentCritStatus.StatusStates.GetWithDefault<StackState>().Stack = 1;
+                        yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, recentCritStatus, null));
                     }
+                    else
+                        recentCritStatus.StatusStates.GetWithDefault<StackState>().Stack = recentCritStatus.StatusStates.GetWithDefault<StackState>().Stack + 1;
                 }
 
                 if (context.ActionType == BattleActionType.Skill && context.Data.ID > 0)

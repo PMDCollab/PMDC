@@ -15,6 +15,7 @@ namespace PMDC.Data
         public const int MAX_STAT_BOOST = 128;
         public const int ALT_COLOR_ODDS = 512;
 
+        public int Generation;
         public int Ratio;
         public List<byte> Personalities;
 

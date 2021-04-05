@@ -197,14 +197,18 @@ namespace PMDC
 
                 if (reserializeIndices != DataManager.DataType.None)
                 {
+                    DiagManager.Instance.LogInfo("Beginning Reserialization");
                     //we need the datamanager for this, but only while data is hardcoded
                     //TODO: remove when data is no longer hardcoded
                     LuaEngine.InitInstance();
                     DataManager.InitInstance();
                     RogueEssence.Dev.DevHelper.ReserializeBase();
+                    DiagManager.Instance.LogInfo("Reserializing main data");
                     RogueEssence.Dev.DevHelper.Reserialize(reserializeIndices);
+                    DiagManager.Instance.LogInfo("Reserializing map data");
                     RogueEssence.Dev.DevHelper.ReserializeData(DataManager.DATA_PATH + "Map/", DataManager.MAP_EXT);
                     RogueEssence.Dev.DevHelper.ReserializeData(DataManager.DATA_PATH + "Ground/", DataManager.GROUND_EXT);
+                    DiagManager.Instance.LogInfo("Reserializing indices");
                     RogueEssence.Dev.DevHelper.RunIndexing(reserializeIndices);
                     return;
                 }
@@ -260,7 +264,7 @@ namespace PMDC
             catch (Exception ex)
             {
                 DiagManager.Instance.LogError(ex);
-                throw ex;
+                throw;
             }
         }
 
