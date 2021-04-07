@@ -273,8 +273,8 @@ namespace PMDC.Dev
         {
             Dictionary<int, HashSet<(string, ZoneLoc)>> foundSpecies = DevHelper.GetAllAppearingMonsters(true);
 
-            foreach (int startchar in DataManager.Instance.StartChars)
-                DevHelper.AddEvoFamily(foundSpecies, startchar, "STARTER", ZoneLoc.Invalid);
+            foreach (MonsterID startchar in DataManager.Instance.StartChars)
+                DevHelper.AddEvoFamily(foundSpecies, startchar.Species, "STARTER", ZoneLoc.Invalid);
 
             List<string[]> stats = new List<string[]>();
             stats.Add(new string[4] { "###", "Name", "Join %", "Found In" });
