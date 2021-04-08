@@ -2854,6 +2854,32 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class FadeInEvent : SingleCharEvent
+    {
+        public FadeInEvent() { }
+        public override GameEvent Clone() { return new FadeInEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeIn());
+        }
+    }
+
+    [Serializable]
+    public class SpecialIntroEvent : SingleCharEvent
+    {
+        public SpecialIntroEvent() { }
+        public override GameEvent Clone() { return new SpecialIntroEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            foreach (Character member in DungeonScene.Instance.ActiveTeam.EnumerateChars())
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.SpecialIntro(member));
+
+        }
+    }
+
+    [Serializable]
     public class BeginBattleEvent : SingleCharEvent
     {
         public BeginBattleEvent() { }

@@ -12183,7 +12183,7 @@ namespace PMDC.Dungeon
             if (state != null)
                 moveIndex = state.Index;
 
-            if (!entry.TeachSkills.Contains(new LearnableSkill(moveIndex)))
+            if (!entry.CanLearnSkill(moveIndex))
             {
                 context.CancelState.Cancel = true;
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CANT_LEARN_SKILL").ToLocal(), context.User.Name));
@@ -12860,7 +12860,7 @@ namespace PMDC.Dungeon
                                 () => { nick = true; },
                                 () => { })));
                             if (nick)
-                                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(new NicknameMenu((string text) => { name = text; })));
+                                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(new NicknameMenu((string text) => { name = text; }, () => { })));
                             DataManager.Instance.LogUIPlay(name.Length);
                             for (int ii = 0; ii < name.Length; ii++)
                                 DataManager.Instance.LogUIPlay((int)name[ii]);

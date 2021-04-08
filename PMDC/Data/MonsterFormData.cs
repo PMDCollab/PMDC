@@ -19,9 +19,20 @@ namespace PMDC.Data
         public int Ratio;
         public List<byte> Personalities;
 
+
+        public List<LearnableSkill> TeachSkills;
+
+        public List<LearnableSkill> SharedSkills;
+
+        public List<LearnableSkill> SecretSkills;
+
         public MonsterFormData()
         {
             Personalities = new List<byte>();
+
+            TeachSkills = new List<LearnableSkill>();
+            SharedSkills = new List<LearnableSkill>();
+            SecretSkills = new List<LearnableSkill>();
         }
 
         public override int GetStat(int level, Stat stat, int bonus)
@@ -212,6 +223,18 @@ namespace PMDC.Data
             return (int)((ulong)ExpYield * (ulong)level * (ulong)multNum * (ulong)multNum * (ulong)multNum / (ulong)multDen / (ulong)multDen / (ulong)multDen / 5) + 1;
         }
 
+        public override bool CanLearnSkill(int skill)
+        {
+            if (LevelSkills.FindIndex(a => a.Skill == skill) > -1)
+                return true;
+            if (TeachSkills.FindIndex(a => a.Skill == skill) > -1)
+                return true;
+            if (SharedSkills.FindIndex(a => a.Skill == skill) > -1)
+                return true;
+            if (SecretSkills.FindIndex(a => a.Skill == skill) > -1)
+                return true;
+            return false;
+        }
     }
 
 
