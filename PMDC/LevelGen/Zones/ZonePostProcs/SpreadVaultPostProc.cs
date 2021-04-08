@@ -82,10 +82,14 @@ namespace PMDC.LevelGen
                     SpawnList<MapItem> itemListSlice = Items.GetSpawnList(id);
                     PickerSpawner<ListMapGenContext, MapItem> constructedSpawns = new PickerSpawner<ListMapGenContext, MapItem>(new LoopedRand<MapItem>(itemListSlice, ItemAmount[id]));
 
-                    IStepSpawner<ListMapGenContext, MapItem> treasures = ItemSpawners[id].Copy();
-
-                    PresetMultiRand<IStepSpawner<ListMapGenContext, MapItem>> groupRand = new PresetMultiRand<IStepSpawner<ListMapGenContext, MapItem>>(constructedSpawns, treasures);
-
+                    List<IStepSpawner<ListMapGenContext, MapItem>> steps = new List<IStepSpawner<ListMapGenContext, MapItem>>();
+                    steps.Add(constructedSpawns);
+                    if (ItemSpawners.ContainsItem(id))
+                    {
+                        IStepSpawner<ListMapGenContext, MapItem> treasures = ItemSpawners[id].Copy();
+                        steps.Add(treasures);
+                    }
+                    PresetMultiRand<IStepSpawner<ListMapGenContext, MapItem>> groupRand = new PresetMultiRand<IStepSpawner<ListMapGenContext, MapItem>>(steps.ToArray());
                     RandomRoomSpawnStep<ListMapGenContext, MapItem> detourItems = ItemPlacements[id].Copy();
                     detourItems.Spawn = new StepSpawner<ListMapGenContext, MapItem>(groupRand);
                     queue.Enqueue(ItemPriority, detourItems);
