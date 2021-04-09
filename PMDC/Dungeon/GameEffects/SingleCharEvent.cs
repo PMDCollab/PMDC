@@ -2859,6 +2859,8 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
+            if (character != null)
+                yield break;
             yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeIn());
         }
     }
@@ -2871,6 +2873,8 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
+            if (character != null)
+                yield break;
             foreach (Character member in DungeonScene.Instance.ActiveTeam.EnumerateChars())
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.SpecialIntro(member));
 
