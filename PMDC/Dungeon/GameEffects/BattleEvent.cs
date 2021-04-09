@@ -12200,7 +12200,7 @@ namespace PMDC.Dungeon
             }
             else
             {
-                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.TryLearnSkill(context.User, moveIndex,
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.TryLearnSkill(context.User, moveIndex,
                 (int slot) =>
                 {
                     MoveLearnContext learn = new MoveLearnContext();
@@ -12318,7 +12318,7 @@ namespace PMDC.Dungeon
             {
                 return new SkillRecallMenu(context.User, forgottenMoves.ToArray(), (int moveNum) =>
                 {
-                    MenuManager.Instance.NextAction = DungeonScene.Instance.TryLearnSkill(context.User, moveNum,
+                    MenuManager.Instance.NextAction = DungeonScene.TryLearnSkill(context.User, moveNum,
                         (int slot) =>
                         {
                             MoveLearnContext learn = new MoveLearnContext();
@@ -12353,7 +12353,7 @@ namespace PMDC.Dungeon
                 moveSlot = learn.ReplaceSlot;
             }
             if (moveNum > -1 && moveSlot > -1)
-                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.LearnSkillWithFanfare(context.User, moveNum, moveSlot));
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.LearnSkillWithFanfare(context.User, moveNum, moveSlot));
         }
     }
     [Serializable]
@@ -12371,13 +12371,7 @@ namespace PMDC.Dungeon
             {
                 int moveNum = context.User.BaseSkills[slot].SkillNum;
                 context.User.DeleteSkill(slot);
-                if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam && DataManager.Instance.CurrentReplay == null)
-                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(String.Format(new StringKey("DLG_FORGET_SKILL").ToLocal(), context.User.Name, DataManager.Instance.GetSkill(moveNum).Name.ToLocal())));
-                else
-                {
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("DLG_FORGET_SKILL").ToLocal(), context.User.Name, DataManager.Instance.GetSkill(moveNum).Name.ToLocal()));
-                    yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
-                }
+                yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(String.Format(new StringKey("DLG_FORGET_SKILL").ToLocal(), context.User.Name, DataManager.Instance.GetSkill(moveNum).Name.ToLocal()), context.User.MemberTeam));
             }
         }
     }
@@ -12465,13 +12459,7 @@ namespace PMDC.Dungeon
                 GameManager.Instance.SE("Fanfare/LearnSkill");
                 context.User.LearnIntrinsic(abilityNum, abilitySlot);
 
-                if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam && DataManager.Instance.CurrentReplay == null)
-                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(false, String.Format(new StringKey("DLG_LEARN_INTRINSIC").ToLocal(), context.User.Name, DataManager.Instance.GetIntrinsic(abilityNum).Name.ToLocal())));
-                else
-                {
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("DLG_LEARN_INTRINSIC").ToLocal(), context.User.Name, DataManager.Instance.GetIntrinsic(abilityNum).Name.ToLocal()));
-                    yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
-                }
+                yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(String.Format(new StringKey("DLG_LEARN_INTRINSIC").ToLocal(), context.User.Name, DataManager.Instance.GetIntrinsic(abilityNum).Name.ToLocal()), context.User.MemberTeam));
             }
         }
     }
@@ -12490,13 +12478,8 @@ namespace PMDC.Dungeon
             {
                 int abilityNum = context.User.BaseIntrinsics[slot];
                 context.User.DeleteIntrinsic(slot);
-                if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam && DataManager.Instance.CurrentReplay == null)
-                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(String.Format(new StringKey("DLG_FORGET_INTRINSIC").ToLocal(), context.User.Name, DataManager.Instance.GetIntrinsic(abilityNum).Name.ToLocal())));
-                else
-                {
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("DLG_FORGET_INTRINSIC").ToLocal(), context.User.Name, DataManager.Instance.GetIntrinsic(abilityNum).Name.ToLocal()));
-                    yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
-                }
+
+                yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(String.Format(new StringKey("DLG_FORGET_INTRINSIC").ToLocal(), context.User.Name, DataManager.Instance.GetIntrinsic(abilityNum).Name.ToLocal()), context.User.MemberTeam));
             }
         }
     }
@@ -12665,13 +12648,9 @@ namespace PMDC.Dungeon
                 DungeonScene.Instance.AddCharToTeam(Faction.Player, 0, false, member);
                 member.RefreshTraits();
                 ZoneManager.Instance.CurrentMap.UpdateExploration(member);
-                if (DataManager.Instance.CurrentReplay == null)
-                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(String.Format(new StringKey("MSG_ASSEMBLY_TAKE_ANY").ToLocal(), member.BaseName)));
-                else
-                {
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ASSEMBLY_TAKE_ANY").ToLocal(), member.BaseName));
-                    yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
-                }
+
+                yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(String.Format(new StringKey("MSG_ASSEMBLY_TAKE_ANY").ToLocal(), member.BaseName)));
+
                 yield return CoroutineManager.Instance.StartCoroutine(member.OnMapStart());
 
                 if (DungeonScene.Instance.ActiveTeam.Players.Count > DungeonScene.Instance.ActiveTeam.GetMaxTeam(ZoneManager.Instance.CurrentZone))

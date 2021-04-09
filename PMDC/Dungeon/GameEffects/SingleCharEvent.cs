@@ -2577,17 +2577,15 @@ namespace PMDC.Dungeon
             //evolution chime
             GameManager.Instance.Fanfare("Fanfare/Promotion");
             //proclamation
-            if (DataManager.Instance.CurrentReplay == null)
-                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(false, String.Format(new StringKey("DLG_EVO_COMPLETE").ToLocal(), oldName, entry.Name.ToLocal())));
-            else
-            {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("DLG_EVO_COMPLETE").ToLocal(), oldName, entry.Name.ToLocal()));
-                yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
-            }
+
+            yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(String.Format(new StringKey("DLG_EVO_COMPLETE").ToLocal(), oldName, entry.Name.ToLocal())));
+
             DataManager.Instance.Save.RegisterMonster(character.BaseForm.Species);
             yield return CoroutineManager.Instance.StartCoroutine(character.OnMapStart());
 
-            yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.CheckLevelSkills(character, character.Level - 1));
+            yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.CheckLevelSkills(character, 0));
+            if (character.Level > 1)
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.CheckLevelSkills(character, character.Level - 1));
         }
     }
 
