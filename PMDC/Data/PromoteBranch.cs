@@ -31,14 +31,12 @@ namespace PMDC.Data
         {
             if (character.EquippedItem.ID == ItemNum)
                 return true;
-            //if (character.MemberTeam is ExplorerTeam)
-            //{
-            //    foreach (InvItem item in ((ExplorerTeam)character.MemberTeam).Inventory)
-            //    {
-            //        if (item.ID == ItemNum)
-            //            return true;
-            //    }
-            //}
+
+            foreach (InvItem item in character.MemberTeam.EnumerateInv())
+            {
+                if (item.ID == ItemNum)
+                    return true;
+            }
             return false;
         }
         public override bool GetReq(Character character)
@@ -52,19 +50,17 @@ namespace PMDC.Data
         {
             if (character.EquippedItem.ID == ItemNum)
                 character.DequipItem();
-
-            //if (character.MemberTeam is ExplorerTeam)
-            //{
-            //    List<InvItem> inv = ((ExplorerTeam)character.MemberTeam).Inventory;
-            //    for (int ii = 0; ii < inv.Count; ii++)
-            //    {
-            //        if (inv[ii].ID == ItemNum)
-            //        {
-            //            inv.RemoveAt(ii);
-            //            break;
-            //        }
-            //    }
-            //}
+            else
+            {
+                for (int ii = 0; ii < character.MemberTeam.GetInvCount(); ii++)
+                {
+                    if (character.MemberTeam.GetInv(ii).ID == ItemNum)
+                    {
+                        character.MemberTeam.RemoveFromInv(ii);
+                        break;
+                    }
+                }
+            }
         }
 
         public override void OnPromote(Character character)

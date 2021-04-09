@@ -2551,7 +2551,7 @@ namespace PMDC.Dungeon
             if (newData.Form >= entry.Forms.Count)
                 newData.Form = 0;
             character.Promote(newData);
-            branch.OnPromote(character, true);
+            branch.OnPromote(character, true, bypass);
             if (bypass)
                 character.DequipItem();
 
