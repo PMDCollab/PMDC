@@ -13,7 +13,7 @@ namespace PMDC.Data
     public class MonsterFormData : BaseMonsterForm
     {
         public const int MAX_STAT_BOOST = 128;
-        public const int ALT_COLOR_ODDS = 512;
+        public const int ALT_COLOR_ODDS = 1024;
 
         public int Generation;
         public int Ratio;
