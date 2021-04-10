@@ -180,12 +180,12 @@ namespace PMDC.Dev
         public static void PrintItemGuide()
         {
             List<string[]> stats = new List<string[]>();
-            stats.Add(new string[4] { "Name", "Type", "Price", "Description" });
+            stats.Add(new string[5] { "###", "Name", "Type", "Price", "Description" });
             for (int ii = 0; ii < DataManager.Instance.DataIndices[DataManager.DataType.Item].Count; ii++)
             {
                 ItemData entry = DataManager.Instance.GetItem(ii);
                 if (entry.Released)
-                    stats.Add(new string[4] { entry.Name.ToLocal(), entry.UsageType.ToString(), entry.Price.ToString(), entry.Desc.ToLocal() });
+                    stats.Add(new string[5] { ii.ToString("D4"), entry.Name.ToLocal(), entry.UsageType.ToString(), entry.Price.ToString(), entry.Desc.ToLocal() });
             }
             writeHTMLGuide("Items", stats);
         }
@@ -193,7 +193,7 @@ namespace PMDC.Dev
         public static void PrintMoveGuide()
         {
             List<string[]> stats = new List<string[]>();
-            stats.Add(new string[8] { "Name", "Type", "Category", "Power", "Accuracy", "PP", "Range", "Description" });
+            stats.Add(new string[9] { "###", "Name", "Type", "Category", "Power", "Accuracy", "PP", "Range", "Description" });
             for (int ii = 0; ii < DataManager.Instance.DataIndices[DataManager.DataType.Skill].Count; ii++)
             {
                 SkillData entry = DataManager.Instance.GetSkill(ii);
@@ -211,7 +211,7 @@ namespace PMDC.Dev
                         entry.Desc.ToLocal()});
                 }
                 else
-                    stats.Add(new string[8] { entry.Name.ToLocal(), "???", "None", "---", "---", "N/A", "No One", "NO DATA" });
+                    stats.Add(new string[9] { ii.ToString("D3"), entry.Name.ToLocal(), "???", "None", "---", "---", "N/A", "No One", "NO DATA" });
                 //effect chance
                 //additional flags
             }
@@ -221,14 +221,14 @@ namespace PMDC.Dev
         public static void PrintAbilityGuide()
         {
             List<string[]> stats = new List<string[]>();
-            stats.Add(new string[2] { "Name", "Description" });
+            stats.Add(new string[3] { "###", "Name", "Description" });
             for (int ii = 0; ii < DataManager.Instance.DataIndices[DataManager.DataType.Intrinsic].Count; ii++)
             {
                 IntrinsicData entry = DataManager.Instance.GetIntrinsic(ii);
                 if (entry.Released)
-                    stats.Add(new string[2] { entry.Name.ToLocal(), entry.Desc.ToLocal() });
+                    stats.Add(new string[3] { ii.ToString("D3"), entry.Name.ToLocal(), entry.Desc.ToLocal() });
                 else
-                    stats.Add(new string[2] { entry.Name.ToLocal(), "NO DATA" });
+                    stats.Add(new string[3] { ii.ToString("D3"), entry.Name.ToLocal(), "NO DATA" });
             }
             writeHTMLGuide("Abilities", stats);
         }
