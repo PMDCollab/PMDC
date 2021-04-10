@@ -7418,6 +7418,38 @@ namespace PMDC.Dungeon
         }
     }
 
+    [Serializable]
+    public class TargetNeededEvent : BattleEvent
+    {
+        public Alignment Target;
+        public List<BattleEvent> BaseEvents;
+
+        public TargetNeededEvent() { BaseEvents = new List<BattleEvent>(); }
+        public TargetNeededEvent(Alignment target, params BattleEvent[] effects)
+        {
+            Target = target;
+            BaseEvents = new List<BattleEvent>();
+            foreach (BattleEvent effect in effects)
+                BaseEvents.Add(effect);
+        }
+        protected TargetNeededEvent(TargetNeededEvent other)
+            : this()
+        {
+            foreach (BattleEvent battleEffect in other.BaseEvents)
+                BaseEvents.Add((BattleEvent)battleEffect.Clone());
+        }
+        public override GameEvent Clone() { return new TargetNeededEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if ((DungeonScene.Instance.GetMatchup(context.User, context.Target) & Target) != Alignment.None)
+            {
+                foreach (BattleEvent battleEffect in BaseEvents)
+                    yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
+            }
+        }
+    }
+
 
     [Serializable]
     public class OnDashActionEvent : BattleEvent
