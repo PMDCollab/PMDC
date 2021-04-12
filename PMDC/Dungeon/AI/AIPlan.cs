@@ -17,22 +17,30 @@ namespace PMDC.Dungeon
         /// </summary>
         Cannibal = 2,
         /// <summary>
-        /// will pick up and knows how to use items
+        /// will pick up items
         /// </summary>
-        ItemMaster = 4,
+        ItemGrabber = 4,
+        /// <summary>
+        /// Knows how to use items
+        /// </summary>
+        ItemMaster = 8,
         /// <summary>
         /// Is aware of move-neutralizing abilities
         /// </summary>
-        KnowsMatchups = 8,
+        KnowsMatchups = 16,
         /// <summary>
         /// Uses moves to escape
         /// </summary>
-        AttackToEscape = 16,
+        AttackToEscape = 32,
         /// <summary>
         /// will not attack sleepers/the frozen
         /// but will still wait on them to thaw out instead of walking away
         /// </summary>
-        WontDisturb = 32,
+        WontDisturb = 64,
+        /// <summary>
+        /// Avoids traps
+        /// </summary>
+        TrapAvoider = 128,
         /// <summary>
         /// HAs the sensibilities of a player team's ally
         /// will not walk into silcoon/cascoon
@@ -42,8 +50,7 @@ namespace PMDC.Dungeon
         /// will not attack or target certain AI
         /// will not attack or target sleepers and frozen, full stop
         /// </summary>
-        TeamPartner = 64,
-        TrapAvoider = 128,
+        TeamPartner = 256,
     }
 
     public struct ActionValue
@@ -245,7 +252,7 @@ namespace PMDC.Dungeon
         protected GameAction TrySelectWalk(Character controlledChar, Dir8 dir)
         {
             //assumes that this direction was checked for blocking, and no-walking
-            return new GameAction(GameAction.ActionType.Move, dir, ((IQ & AIFlags.ItemMaster) != AIFlags.None) ? 1 : 0);
+            return new GameAction(GameAction.ActionType.Move, dir, ((IQ & AIFlags.ItemGrabber) != AIFlags.None) ? 1 : 0);
         }
 
         protected GameAction TryAttackChoice(ReRandom rand, Character controlledChar, Character targetChar)

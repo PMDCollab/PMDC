@@ -948,22 +948,31 @@ namespace PMDC.Dungeon
                 }
                 else
                 {
-                    foreach (int itemId in candidateItems.Keys)
+                    //use the reviver if the monster is an item master, or if the reviver doesn't ask to use
+                    AIPlan plan = (AIPlan)character.Tactic.Plans[0];
+                    if (!AskToUse || (plan.IQ & AIFlags.ItemMaster) != AIFlags.None)
                     {
-                        useIndex = itemId;
-                        useSlot = candidateItems[itemId];
-                        break;
+                        foreach (int itemId in candidateItems.Keys)
+                        {
+                            useIndex = itemId;
+                            useSlot = candidateItems[itemId];
+                            break;
+                        }
                     }
                 }
             }
             else
             {
-                if (character.EquippedItem.ID > -1 && !character.EquippedItem.Cursed)
+                AIPlan plan = (AIPlan)character.Tactic.Plans[0];
+                if (!AskToUse || (plan.IQ & AIFlags.ItemMaster) != AIFlags.None)
                 {
-                    if (isAutoReviveItem(character.EquippedItem.ID))
+                    if (character.EquippedItem.ID > -1 && !character.EquippedItem.Cursed)
                     {
-                        useIndex = character.EquippedItem.ID;
-                        useSlot = BattleContext.EQUIP_ITEM_SLOT;
+                        if (isAutoReviveItem(character.EquippedItem.ID))
+                        {
+                            useIndex = character.EquippedItem.ID;
+                            useSlot = BattleContext.EQUIP_ITEM_SLOT;
+                        }
                     }
                 }
             }
