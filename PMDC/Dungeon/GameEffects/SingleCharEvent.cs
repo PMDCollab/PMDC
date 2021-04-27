@@ -1938,7 +1938,7 @@ namespace PMDC.Dungeon
                     yield break;
 
                 MapStatus status = ZoneManager.Instance.CurrentMap.Status[BadWeatherID];
-                if (status.StatusStates.GetWithDefault<MapCountDownState>().Counter % 5 == 0)
+                if (status.StatusStates.GetWithDefault<MapTickState>().Counter % 5 == 0)
                     yield return CoroutineManager.Instance.StartCoroutine(character.InflictDamage(hp, false));
             }
             else if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(GoodWeatherID))
@@ -1946,7 +1946,7 @@ namespace PMDC.Dungeon
                 if (character.HP < character.MaxHP)
                 {
                     MapStatus status = ZoneManager.Instance.CurrentMap.Status[GoodWeatherID];
-                    if (status.StatusStates.GetWithDefault<MapCountDownState>().Counter % 5 == 0)
+                    if (status.StatusStates.GetWithDefault<MapTickState>().Counter % 5 == 0)
                         yield return CoroutineManager.Instance.StartCoroutine(character.RestoreHP(hp, false));
                 }
             }
@@ -1986,7 +1986,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (character != null && ((MapStatus)owner).StatusStates.GetWithDefault<MapCountDownState>().Counter % 5 == 0)
+            if (character != null && ((MapStatus)owner).StatusStates.GetWithDefault<MapTickState>().Counter % 5 == 0)
             {
                 foreach (FlagType state in States)
                 {
@@ -2029,7 +2029,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (character != null && ((MapStatus)owner).StatusStates.GetWithDefault<MapCountDownState>().Counter % 5 == 0)
+            if (character != null && ((MapStatus)owner).StatusStates.GetWithDefault<MapTickState>().Counter % 5 == 0)
             {
                 foreach (int element in ExceptionElements)
                 {
@@ -2153,7 +2153,24 @@ namespace PMDC.Dungeon
             }
         }
     }
-    
+
+    [Serializable]
+    public class MapTickEvent : SingleCharEvent
+    {
+        public MapTickEvent() { }
+        public override GameEvent Clone() { return new MapTickEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (character == null)
+            {
+                MapTickState countdown = ((MapStatus)owner).StatusStates.GetWithDefault<MapTickState>();
+                countdown.Counter = (countdown.Counter + 1) % 10;
+            }
+            yield break;
+        }
+    }
+
     [Serializable]
     public class TimeLimitEvent : SingleCharEvent
     {
