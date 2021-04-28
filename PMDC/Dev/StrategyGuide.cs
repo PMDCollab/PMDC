@@ -201,7 +201,7 @@ namespace PMDC.Dev
                 {
                     ElementData elementEntry = DataManager.Instance.GetElement(entry.Data.Element);
                     BasePowerState powerState = entry.Data.SkillStates.GetWithDefault<BasePowerState>();
-                    stats.Add(new string[8] { entry.Name.ToLocal(),
+                    stats.Add(new string[9] { ii.ToString("D3"), entry.Name.ToLocal(),
                         elementEntry.Name.ToLocal(),
                         entry.Data.Category.ToLocal(),
                         powerState != null ? powerState.Power.ToString() : "---",
