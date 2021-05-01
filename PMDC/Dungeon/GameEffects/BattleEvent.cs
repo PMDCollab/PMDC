@@ -12829,6 +12829,7 @@ namespace PMDC.Dungeon
                         context.Target.Tactic = new AITactic(tactic);
                         DungeonScene.Instance.AddCharToTeam(Faction.Player, 0, false, context.Target);
                         context.Target.RefreshTraits();
+                        context.Target.Tactic.Initialize(context.Target);
 
                         int oldFullness = context.Target.Fullness;
                         context.Target.FullRestore();
