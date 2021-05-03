@@ -82,7 +82,7 @@ namespace PMDC.Dungeon
             {
                 //transform it
                 character.Transform(new MonsterID(character.CurrentForm.Species, forme, character.CurrentForm.Skin, character.CurrentForm.Gender));
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_FORM_CHANGE").ToLocal(), character.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_FORM_CHANGE").ToLocal(), character.GetDisplayName(false)));
             }
 
             yield break;

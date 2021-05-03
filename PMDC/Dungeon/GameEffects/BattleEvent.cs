@@ -116,7 +116,7 @@ namespace PMDC.Dungeon
                 }
                 else
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_MISS").ToLocal(), context.Target.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_MISS").ToLocal(), context.Target.GetDisplayName(false)));
                     GameManager.Instance.BattleSE("DUN_Miss");
                     DungeonScene.Instance.Missed(context.Target.CharLoc);
                 }
@@ -157,7 +157,7 @@ namespace PMDC.Dungeon
 
 
             if (sayMove)
-                context.actionMsg = String.Format(new StringKey("MSG_SKILL_USE").ToLocal(), context.User.Name, entry.GetIconName());
+                context.actionMsg = String.Format(new StringKey("MSG_SKILL_USE").ToLocal(), context.User.GetDisplayName(false), entry.GetIconName());
 
             if (context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS)
             {
@@ -223,22 +223,22 @@ namespace PMDC.Dungeon
             {
                 case ItemData.UseType.Eat:
                     {
-                        context.actionMsg = String.Format(new StringKey("MSG_USE_EAT").ToLocal(), context.User.Name, item.GetDisplayName());
+                        context.actionMsg = String.Format(new StringKey("MSG_USE_EAT").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName());
                         break;
                     }
                 case ItemData.UseType.Drink:
                     {
-                        context.actionMsg = String.Format(new StringKey("MSG_USE_DRINK").ToLocal(), context.User.Name, item.GetDisplayName());
+                        context.actionMsg = String.Format(new StringKey("MSG_USE_DRINK").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName());
                         break;
                     }
                 case ItemData.UseType.Learn:
                     {
-                        context.actionMsg = String.Format(new StringKey("MSG_USE_OPERATE").ToLocal(), context.User.Name, item.GetDisplayName());
+                        context.actionMsg = String.Format(new StringKey("MSG_USE_OPERATE").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName());
                         break;
                     }
                 case ItemData.UseType.Use:
                     {
-                        context.actionMsg = String.Format(new StringKey("MSG_USE").ToLocal(), context.User.Name, item.GetDisplayName());
+                        context.actionMsg = String.Format(new StringKey("MSG_USE").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName());
                         break;
                     }
             }
@@ -382,12 +382,12 @@ namespace PMDC.Dungeon
                 context.Explosion.TargetAlignments = Alignment.Friend | Alignment.Foe | Alignment.Self;
             }
 
-            context.actionMsg = String.Format(new StringKey("MSG_THROW").ToLocal(), context.User.Name, context.Item.GetDisplayName());
+            context.actionMsg = String.Format(new StringKey("MSG_THROW").ToLocal(), context.User.GetDisplayName(false), context.Item.GetDisplayName());
 
             if (context.UsageSlot == BattleContext.EQUIP_ITEM_SLOT && context.User.EquippedItem.Cursed && !context.User.CanRemoveStuck)
             {
                 GameManager.Instance.BattleSE("DUN_Sticky");
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_THROW_CURSED").ToLocal(), context.User.Name, item.GetDisplayName()), false, true);
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_THROW_CURSED").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName()), false, true);
                 context.CancelState.Cancel = true;
             }
         }
@@ -446,9 +446,9 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             if (UseTarget)
-                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.Target.GetDisplayName(false)));
             else
-            DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.Name));
+            DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false)));
             if (Delay)
                 yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(10));
         }
@@ -892,7 +892,7 @@ namespace PMDC.Dungeon
             newContext.Item = new InvItem();
 
             if (Msg.Key != null)
-                DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), ownerChar.Name, owner.GetDisplayName()));
+                DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
 
             return newContext;
         }
@@ -1126,7 +1126,7 @@ namespace PMDC.Dungeon
             StatusEffect status = context.User.GetStatusEffect(StatusID);
             if (status == null)
             {
-                DungeonScene.Instance.LogMsg(String.Format(FailMsg.ToLocal(), context.User.Name));
+                DungeonScene.Instance.LogMsg(String.Format(FailMsg.ToLocal(), context.User.GetDisplayName(false)));
                 yield break;
             }
 
@@ -1145,7 +1145,7 @@ namespace PMDC.Dungeon
                 context.Data.ID = id;
             }
             else
-                DungeonScene.Instance.LogMsg(String.Format(FailMsg.ToLocal(), context.User.Name));
+                DungeonScene.Instance.LogMsg(String.Format(FailMsg.ToLocal(), context.User.GetDisplayName(false)));
         }
     }
 
@@ -1297,7 +1297,7 @@ namespace PMDC.Dungeon
                 {
                     if (GiveMsg)
                     {
-                        newData.OnHits.Add(0, new FormatLogLocalEvent(String.Format(new StringKey("MSG_ABSORB").ToLocal(), ownerChar.Name, owner.GetDisplayName()), false));
+                        newData.OnHits.Add(0, new FormatLogLocalEvent(String.Format(new StringKey("MSG_ABSORB").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()), false));
                         newData.OnHits.Add(0, new BattleAnimEvent((FiniteEmitter)Emitter.Clone(), Sound, true, 10));
                     }
                     foreach (BattleEvent battleEffect in BaseEvents)
@@ -1363,7 +1363,7 @@ namespace PMDC.Dungeon
                 (context.Data.Category == BattleData.SkillCategory.Physical || context.Data.Category == BattleData.SkillCategory.Magical))
             {
                 if (Msg)
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PROTECT_WITH").ToLocal(), ownerChar.Name, owner.GetDisplayName()));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PROTECT_WITH").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
                 foreach (BattleAnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
 
@@ -1605,7 +1605,7 @@ namespace PMDC.Dungeon
                     context.Explosion.ExplodeFX.Delay = 30;
                     context.Explosion.TargetAlignments = (Alignment.Self | Alignment.Friend);
 
-                    DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), ownerChar.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), ownerChar.GetDisplayName(false)));
                 }
             }
             yield break;
@@ -2415,7 +2415,7 @@ namespace PMDC.Dungeon
             int typeMatchup = PreTypeEvent.GetDualEffectiveness(context.User, context.Target, context.Data);
             if (typeMatchup <= PreTypeEvent.NRM_2 && (context.Data.Category == BattleData.SkillCategory.Physical || context.Data.Category == BattleData.SkillCategory.Magical))
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PROTECT_WITH").ToLocal(), ownerChar.Name, owner.GetDisplayName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PROTECT_WITH").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
 
                 foreach (BattleAnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
@@ -2435,7 +2435,7 @@ namespace PMDC.Dungeon
         {
             if (context.Target.HP < context.Target.MaxHP)
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_FULL_HP_REQ").ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_FULL_HP_REQ").ToLocal(), context.Target.GetDisplayName(false)));
                 context.AddContextStateMult<AccMult>(false, -1, 1);
             }
             yield break;
@@ -2451,7 +2451,7 @@ namespace PMDC.Dungeon
         {
             if (context.Target.MemberTeam is ExplorerTeam)
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_EXPLORER_IMMUNE").ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_EXPLORER_IMMUNE").ToLocal(), context.Target.GetDisplayName(false)));
                 context.AddContextStateMult<DmgMult>(false, -1, 1);
             }
             yield break;
@@ -2467,7 +2467,7 @@ namespace PMDC.Dungeon
         {
             if (context.Target.Level > context.User.Level)
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LEVEL_IMMUNE").ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LEVEL_IMMUNE").ToLocal(), context.Target.GetDisplayName(false)));
                 context.AddContextStateMult<DmgMult>(false, -1, 1);
             }
             yield break;
@@ -2539,7 +2539,7 @@ namespace PMDC.Dungeon
             if ((context.ExplosionTile - context.Target.CharLoc).Dist8() >= Range)
             {
                 if (Msg)
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PROTECT_WITH").ToLocal(), ownerChar.Name, owner.GetDisplayName()));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PROTECT_WITH").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
                 foreach (BattleAnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
 
@@ -2874,7 +2874,7 @@ namespace PMDC.Dungeon
         {
             if (context.User != context.Target)
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PROTECT").ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PROTECT").ToLocal(), context.Target.GetDisplayName(false)));
 
                 foreach (BattleAnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
@@ -3027,7 +3027,7 @@ namespace PMDC.Dungeon
                 int diff = (context.StrikeStartTile - context.Target.CharLoc).Dist8();
                 if (diff > 1)
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_AVOID").ToLocal(), context.Target.Name, owner.GetDisplayName()));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_AVOID").ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName()));
                     context.AddContextStateMult<AccMult>(false, -1, 1);
                 }
             }
@@ -3071,7 +3071,7 @@ namespace PMDC.Dungeon
 
                 if (context.UsageSlot == recordSlot)
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_AVOID").ToLocal(), ownerChar.Name, owner.GetDisplayName()));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_AVOID").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
                     context.AddContextStateMult<AccMult>(false, -1, 1);
                 }
             }
@@ -3120,7 +3120,7 @@ namespace PMDC.Dungeon
 
                 if (context.UsageSlot == recordSlot)
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_AVOID").ToLocal(), ownerChar.Name, owner.GetDisplayName()));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_AVOID").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
                     context.AddContextStateMult<AccMult>(false, -1, 1);
                 }
             }
@@ -3163,7 +3163,7 @@ namespace PMDC.Dungeon
             }
             if (hasState)
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PROTECT_WITH").ToLocal(), ownerChar.Name, owner.GetDisplayName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PROTECT_WITH").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
 
                 foreach (BattleAnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
@@ -3184,7 +3184,7 @@ namespace PMDC.Dungeon
         {
             if ((context.StrikeStartTile - context.Target.CharLoc).Dist8() > 1)
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_AVOID").ToLocal(), context.Target.Name, owner.GetDisplayName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_AVOID").ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName()));
                 context.AddContextStateMult<AccMult>(false, -1, 1);
             }
             yield break;
@@ -3249,7 +3249,7 @@ namespace PMDC.Dungeon
         {
             if (((DungeonScene.Instance.GetMatchup(context.User, context.Target) | EvadeAlignment) == EvadeAlignment) && context.Data.Category == Category)
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PROTECT_WITH").ToLocal(), ownerChar.Name, owner.GetDisplayName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PROTECT_WITH").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
 
                 foreach (BattleAnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
@@ -3270,7 +3270,7 @@ namespace PMDC.Dungeon
             BasePowerState basePower = context.Data.SkillStates.GetWithDefault<BasePowerState>();
             if (basePower != null && DungeonScene.Instance.GetMatchup(context.User, context.Target) == Alignment.Friend)
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_AVOID").ToLocal(), ownerChar.Name, owner.GetDisplayName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_AVOID").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
                 context.AddContextStateMult<AccMult>(false, -1, 1);
             }
             yield break;
@@ -3461,7 +3461,7 @@ namespace PMDC.Dungeon
         {
             if (context.User != context.Target && context.HitboxAction.GetEffectiveDistance() > 2)
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PROTECT_WITH").ToLocal(), context.Target.Name, owner.GetDisplayName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PROTECT_WITH").ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName()));
 
                 foreach (BattleAnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
@@ -3497,7 +3497,7 @@ namespace PMDC.Dungeon
         {
             if (context.User != context.Target && (context.HitboxAction.IsWide() || context.Explosion.Range > 0))
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PROTECT_WITH").ToLocal(), context.Target.Name, owner.GetDisplayName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PROTECT_WITH").ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName()));
 
                 foreach (BattleAnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
@@ -3724,7 +3724,7 @@ namespace PMDC.Dungeon
             int damage = context.GetContextStateInt<DamageDealt>(0);
             if (damage > 0 && (context.ActionType == BattleActionType.Throw || (context.ActionType == BattleActionType.Skill && context.UsageSlot == BattleContext.DEFAULT_ATTACK_SLOT)) && DungeonScene.Instance.GetMatchup(context.User, context.Target) != Alignment.Self)
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_REFLECT_BY").ToLocal(), ownerChar.Name, owner.GetDisplayName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_REFLECT_BY").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
 
                 foreach (BattleAnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
@@ -3772,7 +3772,7 @@ namespace PMDC.Dungeon
             int damage = context.GetContextStateInt<DamageHealedTarget>(0);
             if (damage > 0 && (context.ActionType == BattleActionType.Throw || context.ActionType == BattleActionType.Skill || context.ActionType == BattleActionType.Item) && DungeonScene.Instance.GetMatchup(context.User, context.Target) != Alignment.Self)
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_REFLECT_HEAL_BY").ToLocal(), ownerChar.Name, owner.GetDisplayName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_REFLECT_HEAL_BY").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
 
                 foreach (BattleAnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
@@ -3814,7 +3814,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), ownerChar.Name, owner.GetDisplayName()));
+            DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
 
             foreach (BattleAnimEvent anim in Anims)
                 yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
@@ -3870,7 +3870,7 @@ namespace PMDC.Dungeon
                 }
                 if (inflictsStatus)
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), context.Target.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), context.Target.GetDisplayName(false)));
 
                     foreach (BattleAnimEvent anim in Anims)
                         yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
@@ -3957,7 +3957,7 @@ namespace PMDC.Dungeon
                 && DungeonScene.Instance.GetMatchup(context.User, context.Target) == Alignment.Foe
                 && !context.User.CharStates.Contains<MagicGuardState>())
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CURSE").ToLocal(), context.User.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CURSE").ToLocal(), context.User.GetDisplayName(false)));
 
                 foreach (BattleAnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
@@ -4031,7 +4031,7 @@ namespace PMDC.Dungeon
                     yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
             }
             else if (ExceptionMsg)
-                DungeonScene.Instance.LogMsg(String.Format(state.Msg.ToLocal(), context.User.Name, owner.GetDisplayName()));
+                DungeonScene.Instance.LogMsg(String.Format(state.Msg.ToLocal(), context.User.GetDisplayName(false), owner.GetDisplayName()));
         }
     }
 
@@ -4185,7 +4185,7 @@ namespace PMDC.Dungeon
                 yield break;
 
             if (Message.Key != null)
-                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.Name));
+                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false)));
             context.CancelState.Cancel = true;
         }
     }
@@ -4211,7 +4211,7 @@ namespace PMDC.Dungeon
             if (context.ActionType == BattleActionType.Item || context.ActionType == BattleActionType.Throw)
             {
                 if (Message.Key != null)
-                    DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false)));
                 context.CancelState.Cancel = true;
             }
             yield break;
@@ -4259,7 +4259,7 @@ namespace PMDC.Dungeon
                 if (canceled)
                 {
                     if (Message.Key != null)
-                        DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.Name));
+                        DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false)));
                     context.CancelState.Cancel = true;
                 }
             }
@@ -4290,7 +4290,7 @@ namespace PMDC.Dungeon
                 ItemData entry = DataManager.Instance.GetItem(context.Item.ID);
                 if (entry.ItemStates.Contains<EdibleState>())
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.Target.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.Target.GetDisplayName(false)));
                     context.AddContextStateMult<AccMult>(false, -1, 1);
                 }
             }
@@ -4318,7 +4318,7 @@ namespace PMDC.Dungeon
         {
             if (context.User.HP <= context.User.MaxHP / HPFraction)
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HP_NEEDED").ToLocal(), context.User.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HP_NEEDED").ToLocal(), context.User.GetDisplayName(false)));
                 context.CancelState.Cancel = true;
             }
             yield break;
@@ -4372,7 +4372,7 @@ namespace PMDC.Dungeon
             context.Item = new InvItem();
             context.Strikes = entry.Strikes;
 
-            context.actionMsg = String.Format(new StringKey("MSG_SKILL_USE").ToLocal(), context.User.Name, entry.GetIconName());
+            context.actionMsg = String.Format(new StringKey("MSG_SKILL_USE").ToLocal(), context.User.GetDisplayName(false), entry.GetIconName());
         }
     }
     [Serializable]
@@ -4474,7 +4474,7 @@ namespace PMDC.Dungeon
                 //still declare the move
             }
             else
-                context.actionMsg = String.Format(new StringKey("MSG_BIDE_ATTACK").ToLocal(), context.User.Name);
+                context.actionMsg = String.Format(new StringKey("MSG_BIDE_ATTACK").ToLocal(), context.User.GetDisplayName(false));
             yield break;
         }
     }
@@ -4816,7 +4816,7 @@ namespace PMDC.Dungeon
                 higherStat = SpAtkStat;
             }
 
-            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_DOWNLOAD").ToLocal(), context.Target.Name, context.User.Name));
+            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_DOWNLOAD").ToLocal(), context.Target.GetDisplayName(false), context.User.GetDisplayName(false)));
 
             StatusEffect lowerStatus = new StatusEffect(lowerStat);
             lowerStatus.LoadFromData();
@@ -4859,7 +4859,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), ownerChar.Name));
+            DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), ownerChar.GetDisplayName(false)));
 
             StatusEffect lowerStatus = new StatusEffect(LowerID);
             lowerStatus.LoadFromData();
@@ -4915,7 +4915,7 @@ namespace PMDC.Dungeon
 
             if (dropID > -1 && raiseID > -1)
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_MOODY").ToLocal(), context.User.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_MOODY").ToLocal(), context.User.GetDisplayName(false)));
 
                 StatusEffect lowerStatus = new StatusEffect(dropID);
                 lowerStatus.LoadFromData();
@@ -5056,7 +5056,7 @@ namespace PMDC.Dungeon
             }
             else
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STORE_ENERGY").ToLocal(), context.User.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STORE_ENERGY").ToLocal(), context.User.GetDisplayName(false)));
                 context.CancelState.Cancel = true;
             }
         }
@@ -5087,7 +5087,7 @@ namespace PMDC.Dungeon
                 if ((((StatusEffect)owner).TargetChar == context.Target) != Invert)
                 {
                     if (Message.Key != null)
-                        DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.Name, ((StatusEffect)owner).TargetChar.Name));
+                        DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false), ((StatusEffect)owner).TargetChar.GetDisplayName(false)));
                     context.AddContextStateMult<AccMult>(false, -1, 1);
                 }
             }
@@ -5105,7 +5105,7 @@ namespace PMDC.Dungeon
             int damage = context.GetContextStateInt<DamageDealt>(0);
             if (damage > 0 && ((StatusEffect)owner).TargetChar != null)
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_DESTINY_BOND").ToLocal(), context.Target.Name, ((StatusEffect)owner).TargetChar.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_DESTINY_BOND").ToLocal(), context.Target.GetDisplayName(false), ((StatusEffect)owner).TargetChar.GetDisplayName(false)));
 
                 if (((StatusEffect)owner).TargetChar.CharStates.Contains<HitAndRunState>())
                     damage /= 4;
@@ -5124,7 +5124,7 @@ namespace PMDC.Dungeon
                 yield break;
 
             if (((StatusEffect)owner).StatusStates.GetWithDefault<CountDownState>().Counter > 0)
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ASLEEP").ToLocal(), context.User.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ASLEEP").ToLocal(), context.User.GetDisplayName(false)));
             if (!context.ContextStates.Contains<SleepAttack>())
                 context.CancelState.Cancel = true;
         }
@@ -5153,7 +5153,7 @@ namespace PMDC.Dungeon
             if (!context.ContextStates.Contains<BoundAttack>())
             {
                 if (Message.Key != null)
-                    DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false)));
                 context.CancelState.Cancel = true;
             }
         }
@@ -5202,7 +5202,7 @@ namespace PMDC.Dungeon
             if (context.Data.Element == 07)
                 yield return CoroutineManager.Instance.StartCoroutine(context.User.RemoveStatusEffect(((StatusEffect)owner).ID));
             else
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_FROZEN").ToLocal(), context.User.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_FROZEN").ToLocal(), context.User.GetDisplayName(false)));
             context.CancelState.Cancel = true;
             yield break;
         }
@@ -5219,7 +5219,7 @@ namespace PMDC.Dungeon
             {
                 if (context.Data.Category != BattleData.SkillCategory.None)
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_FROZEN").ToLocal(), context.Target.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_FROZEN").ToLocal(), context.Target.GetDisplayName(false)));
                     context.AddContextStateMult<AccMult>(false, -1, 1);
                 }
             }
@@ -5258,7 +5258,7 @@ namespace PMDC.Dungeon
                 foreach (BattleAnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
 
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PARALYZED").ToLocal(), context.User.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PARALYZED").ToLocal(), context.User.GetDisplayName(false)));
                 yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
                 context.CancelState.Cancel = true;
             }
@@ -5293,12 +5293,12 @@ namespace PMDC.Dungeon
                     countState.Count++;
                 if (context.User.CharStates.Contains<PoisonHealState>())
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_POISON_HEAL").ToLocal(), context.User.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_POISON_HEAL").ToLocal(), context.User.GetDisplayName(false)));
                     yield return CoroutineManager.Instance.StartCoroutine(context.User.RestoreHP(Math.Max(1, context.User.MaxHP / 12)));
                 }
                 else
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_POISONED").ToLocal(), context.User.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_POISONED").ToLocal(), context.User.GetDisplayName(false)));
                     yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(Math.Max(1, (context.User.MaxHP * countState.Count) / 16)));
                 }
             }
@@ -5366,9 +5366,9 @@ namespace PMDC.Dungeon
                 AddStat(stat, context);
 
             if (heal > 15)
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HUNGER_FILL").ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HUNGER_FILL").ToLocal(), context.Target.GetDisplayName(false)));
             else if (heal > 5)
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HUNGER_FILL_MIN").ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HUNGER_FILL_MIN").ToLocal(), context.Target.GetDisplayName(false)));
 
             context.Target.Fullness += heal;
 
@@ -5434,7 +5434,7 @@ namespace PMDC.Dungeon
                     break;
             }
             if (newStat - prevStat > 0)
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STAT_BOOST").ToLocal(), context.Target.Name, stat.ToLocal(), (newStat - prevStat).ToString()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STAT_BOOST").ToLocal(), context.Target.GetDisplayName(false), stat.ToLocal(), (newStat - prevStat).ToString()));
         }
     }
 
@@ -5531,7 +5531,7 @@ namespace PMDC.Dungeon
             }
             if (newStat > prevStat)
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STAT_BOOST").ToLocal(), target.Name, stat.ToLocal(), (newStat - prevStat).ToString()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STAT_BOOST").ToLocal(), target.GetDisplayName(false), stat.ToLocal(), (newStat - prevStat).ToString()));
                 return true;
             }
             else
@@ -5695,7 +5695,7 @@ namespace PMDC.Dungeon
         {
             if (context.Target.CharStates.Contains<StickyHoldState>())
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD_MONEY").ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD_MONEY").ToLocal(), context.Target.GetDisplayName(false)));
                 yield break;
             }
 
@@ -5707,7 +5707,7 @@ namespace PMDC.Dungeon
 
                 if (moneyLost > 0)
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_KNOCK_MONEY").ToLocal(), context.Target.Name, Text.FormatKey("MONEY_AMOUNT", moneyLost.ToString())));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_KNOCK_MONEY").ToLocal(), context.Target.GetDisplayName(false), Text.FormatKey("MONEY_AMOUNT", moneyLost.ToString())));
                     Loc endLoc = context.Target.CharLoc + context.User.CharDir.GetLoc() * 2;
                     yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropMoney(moneyLost, endLoc, context.Target.CharLoc));
                 }
@@ -6150,7 +6150,7 @@ namespace PMDC.Dungeon
             if (target.GetStatusEffect(StatusID) == null)
             {
                 context.AddContextStateMult<DmgMult>(false, -1, 1);
-                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), target.GetDisplayName(false)));
             }
             yield break;
         }
@@ -6180,7 +6180,7 @@ namespace PMDC.Dungeon
         {
             if (context.User.GetStatusEffect(StatusID) == null)
             {
-                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.Name));
+                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false)));
                 context.CancelState.Cancel = true;
             }
             yield break;
@@ -6277,7 +6277,7 @@ namespace PMDC.Dungeon
             }
             else
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SYNCHRO_FAIL").ToLocal(), context.Target.Name, context.User.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SYNCHRO_FAIL").ToLocal(), context.Target.GetDisplayName(false), context.User.GetDisplayName(false)));
                 context.AddContextStateMult<DmgMult>(false, 1, 4);
             }
             yield break;
@@ -6405,7 +6405,7 @@ namespace PMDC.Dungeon
             Character target = (AffectTarget ? context.Target : context.User);
 
             if (Message.Key != null)
-                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), ownerChar.Name, target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), ownerChar.GetDisplayName(false), target.GetDisplayName(false)));
 
             foreach (BattleAnimEvent anim in Anims)
                 yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
@@ -6590,7 +6590,7 @@ namespace PMDC.Dungeon
                 int typeMatchup = PreTypeEvent.GetDualEffectiveness(context.User, context.Target, context.Data);
                 if (typeMatchup <= PreTypeEvent.N_E_2)
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(PreTypeEvent.EffectivenessToPhrase(typeMatchup), context.Target.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(PreTypeEvent.EffectivenessToPhrase(typeMatchup), context.Target.GetDisplayName(false)));
                     context.AddContextStateMult<DmgMult>(false, -1, 4);
                 }
             }
@@ -6726,9 +6726,9 @@ namespace PMDC.Dungeon
                 if (typeMatchup != PreTypeEvent.NRM_2)
                 {
                     if (effectivenessMsg != null)
-                        effectivenessMsg += (" " + String.Format(PreTypeEvent.EffectivenessToPhrase(typeMatchup), context.Target.Name));
+                        effectivenessMsg += (" " + String.Format(PreTypeEvent.EffectivenessToPhrase(typeMatchup), context.Target.GetDisplayName(false)));
                     else
-                        effectivenessMsg = String.Format(PreTypeEvent.EffectivenessToPhrase(typeMatchup), context.Target.Name);
+                        effectivenessMsg = String.Format(PreTypeEvent.EffectivenessToPhrase(typeMatchup), context.Target.GetDisplayName(false));
 
                     int effectiveness = PreTypeEvent.Effectiveness[typeMatchup];
                     if (effectiveness == 0)
@@ -6767,7 +6767,7 @@ namespace PMDC.Dungeon
             int typeMatchup = PreTypeEvent.GetDualEffectiveness(context.User, context.Target, context.Data);
             if (typeMatchup <= PreTypeEvent.N_E_2)
             {
-                DungeonScene.Instance.LogMsg(String.Format(PreTypeEvent.EffectivenessToPhrase(typeMatchup), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(PreTypeEvent.EffectivenessToPhrase(typeMatchup), context.Target.GetDisplayName(false)));
                 damage = -1;
             }
 
@@ -7860,7 +7860,7 @@ namespace PMDC.Dungeon
                 yield return CoroutineManager.Instance.StartCoroutine(target.BeforeStatusCheck(statusContext));
                 if (!statusContext.CancelState.Cancel)
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(TriggerMsg.ToLocal(), ownerChar.Name, owner.GetDisplayName()));
+                    DungeonScene.Instance.LogMsg(String.Format(TriggerMsg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
 
                     foreach (BattleAnimEvent anim in Anims)
                         yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
@@ -7987,7 +7987,7 @@ namespace PMDC.Dungeon
             }
             else
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_DISABLE_FAIL").ToLocal(), target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_DISABLE_FAIL").ToLocal(), target.GetDisplayName(false)));
                 return false;
             }
         }
@@ -8203,7 +8203,7 @@ namespace PMDC.Dungeon
                 //message only if the status isn't already there
                 MapStatus statusToCheck;
                 if (!ZoneManager.Instance.CurrentMap.Status.TryGetValue(status.ID, out statusToCheck))
-                    DungeonScene.Instance.LogMsg(String.Format(MsgOverride.ToLocal(), ownerChar.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(MsgOverride.ToLocal(), ownerChar.GetDisplayName(false)));
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status, false));
             }
         }
@@ -8258,7 +8258,7 @@ namespace PMDC.Dungeon
                 MapStatus status = new MapStatus(weather);
                 status.LoadFromData();
                 ElementData elementData = DataManager.Instance.GetElement(context.User.Element1);
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ELEMENT_WEATHER").ToLocal(), context.User.Name, elementData.GetIconName(), ((MapStatusData)status.GetData()).GetColoredName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ELEMENT_WEATHER").ToLocal(), context.User.GetDisplayName(false), elementData.GetIconName(), ((MapStatusData)status.GetData()).GetColoredName()));
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
             }
             else if (WeatherPair.TryGetValue(context.User.Element2, out weather))
@@ -8267,7 +8267,7 @@ namespace PMDC.Dungeon
                 MapStatus status = new MapStatus(weather);
                 status.LoadFromData();
                 ElementData elementData = DataManager.Instance.GetElement(context.User.Element2);
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ELEMENT_WEATHER").ToLocal(), context.User.Name, elementData.GetIconName(), ((MapStatusData)status.GetData()).GetColoredName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ELEMENT_WEATHER").ToLocal(), context.User.GetDisplayName(false), elementData.GetIconName(), ((MapStatusData)status.GetData()).GetColoredName()));
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
             }
             else//clear weather
@@ -8317,7 +8317,7 @@ namespace PMDC.Dungeon
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
             }
             else
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_BAN_FAIL").ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_BAN_FAIL").ToLocal(), context.Target.GetDisplayName(false)));
         }
     }
 
@@ -8348,7 +8348,7 @@ namespace PMDC.Dungeon
                 bool learn = (context.ActionType == BattleActionType.Skill && context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS && context.User.Skills[context.UsageSlot].BackRef > -1);
                 for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
                     sketchMove(context, context.Target.BaseSkills[ii].SkillNum, ii, learn, true);
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SKETCH").ToLocal(), context.User.Name, context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SKETCH").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
                 yield break;
             }
             else
@@ -8361,7 +8361,7 @@ namespace PMDC.Dungeon
                 }
             }
             
-            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SKETCH_FAIL").ToLocal(), context.Target.Name));
+            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SKETCH_FAIL").ToLocal(), context.Target.GetDisplayName(false)));
         }
 
         private void sketchMove(BattleContext context, int moveIndex, int moveSlot, bool learn, bool group)
@@ -8374,7 +8374,7 @@ namespace PMDC.Dungeon
                 {
                     if (moveState.Element.SkillNum == moveIndex)
                     {
-                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ALREADY_HAS_SKILL").ToLocal(), context.User.Name, entry.GetIconName()));
+                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ALREADY_HAS_SKILL").ToLocal(), context.User.GetDisplayName(false), entry.GetIconName()));
                         return;
                     }
                 }
@@ -8384,7 +8384,7 @@ namespace PMDC.Dungeon
             else
                 context.User.ChangeSkill(moveSlot, moveIndex);
             if (!group)
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SKETCH").ToLocal(), context.User.Name, entry.GetIconName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SKETCH").ToLocal(), context.User.GetDisplayName(false), entry.GetIconName()));
         }
     }
 
@@ -8421,15 +8421,15 @@ namespace PMDC.Dungeon
                 {
                     if (moveState.Element.SkillNum == chosenMove)
                     {
-                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ALREADY_HAS_SKILL").ToLocal(), context.User.Name, entry.GetIconName()));
+                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ALREADY_HAS_SKILL").ToLocal(), context.User.GetDisplayName(false), entry.GetIconName()));
                         yield break;
                     }
                 }
                 context.User.ChangeSkill(context.UsageSlot, chosenMove);
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_MIMIC").ToLocal(), context.User.Name, entry.GetIconName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_MIMIC").ToLocal(), context.User.GetDisplayName(false), entry.GetIconName()));
             }
             else
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_MIMIC_FAIL").ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_MIMIC_FAIL").ToLocal(), context.Target.GetDisplayName(false)));
         }
     }
 
@@ -8456,7 +8456,7 @@ namespace PMDC.Dungeon
 
                 if (context.GlobalContextStates.Contains<TaintedDrain>())
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LIQUID_OOZE").ToLocal(), context.User.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LIQUID_OOZE").ToLocal(), context.User.GetDisplayName(false)));
                     yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(heal * 4));
                 }
                 else
@@ -8628,10 +8628,10 @@ namespace PMDC.Dungeon
                 if (slot > -1 && slot < CharData.MAX_SKILL_SLOTS)
                     yield return CoroutineManager.Instance.StartCoroutine(context.Target.DeductCharges(slot, PP));
                 else
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_NO_EFFECT").ToLocal(), context.Target.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_NO_EFFECT").ToLocal(), context.Target.GetDisplayName(false)));
             }
             else
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_NO_EFFECT").ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_NO_EFFECT").ToLocal(), context.Target.GetDisplayName(false)));
         }
     }
 
@@ -8687,13 +8687,13 @@ namespace PMDC.Dungeon
             if (Heal < 0)
             {
                 if (Msg)
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HUNGER_DROP").ToLocal(), context.Target.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HUNGER_DROP").ToLocal(), context.Target.GetDisplayName(false)));
                 GameManager.Instance.BattleSE("DUN_Hunger");
             }
             else
             {
                 if (Msg)
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HUNGER_FILL").ToLocal(), context.Target.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HUNGER_FILL").ToLocal(), context.Target.GetDisplayName(false)));
             }
 
             context.Target.Fullness += Heal;
@@ -8703,9 +8703,9 @@ namespace PMDC.Dungeon
                 if (Msg)
                 {
                     if (AddMaxBelly < 0)
-                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_MAX_HUNGER_DROP").ToLocal(), context.Target.Name));
+                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_MAX_HUNGER_DROP").ToLocal(), context.Target.GetDisplayName(false)));
                     else
-                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_MAX_HUNGER_BOOST").ToLocal(), context.Target.Name));
+                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_MAX_HUNGER_BOOST").ToLocal(), context.Target.GetDisplayName(false)));
                 }
                 context.Target.MaxFullness += AddMaxBelly;
                 if (context.Target.MaxFullness < MIN_MAX_FULLNESS)
@@ -8838,7 +8838,7 @@ namespace PMDC.Dungeon
                 }
             }
             if (affected && Msg.Key != null)
-                DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), target.GetDisplayName(false)));
         }
 
     }
@@ -8888,7 +8888,7 @@ namespace PMDC.Dungeon
 
             if (statuses.Count > 0 && Msg.Key != null)
             {
-                DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), target.GetDisplayName(false)));
             }
 
             foreach (int statusID in statuses)
@@ -9039,7 +9039,7 @@ namespace PMDC.Dungeon
 
                     if (badStatuses.Count > 0)
                     {
-                        DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), ownerChar.Name, target.Name));
+                        DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), ownerChar.GetDisplayName(false), target.GetDisplayName(false)));
 
                         foreach (AnimEvent anim in Anims)
                             yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, target));
@@ -9074,7 +9074,7 @@ namespace PMDC.Dungeon
             {
                 if (!context.User.CharStates.Contains<NoRecoilState>() && !context.User.CharStates.Contains<MagicGuardState>())
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HIT_RECOIL").ToLocal(), context.User.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HIT_RECOIL").ToLocal(), context.User.GetDisplayName(false)));
 
                     GameManager.Instance.BattleSE("DUN_Hit_Neutral");
                     SingleEmitter endEmitter = new SingleEmitter(new AnimData("Hit_Neutral", 3));
@@ -9107,7 +9107,7 @@ namespace PMDC.Dungeon
             {
                 if (!context.User.CharStates.Contains<NoRecoilState>() && !context.User.CharStates.Contains<MagicGuardState>())
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HIT_CRASH").ToLocal(), context.User.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HIT_CRASH").ToLocal(), context.User.GetDisplayName(false)));
                     yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(Math.Max(1, context.User.MaxHP / HPFraction)));
                 }
             }
@@ -9141,7 +9141,7 @@ namespace PMDC.Dungeon
             if (!context.User.CharStates.Contains<MagicGuardState>())
             {
                 if (Msg.Key != null)
-                    DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), context.User.Name, owner.GetDisplayName(), ownerChar.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), context.User.GetDisplayName(false), owner.GetDisplayName(), ownerChar.GetDisplayName(false)));
                 if (VFX)
                 {
                     GameManager.Instance.BattleSE("DUN_Hit_Neutral");
@@ -9264,7 +9264,7 @@ namespace PMDC.Dungeon
             if (!targetChar.CharStates.Contains<MagicGuardState>())
             {
                 if (Message.Key != null)
-                    DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false)));
 
                 CharAnimAction chargeAnim = new CharAnimAction(context.User.CharLoc, context.User.CharDir, CharAnim);
                 yield return CoroutineManager.Instance.StartCoroutine(context.User.StartAnim(chargeAnim));
@@ -9301,7 +9301,7 @@ namespace PMDC.Dungeon
                 yield break;
 
             target.HP = 1;
-            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HP_TO_ONE").ToLocal(), target.Name));
+            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HP_TO_ONE").ToLocal(), target.GetDisplayName(false)));
         }
     }
 
@@ -9331,7 +9331,7 @@ namespace PMDC.Dungeon
                     target.SetSkillCharges(ii, 1);
             }
 
-            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PP_TO_ONE").ToLocal(), target.Name));
+            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PP_TO_ONE").ToLocal(), target.GetDisplayName(false)));
         }
     }
 
@@ -9360,7 +9360,7 @@ namespace PMDC.Dungeon
                 yield break;
             //jump back a number of spaces
             if (context.User.CharStates.Contains<AnchorState>())
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), context.User.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), context.User.GetDisplayName(false)));
             else
             {
                 Dir8 hopDir = (Reverse ? context.User.CharDir.Reverse() : context.User.CharDir);
@@ -9397,7 +9397,7 @@ namespace PMDC.Dungeon
 
             //knock back a number of spaces
             if (target.CharStates.Contains<AnchorState>())
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), target.GetDisplayName(false)));
             else
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.WarpNear(target, context.User.CharLoc + context.User.CharDir.GetLoc()));
         }
@@ -9423,7 +9423,7 @@ namespace PMDC.Dungeon
 
             //knock back a number of spaces
             if (context.Target.CharStates.Contains<AnchorState>())
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), context.Target.GetDisplayName(false)));
             else
             {
                 Dir8 dir = DirExt.GetDir(context.User.CharLoc, context.Target.CharLoc);
@@ -9456,7 +9456,7 @@ namespace PMDC.Dungeon
 
             //knock back a number of spaces
             if (context.Target.CharStates.Contains<AnchorState>())
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), context.Target.GetDisplayName(false)));
             else
             {
                 int damage = HitEvent.CalculateDamage(owner, context);
@@ -9524,7 +9524,7 @@ namespace PMDC.Dungeon
             {
                 //knock back a number of spaces
                 if (target.CharStates.Contains<AnchorState>())
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), target.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), target.GetDisplayName(false)));
                 else
                     yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.KnockBack(target, dir, Distance));
             }
@@ -9557,7 +9557,7 @@ namespace PMDC.Dungeon
                 yield break;
 
             if (target.CharStates.Contains<AnchorState>())
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), target.GetDisplayName(false)));
             else
             {
                 //warp within the space
@@ -9568,7 +9568,7 @@ namespace PMDC.Dungeon
                     if (!character.Dead && DungeonScene.Instance.GetMatchup(character, target) == Alignment.Friend && (character.CharLoc - startLoc).Dist8() <= 1)
                     {
                         if (character.CharStates.Contains<AnchorState>())
-                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), character.Name));
+                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), character.GetDisplayName(false)));
                         else
                             yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.WarpNear(character, target.CharLoc));
                     }
@@ -9612,12 +9612,12 @@ namespace PMDC.Dungeon
             if (target.CharStates.Contains<AnchorState>())
             {
                 if (TriggerMsg.Key == null)
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), target.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), target.GetDisplayName(false)));
             }
             else
             {
                 if (TriggerMsg.Key != null)
-                    DungeonScene.Instance.LogMsg(String.Format(TriggerMsg.ToLocal(), ownerChar.Name, owner.GetDisplayName()));
+                    DungeonScene.Instance.LogMsg(String.Format(TriggerMsg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
 
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RandomWarp(target, Distance));
             }
@@ -9654,7 +9654,7 @@ namespace PMDC.Dungeon
                 yield break;
             //warp within the space
             if (target.CharStates.Contains<AnchorState>())
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), target.GetDisplayName(false)));
             else
                 yield return CoroutineManager.Instance.StartCoroutine(WarpToEnd(target, Distance, DiffRange));
         }
@@ -9724,7 +9724,7 @@ namespace PMDC.Dungeon
 
             if (Msg.Key != null)
             {
-                DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), origin.Name, target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), origin.GetDisplayName(false), target.GetDisplayName(false)));
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.WarpNear(target, origin.CharLoc, false));
             }
             else
@@ -9741,7 +9741,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             if (context.Target.CharStates.Contains<AnchorState>())
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), context.Target.GetDisplayName(false)));
             else
             {
                 foreach (Character character in context.Target.MemberTeam.Players)
@@ -9814,7 +9814,7 @@ namespace PMDC.Dungeon
                 totalWarp++;
             }
             if (totalWarp > 0)
-                DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), context.Target.GetDisplayName(false)));
             else if (!SilentFail)
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_NOTHING_HAPPENED").ToLocal()));
         }
@@ -9851,7 +9851,7 @@ namespace PMDC.Dungeon
             if (totalWarp == 0)
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_NOTHING_HAPPENED").ToLocal()));
             else
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SUMMON_FOES").ToLocal(), context.User.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SUMMON_FOES").ToLocal(), context.User.GetDisplayName(false)));
         }
     }
 
@@ -9864,7 +9864,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             if (context.Target.CharStates.Contains<AnchorState>())
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), context.Target.GetDisplayName(false)));
             else
             {
                 //switch the positions of the attacker and target
@@ -9931,7 +9931,7 @@ namespace PMDC.Dungeon
                 item.ID = newItem;
                 item.HiddenValue = 0;
                 context.Target.EquipItem(item);
-                DungeonScene.Instance.LogMsg(String.Format(SuccessMsg.ToLocal(), context.Target.Name, oldName, item.GetDisplayName()));
+                DungeonScene.Instance.LogMsg(String.Format(SuccessMsg.ToLocal(), context.Target.GetDisplayName(false), oldName, item.GetDisplayName()));
             }
 
             if (!HeldOnly && context.Target.MemberTeam is ExplorerTeam)
@@ -9952,7 +9952,7 @@ namespace PMDC.Dungeon
                         item.ID = newItem;
                         item.HiddenValue = 0;
                         team.UpdateInv(oldItem, item);
-                        DungeonScene.Instance.LogMsg(String.Format(SuccessMsg.ToLocal(), context.Target.Name, oldItem.GetDisplayName(), item.GetDisplayName()));
+                        DungeonScene.Instance.LogMsg(String.Format(SuccessMsg.ToLocal(), context.Target.GetDisplayName(false), oldItem.GetDisplayName(), item.GetDisplayName()));
                     }
                 }
             }
@@ -10130,7 +10130,7 @@ namespace PMDC.Dungeon
             if (context.Target.CharStates.Contains<StickyHoldState>())
             {
                 if (!SilentCheck)
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD").ToLocal(), context.Target.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD").ToLocal(), context.Target.GetDisplayName(false)));
                 yield break;
             }
 
@@ -10138,7 +10138,7 @@ namespace PMDC.Dungeon
             if (itemIndex > -2)
             {
                 if (Message.Key != null)
-                    DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.Name, context.Target.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
 
 
                 Loc? newLoc = ZoneManager.Instance.CurrentMap.FindItemlessTile(context.User.CharLoc, CharAction.MAX_RANGE, true);
@@ -10183,7 +10183,7 @@ namespace PMDC.Dungeon
             if (context.Target.CharStates.Contains<StickyHoldState>())
             {
                 if (!SilentCheck)
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD").ToLocal(), context.Target.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD").ToLocal(), context.Target.GetDisplayName(false)));
                 yield break;
             }
 
@@ -10191,7 +10191,7 @@ namespace PMDC.Dungeon
             if (itemIndex > -2)
             {
                 if (Message.Key != null)
-                    DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.Name, context.Target.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
                 InvItem item = (itemIndex > -1 ? ((ExplorerTeam)context.Target.MemberTeam).GetInv(itemIndex) : context.Target.EquippedItem);
                 //remove the item, and make it bounce in the attacker's direction
                 if (itemIndex > -1)
@@ -10218,7 +10218,7 @@ namespace PMDC.Dungeon
         {
             if (context.Target.CharStates.Contains<StickyHoldState>())
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD").ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD").ToLocal(), context.Target.GetDisplayName(false)));
                 yield break;
             }
 
@@ -10302,7 +10302,7 @@ namespace PMDC.Dungeon
                 newContext.Explosion = new ExplosionData(entry.Explosion);
                 newContext.Explosion.TargetAlignments = Alignment.Friend | Alignment.Foe | Alignment.Self;
 
-                newContext.actionMsg = String.Format(new StringKey("MSG_KNOCK_ITEM").ToLocal(), context.User.Name, context.Target.Name, item.GetDisplayName());
+                newContext.actionMsg = String.Format(new StringKey("MSG_KNOCK_ITEM").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false), item.GetDisplayName());
 
 
                 //beforetryaction and beforeAction need to distinguish forced effects vs willing effects for all times it's triggered
@@ -10371,7 +10371,7 @@ namespace PMDC.Dungeon
                     {
                         item.HiddenValue = item.ID;
                         item.ID = NewItem;
-                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRANSFORM_ITEM").ToLocal(), context.Target.Name,
+                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRANSFORM_ITEM").ToLocal(), context.Target.GetDisplayName(false),
                             oldItem.GetDisplayName(), item.GetDisplayName()));
                         ((ExplorerTeam)context.Target.MemberTeam).UpdateInv(oldItem, item);
                     }
@@ -10380,14 +10380,14 @@ namespace PMDC.Dungeon
                         context.Target.DequipItem();
                         item.HiddenValue = item.ID;
                         item.ID = NewItem;
-                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRANSFORM_HELD_ITEM").ToLocal(), context.Target.Name,
+                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRANSFORM_HELD_ITEM").ToLocal(), context.Target.GetDisplayName(false),
                             oldItem.GetDisplayName(), item.GetDisplayName()));
                         context.Target.EquipItem(item);
                     }
                     yield break;
                 }
             }
-            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRANSFORM_ITEM_FAIL").ToLocal(), context.Target.Name));
+            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRANSFORM_ITEM_FAIL").ToLocal(), context.Target.GetDisplayName(false)));
         }
     }
 
@@ -10427,16 +10427,16 @@ namespace PMDC.Dungeon
                 if (itemIndex > -1)
                 {
                     if (item.Cursed == Sticky)
-                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRANSFORM_ITEM_FAIL").ToLocal(), context.Target.Name));
+                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRANSFORM_ITEM_FAIL").ToLocal(), context.Target.GetDisplayName(false)));
                     else
                     {
                         if (Sticky)
                         {
                             GameManager.Instance.BattleSE("DUN_Sticky");
-                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CURSE_ITEM").ToLocal(), context.Target.Name, item.GetDisplayName()));
+                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CURSE_ITEM").ToLocal(), context.Target.GetDisplayName(false), item.GetDisplayName()));
                         }
                         else
-                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CLEANSE_ITEM").ToLocal(), context.Target.Name, item.GetDisplayName()));
+                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CLEANSE_ITEM").ToLocal(), context.Target.GetDisplayName(false), item.GetDisplayName()));
                     }
                 }
                 else
@@ -10444,15 +10444,15 @@ namespace PMDC.Dungeon
                     if (Sticky)
                     {
                         if (item.Cursed)
-                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ALREADY_CURSED").ToLocal(), context.Target.Name, item.GetDisplayName()));
+                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ALREADY_CURSED").ToLocal(), context.Target.GetDisplayName(false), item.GetDisplayName()));
                         else
                         {
                             GameManager.Instance.BattleSE("DUN_Sticky");
-                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CURSE_HELD_ITEM").ToLocal(), context.Target.Name, item.GetDisplayName()));
+                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CURSE_HELD_ITEM").ToLocal(), context.Target.GetDisplayName(false), item.GetDisplayName()));
                         }
                     }
                     else if (item.Cursed)
-                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CLEANSE_HELD_ITEM").ToLocal(), context.Target.Name, item.GetDisplayName()));
+                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CLEANSE_HELD_ITEM").ToLocal(), context.Target.GetDisplayName(false), item.GetDisplayName()));
                 }
                 item.Cursed = Sticky;
 
@@ -10482,12 +10482,12 @@ namespace PMDC.Dungeon
                 if (itemIndex > -1)
                 {
                     ((ExplorerTeam)context.Target.MemberTeam).RemoveFromInv(itemIndex);
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LOSE_ITEM").ToLocal(), context.Target.Name, item.GetDisplayName()));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LOSE_ITEM").ToLocal(), context.Target.GetDisplayName(false), item.GetDisplayName()));
                 }
                 else
                 {
                     context.Target.DequipItem();
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LOSE_HELD_ITEM").ToLocal(), context.Target.Name, item.GetDisplayName()));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LOSE_HELD_ITEM").ToLocal(), context.Target.GetDisplayName(false), item.GetDisplayName()));
                 }
             }
             yield break;
@@ -10530,7 +10530,7 @@ namespace PMDC.Dungeon
             if (target.CharStates.Contains<StickyHoldState>())
             {
                 if (!SilentCheck)
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD").ToLocal(), target.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD").ToLocal(), target.GetDisplayName(false)));
                 yield break;
             }
 
@@ -10554,7 +10554,7 @@ namespace PMDC.Dungeon
                     DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
                     yield return new WaitForFrames(ItemAnim.ITEM_ACTION_TIME);
 
-                    DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), origin.Name, item.GetDisplayName(), target.Name, owner.GetDisplayName()));
+                    DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), origin.GetDisplayName(false), item.GetDisplayName(), target.GetDisplayName(false), owner.GetDisplayName()));
 
                     if (origin.MemberTeam is ExplorerTeam)
                     {
@@ -10572,7 +10572,7 @@ namespace PMDC.Dungeon
                         else
                         {
                             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
-                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_INV_FULL").ToLocal(), origin.Name, item.GetDisplayName()));
+                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_INV_FULL").ToLocal(), origin.GetDisplayName(false), item.GetDisplayName()));
                             //if the bag is full, or there is no bag, the stolen item will slide off in the opposite direction they're facing
                             Loc endLoc = origin.CharLoc + origin.CharDir.Reverse().GetLoc();
                             yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(item, endLoc, origin.CharLoc));
@@ -10594,7 +10594,7 @@ namespace PMDC.Dungeon
                 else
                 {
                     if (!SilentCheck)
-                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STEAL_ITEM_FAIL").ToLocal(), target.Name));
+                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STEAL_ITEM_FAIL").ToLocal(), target.GetDisplayName(false)));
                 }
             }
             else
@@ -10602,7 +10602,7 @@ namespace PMDC.Dungeon
                 if (!SilentCheck)
                 {
                     GameManager.Instance.BattleSE("DUN_Sticky");
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STEAL_ITEM_CURSED").ToLocal(), origin.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STEAL_ITEM_CURSED").ToLocal(), origin.GetDisplayName(false)));
                 }
             }
         }
@@ -10630,7 +10630,7 @@ namespace PMDC.Dungeon
 
             if (target.CharStates.Contains<StickyHoldState>())
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD").ToLocal(), target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD").ToLocal(), target.GetDisplayName(false)));
                 yield break;
             }
 
@@ -10642,7 +10642,7 @@ namespace PMDC.Dungeon
                 if (itemIndex == -1 && item.Cursed && !target.CanRemoveStuck)
                 {
                     GameManager.Instance.BattleSE("DUN_Sticky");
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_BESTOW_ITEM_CURSED").ToLocal(), target.Name, item.GetDisplayName()));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_BESTOW_ITEM_CURSED").ToLocal(), target.GetDisplayName(false), item.GetDisplayName()));
                 }
                 else
                 {
@@ -10652,7 +10652,7 @@ namespace PMDC.Dungeon
                     else
                         target.DequipItem();
 
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_GIVE_ITEM_AWAY").ToLocal(), target.Name, item.GetDisplayName()));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_GIVE_ITEM_AWAY").ToLocal(), target.GetDisplayName(false), item.GetDisplayName()));
 
                     //item steal animation
                     int MaxDistance = (int)Math.Sqrt(((target.CharLoc - origin.CharLoc) * GraphicsManager.TileSize).DistSquared());
@@ -10678,7 +10678,7 @@ namespace PMDC.Dungeon
                             else
                             {
                                 yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
-                                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_INV_FULL").ToLocal(), origin.Name, item.GetDisplayName()));
+                                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_INV_FULL").ToLocal(), origin.GetDisplayName(false), item.GetDisplayName()));
                                 //if the bag is full, or there is no bag, the stolen item will slide off in the opposite direction they're facing
                                 Loc endLoc = origin.CharLoc + origin.CharDir.Reverse().GetLoc();
                                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(item, endLoc, origin.CharLoc));
@@ -10700,7 +10700,7 @@ namespace PMDC.Dungeon
                     else
                     {
                         GameManager.Instance.BattleSE("DUN_Sticky");
-                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_RECEIVE_ITEM_CURSED").ToLocal(), origin.Name));
+                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_RECEIVE_ITEM_CURSED").ToLocal(), origin.GetDisplayName(false)));
                         //the new item will slide off in the opposite direction they're facing
                         Loc endLoc = origin.CharLoc + origin.CharDir.Reverse().GetLoc();
                         yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(item, endLoc, origin.CharLoc));
@@ -10709,7 +10709,7 @@ namespace PMDC.Dungeon
                 }
             }
             else
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_BESTOW_ITEM_FAIL").ToLocal(), target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_BESTOW_ITEM_FAIL").ToLocal(), target.GetDisplayName(false)));
         }
     }
 
@@ -10726,7 +10726,7 @@ namespace PMDC.Dungeon
         {
             if (context.Target.CharStates.Contains<StickyHoldState>())
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD").ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD").ToLocal(), context.Target.GetDisplayName(false)));
                 yield break;
             }
 
@@ -10738,7 +10738,7 @@ namespace PMDC.Dungeon
                 InvItem attackerItem = (attackerIndex > -1 ? ((ExplorerTeam)context.User.MemberTeam).GetInv(attackerIndex) : context.User.EquippedItem);
                 InvItem targetItem = (targetIndex > -1 ? ((ExplorerTeam)context.Target.MemberTeam).GetInv(targetIndex) : context.Target.EquippedItem);
 
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_EXCHANGE_ITEM").ToLocal(), context.User.Name, context.Target.Name,
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_EXCHANGE_ITEM").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false),
                     attackerItem.GetDisplayName(), targetItem.GetDisplayName()));
 
                 if (targetIndex > -1)
@@ -10805,7 +10805,7 @@ namespace PMDC.Dungeon
         {
             if (context.Target.CharStates.Contains<StickyHoldState>())
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD").ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD").ToLocal(), context.Target.GetDisplayName(false)));
                 yield break;
             }
 
@@ -10816,12 +10816,12 @@ namespace PMDC.Dungeon
             {
                 //if it's an explorer, and their inv is full, and they're not holding anything, they cannot be given an item by the other party
                 if (attackerItem.ID == -1 && context.User.MemberTeam is ExplorerTeam && ((ExplorerTeam)context.User.MemberTeam).GetInvCount() >= ((ExplorerTeam)context.User.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone))
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_INV_FULL").ToLocal(), context.User.Name, targetItem.GetDisplayName()));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_INV_FULL").ToLocal(), context.User.GetDisplayName(false), targetItem.GetDisplayName()));
                 else if (targetItem.ID == -1 && context.Target.MemberTeam is ExplorerTeam && ((ExplorerTeam)context.Target.MemberTeam).GetInvCount() >= ((ExplorerTeam)context.Target.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone))
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_INV_FULL").ToLocal(), context.Target.Name, attackerItem.GetDisplayName()));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_INV_FULL").ToLocal(), context.Target.GetDisplayName(false), attackerItem.GetDisplayName()));
                 else
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_EXCHANGE_HELD_ITEM").ToLocal(), context.User.Name, context.Target.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_EXCHANGE_HELD_ITEM").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
 
                     context.Target.DequipItem();
                     if (attackerItem.ID > -1)
@@ -10833,7 +10833,7 @@ namespace PMDC.Dungeon
                 }
             }
             else
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_EXCHANGE_ITEM_FAIL").ToLocal(), context.User.Name, context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_EXCHANGE_ITEM_FAIL").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
         }
     }
 
@@ -10870,7 +10870,7 @@ namespace PMDC.Dungeon
             if (target.CharStates.Contains<StickyHoldState>())
             {
                 if (!SilentCheck)
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD").ToLocal(), target.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD").ToLocal(), target.GetDisplayName(false)));
                 yield break;
             }
 
@@ -10907,22 +10907,22 @@ namespace PMDC.Dungeon
                     {
                         case ItemData.UseType.Eat:
                             {
-                                newContext.actionMsg = String.Format(new StringKey("MSG_STEAL_EAT").ToLocal(), newContext.User.Name, item.GetDisplayName());
+                                newContext.actionMsg = String.Format(new StringKey("MSG_STEAL_EAT").ToLocal(), newContext.User.GetDisplayName(false), item.GetDisplayName());
                                 break;
                             }
                         case ItemData.UseType.Drink:
                             {
-                                newContext.actionMsg = String.Format(new StringKey("MSG_STEAL_DRINK").ToLocal(), newContext.User.Name, item.GetDisplayName());
+                                newContext.actionMsg = String.Format(new StringKey("MSG_STEAL_DRINK").ToLocal(), newContext.User.GetDisplayName(false), item.GetDisplayName());
                                 break;
                             }
                         case ItemData.UseType.Learn:
                             {
-                                newContext.actionMsg = String.Format(new StringKey("MSG_STEAL_OPERATE").ToLocal(), newContext.User.Name, item.GetDisplayName());
+                                newContext.actionMsg = String.Format(new StringKey("MSG_STEAL_OPERATE").ToLocal(), newContext.User.GetDisplayName(false), item.GetDisplayName());
                                 break;
                             }
                         case ItemData.UseType.Use:
                             {
-                                newContext.actionMsg = String.Format(new StringKey("MSG_STEAL_USE").ToLocal(), newContext.User.Name, item.GetDisplayName());
+                                newContext.actionMsg = String.Format(new StringKey("MSG_STEAL_USE").ToLocal(), newContext.User.GetDisplayName(false), item.GetDisplayName());
                                 break;
                             }
                     }
@@ -10990,7 +10990,7 @@ namespace PMDC.Dungeon
             else
             {
                 context.CancelState.Cancel = true;
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_BESTOW_ITEM_FAIL").ToLocal(), context.User.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_BESTOW_ITEM_FAIL").ToLocal(), context.User.GetDisplayName(false)));
             }
             yield break;
         }
@@ -11007,7 +11007,7 @@ namespace PMDC.Dungeon
         {
             if (context.Target.EquippedItem.ID > -1 && context.Target.CharStates.Contains<StickyHoldState>())
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD").ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD").ToLocal(), context.Target.GetDisplayName(false)));
 
                 //bestowed item slides off
                 Loc endLoc = context.Target.CharLoc + context.User.CharDir.GetLoc() * 2;
@@ -11015,7 +11015,7 @@ namespace PMDC.Dungeon
             }
             else if (context.Item.ID > -1)
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_BESTOW_ITEM").ToLocal(), context.Target.Name, context.Item.GetDisplayName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_BESTOW_ITEM").ToLocal(), context.Target.GetDisplayName(false), context.Item.GetDisplayName()));
 
                 if (context.Target.EquippedItem.ID > -1)
                 {
@@ -11030,7 +11030,7 @@ namespace PMDC.Dungeon
                 }
                 else if (context.Target.MemberTeam is ExplorerTeam && ((ExplorerTeam)context.Target.MemberTeam).GetInvCount() >= ((ExplorerTeam)context.Target.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone))
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_INV_FULL").ToLocal(), context.Target.Name, context.Item.GetDisplayName()));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_INV_FULL").ToLocal(), context.Target.GetDisplayName(false), context.Item.GetDisplayName()));
                     //check if inventory is full.  If so, make the bestowed item slide off
                     Loc endLoc = context.Target.CharLoc + context.Target.CharDir.Reverse().GetLoc();
                     yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(context.Item, endLoc, context.Target.CharLoc));
@@ -11058,7 +11058,7 @@ namespace PMDC.Dungeon
         {
             if (context.Item.ID > -1)
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CATCH_ITEM").ToLocal(), context.Target.Name, context.Item.GetDisplayName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CATCH_ITEM").ToLocal(), context.Target.GetDisplayName(false), context.Item.GetDisplayName()));
                 //give the target the item
                 context.Target.EquipItem(new InvItem(context.Item));
             }
@@ -11109,7 +11109,7 @@ namespace PMDC.Dungeon
 
             yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, status, context.ContextStates, false));
 
-            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_REST").ToLocal(), context.Target.Name));
+            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_REST").ToLocal(), context.Target.GetDisplayName(false)));
 
             //restore all HP
             yield return CoroutineManager.Instance.StartCoroutine(context.Target.RestoreHP(context.Target.MaxHP));
@@ -11161,7 +11161,7 @@ namespace PMDC.Dungeon
             else
             {
                 ElementData typeData = DataManager.Instance.GetElement(TargetElement);
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ALREADY_HAS_ELEMENT").ToLocal(), context.Target.Name, typeData.GetIconName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ALREADY_HAS_ELEMENT").ToLocal(), context.Target.GetDisplayName(false), typeData.GetIconName()));
             }
         }
     }
@@ -11188,7 +11188,7 @@ namespace PMDC.Dungeon
             if (!context.Target.HasElement(TargetElement))
                 yield return CoroutineManager.Instance.StartCoroutine(context.Target.ChangeElement(TargetElement, context.Target.Element1));
             else
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ALREADY_HAS_ELEMENT").ToLocal(), context.Target.Name, TargetElement));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ALREADY_HAS_ELEMENT").ToLocal(), context.Target.GetDisplayName(false), TargetElement));
         }
     }
 
@@ -11341,7 +11341,7 @@ namespace PMDC.Dungeon
             Character origin = (AffectTarget ? context.User : context.Target);
 
             if (Msg.Key != null)
-                DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), origin.Name, target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), origin.GetDisplayName(false), target.GetDisplayName(false)));
 
             //reflect ability (target to attacker, or vice versa)
             for (int ii = 0; ii < CharData.MAX_INTRINSIC_SLOTS; ii++)
@@ -11378,7 +11378,7 @@ namespace PMDC.Dungeon
             int atk = context.Target.Atk;
             context.Target.ProxyAtk = context.Target.Def;
             context.Target.ProxyDef = atk;
-            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STAT_SWAP").ToLocal(), context.User.Name,
+            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STAT_SWAP").ToLocal(), context.User.GetDisplayName(false),
                 String.Format(new StringKey("BASE_STAT").ToLocal(), Stat.Attack.ToLocal()),
                 String.Format(new StringKey("BASE_STAT").ToLocal(), Stat.Defense.ToLocal())));
             yield break;
@@ -11416,7 +11416,7 @@ namespace PMDC.Dungeon
                 stats[0] = String.Format(new StringKey("BASE_STAT").ToLocal(), Stat.Attack.ToLocal());
                 stats[1] = String.Format(new StringKey("BASE_STAT").ToLocal(), Stat.MAtk.ToLocal());
                 string list = Text.BuildList(stats);
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STAT_SPLIT").ToLocal(), context.User.Name, list, context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STAT_SPLIT").ToLocal(), context.User.GetDisplayName(false), list, context.Target.GetDisplayName(false)));
             }
             else
             {
@@ -11428,7 +11428,7 @@ namespace PMDC.Dungeon
                 stats[0] = String.Format(new StringKey("BASE_STAT").ToLocal(), Stat.Defense.ToLocal());
                 stats[1] = String.Format(new StringKey("BASE_STAT").ToLocal(), Stat.MDef.ToLocal());
                 string list = Text.BuildList(stats);
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STAT_SPLIT").ToLocal(), context.User.Name, list, context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STAT_SPLIT").ToLocal(), context.User.GetDisplayName(false), list, context.Target.GetDisplayName(false)));
             }
             yield break;
         }
@@ -11445,7 +11445,7 @@ namespace PMDC.Dungeon
 
             context.User.HP = Math.Min(hp, context.User.MaxHP);
             context.Target.HP = Math.Min(hp, context.Target.MaxHP);
-            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HP_SPLIT").ToLocal(), context.User.Name, context.Target.Name));
+            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HP_SPLIT").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
             yield break;
         }
     }
@@ -11486,7 +11486,7 @@ namespace PMDC.Dungeon
                     yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, status, context.ContextStates, false));
                 }
             }
-            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_BUFF_COPY").ToLocal(), context.User.Name, context.Target.Name));
+            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_BUFF_COPY").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
         }
     }
 
@@ -11540,7 +11540,7 @@ namespace PMDC.Dungeon
                     status.StatusStates.GetWithDefault<StackState>().Stack = targetStack;
                     yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, status, context.ContextStates, false));
                 }
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_BUFF_SWAP").ToLocal(), context.User.Name, context.Target.Name, DataManager.Instance.GetStatus(statusID).GetColoredName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_BUFF_SWAP").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false), DataManager.Instance.GetStatus(statusID).GetColoredName()));
             }
         }
     }
@@ -11640,11 +11640,11 @@ namespace PMDC.Dungeon
                 yield break;
 
             if (context.User.BaseForm.Species != context.User.CurrentForm.Species)
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ALREADY_TRANSFORMED").ToLocal(), context.User.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ALREADY_TRANSFORMED").ToLocal(), context.User.GetDisplayName(false)));
             else if (context.User.CurrentForm.Species == context.Target.CurrentForm.Species)
             {
                 MonsterData entry = DataManager.Instance.GetMonster(context.User.CurrentForm.Species);
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ALREADY_HAS_SPECIES").ToLocal(), context.User.Name, entry.GetColoredName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ALREADY_HAS_SPECIES").ToLocal(), context.User.GetDisplayName(false), entry.GetColoredName()));
             }
             else
             {
@@ -11668,7 +11668,7 @@ namespace PMDC.Dungeon
                 for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
                     context.User.ChangeSkill(ii, context.Target.Skills[ii].Element.SkillNum);
                 
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRANSFORM").ToLocal(), context.User.Name, context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRANSFORM").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
             }
         }
     }
@@ -11688,7 +11688,7 @@ namespace PMDC.Dungeon
             
             if (candidateDex.PromoteFrom > -1)
             {
-                string prevName = context.Target.Name;
+                string prevName = context.Target.GetDisplayName(false);
                 MonsterID prevoData = context.Target.CurrentForm;
                 prevoData.Species = candidateDex.PromoteFrom;
                 context.Target.Transform(prevoData);
@@ -11707,7 +11707,7 @@ namespace PMDC.Dungeon
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_DEVOLVE").ToLocal(), prevName, dex.GetColoredName()));
             }
             else
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_DEVOLVE_FAIL").ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_DEVOLVE_FAIL").ToLocal(), context.Target.GetDisplayName(false)));
         }
     }
 
@@ -11808,7 +11808,7 @@ namespace PMDC.Dungeon
                     unclaimed_index--;
                 }
             }
-            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRAWL").ToLocal(), context.User.Name));
+            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRAWL").ToLocal(), context.User.GetDisplayName(false)));
             yield return new WaitForFrames(ItemAnim.ITEM_ACTION_TIME);
             foreach (MapItem item in unclaimed_items)
                 ZoneManager.Instance.CurrentMap.Items.Add(item);
@@ -12214,7 +12214,7 @@ namespace PMDC.Dungeon
             if (!entry.CanLearnSkill(moveIndex))
             {
                 context.CancelState.Cancel = true;
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CANT_LEARN_SKILL").ToLocal(), context.User.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CANT_LEARN_SKILL").ToLocal(), context.User.GetDisplayName(false)));
                 yield break;
             }
 
@@ -12331,7 +12331,7 @@ namespace PMDC.Dungeon
                 }
                 else
                     MenuManager.Instance.AddMenu(MenuManager.Instance.CreateDialogue(() => { MenuManager.Instance.AddMenu(createLinkBoxDialog(context), false); },
-                    String.Format(new StringKey("DLG_CANT_FORGET_SKILL").ToLocal(), context.User.BaseName)), false);
+                    String.Format(new StringKey("DLG_CANT_FORGET_SKILL").ToLocal(), context.User.GetDisplayName(true))), false);
 
             }));
             choices.Add(new DialogueChoice(Text.FormatKey("MENU_CANCEL"), () => { context.CancelState.Cancel = true; }));
@@ -12359,7 +12359,7 @@ namespace PMDC.Dungeon
             }
             else
                 return MenuManager.Instance.CreateDialogue(() => { MenuManager.Instance.AddMenu(createLinkBoxDialog(context), false); },
-                    String.Format(new StringKey("DLG_CANT_RECALL_SKILL").ToLocal(), context.User.BaseName));
+                    String.Format(new StringKey("DLG_CANT_RECALL_SKILL").ToLocal(), context.User.GetDisplayName(true)));
 
         }
 
@@ -12399,7 +12399,7 @@ namespace PMDC.Dungeon
             {
                 int moveNum = context.User.BaseSkills[slot].SkillNum;
                 context.User.DeleteSkill(slot);
-                yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(String.Format(new StringKey("DLG_FORGET_SKILL").ToLocal(), context.User.Name, DataManager.Instance.GetSkill(moveNum).GetIconName()), context.User.MemberTeam));
+                yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(String.Format(new StringKey("DLG_FORGET_SKILL").ToLocal(), context.User.GetDisplayName(false), DataManager.Instance.GetSkill(moveNum).GetIconName()), context.User.MemberTeam));
             }
         }
     }
@@ -12456,7 +12456,7 @@ namespace PMDC.Dungeon
                 }
                 else
                 {
-                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(String.Format(new StringKey("DLG_CANT_RECALL_INTRINSIC").ToLocal(), context.User.BaseName)));
+                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(String.Format(new StringKey("DLG_CANT_RECALL_INTRINSIC").ToLocal(), context.User.GetDisplayName(true))));
                     context.CancelState.Cancel = true;
                 }
             }
@@ -12487,7 +12487,7 @@ namespace PMDC.Dungeon
                 GameManager.Instance.SE("Fanfare/LearnSkill");
                 context.User.LearnIntrinsic(abilityNum, abilitySlot);
 
-                yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(String.Format(new StringKey("DLG_LEARN_INTRINSIC").ToLocal(), context.User.Name, DataManager.Instance.GetIntrinsic(abilityNum).GetColoredName()), context.User.MemberTeam));
+                yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(String.Format(new StringKey("DLG_LEARN_INTRINSIC").ToLocal(), context.User.GetDisplayName(false), DataManager.Instance.GetIntrinsic(abilityNum).GetColoredName()), context.User.MemberTeam));
             }
         }
     }
@@ -12507,7 +12507,7 @@ namespace PMDC.Dungeon
                 int abilityNum = context.User.BaseIntrinsics[slot];
                 context.User.DeleteIntrinsic(slot);
 
-                yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(String.Format(new StringKey("DLG_FORGET_INTRINSIC").ToLocal(), context.User.Name, DataManager.Instance.GetIntrinsic(abilityNum).GetColoredName()), context.User.MemberTeam));
+                yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(String.Format(new StringKey("DLG_FORGET_INTRINSIC").ToLocal(), context.User.GetDisplayName(false), DataManager.Instance.GetIntrinsic(abilityNum).GetColoredName()), context.User.MemberTeam));
             }
         }
     }
@@ -12589,7 +12589,7 @@ namespace PMDC.Dungeon
                     ExplorerTeam team = (ExplorerTeam)context.User.MemberTeam;
                     InvItem item = team.TakeItems(new List<int>{ slot })[0];
 
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STORAGE_TAKE").ToLocal(), context.User.Name, item.GetDisplayName()));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STORAGE_TAKE").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName()));
                     if (team.GetInvCount() < team.GetMaxInvSlots(ZoneManager.Instance.CurrentZone))
                         team.AddToInv(item);
                     else
@@ -12677,7 +12677,7 @@ namespace PMDC.Dungeon
                 member.RefreshTraits();
                 ZoneManager.Instance.CurrentMap.UpdateExploration(member);
 
-                yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(String.Format(new StringKey("MSG_ASSEMBLY_TAKE_ANY").ToLocal(), member.BaseName)));
+                yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(String.Format(new StringKey("MSG_ASSEMBLY_TAKE_ANY").ToLocal(), member.GetDisplayName(true))));
 
                 yield return CoroutineManager.Instance.StartCoroutine(member.OnMapStart());
 
@@ -12787,13 +12787,13 @@ namespace PMDC.Dungeon
 
             if (!(context.Target.MemberTeam is MonsterTeam) || ((MonsterTeam)context.Target.MemberTeam).Unrecruitable)
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CANT_RECRUIT").ToLocal(), context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CANT_RECRUIT").ToLocal(), context.Target.GetDisplayName(false)));
                 GameManager.Instance.BattleSE("DUN_Miss");
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(context.Item, context.Target.CharLoc));
             }
             else if (context.Target.Level > context.User.Level + 5)
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CANT_RECRUIT_LEVEL").ToLocal(), context.User.Name, context.Target.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CANT_RECRUIT_LEVEL").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
                 GameManager.Instance.BattleSE("DUN_Miss");
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(context.Item, context.Target.CharLoc));
             }
@@ -12809,7 +12809,7 @@ namespace PMDC.Dungeon
                 {
                     //TODO: emote
 
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CANT_RECRUIT_RATE").ToLocal(), context.Target.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CANT_RECRUIT_RATE").ToLocal(), context.Target.GetDisplayName(false)));
                     GameManager.Instance.BattleSE("DUN_Miss");
                     yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(context.Item, context.Target.CharLoc));
                 }
@@ -12884,9 +12884,9 @@ namespace PMDC.Dungeon
                             context.Target.Nickname = name;
                         }
                         if (DungeonScene.Instance.ActiveTeam.Name != "")
-                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_RECRUIT").ToLocal(), context.Target.BaseName, DungeonScene.Instance.ActiveTeam.Name));
+                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_RECRUIT").ToLocal(), context.Target.GetDisplayName(true), DungeonScene.Instance.ActiveTeam.GetDisplayName()));
                         else
-                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_RECRUIT_ANY").ToLocal(), context.Target.BaseName));
+                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_RECRUIT_ANY").ToLocal(), context.Target.GetDisplayName(true)));
                         DataManager.Instance.Save.RegisterMonster(context.Target.BaseForm.Species);
                         yield return CoroutineManager.Instance.StartCoroutine(context.Target.OnMapStart());
 
@@ -12896,7 +12896,7 @@ namespace PMDC.Dungeon
                     }
                     else
                     {
-                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_RECRUIT_FAIL").ToLocal(), context.Target.Name));
+                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_RECRUIT_FAIL").ToLocal(), context.Target.GetDisplayName(false)));
                         GameManager.Instance.BattleSE("DUN_Miss");
                         yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(context.Item, context.Target.CharLoc));
                     }
@@ -12939,7 +12939,7 @@ namespace PMDC.Dungeon
                     emitter.SetupEmit(character.MapLoc, character.MapLoc, character.CharDir);
                     DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
 
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_REVIVE").ToLocal(), character.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_REVIVE").ToLocal(), character.GetDisplayName(false)));
 
                     yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(20));
                     revived = true;
