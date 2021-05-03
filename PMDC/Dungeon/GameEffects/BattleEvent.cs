@@ -137,13 +137,9 @@ namespace PMDC.Dungeon
             if (context.UsageSlot == BattleContext.FORCED_SLOT)
                 yield break;
 
-            bool sayMove = false;
             int usageIndex = 0;
             if (context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS)
-            {
                 usageIndex = context.User.Skills[context.UsageSlot].Element.SkillNum;
-                sayMove = true;
-            }
 
             SkillData entry = DataManager.Instance.GetSkill(usageIndex);
             context.Data = new BattleData(entry.Data);
@@ -156,8 +152,10 @@ namespace PMDC.Dungeon
             context.StartDir = context.User.CharDir;
 
 
-            if (sayMove)
-                context.actionMsg = String.Format(new StringKey("MSG_SKILL_USE").ToLocal(), context.User.GetDisplayName(false), entry.GetIconName());
+            if (usageIndex > 0)
+                context.SetActionMsg(String.Format(new StringKey("MSG_SKILL_USE").ToLocal(), context.User.GetDisplayName(false), entry.GetIconName()));
+            else
+                context.SetActionMsg(String.Format(new StringKey("MSG_ATTACK_USE").ToLocal(), context.User.GetDisplayName(false)), true);
 
             if (context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS)
             {
@@ -223,22 +221,22 @@ namespace PMDC.Dungeon
             {
                 case ItemData.UseType.Eat:
                     {
-                        context.actionMsg = String.Format(new StringKey("MSG_USE_EAT").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName());
+                        context.SetActionMsg(String.Format(new StringKey("MSG_USE_EAT").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName()));
                         break;
                     }
                 case ItemData.UseType.Drink:
                     {
-                        context.actionMsg = String.Format(new StringKey("MSG_USE_DRINK").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName());
+                        context.SetActionMsg(String.Format(new StringKey("MSG_USE_DRINK").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName()));
                         break;
                     }
                 case ItemData.UseType.Learn:
                     {
-                        context.actionMsg = String.Format(new StringKey("MSG_USE_OPERATE").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName());
+                        context.SetActionMsg(String.Format(new StringKey("MSG_USE_OPERATE").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName()));
                         break;
                     }
                 case ItemData.UseType.Use:
                     {
-                        context.actionMsg = String.Format(new StringKey("MSG_USE").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName());
+                        context.SetActionMsg(String.Format(new StringKey("MSG_USE").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName()));
                         break;
                     }
             }
@@ -382,7 +380,7 @@ namespace PMDC.Dungeon
                 context.Explosion.TargetAlignments = Alignment.Friend | Alignment.Foe | Alignment.Self;
             }
 
-            context.actionMsg = String.Format(new StringKey("MSG_THROW").ToLocal(), context.User.GetDisplayName(false), context.Item.GetDisplayName());
+            context.SetActionMsg(String.Format(new StringKey("MSG_THROW").ToLocal(), context.User.GetDisplayName(false), context.Item.GetDisplayName()));
 
             if (context.UsageSlot == BattleContext.EQUIP_ITEM_SLOT && context.User.EquippedItem.Cursed && !context.User.CanRemoveStuck)
             {
@@ -665,8 +663,7 @@ namespace PMDC.Dungeon
             yield return CoroutineManager.Instance.StartCoroutine(newContext.User.BeforeAction(newContext));
             if (newContext.CancelState.Cancel) { yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.CancelWait(newContext.User.CharLoc)); yield break; }
 
-            if (!String.IsNullOrEmpty(newContext.actionMsg))
-                DungeonScene.Instance.LogMsg(newContext.actionMsg);
+            newContext.PrintActionMsg();
 
             yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.ExecuteAction(newContext));
             if (newContext.CancelState.Cancel) { yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.CancelWait(newContext.User.CharLoc)); yield break; }
@@ -4372,7 +4369,7 @@ namespace PMDC.Dungeon
             context.Item = new InvItem();
             context.Strikes = entry.Strikes;
 
-            context.actionMsg = String.Format(new StringKey("MSG_SKILL_USE").ToLocal(), context.User.GetDisplayName(false), entry.GetIconName());
+            context.SetActionMsg(String.Format(new StringKey("MSG_SKILL_USE").ToLocal(), context.User.GetDisplayName(false), entry.GetIconName()));
         }
     }
     [Serializable]
@@ -4415,7 +4412,7 @@ namespace PMDC.Dungeon
                 context.Item = new InvItem();
                 context.Strikes = 1;
 
-                context.actionMsg = "";
+                context.SetActionMsg("");
             }
             yield break;
         }
@@ -4474,7 +4471,7 @@ namespace PMDC.Dungeon
                 //still declare the move
             }
             else
-                context.actionMsg = String.Format(new StringKey("MSG_BIDE_ATTACK").ToLocal(), context.User.GetDisplayName(false));
+                context.SetActionMsg(String.Format(new StringKey("MSG_BIDE_ATTACK").ToLocal(), context.User.GetDisplayName(false)));
             yield break;
         }
     }
@@ -4529,7 +4526,7 @@ namespace PMDC.Dungeon
                 context.Item = new InvItem();
                 context.Strikes = 1;
 
-                context.actionMsg = "";
+                context.SetActionMsg("");
             }
             yield break;
         }
@@ -10302,7 +10299,7 @@ namespace PMDC.Dungeon
                 newContext.Explosion = new ExplosionData(entry.Explosion);
                 newContext.Explosion.TargetAlignments = Alignment.Friend | Alignment.Foe | Alignment.Self;
 
-                newContext.actionMsg = String.Format(new StringKey("MSG_KNOCK_ITEM").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false), item.GetDisplayName());
+                newContext.SetActionMsg(String.Format(new StringKey("MSG_KNOCK_ITEM").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false), item.GetDisplayName()));
 
 
                 //beforetryaction and beforeAction need to distinguish forced effects vs willing effects for all times it's triggered
@@ -10321,8 +10318,7 @@ namespace PMDC.Dungeon
                 yield return CoroutineManager.Instance.StartCoroutine(newContext.User.BeforeAction(newContext));
                 if (newContext.CancelState.Cancel) { yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.CancelWait(newContext.User.CharLoc)); yield break; }
 
-                if (!String.IsNullOrEmpty(newContext.actionMsg))
-                    DungeonScene.Instance.LogMsg(newContext.actionMsg);
+                newContext.PrintActionMsg();
 
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.ExecuteAction(newContext));
                 if (newContext.CancelState.Cancel) { yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.CancelWait(newContext.User.CharLoc)); yield break; }
@@ -10907,22 +10903,22 @@ namespace PMDC.Dungeon
                     {
                         case ItemData.UseType.Eat:
                             {
-                                newContext.actionMsg = String.Format(new StringKey("MSG_STEAL_EAT").ToLocal(), newContext.User.GetDisplayName(false), item.GetDisplayName());
+                                newContext.SetActionMsg(String.Format(new StringKey("MSG_STEAL_EAT").ToLocal(), newContext.User.GetDisplayName(false), item.GetDisplayName()));
                                 break;
                             }
                         case ItemData.UseType.Drink:
                             {
-                                newContext.actionMsg = String.Format(new StringKey("MSG_STEAL_DRINK").ToLocal(), newContext.User.GetDisplayName(false), item.GetDisplayName());
+                                newContext.SetActionMsg(String.Format(new StringKey("MSG_STEAL_DRINK").ToLocal(), newContext.User.GetDisplayName(false), item.GetDisplayName()));
                                 break;
                             }
                         case ItemData.UseType.Learn:
                             {
-                                newContext.actionMsg = String.Format(new StringKey("MSG_STEAL_OPERATE").ToLocal(), newContext.User.GetDisplayName(false), item.GetDisplayName());
+                                newContext.SetActionMsg(String.Format(new StringKey("MSG_STEAL_OPERATE").ToLocal(), newContext.User.GetDisplayName(false), item.GetDisplayName()));
                                 break;
                             }
                         case ItemData.UseType.Use:
                             {
-                                newContext.actionMsg = String.Format(new StringKey("MSG_STEAL_USE").ToLocal(), newContext.User.GetDisplayName(false), item.GetDisplayName());
+                                newContext.SetActionMsg(String.Format(new StringKey("MSG_STEAL_USE").ToLocal(), newContext.User.GetDisplayName(false), item.GetDisplayName()));
                                 break;
                             }
                     }
@@ -10948,8 +10944,7 @@ namespace PMDC.Dungeon
                     else
                         target.DequipItem();
 
-                    if (!String.IsNullOrEmpty(newContext.actionMsg))
-                        DungeonScene.Instance.LogMsg(newContext.actionMsg);
+                    newContext.PrintActionMsg();
 
                     //yield return CoroutinesManager.Instance.StartCoroutine(ExecuteAction(context));
                     //if (context.CancelState.Cancel) { yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30)); yield break; }

@@ -648,7 +648,7 @@ namespace PMDC.Dungeon
             newContext.Item = new InvItem();
 
             TileData entry = DataManager.Instance.GetTile(owner.GetID());
-            newContext.actionMsg = String.Format(Msg.ToLocal(), newContext.User.GetDisplayName(false));
+            newContext.SetActionMsg(String.Format(Msg.ToLocal(), newContext.User.GetDisplayName(false)));
 
             //process the attack
             yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.PreProcessAction(newContext));
@@ -657,9 +657,8 @@ namespace PMDC.Dungeon
             yield return CoroutineManager.Instance.StartCoroutine(newContext.User.BeforeAction(newContext));
             if (newContext.CancelState.Cancel) { yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.CancelWait(newContext.User.CharLoc)); yield break; }
 
-            if (!String.IsNullOrEmpty(newContext.actionMsg))
-                DungeonScene.Instance.LogMsg(newContext.actionMsg);
-            
+            newContext.PrintActionMsg();
+
             yield return CoroutineManager.Instance.StartCoroutine(LocalExecuteAction(newContext));
             if (newContext.CancelState.Cancel) { yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.CancelWait(newContext.User.CharLoc)); yield break; }
             yield return CoroutineManager.Instance.StartCoroutine(TrapRepeatActions(newContext));
@@ -3091,15 +3090,14 @@ namespace PMDC.Dungeon
             newContext.Item = new InvItem();
 
             TileData entry = DataManager.Instance.GetTile(owner.GetID());
-            newContext.actionMsg = String.Format(new StringKey("MSG_TILE_CHECK").ToLocal(), newContext.User.GetDisplayName(false), entry.Name.ToLocal());
+            newContext.SetActionMsg(String.Format(new StringKey("MSG_TILE_CHECK").ToLocal(), newContext.User.GetDisplayName(false), entry.Name.ToLocal()));
 
             //process the attack
             
             yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.PreProcessAction(newContext));
 
             //Handle Use
-            if (!String.IsNullOrEmpty(newContext.actionMsg))
-                DungeonScene.Instance.LogMsg(newContext.actionMsg);
+            newContext.PrintActionMsg();
 
             yield return CoroutineManager.Instance.StartCoroutine(TrapExecuteAction(newContext));
             if (newContext.CancelState.Cancel) { yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.CancelWait(effectTile.TileLoc)); yield break; }
