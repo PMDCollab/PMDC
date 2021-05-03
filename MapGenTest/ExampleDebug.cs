@@ -266,9 +266,9 @@ namespace MapGenTest
                     rewriteLine(farthestPrint, String.Format("X:{0}  Y:{1}", mapLoc.X.ToString("D3"), mapLoc.Y.ToString("D3")));
                     farthestPrint++;
                     Tile tile = context.Tiles[mapLoc.X][mapLoc.Y];
-                    rewriteLine(farthestPrint, String.Format("Terrain {0}: {1}", tile.Data.GetID(), tile.Data.GetID() > -1 ? tile.Data.GetName() : "---"));
+                    rewriteLine(farthestPrint, String.Format("Terrain {0}: {1}", tile.Data.GetID(), tile.Data.GetID() > -1 ? tile.Data.GetData().Name.ToLocal() : "---"));
                     farthestPrint++;
-                    rewriteLine(farthestPrint, String.Format("Tile {0}: {1}", tile.Effect.GetID(), tile.Effect.GetID() > -1 ? tile.Effect.GetName() : "---"));
+                    rewriteLine(farthestPrint, String.Format("Tile {0}: {1}", tile.Effect.GetID(), tile.Effect.GetID() > -1 ? tile.Effect.GetData().Name.ToLocal() : "---"));
                     farthestPrint++;
                     for(int ii = 0; ii < context.Map.EntryPoints.Count; ii++)
                     {
@@ -300,12 +300,12 @@ namespace MapGenTest
                                 farthestPrint++;
                                 string nameString = String.Format("    Lv.{0} {1} ", character.Level, character.Name);
                                 foreach (int status in character.StatusEffects.Keys)
-                                    nameString += String.Format("[{0}]", character.StatusEffects[status].GetName());
+                                    nameString += String.Format("[{0}]", ((StatusData)character.StatusEffects[status].GetData()).Name.ToLocal());
 
                                 rewriteLine(farthestPrint, nameString);
                                 farthestPrint++;
-                                rewriteLine(farthestPrint, String.Format("    @{0} *{1} ?{2}", character.EquippedItem.ID > -1 ? character.EquippedItem.GetName() : "---",
-                                    character.Intrinsics[0].Element.ID > -1 ? character.Intrinsics[0].Element.GetName() : "---", character.Tactic.Name));
+                                rewriteLine(farthestPrint, String.Format("    @{0} *{1} ?{2}", character.EquippedItem.ID > -1 ? ((ItemData)character.EquippedItem.GetData()).Name.ToLocal() : "---",
+                                    character.Intrinsics[0].Element.ID > -1 ? ((IntrinsicData)character.Intrinsics[0].Element.GetData()).Name.ToLocal() : "---", character.Tactic.Name));
                                 farthestPrint++;
                                 rewriteLine(farthestPrint, String.Format("    {0}{1} {2}{3} {4}{5} {6}{7}",
                                     character.Skills[0].Element.Enabled ? "+" : "-", character.BaseSkills[0].SkillNum > -1 ? DataManager.Instance.GetSkill(character.Skills[0].Element.SkillNum).Name.ToLocal() : "---",

@@ -318,7 +318,7 @@ namespace PMDC.Dungeon
             yield return CoroutineManager.Instance.StartCoroutine(ownerChar.StartAnim(spinAnim));
             yield return new WaitWhile(ownerChar.OccupiedwithAction);
 
-            DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), ownerChar.Name, owner.GetName()));
+            DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), ownerChar.Name, owner.GetDisplayName()));
             context.ExplosionTile = ownerChar.CharLoc;
             context.Explosion.Range = 0;
             context.ContextStates.Set(new Redirected());

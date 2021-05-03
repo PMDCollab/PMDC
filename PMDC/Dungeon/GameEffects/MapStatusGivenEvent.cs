@@ -194,7 +194,7 @@ namespace PMDC.Dungeon
             if (msg)
             {
                 SkillData entry = DataManager.Instance.GetSkill(status.StatusStates.GetWithDefault<MapIndexState>().Index);
-                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), entry.Name.ToLocal()));
+                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), entry.GetIconName()));
                 yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(10));
             }
         }

@@ -26,7 +26,7 @@ namespace PMDC.Data
         public int ItemNum;
 
         public override int GiveItem { get { return ItemNum; } }
-        public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_ITEM").ToLocal(), DataManager.Instance.GetItem(ItemNum).Name.ToLocal()); }
+        public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_ITEM").ToLocal(), DataManager.Instance.GetItem(ItemNum).GetColoredName()); }
         public override bool GetGroundReq(Character character)
         {
             if (character.EquippedItem.ID == ItemNum)
@@ -121,7 +121,7 @@ namespace PMDC.Data
         public int Weather;
 
         public override bool GetGroundReq(Character character) { return false; }
-        public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_MAP").ToLocal(), DataManager.Instance.GetMapStatus(Weather).Name); }
+        public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_MAP").ToLocal(), DataManager.Instance.GetMapStatus(Weather).GetColoredName()); }
         public override bool GetReq(Character character)
         {
             return ZoneManager.Instance.CurrentMap.Status.ContainsKey(Weather);
@@ -177,7 +177,7 @@ namespace PMDC.Data
 
         public override string GetReqString()
         {
-            return String.Format(new StringKey("EVO_REQ_STAT_BOOST").ToLocal(), DataManager.Instance.GetStatus(StatBoostStatus).Name);
+            return String.Format(new StringKey("EVO_REQ_STAT_BOOST").ToLocal(), DataManager.Instance.GetStatus(StatBoostStatus).GetColoredName());
         }
         public override bool GetReq(Character character)
         {
@@ -196,7 +196,7 @@ namespace PMDC.Data
     {
         public int MoveNum;
 
-        public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_SKILL").ToLocal(), DataManager.Instance.GetSkill(MoveNum).Name.ToLocal()); }
+        public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_SKILL").ToLocal(), DataManager.Instance.GetSkill(MoveNum).GetColoredName()); }
         public override bool GetReq(Character character)
         {
             foreach (SlotSkill move in character.BaseSkills)
@@ -216,7 +216,7 @@ namespace PMDC.Data
         public override string GetReqString()
         {
             ElementData elementEntry = DataManager.Instance.GetElement(MoveElement);
-            return String.Format(new StringKey("EVO_REQ_SKILL_ELEMENT").ToLocal(), elementEntry.Name.ToLocal());
+            return String.Format(new StringKey("EVO_REQ_SKILL_ELEMENT").ToLocal(), elementEntry.GetColoredName());
         }
         public override bool GetReq(Character character)
         {
@@ -302,7 +302,7 @@ namespace PMDC.Data
         public override string GetReqString()
         {
             ElementData elementEntry = DataManager.Instance.GetElement(TileElement);
-            return String.Format(new StringKey("EVO_REQ_TILE_ELEMENT").ToLocal(), elementEntry.Name.ToLocal());
+            return String.Format(new StringKey("EVO_REQ_TILE_ELEMENT").ToLocal(), elementEntry.GetColoredName());
         }
         public override bool GetReq(Character character)
         {
@@ -314,7 +314,7 @@ namespace PMDC.Data
     {
         public int Species;
 
-        public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_ALLY_SPECIES").ToLocal(), DataManager.Instance.GetMonster(Species).Name.ToLocal()); }
+        public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_ALLY_SPECIES").ToLocal(), DataManager.Instance.GetMonster(Species).GetColoredName()); }
         public override bool GetReq(Character character)
         {
             foreach (Character partner in character.MemberTeam.Players)
@@ -334,7 +334,7 @@ namespace PMDC.Data
         public override string GetReqString()
         {
             ElementData elementEntry = DataManager.Instance.GetElement(PartnerElement);
-            return String.Format(new StringKey("EVO_REQ_ALLY_ELEMENT").ToLocal(), elementEntry.Name.ToLocal());
+            return String.Format(new StringKey("EVO_REQ_ALLY_ELEMENT").ToLocal(), elementEntry.GetColoredName());
         }
         public override bool GetReq(Character character)
         {
