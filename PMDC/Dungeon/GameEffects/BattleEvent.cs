@@ -7445,6 +7445,37 @@ namespace PMDC.Dungeon
 
 
     [Serializable]
+    public class OnSelfActionEvent : BattleEvent
+    {
+        public List<BattleEvent> BaseEvents;
+
+        public OnSelfActionEvent() { BaseEvents = new List<BattleEvent>(); }
+        public OnSelfActionEvent(params BattleEvent[] effects)
+        {
+            BaseEvents = new List<BattleEvent>();
+            foreach (BattleEvent effect in effects)
+                BaseEvents.Add(effect);
+        }
+        protected OnSelfActionEvent(OnSelfActionEvent other)
+            : this()
+        {
+            foreach (BattleEvent battleEffect in other.BaseEvents)
+                BaseEvents.Add((BattleEvent)battleEffect.Clone());
+        }
+        public override GameEvent Clone() { return new OnDashActionEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.HitboxAction is SelfAction)
+            {
+                foreach (BattleEvent battleEffect in BaseEvents)
+                    yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
+            }
+        }
+    }
+
+
+    [Serializable]
     public class OnDashActionEvent : BattleEvent
     {
         public List<BattleEvent> BaseEvents;
