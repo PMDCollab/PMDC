@@ -58,6 +58,9 @@ namespace PMDC.LevelGen
             return results;
         }
 
-
+        public override string ToString()
+        {
+            return string.Format("{0}: Rarity:{1} Amt:{2}", this.GetType().Name, this.Rarity.ToString(), this.Amount.ToString());
+        }
     }
 }

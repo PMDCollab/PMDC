@@ -288,7 +288,6 @@ namespace PMDC
             DataEditor.AddEditor(new EntryDataEditor());
             DataEditor.AddEditor(new FrameTypeEditor());
 
-
             DataEditor.AddEditor(new MapTilesEditor());
             DataEditor.AddEditor(new BaseEmitterEditor());
             DataEditor.AddEditor(new BattleDataEditor());
@@ -303,6 +302,7 @@ namespace PMDC
             DataEditor.AddEditor(new ColumnAnimEditor());
             DataEditor.AddEditor(new StaticAnimEditor());
             DataEditor.AddEditor(new TypeDictEditor());
+            DataEditor.AddEditor(new RangeDictEditor());
             DataEditor.AddEditor(new SpawnListEditor());
             DataEditor.AddEditor(new SpawnRangeListEditor());
             DataEditor.AddEditor(new PriorityListEditor());
