@@ -7476,6 +7476,58 @@ namespace PMDC.Dungeon
 
 
     [Serializable]
+    public class GiveStatusNeededEvent : BattleEvent
+    {
+        [DataType(0, DataManager.DataType.Status, false)]
+        public int[] Statuses;
+        public List<BattleEvent> BaseEvents;
+
+        public GiveStatusNeededEvent() { BaseEvents = new List<BattleEvent>(); }
+        public GiveStatusNeededEvent(int[] statuses, params BattleEvent[] effects)
+        {
+            Statuses = statuses;
+            BaseEvents = new List<BattleEvent>();
+            foreach (BattleEvent effect in effects)
+                BaseEvents.Add(effect);
+        }
+        protected GiveStatusNeededEvent(GiveStatusNeededEvent other)
+            : this()
+        {
+            Statuses = new int[other.Statuses.Length];
+            Array.Copy(other.Statuses, Statuses, Statuses.Length);
+            foreach (BattleEvent battleEffect in other.BaseEvents)
+                BaseEvents.Add((BattleEvent)battleEffect.Clone());
+        }
+        public override GameEvent Clone() { return new GiveStatusNeededEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            bool hasStatus = false;
+            foreach (BattleEvent effect in context.Data.OnHits)
+            {
+                StatusBattleEvent statusEvent = effect as StatusBattleEvent;
+                if (statusEvent != null)
+                {
+                    foreach (int status in Statuses)
+                    {
+                        if (statusEvent.StatusID == status)
+                        {
+                            hasStatus = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (hasStatus)
+            {
+                foreach (BattleEvent battleEffect in BaseEvents)
+                    yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
+            }
+        }
+    }
+
+
+    [Serializable]
     public class OnDashActionEvent : BattleEvent
     {
         public List<BattleEvent> BaseEvents;
