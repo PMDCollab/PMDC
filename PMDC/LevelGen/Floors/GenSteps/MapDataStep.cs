@@ -5,12 +5,14 @@ using RogueElements;
 using RogueEssence.Data;
 using RogueEssence.LevelGen;
 using System.Text;
+using RogueEssence.Dev;
 
 namespace PMDC.LevelGen
 {
     [Serializable]
     public class MapDataStep<T> : GenStep<T> where T : BaseMapGenContext
     {
+        [Music(0)]
         public string Music;
         public int TimeLimit;
         public Map.SightRange TileSight;
