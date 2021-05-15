@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using RogueElements;
+using RogueEssence.Dev;
 using RogueEssence.Dungeon;
 using RogueEssence.LevelGen;
 
@@ -11,13 +12,17 @@ namespace PMDC.LevelGen
     {
         public SpreadPlanBase SpreadPlan;
         public Priority Priority;
-        
+
         //they're generated on runtime, so they use map RNG, thus use spawnlists
+        [RangeBorder(0, true, true)]
         public SpawnRangeList<MapItem> Items;
+        [RangeBorder(0, true, true)]
         public SpawnRangeList<ItemTheme> ItemThemes;
+        [RangeBorder(0, true, true)]
         public SpawnRangeList<MobSpawn> Mobs;
         //special enemies will have their level scaled according to the paramrange provided by the floor
         //levels will be a spawnrangelist of ints, autocalculated with increments of 3-4
+        [RangeBorder(0, true, true)]
         public SpawnRangeList<MobTheme> MobThemes;
         public SpawnList<IMonsterHouseBaseStep> PostProcSpawns;
 

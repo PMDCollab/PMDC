@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using RogueElements;
 using RogueEssence;
+using RogueEssence.Dev;
 using RogueEssence.Dungeon;
 using RogueEssence.LevelGen;
 
@@ -17,7 +18,9 @@ namespace PMDC.LevelGen
         public List<IGenPriority> VaultSteps;
 
         //items can be multiple lists
+        [RangeBorder(0, true, true)]
         public SpawnRangeList<MapItem> Items;
+        [RangeBorder(0, true, true)]
         public SpawnRangeList<AddBossRoomStep<ListMapGenContext>> BossSteps;
         //special enemies will have their level scaled according to the paramrange provided by the floor
         //levels will be a spawnrangelist of ints, autocalculated with increments of 3-4
@@ -25,8 +28,11 @@ namespace PMDC.LevelGen
         /// <summary>
         /// Amount for the items randomly chosen from spawnlist
         /// </summary>
+        [RangeBorder(0, true, true)]
         public RangeDict<RandRange> ItemAmount;
+        [RangeBorder(0, true, true)]
         public RangeDict<IStepSpawner<ListMapGenContext, MapItem>> ItemSpawners;
+        [RangeBorder(0, true, true)]
         public RangeDict<RandomRoomSpawnStep<ListMapGenContext, MapItem>> ItemPlacements;
         //spreads an item through the floors
         //ensures that the space in floors between occurrences is kept tame
