@@ -287,6 +287,8 @@ namespace PMDC
             DataEditor.AddEditor(new MusicEditor());
             DataEditor.AddEditor(new EntryDataEditor());
             DataEditor.AddEditor(new FrameTypeEditor());
+            DataEditor.AddEditor(new MapItemEditor());
+            DataEditor.AddEditor(new MonsterIDEditor());
 
             DataEditor.AddEditor(new MapTilesEditor());
             DataEditor.AddEditor(new BaseEmitterEditor());
@@ -309,6 +311,7 @@ namespace PMDC
             DataEditor.AddEditor(new PriorityEditor());
             DataEditor.AddEditor(new SegLocEditor());
             DataEditor.AddEditor(new LocEditor());
+            DataEditor.AddEditor(new RandRangeEditor());
             DataEditor.AddEditor(new IntRangeEditor());
             DataEditor.AddEditor(new FlagTypeEditor());
             DataEditor.AddEditor(new ColorEditor());
@@ -324,8 +327,6 @@ namespace PMDC
             DataEditor.AddEditor(new IntEditor());
             DataEditor.AddEditor(new ByteEditor());
             DataEditor.AddEditor(new ObjectEditor());
-
-            DataEditor.AddConverter(new MapItemConv());
         }
     }
 }
