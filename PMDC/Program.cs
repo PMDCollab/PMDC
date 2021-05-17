@@ -281,6 +281,9 @@ namespace PMDC
         public static void InitDataEditor()
         {
             DataEditor.Init();
+
+            DataEditor.AddEditor(new ZoneMoneySpawnPostProcEditor());
+
             //DataEditor.AddConverter(new AutoTileBaseConverter());
             DataEditor.AddEditor(new AnimDataEditor());
             DataEditor.AddEditor(new SoundEditor());
