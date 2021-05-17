@@ -137,14 +137,14 @@ namespace MapGenTest
                     Console.WriteLine("Choose a structure|ESC=Back|F2=Stress Test");
 
                     int longestWidth = 0;
-                    for (int ii = 0; ii < zone.Structures.Count; ii++)
+                    for (int ii = 0; ii < zone.Segments.Count; ii++)
                     {
-                        string label = GetSelectionString(ii, zone.Structures[ii].FloorCount + " Floors");
+                        string label = GetSelectionString(ii, zone.Segments[ii].FloorCount + " Floors");
                         if (label.Length > longestWidth)
                             longestWidth = label.Length;
                     }
                     int cols = Math.Min(3, (Console.WindowWidth - 1) / longestWidth + 1);
-                    int rows = Math.Max(Math.Min(12, zone.Structures.Count), (zone.Structures.Count - 1) / cols + 1);
+                    int rows = Math.Max(Math.Min(12, zone.Segments.Count), (zone.Segments.Count - 1) / cols + 1);
 
                     for (int ii = 0; ii < rows; ii++)
                     {
@@ -153,10 +153,10 @@ namespace MapGenTest
                         for (int jj = 0; jj < cols; jj++)
                         {
                             int index = ii + rows * jj;
-                            if (index < zone.Structures.Count)
+                            if (index < zone.Segments.Count)
                             {
                                 choiceStr += "{" + jj + "," + "-" + longestWidth + "}";
-                                choiceList.Add(GetSelectionString(index, zone.Structures[index].FloorCount + " Floors"));
+                                choiceList.Add(GetSelectionString(index, zone.Segments[index].FloorCount + " Floors"));
                             }
                         }
                         Console.WriteLine(String.Format(choiceStr, choiceList.ToArray()));
@@ -197,10 +197,10 @@ namespace MapGenTest
                         if (key.KeyChar >= 'a' && key.KeyChar <= 'z')
                             structureIndex = key.KeyChar - 'a' + 10;
                     }
-                    if (structureIndex > -1 && structureIndex < zone.Structures.Count)
+                    if (structureIndex > -1 && structureIndex < zone.Segments.Count)
                     {
                         Registry.SetValue(DiagManager.REG_PATH, "StructChoice", structureIndex);
-                        FloorMenu(state, structureIndex, zone.Structures[structureIndex]);
+                        FloorMenu(state, structureIndex, zone.Segments[structureIndex]);
                         Registry.SetValue(DiagManager.REG_PATH, "StructChoice", -1);
                     }
                 }
@@ -308,9 +308,9 @@ namespace MapGenTest
                         //load the struct context
                         ReRandom initRand = new ReRandom(structSeed);
                         ZoneGenContext zoneContext = new ZoneGenContext();
-                        foreach (ZonePostProc zoneStep in structure.PostProcessingSteps)
+                        foreach (ZoneStep zoneStep in structure.ZoneSteps)
                         {
-                            ZonePostProc newStep = zoneStep.Instantiate(initRand.NextUInt64());
+                            ZoneStep newStep = zoneStep.Instantiate(initRand.NextUInt64());
                             zoneContext.ZoneSteps.Add(newStep);
                         }
 
@@ -447,10 +447,10 @@ namespace MapGenTest
                         zoneIndex = kk;
                         ZoneData zone = getCachedZone(kk);
 
-                        for (int nn = 0; nn < zone.Structures.Count; nn++)
+                        for (int nn = 0; nn < zone.Segments.Count; nn++)
                         {
                             structureIndex = nn;
-                            ZoneSegmentBase structure = zone.Structures[nn];
+                            ZoneSegmentBase structure = zone.Segments[nn];
 
                             structSeed = MathUtils.Rand.NextUInt64();
                             ReRandom structRand = new ReRandom(structSeed);
@@ -458,9 +458,9 @@ namespace MapGenTest
                             //load the struct context
                             ReRandom initRand = new ReRandom(structSeed);
                             ZoneGenContext zoneContext = new ZoneGenContext();
-                            foreach (ZonePostProc zoneStep in structure.PostProcessingSteps)
+                            foreach (ZoneStep zoneStep in structure.ZoneSteps)
                             {
-                                ZonePostProc newStep = zoneStep.Instantiate(initRand.NextUInt64());
+                                ZoneStep newStep = zoneStep.Instantiate(initRand.NextUInt64());
                                 zoneContext.ZoneSteps.Add(newStep);
                             }
 
@@ -501,17 +501,17 @@ namespace MapGenTest
             try
             {
                 List<List<TimeSpan>> generationTimes = new List<List<TimeSpan>>();
-                for (int ii = 0; ii < zone.Structures.Count; ii++)
+                for (int ii = 0; ii < zone.Segments.Count; ii++)
                     generationTimes.Add(new List<TimeSpan>());
 
                 Stopwatch watch = new Stopwatch();
 
                 for (int ii = 0; ii < amount; ii++)
                 {
-                    for (int nn = 0; nn < zone.Structures.Count; nn++)
+                    for (int nn = 0; nn < zone.Segments.Count; nn++)
                     {
                         structureIndex = nn;
-                        ZoneSegmentBase structure = zone.Structures[nn];
+                        ZoneSegmentBase structure = zone.Segments[nn];
 
                         structSeed = MathUtils.Rand.NextUInt64();
                         ReRandom structRand = new ReRandom(structSeed);
@@ -519,9 +519,9 @@ namespace MapGenTest
                         //load the struct context
                         ReRandom initRand = new ReRandom(structSeed);
                         ZoneGenContext zoneContext = new ZoneGenContext();
-                        foreach (ZonePostProc zoneStep in structure.PostProcessingSteps)
+                        foreach (ZoneStep zoneStep in structure.ZoneSteps)
                         {
-                            ZonePostProc newStep = zoneStep.Instantiate(initRand.NextUInt64());
+                            ZoneStep newStep = zoneStep.Instantiate(initRand.NextUInt64());
                             zoneContext.ZoneSteps.Add(newStep);
                         }
 
@@ -581,9 +581,9 @@ namespace MapGenTest
                     //load the struct context
                     ReRandom initRand = new ReRandom(structSeed);
                     ZoneGenContext zoneContext = new ZoneGenContext();
-                    foreach (ZonePostProc zoneStep in structure.PostProcessingSteps)
+                    foreach (ZoneStep zoneStep in structure.ZoneSteps)
                     {
-                        ZonePostProc newStep = zoneStep.Instantiate(initRand.NextUInt64());
+                        ZoneStep newStep = zoneStep.Instantiate(initRand.NextUInt64());
                         zoneContext.ZoneSteps.Add(newStep);
                     }
 
@@ -656,9 +656,9 @@ namespace MapGenTest
                     //load the struct context
                     ReRandom initRand = new ReRandom(structSeed);
                     ZoneGenContext zoneContext = new ZoneGenContext();
-                    foreach (ZonePostProc zoneStep in structure.PostProcessingSteps)
+                    foreach (ZoneStep zoneStep in structure.ZoneSteps)
                     {
-                        ZonePostProc newStep = zoneStep.Instantiate(initRand.NextUInt64());
+                        ZoneStep newStep = zoneStep.Instantiate(initRand.NextUInt64());
                         zoneContext.ZoneSteps.Add(newStep);
                     }
 

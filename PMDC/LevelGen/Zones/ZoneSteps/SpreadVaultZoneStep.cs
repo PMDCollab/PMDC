@@ -9,11 +9,11 @@ using RogueEssence.LevelGen;
 namespace PMDC.LevelGen
 {
     [Serializable]
-    public class SpreadBossPostProc : ZonePostProc
+    public class SpreadVaultZoneStep : ZoneStep
     {
         public SpreadPlanBase SpreadPlan;
-        public Priority BossRoomPriority;
-        public Priority RewardPriority;
+        public Priority ItemPriority;
+        public Priority MobPriority;
 
         public List<IGenPriority> VaultSteps;
 
@@ -21,7 +21,7 @@ namespace PMDC.LevelGen
         [RangeBorder(0, true, true)]
         public SpawnRangeList<MapItem> Items;
         [RangeBorder(0, true, true)]
-        public SpawnRangeList<AddBossRoomStep<ListMapGenContext>> BossSteps;
+        public SpawnRangeList<MobSpawn> Mobs;
         //special enemies will have their level scaled according to the paramrange provided by the floor
         //levels will be a spawnrangelist of ints, autocalculated with increments of 3-4
 
@@ -34,75 +34,89 @@ namespace PMDC.LevelGen
         public RangeDict<IStepSpawner<ListMapGenContext, MapItem>> ItemSpawners;
         [RangeBorder(0, true, true)]
         public RangeDict<RandomRoomSpawnStep<ListMapGenContext, MapItem>> ItemPlacements;
+        [RangeBorder(0, true, true)]
+        public RangeDict<PlaceRandomMobsStep<ListMapGenContext>> MobPlacements;
         //spreads an item through the floors
         //ensures that the space in floors between occurrences is kept tame
-        public SpreadBossPostProc()
+        public SpreadVaultZoneStep()
         {
             VaultSteps = new List<IGenPriority>();
             Items = new SpawnRangeList<MapItem>();
-            BossSteps = new SpawnRangeList<AddBossRoomStep<ListMapGenContext>>();
+            Mobs = new SpawnRangeList<MobSpawn>();
             ItemAmount = new RangeDict<RandRange>();
             ItemSpawners = new RangeDict<IStepSpawner<ListMapGenContext, MapItem>>();
             ItemPlacements = new RangeDict<RandomRoomSpawnStep<ListMapGenContext, MapItem>>();
+            MobPlacements = new RangeDict<PlaceRandomMobsStep<ListMapGenContext>>();
         }
-        public SpreadBossPostProc(Priority bossRoomPriority, Priority rewardPriority) : this()
+        public SpreadVaultZoneStep(Priority itemPriority, Priority mobPriority) : this()
         {
-            BossRoomPriority = bossRoomPriority;
-            RewardPriority = rewardPriority;
+            MobPriority = itemPriority;
         }
 
-        public SpreadBossPostProc(Priority bossRoomPriority, Priority rewardPriority, SpreadPlanBase plan) : this(bossRoomPriority, rewardPriority)
+        public SpreadVaultZoneStep(Priority itemPriority, Priority mobPriority, SpreadPlanBase plan) : this(itemPriority, mobPriority)
         {
-            BossRoomPriority = bossRoomPriority;
-            RewardPriority = rewardPriority;
+            ItemPriority = itemPriority;
+            MobPriority = mobPriority;
             SpreadPlan = plan;
         }
 
-        protected SpreadBossPostProc(SpreadBossPostProc other, ulong seed) : this()
+        protected SpreadVaultZoneStep(SpreadVaultZoneStep other, ulong seed) : this()
         {
             VaultSteps = other.VaultSteps;
             Items = other.Items;
-            BossSteps = other.BossSteps;
+            Mobs = other.Mobs;
             ItemAmount = other.ItemAmount;
             ItemSpawners = other.ItemSpawners;
             ItemPlacements = other.ItemPlacements;
+            MobPlacements = other.MobPlacements;
 
-            BossRoomPriority = other.BossRoomPriority;
-            RewardPriority = other.RewardPriority;
+            ItemPriority = other.ItemPriority;
+            MobPriority = other.MobPriority;
             SpreadPlan = other.SpreadPlan.Instantiate(seed);
         }
 
-        public override ZonePostProc Instantiate(ulong seed) { return new SpreadBossPostProc(this, seed); }
+        public override ZoneStep Instantiate(ulong seed) { return new SpreadVaultZoneStep(this, seed); }
 
         public override void Apply(ZoneGenContext zoneContext, IGenContext context, StablePriorityQueue<Priority, IGenStep> queue)
         {
             int id = zoneContext.CurrentID;
             if (SpreadPlan.CheckIfDistributed(zoneContext, context))
             {
-                {
-                    SpawnList<AddBossRoomStep<ListMapGenContext>> bossListSlice = BossSteps.GetSpawnList(id);
-                    if (!bossListSlice.CanPick)
-                        return;
-                    AddBossRoomStep<ListMapGenContext> bossStep = bossListSlice.Pick(context.Rand).Copy();
-                    queue.Enqueue(BossRoomPriority, bossStep);
-                }
-
-                foreach (IGenPriority vaultStep in VaultSteps)
+                foreach(IGenPriority vaultStep in VaultSteps)
                     queue.Enqueue(vaultStep.Priority, vaultStep.GetItem());
 
                 {
                     SpawnList<MapItem> itemListSlice = Items.GetSpawnList(id);
                     PickerSpawner<ListMapGenContext, MapItem> constructedSpawns = new PickerSpawner<ListMapGenContext, MapItem>(new LoopedRand<MapItem>(itemListSlice, ItemAmount[id]));
 
-                    IStepSpawner<ListMapGenContext, MapItem> treasures = ItemSpawners[id].Copy();
-
-                    PresetMultiRand<IStepSpawner<ListMapGenContext, MapItem>> groupRand = new PresetMultiRand<IStepSpawner<ListMapGenContext, MapItem>>(constructedSpawns, treasures);
-
+                    List<IStepSpawner<ListMapGenContext, MapItem>> steps = new List<IStepSpawner<ListMapGenContext, MapItem>>();
+                    steps.Add(constructedSpawns);
+                    if (ItemSpawners.ContainsItem(id))
+                    {
+                        IStepSpawner<ListMapGenContext, MapItem> treasures = ItemSpawners[id].Copy();
+                        steps.Add(treasures);
+                    }
+                    PresetMultiRand<IStepSpawner<ListMapGenContext, MapItem>> groupRand = new PresetMultiRand<IStepSpawner<ListMapGenContext, MapItem>>(steps.ToArray());
                     RandomRoomSpawnStep<ListMapGenContext, MapItem> detourItems = ItemPlacements[id].Copy();
                     detourItems.Spawn = new StepSpawner<ListMapGenContext, MapItem>(groupRand);
-                    queue.Enqueue(RewardPriority, detourItems);
+                    queue.Enqueue(ItemPriority, detourItems);
                 }
 
+
+                SpawnList<MobSpawn> mobListSlice = Mobs.GetSpawnList(id);
+                if (mobListSlice.CanPick)
+                {
+                    //secret enemies
+                    SpecificTeamSpawner specificTeam = new SpecificTeamSpawner();
+
+                    MobSpawn newSpawn = mobListSlice.Pick(context.Rand).Copy();
+                    specificTeam.Spawns.Add(newSpawn);
+
+                    //use bruteforce clone for this
+                    PlaceRandomMobsStep<ListMapGenContext> secretMobPlacement = MobPlacements[id].Copy();
+                    secretMobPlacement.Spawn = new TeamPickerSpawner<ListMapGenContext>(specificTeam);
+                    queue.Enqueue(MobPriority, secretMobPlacement);
+                }
             }
         }
     }

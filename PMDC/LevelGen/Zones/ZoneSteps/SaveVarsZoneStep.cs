@@ -8,20 +8,20 @@ using RogueEssence.LevelGen;
 namespace PMDC.LevelGen
 {
     [Serializable]
-    public class SaveVarsPostProc : ZonePostProc
+    public class SaveVarsZoneStep : ZoneStep
     {
         public Priority Priority;
 
-        public SaveVarsPostProc(Priority priority)
+        public SaveVarsZoneStep(Priority priority)
         {
             Priority = priority;
         }
-        protected SaveVarsPostProc(SaveVarsPostProc other, ulong seed)
+        protected SaveVarsZoneStep(SaveVarsZoneStep other, ulong seed)
         {
             Priority = other.Priority;
         }
 
-        public override ZonePostProc Instantiate(ulong seed) { return new SaveVarsPostProc(this, seed); }
+        public override ZoneStep Instantiate(ulong seed) { return new SaveVarsZoneStep(this, seed); }
 
         public override void Apply(ZoneGenContext zoneContext, IGenContext context, StablePriorityQueue<Priority, IGenStep> queue)
         {

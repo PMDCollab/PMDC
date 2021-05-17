@@ -2679,7 +2679,7 @@ namespace PMDC.Dungeon
             //however, only the leader of a team can choose to advance
             if (character == DungeonScene.Instance.ActiveTeam.Leader)
             {
-                ZoneSegmentBase structure = ZoneManager.Instance.CurrentZone.Structures[ZoneManager.Instance.CurrentMapID.Segment];
+                ZoneSegmentBase structure = ZoneManager.Instance.CurrentZone.Segments[ZoneManager.Instance.CurrentMapID.Segment];
                 GameManager.Instance.BattleSE("DUN_Stairs_Down");
                 yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Rescue));
             }
@@ -2704,7 +2704,7 @@ namespace PMDC.Dungeon
             //however, only the leader of a team can choose to advance
             if (character == DungeonScene.Instance.ActiveTeam.Leader)
             {
-                ZoneSegmentBase structure = ZoneManager.Instance.CurrentZone.Structures[ZoneManager.Instance.CurrentMapID.Segment];
+                ZoneSegmentBase structure = ZoneManager.Instance.CurrentZone.Segments[ZoneManager.Instance.CurrentMapID.Segment];
                 GameManager.Instance.BattleSE("DUN_Stairs_Down");
                 if (ZoneManager.Instance.CurrentMapID.ID + 1 < structure.FloorCount)
                 {
@@ -2740,11 +2740,11 @@ namespace PMDC.Dungeon
                 {
                     yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeOut(false));
 
-                    int endStructure = ZoneManager.Instance.CurrentMapID.Segment + destState.Dest.Segment;
+                    int endSegment = ZoneManager.Instance.CurrentMapID.Segment + destState.Dest.Segment;
                     int endFloor = ZoneManager.Instance.CurrentMapID.ID + destState.Dest.ID;
 
-                    if (endStructure >= 0 && endFloor >= 0 && endStructure < ZoneManager.Instance.CurrentZone.Structures.Count && endFloor < ZoneManager.Instance.CurrentZone.Structures[endStructure].FloorCount)
-                        GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, new SegLoc(endStructure, endFloor)));
+                    if (endSegment >= 0 && endFloor >= 0 && endSegment < ZoneManager.Instance.CurrentZone.Segments.Count && endFloor < ZoneManager.Instance.CurrentZone.Segments[endSegment].FloorCount)
+                        GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, new SegLoc(endSegment, endFloor)));
                     else
                         yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
                 }

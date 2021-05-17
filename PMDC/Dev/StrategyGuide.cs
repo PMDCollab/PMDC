@@ -330,14 +330,14 @@ namespace PMDC.Dev
                             for (int zz = 0; zz < DataManager.Instance.DataIndices[DataManager.DataType.Zone].Count; zz++)
                             {
                                 ZoneData mainZone = DataManager.Instance.GetZone(zz);
-                                for (int yy = 0; yy < mainZone.Structures.Count; yy++)
+                                for (int yy = 0; yy < mainZone.Segments.Count; yy++)
                                 {
                                     if (specialDict.ContainsKey(zz) && specialDict[zz].Contains(yy))
                                     {
                                         string locString = String.Format("{0} {1}S", mainZone.Name.ToLocal(), yy + 1);
-                                        foreach (var step in mainZone.Structures[yy].PostProcessingSteps)
+                                        foreach (var step in mainZone.Segments[yy].ZoneSteps)
                                         {
-                                            var startStep = step as FloorNameIDPostProc;
+                                            var startStep = step as FloorNameIDZoneStep;
                                             if (startStep != null)
                                             {
                                                 locString = LocalText.FormatLocalText(startStep.Name, "?").ToLocal().Replace('\n', ' ');
@@ -354,9 +354,9 @@ namespace PMDC.Dev
                                         List<string> ranges = combineFloorRanges(floorDict[zz][yy]);
                                         string rangeString = String.Join(",", ranges.ToArray());
                                         string locString = String.Format("{0} {1}S {2}F", mainZone.Name.ToLocal(), yy + 1, rangeString);
-                                        foreach (var step in mainZone.Structures[yy].PostProcessingSteps)
+                                        foreach (var step in mainZone.Segments[yy].ZoneSteps)
                                         {
-                                            var startStep = step as FloorNameIDPostProc;
+                                            var startStep = step as FloorNameIDZoneStep;
                                             if (startStep != null)
                                             {
                                                 locString = LocalText.FormatLocalText(startStep.Name, rangeString).ToLocal().Replace('\n', ' ');

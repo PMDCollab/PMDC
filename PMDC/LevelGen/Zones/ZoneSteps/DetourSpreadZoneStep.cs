@@ -8,7 +8,7 @@
 //    //TODO: revive this trainwreck of a class after you've split it up
 
 //    [Serializable]
-//    public class DetourSpreadPostProc : ZonePostProc<MapGenContext>
+//    public class DetourSpreadZoneStep : ZoneStep<MapGenContext>
 //    {
 //        public Range FloorSpacing;
 //        public Range FloorRange;
@@ -28,7 +28,7 @@
 
 //        //spreads an item through the floors
 //        //ensures that the space in floors between occurrences is kept tame
-//        public DetourSpreadPostProc(int priority)
+//        public DetourSpreadZoneStep(int priority)
 //        {
 //            Priority = priority;
 //            TileSpawns = new SpawnRangeList<EffectTile>();
@@ -37,7 +37,7 @@
 //            TeamSpawns = new SpawnRangeList<TeamSpawner>();
 //        }
 
-//        public DetourSpreadPostProc(int priority, Range spacing, Range floorRange) : this(priority)
+//        public DetourSpreadZoneStep(int priority, Range spacing, Range floorRange) : this(priority)
 //        {
 //            FloorSpacing = spacing;
 //            FloorRange = floorRange;

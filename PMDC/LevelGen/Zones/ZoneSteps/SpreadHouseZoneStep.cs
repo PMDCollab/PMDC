@@ -8,7 +8,7 @@ using RogueEssence.LevelGen;
 namespace PMDC.LevelGen
 {
     [Serializable]
-    public class SpreadHousePostProc : ZonePostProc
+    public class SpreadHouseZoneStep : ZoneStep
     {
         public SpreadPlanBase SpreadPlan;
         public Priority Priority;
@@ -24,66 +24,66 @@ namespace PMDC.LevelGen
         //levels will be a spawnrangelist of ints, autocalculated with increments of 3-4
         [RangeBorder(0, true, true)]
         public SpawnRangeList<MobTheme> MobThemes;
-        public SpawnList<IMonsterHouseBaseStep> PostProcSpawns;
+        public SpawnList<IMonsterHouseBaseStep> HouseStepSpawns;
 
         //spreads an item through the floors
         //ensures that the space in floors between occurrences is kept tame
-        public SpreadHousePostProc()
+        public SpreadHouseZoneStep()
         {
             Items = new SpawnRangeList<MapItem>();
             ItemThemes = new SpawnRangeList<ItemTheme>();
             Mobs = new SpawnRangeList<MobSpawn>();
             MobThemes = new SpawnRangeList<MobTheme>();
-            PostProcSpawns = new SpawnList<IMonsterHouseBaseStep>();
+            HouseStepSpawns = new SpawnList<IMonsterHouseBaseStep>();
         }
-        public SpreadHousePostProc(Priority priority) : this()
+        public SpreadHouseZoneStep(Priority priority) : this()
         {
             Priority = priority;
         }
 
-        public SpreadHousePostProc(Priority priority, SpreadPlanBase plan) : this(priority)
+        public SpreadHouseZoneStep(Priority priority, SpreadPlanBase plan) : this(priority)
         {
             Priority = priority;
             SpreadPlan = plan;
         }
 
-        protected SpreadHousePostProc(SpreadHousePostProc other, ulong seed) : this()
+        protected SpreadHouseZoneStep(SpreadHouseZoneStep other, ulong seed) : this()
         {
             Items = other.Items;
             ItemThemes = other.ItemThemes;
             Mobs = other.Mobs;
             MobThemes = other.MobThemes;
-            PostProcSpawns = other.PostProcSpawns;
+            HouseStepSpawns = other.HouseStepSpawns;
 
             Priority = other.Priority;
             SpreadPlan = other.SpreadPlan.Instantiate(seed);
         }
 
-        public override ZonePostProc Instantiate(ulong seed) { return new SpreadHousePostProc(this, seed); }
+        public override ZoneStep Instantiate(ulong seed) { return new SpreadHouseZoneStep(this, seed); }
 
         public override void Apply(ZoneGenContext zoneContext, IGenContext context, StablePriorityQueue<Priority, IGenStep> queue)
         {
             int id = zoneContext.CurrentID;
             if (SpreadPlan.CheckIfDistributed(zoneContext, context))
             {
-                IMonsterHouseBaseStep monsterHousePostProc = PostProcSpawns.Pick(context.Rand).CreateNew();
+                IMonsterHouseBaseStep monsterHouseStep = HouseStepSpawns.Pick(context.Rand).CreateNew();
                 SpawnList<MapItem> itemListSlice = Items.GetSpawnList(id);
                 for (int jj = 0; jj < itemListSlice.Count; jj++)
-                    monsterHousePostProc.Items.Add(new MapItem(itemListSlice.GetSpawn(jj)), itemListSlice.GetSpawnRate(jj));
+                    monsterHouseStep.Items.Add(new MapItem(itemListSlice.GetSpawn(jj)), itemListSlice.GetSpawnRate(jj));
                 SpawnList<ItemTheme> itemThemeListSlice = ItemThemes.GetSpawnList(id);
                 for (int jj = 0; jj < itemThemeListSlice.Count; jj++)
-                    monsterHousePostProc.ItemThemes.Add(itemThemeListSlice.GetSpawn(jj).Copy(), itemThemeListSlice.GetSpawnRate(jj));
+                    monsterHouseStep.ItemThemes.Add(itemThemeListSlice.GetSpawn(jj).Copy(), itemThemeListSlice.GetSpawnRate(jj));
                 SpawnList<MobSpawn> mobListSlice = Mobs.GetSpawnList(id);
                 for (int jj = 0; jj < mobListSlice.Count; jj++)
                 {
                     MobSpawn newSpawn = mobListSlice.GetSpawn(jj).Copy();
-                    monsterHousePostProc.Mobs.Add(newSpawn, mobListSlice.GetSpawnRate(jj));
+                    monsterHouseStep.Mobs.Add(newSpawn, mobListSlice.GetSpawnRate(jj));
                 }
                 SpawnList<MobTheme> mobThemeListSlice = MobThemes.GetSpawnList(id);
                 for (int jj = 0; jj < mobThemeListSlice.Count; jj++)
-                    monsterHousePostProc.MobThemes.Add(mobThemeListSlice.GetSpawn(jj).Copy(), mobThemeListSlice.GetSpawnRate(jj));
+                    monsterHouseStep.MobThemes.Add(mobThemeListSlice.GetSpawn(jj).Copy(), mobThemeListSlice.GetSpawnRate(jj));
 
-                queue.Enqueue(Priority, monsterHousePostProc);
+                queue.Enqueue(Priority, monsterHouseStep);
             }
         }
     }

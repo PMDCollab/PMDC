@@ -110,11 +110,11 @@ namespace PMDC.Dev
                     foreach (object val in array)
                         extractMobSpawnFromObject(foundSpecies, val, recruitableOnly, tag, encounter);
                 }
-                else if (type == typeof(SpreadVaultPostProc))
+                else if (type == typeof(SpreadVaultZoneStep))
                 {
                     extractMobSpawnsFromClass(foundSpecies, member, recruitableOnly, "VAULT", encounter);
                 }
-                else if (type == typeof(SpreadHousePostProc))
+                else if (type == typeof(SpreadHouseZoneStep))
                 {
                     extractMobSpawnsFromClass(foundSpecies, member, recruitableOnly, "HOUSE", encounter);
                 }
@@ -193,18 +193,18 @@ namespace PMDC.Dev
                     continue;
                 ZoneData mainZone = DataManager.Instance.GetZone(zz);
 
-                for (int ii = 0; ii < mainZone.Structures.Count; ii++)
+                for (int ii = 0; ii < mainZone.Segments.Count; ii++)
                 {
-                    LayeredSegment structure = mainZone.Structures[ii] as LayeredSegment;
+                    LayeredSegment structure = mainZone.Segments[ii] as LayeredSegment;
                     //check the postprocs for spawn-related classes
                     if (structure != null)
                     {
-                        extractMobSpawnFromObject(foundSpecies, structure.PostProcessingSteps, recruitableOnly, "", new ZoneLoc(zz, new SegLoc(ii, -1)));
+                        extractMobSpawnFromObject(foundSpecies, structure.ZoneSteps, recruitableOnly, "", new ZoneLoc(zz, new SegLoc(ii, -1)));
                         for (int jj = 0; jj < structure.Floors.Count; jj++)
                             extractMobSpawnFromObject(foundSpecies, structure.Floors[jj], recruitableOnly, "", new ZoneLoc(zz, new SegLoc(ii, jj)));
                     }
                     else
-                        extractMobSpawnFromObject(foundSpecies, mainZone.Structures[ii], recruitableOnly, "", new ZoneLoc(zz, new SegLoc(ii, -1)));
+                        extractMobSpawnFromObject(foundSpecies, mainZone.Segments[ii], recruitableOnly, "", new ZoneLoc(zz, new SegLoc(ii, -1)));
                 }
             }
             return foundSpecies;
