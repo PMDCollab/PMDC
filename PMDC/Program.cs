@@ -288,6 +288,8 @@ namespace PMDC
             DataEditor.AddEditor(new EntryDataEditor());
             DataEditor.AddEditor(new FrameTypeEditor());
             DataEditor.AddEditor(new MapItemEditor());
+            DataEditor.AddEditor(new StepSpawnerEditor());
+            DataEditor.AddEditor(new TeamStepSpawnerEditor());
             DataEditor.AddEditor(new MonsterIDEditor());
 
             DataEditor.AddEditor(new MapTilesEditor());

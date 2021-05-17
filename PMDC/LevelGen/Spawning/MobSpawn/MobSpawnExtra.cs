@@ -26,6 +26,11 @@ namespace PMDC.LevelGen
                 }
             }
         }
+
+        public override string ToString()
+        {
+            return string.Format("{0}", this.GetType().Name);
+        }
     }
 
     [Serializable]
@@ -48,6 +53,11 @@ namespace PMDC.LevelGen
         {
             if (map.Rand.Next(Odds) == 0)
                 newChar.BaseForm.Skin = 1;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("{0}: 1/{1}", this.GetType().Name, Odds);
         }
     }
 
@@ -72,6 +82,11 @@ namespace PMDC.LevelGen
             for (int ii = StartAt; ii < newChar.Skills.Count; ii++)
                 newChar.Skills[ii].Element.Enabled = false;
         }
+
+        public override string ToString()
+        {
+            return string.Format("{0}: {1}+", this.GetType().Name, StartAt);
+        }
     }
 
     [Serializable]
@@ -87,6 +102,11 @@ namespace PMDC.LevelGen
         public override void ApplyFeature(IMobSpawnMap map, Character newChar)
         {
             newChar.CharDir = Dir;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("{0}: {1}", this.GetType().Name, Dir);
         }
     }
 
@@ -121,6 +141,11 @@ namespace PMDC.LevelGen
             newChar.MDefBonus = Math.Min(SpDefBonus, MonsterFormData.MAX_STAT_BOOST);
             newChar.SpeedBonus = Math.Min(SpeedBonus, MonsterFormData.MAX_STAT_BOOST);
             newChar.HP = newChar.MaxHP;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("{0}", this.GetType().Name);
         }
     }
 
@@ -163,6 +188,11 @@ namespace PMDC.LevelGen
             newChar.SpeedBonus = Math.Min(SpeedBonus.Min + SpeedBonus.Length * (clampedLevel - LevelRange.Min) / LevelRange.Length, MonsterFormData.MAX_STAT_BOOST);
             newChar.HP = newChar.MaxHP;
         }
+
+        public override string ToString()
+        {
+            return string.Format("{0}", this.GetType().Name);
+        }
     }
 
     [Serializable]
@@ -197,6 +227,17 @@ namespace PMDC.LevelGen
 
             newChar.EquippedItem = Items.Pick(map.Rand);
         }
+
+        public override string ToString()
+        {
+            if (Items.Count != 1)
+                return string.Format("{0}[{1}]", this.GetType().Name, Items.Count.ToString());
+            else
+            {
+                EntrySummary summary = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[Items.GetSpawn(0).ID];
+                return string.Format("{0}: {1}", this.GetType().Name, summary.Name.ToLocal());
+            }
+        }
     }
 
 
@@ -230,6 +271,11 @@ namespace PMDC.LevelGen
             newChar.Level += (map.ID-StartFromID) * AddNumerator / AddDenominator;
             newChar.HP = newChar.MaxHP;
         }
+
+        public override string ToString()
+        {
+            return string.Format("{0}", this.GetType().Name);
+        }
     }
 
     [Serializable]
@@ -249,6 +295,11 @@ namespace PMDC.LevelGen
         {
             newChar.CharLoc = Loc;
         }
+
+        public override string ToString()
+        {
+            return string.Format("{0}", this.GetType().Name);
+        }
     }
 
 
@@ -262,6 +313,11 @@ namespace PMDC.LevelGen
             if (newChar.MemberTeam is MonsterTeam)
                 ((MonsterTeam)newChar.MemberTeam).Unrecruitable = true;
             newChar.BaseForm.Skin = 0;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("{0}", this.GetType().Name);
         }
     }
 }
