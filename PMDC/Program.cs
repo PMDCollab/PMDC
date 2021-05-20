@@ -317,6 +317,8 @@ namespace PMDC
             DataEditor.AddEditor(new SegLocEditor());
             DataEditor.AddEditor(new LocEditor());
             DataEditor.AddEditor(new RandRangeEditor());
+            DataEditor.AddEditor(new RandPickerEditor());
+            DataEditor.AddEditor(new MultiRandPickerEditor());
             DataEditor.AddEditor(new IntRangeEditor());
             DataEditor.AddEditor(new FlagTypeEditor());
             DataEditor.AddEditor(new ColorEditor());
