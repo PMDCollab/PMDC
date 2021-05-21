@@ -1441,7 +1441,23 @@ namespace PMDC.Dungeon
                 int boost = context.StackDiff;
                 if (boost != 0)
                 {
-                    SqueezedAreaEmitter emitter = new SqueezedAreaEmitter(new AnimData(StatLines, 2));
+                    SqueezedAreaEmitter emitter;
+
+                    if (boost > 0)
+                    {
+                        GameManager.Instance.BattleSE(StatUpSound);
+                        StaticAnim anim = new StaticAnim(new AnimData(StatCircle, 3));
+                        anim.SetupEmitted(context.Target.MapLoc, -6, context.Target.CharDir);
+                        DungeonScene.Instance.CreateAnim(anim, DrawLayer.Bottom);
+
+                        emitter = new SqueezedAreaEmitter(new AnimData(StatLines, 2, Dir8.Up));
+                    }
+                    else
+                    {
+                        GameManager.Instance.BattleSE(StatDownSound);
+                        emitter = new SqueezedAreaEmitter(new AnimData(StatLines, 2, Dir8.Down));
+                    }
+
                     emitter.Bursts = 3;
                     emitter.ParticlesPerBurst = 2;
                     emitter.BurstTime = 6;
@@ -1450,19 +1466,6 @@ namespace PMDC.Dungeon
                     emitter.HeightSpeed = 6;
                     emitter.SetupEmit(context.Target.MapLoc, context.Target.MapLoc, context.Target.CharDir);
 
-                    if (boost > 0)
-                    {
-                        GameManager.Instance.BattleSE(StatUpSound);
-                        StaticAnim anim = new StaticAnim(new AnimData(StatCircle, 3));
-                        anim.SetupEmitted(context.Target.MapLoc, -6, context.Target.CharDir);
-                        DungeonScene.Instance.CreateAnim(anim, DrawLayer.Bottom);
-                        emitter.AnimDir = Dir8.Up;
-                    }
-                    else if (boost < 0)
-                    {
-                        GameManager.Instance.BattleSE(StatDownSound);
-                        emitter.AnimDir = Dir8.Down;
-                    }
                     DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
                 }
             }
