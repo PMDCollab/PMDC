@@ -88,27 +88,25 @@ namespace PMDC.Dungeon
     [Serializable]
     public class FamilyMatchupEvent : ElementEffectEvent
     {
-        [DataType(1, DataManager.DataType.Monster, false)]
-        public List<int> Members;
-
         public ElementEffectEvent BaseEvent;
 
-        public FamilyMatchupEvent() { Members = new List<int>(); }
-        public FamilyMatchupEvent(List<int> members, ElementEffectEvent baseEvent) { Members = members; BaseEvent = baseEvent; }
+        public FamilyMatchupEvent() { }
+        public FamilyMatchupEvent(ElementEffectEvent baseEvent) { BaseEvent = baseEvent; }
         protected FamilyMatchupEvent(FamilyMatchupEvent other)
         {
-            Members = new List<int>();
-            Members.AddRange(other.Members);
             BaseEvent = (FamilyMatchupEvent)other.BaseEvent.Clone();
         }
         public override GameEvent Clone() { return new FamilyMatchupEvent(this); }
 
         public override void Apply(GameEventOwner owner, Character ownerChar, int moveType, int targetType, ref int effectiveness)
         {
-            if (Members.Contains(ownerChar.BaseForm.Species))
-            {
+            ItemData entry = DataManager.Instance.GetItem(owner.GetID());
+            FamilyState family;
+            if (!entry.ItemStates.TryGet<FamilyState>(out family))
+                return;
+
+            if (family.Members.Contains(ownerChar.BaseForm.Species))
                 BaseEvent.Apply(owner, ownerChar, moveType, targetType, ref effectiveness);
-            }
         }
     }
 

@@ -1774,35 +1774,29 @@ namespace PMDC.Dungeon
     [Serializable]
     public class FamilyBattleEvent : BattleEvent
     {
-        [DataType(1, DataManager.DataType.Monster, false)]
-        public List<int> Members;
-
         public BattleEvent BaseEvent;
 
         public FamilyBattleEvent()
+        { }
+        public FamilyBattleEvent(BattleEvent baseEvent)
         {
-            Members = new List<int>();
-        }
-        public FamilyBattleEvent(List<int> members, BattleEvent baseEvent)
-        {
-            Members = members;
             BaseEvent = baseEvent;
         }
         protected FamilyBattleEvent(FamilyBattleEvent other)
         {
-            Members = new List<int>();
-            Members.AddRange(other.Members);
             BaseEvent = (BattleEvent)other.BaseEvent.Clone();
         }
         public override GameEvent Clone() { return new FamilyBattleEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (Members.Contains(ownerChar.BaseForm.Species))
-            {
+            ItemData entry = DataManager.Instance.GetItem(owner.GetID());
+            FamilyState family;
+            if (!entry.ItemStates.TryGet<FamilyState>(out family))
+                yield break;
+
+            if (family.Members.Contains(ownerChar.BaseForm.Species))
                 yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, context));
-            }
-            yield break;
         }
     }
 
@@ -5784,7 +5778,8 @@ namespace PMDC.Dungeon
             BasePowerState basePower = context.Data.SkillStates.GetWithDefault<BasePowerState>();
             if (basePower != null)
             {
-                double weight = DataManager.Instance.GetMonster(context.Target.CurrentForm.Species).Forms[context.Target.CurrentForm.Form].Weight;
+                MonsterFormData formData = (MonsterFormData)DataManager.Instance.GetMonster(context.Target.CurrentForm.Species).Forms[context.Target.CurrentForm.Form];
+                double weight = formData.Weight;
 
                 //light/heavy flags here
                 if (context.Target.CharStates.Contains<LightWeightState>())
@@ -6034,14 +6029,16 @@ namespace PMDC.Dungeon
             BasePowerState basePower = context.Data.SkillStates.GetWithDefault<BasePowerState>();
             if (basePower != null)
             {
-                double userWeight = DataManager.Instance.GetMonster(context.User.CurrentForm.Species).Forms[context.User.CurrentForm.Form].Weight;
+                MonsterFormData userForm = (MonsterFormData)DataManager.Instance.GetMonster(context.User.CurrentForm.Species).Forms[context.User.CurrentForm.Form];
+                double userWeight = userForm.Weight;
                 //light/heavy flags here
                 if (context.User.CharStates.Contains<LightWeightState>())
                     userWeight /= 2;
                 if (context.User.CharStates.Contains<HeavyWeightState>())
                     userWeight *= 2;
 
-                double targetWeight = DataManager.Instance.GetMonster(context.Target.CurrentForm.Species).Forms[context.Target.CurrentForm.Form].Weight;
+                MonsterFormData targetForm = (MonsterFormData)DataManager.Instance.GetMonster(context.Target.CurrentForm.Species).Forms[context.Target.CurrentForm.Form];
+                double targetWeight = targetForm.Weight;
                 //light/heavy flags here
                 if (context.Target.CharStates.Contains<LightWeightState>())
                     targetWeight /= 2;

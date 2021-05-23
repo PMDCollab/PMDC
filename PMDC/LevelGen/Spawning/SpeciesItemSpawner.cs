@@ -7,6 +7,7 @@ using RogueEssence.LevelGen;
 using RogueEssence;
 using RogueEssence.Data;
 using System.Xml;
+using PMDC.Data;
 
 namespace PMDC.LevelGen
 {
@@ -35,13 +36,18 @@ namespace PMDC.LevelGen
         {
             int chosenAmount = Amount.Pick(map.Rand);
 
+            RarityData rarity = DataManager.Instance.UniversalData.Get<RarityData>();
             List<int> possibleItems = new List<int>();
             foreach (int baseSpecies in GetPossibleSpecies(map))
             {
                 for (int ii = Rarity.Min; ii < Rarity.Max; ii++)
                 {
-                    if (DataManager.Instance.RarityMap.ContainsKey((baseSpecies, ii)))
-                        possibleItems.AddRange(DataManager.Instance.RarityMap[(baseSpecies, ii)]);
+                    Dictionary<int, List<int>> rarityTable;
+                    if (rarity.RarityMap.TryGetValue(baseSpecies, out rarityTable))
+                    {
+                        if (rarityTable.ContainsKey(ii))
+                            possibleItems.AddRange(rarityTable[ii]);
+                    }
                 }
             }
 

@@ -5,6 +5,7 @@ using System.Drawing;
 using RogueEssence;
 using RogueEssence.Data;
 using RogueEssence.Dungeon;
+using RogueEssence.Dev;
 
 namespace PMDC.Data
 {
@@ -16,9 +17,31 @@ namespace PMDC.Data
         public const int ALT_COLOR_ODDS = 1024;
 
         public int Generation;
-        public int Ratio;
-        public List<byte> Personalities;
 
+        public int Ratio;
+
+        public int BaseHP;
+
+        public int BaseAtk;
+
+        [SharedRow]
+        public int BaseDef;
+
+        public int BaseMAtk;
+
+        [SharedRow]
+        public int BaseMDef;
+
+        public int BaseSpeed;
+
+        public int ExpYield;
+
+        public double Height;
+
+        [SharedRow]
+        public double Weight;
+
+        public List<byte> Personalities;
 
         public List<LearnableSkill> TeachSkills;
 
@@ -35,6 +58,26 @@ namespace PMDC.Data
             SecretSkills = new List<LearnableSkill>();
         }
 
+        public int GetBaseStat(Stat stat)
+        {
+            switch (stat)
+            {
+                case Stat.HP:
+                    return BaseHP;
+                case Stat.Speed:
+                    return BaseSpeed;
+                case Stat.Attack:
+                    return BaseAtk;
+                case Stat.Defense:
+                    return BaseDef;
+                case Stat.MAtk:
+                    return BaseMAtk;
+                case Stat.MDef:
+                    return BaseMDef;
+                default:
+                    return 0;
+            }
+        }
         public override int GetStat(int level, Stat stat, int bonus)
         {
             int curStat = getMinStat(level, stat);

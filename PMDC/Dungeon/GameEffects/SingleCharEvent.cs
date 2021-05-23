@@ -44,34 +44,29 @@ namespace PMDC.Dungeon
     [Serializable]
     public class FamilySingleEvent : SingleCharEvent
     {
-        [DataType(1, DataManager.DataType.Monster, false)]
-        public List<int> Members;
-
         public SingleCharEvent BaseEvent;
 
         public FamilySingleEvent()
+        { }
+        public FamilySingleEvent(SingleCharEvent baseEvent)
         {
-            Members = new List<int>();
-        }
-        public FamilySingleEvent(List<int> members, SingleCharEvent baseEvent)
-        {
-            Members = members;
             BaseEvent = baseEvent;
         }
         protected FamilySingleEvent(FamilySingleEvent other)
         {
-            Members = new List<int>();
-            Members.AddRange(other.Members);
             BaseEvent = (SingleCharEvent)other.BaseEvent.Clone();
         }
         public override GameEvent Clone() { return new FamilySingleEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (Members.Contains(ownerChar.BaseForm.Species))
-            {
+            ItemData entry = DataManager.Instance.GetItem(owner.GetID());
+            FamilyState family;
+            if (!entry.ItemStates.TryGet<FamilyState>(out family))
+                yield break;
+
+            if (family.Members.Contains(ownerChar.BaseForm.Species))
                 yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, character));
-            }
         }
     }
 

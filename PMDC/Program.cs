@@ -209,6 +209,9 @@ namespace PMDC
                     RogueEssence.Dev.DevHelper.ReserializeData(DataManager.DATA_PATH + "Ground/", DataManager.GROUND_EXT);
                     DiagManager.Instance.LogInfo("Reserializing indices");
                     RogueEssence.Dev.DevHelper.RunIndexing(reserializeIndices);
+
+                    DataManager.Instance.InitData();
+                    RogueEssence.Dev.DevHelper.RunExtraIndexing(reserializeIndices);
                     return;
                 }
 
@@ -218,7 +221,11 @@ namespace PMDC
                     //TODO: remove when data is no longer hardcoded
                     LuaEngine.InitInstance();
                     DataManager.InitInstance();
+                    DiagManager.Instance.LogInfo("Reserializing indices");
                     RogueEssence.Dev.DevHelper.RunIndexing(convertIndices);
+
+                    DataManager.Instance.InitData();
+                    RogueEssence.Dev.DevHelper.RunExtraIndexing(reserializeIndices);
                     return;
                 }
 

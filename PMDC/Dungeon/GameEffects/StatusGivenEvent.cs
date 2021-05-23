@@ -40,32 +40,28 @@ namespace PMDC.Dungeon
     [Serializable]
     public class FamilyStatusEvent : StatusGivenEvent
     {
-        [DataType(1, DataManager.DataType.Monster, false)]
-        public List<int> Members;
-
-
         public StatusGivenEvent BaseEvent;
 
-        public FamilyStatusEvent() { Members = new List<int>(); }
-        public FamilyStatusEvent(List<int> members, StatusGivenEvent baseEffect)
+        public FamilyStatusEvent() { }
+        public FamilyStatusEvent(StatusGivenEvent baseEffect)
         {
-            Members = members;
             BaseEvent = baseEffect;
         }
         protected FamilyStatusEvent(FamilyStatusEvent other)
         {
-            Members = new List<int>();
-            Members.AddRange(other.Members);
             BaseEvent = (StatusGivenEvent)other.BaseEvent.Clone();
         }
         public override GameEvent Clone() { return new FamilyStatusEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, StatusCheckContext context)
         {
-            if (Members.Contains(ownerChar.BaseForm.Species))
-            {
+            ItemData entry = DataManager.Instance.GetItem(owner.GetID());
+            FamilyState family;
+            if (!entry.ItemStates.TryGet<FamilyState>(out family))
+                yield break;
+
+            if (family.Members.Contains(ownerChar.BaseForm.Species))
                 yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, context));
-            }
         }
     }
 

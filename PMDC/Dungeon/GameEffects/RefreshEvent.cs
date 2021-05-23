@@ -32,27 +32,25 @@ namespace PMDC.Dungeon
     [Serializable]
     public class FamilyRefreshEvent : RefreshEvent
     {
-        [DataType(1, DataManager.DataType.Monster, false)]
-        public List<int> Members;
-
         public RefreshEvent BaseEvent;
 
-        public FamilyRefreshEvent() { Members = new List<int>(); }
-        public FamilyRefreshEvent(List<int> members, RefreshEvent baseEvent) { Members = members; BaseEvent = baseEvent; }
+        public FamilyRefreshEvent() { }
+        public FamilyRefreshEvent(RefreshEvent baseEvent) { BaseEvent = baseEvent; }
         protected FamilyRefreshEvent(FamilyRefreshEvent other)
         {
-            Members = new List<int>();
-            Members.AddRange(other.Members);
             BaseEvent = (RefreshEvent)other.BaseEvent.Clone();
         }
         public override GameEvent Clone() { return new FamilyRefreshEvent(this); }
 
         public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (Members.Contains(ownerChar.BaseForm.Species))
-            {
+            ItemData entry = DataManager.Instance.GetItem(owner.GetID());
+            FamilyState family;
+            if (!entry.ItemStates.TryGet<FamilyState>(out family))
+                return;
+
+            if (family.Members.Contains(ownerChar.BaseForm.Species))
                 BaseEvent.Apply(owner, ownerChar, character);
-            }
         }
     }
 
