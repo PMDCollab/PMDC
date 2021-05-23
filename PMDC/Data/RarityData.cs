@@ -40,7 +40,7 @@ namespace PMDC.Data
 
             //Add it to its new locations
             string dataPath = DataManager.DATA_PATH + DataManager.DataType.Item.ToString() + "/";
-            string dir = PathMod.ModPath(dataPath + idx + ".bin");
+            string dir = PathMod.ModPath(dataPath + idx + DataManager.DATA_EXT);
             ItemData data = (ItemData)DataManager.LoadData(dir);
             computeSummary(idx, data);
         }

@@ -54,7 +54,7 @@ namespace PMDC.Data
         public override void ContentChanged(int idx)
         {
             string dataPath = DataManager.DATA_PATH + DataManager.DataType.Monster.ToString() + "/";
-            string dir = PathMod.ModPath(dataPath + idx + ".bin");
+            string dir = PathMod.ModPath(dataPath + idx + DataManager.DATA_EXT);
             MonsterData data = (MonsterData)DataManager.LoadData(dir);
             Dictionary<int, FormFeatureSummary> formSummaries = computeSummary(dataPath, idx, data);
             FeatureData[idx] = formSummaries;
@@ -83,7 +83,7 @@ namespace PMDC.Data
             while (preEvo.PromoteFrom > -1)
             {
                 family = preEvo.PromoteFrom;
-                string preDir = PathMod.ModPath(dataPath + family + ".bin");
+                string preDir = PathMod.ModPath(dataPath + family + DataManager.DATA_EXT);
                 preEvo = (MonsterData)DataManager.LoadData(preDir);
             }
             EvoFlag stage = EvoFlag.NoEvo;

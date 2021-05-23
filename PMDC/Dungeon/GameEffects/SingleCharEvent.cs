@@ -2699,15 +2699,20 @@ namespace PMDC.Dungeon
             //however, only the leader of a team can choose to advance
             if (character == DungeonScene.Instance.ActiveTeam.Leader)
             {
-                ZoneSegmentBase structure = ZoneManager.Instance.CurrentZone.Segments[ZoneManager.Instance.CurrentMapID.Segment];
-                GameManager.Instance.BattleSE("DUN_Stairs_Down");
-                if (ZoneManager.Instance.CurrentMapID.ID + 1 < structure.FloorCount)
-                {
-                    yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeOut(false));
-                    GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, new SegLoc(ZoneManager.Instance.CurrentMapID.Segment, ZoneManager.Instance.CurrentMapID.ID + 1)));
-                }
+                if (ZoneManager.Instance.CurrentZoneID < 0) //editor considerations
+                    GameManager.Instance.SceneOutcome = GameManager.Instance.ReturnToEditor();
                 else
-                    yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
+                {
+                    ZoneSegmentBase structure = ZoneManager.Instance.CurrentZone.Segments[ZoneManager.Instance.CurrentMapID.Segment];
+                    GameManager.Instance.BattleSE("DUN_Stairs_Down");
+                    if (ZoneManager.Instance.CurrentMapID.ID + 1 < structure.FloorCount)
+                    {
+                        yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeOut(false));
+                        GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, new SegLoc(ZoneManager.Instance.CurrentMapID.Segment, ZoneManager.Instance.CurrentMapID.ID + 1)));
+                    }
+                    else
+                        yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
+                }
             }
             else if (character.MemberTeam == DungeonScene.Instance.ActiveTeam)
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LEADER_ONLY_TILE").ToLocal()));
@@ -2731,24 +2736,30 @@ namespace PMDC.Dungeon
             if (character == DungeonScene.Instance.ActiveTeam.Leader)
             {
                 GameManager.Instance.BattleSE("DUN_Stairs_Down");
-                if (destState.Relative)
+
+                if (ZoneManager.Instance.CurrentZoneID < 0) //editor considerations
+                    GameManager.Instance.SceneOutcome = GameManager.Instance.ReturnToEditor();
+                else
                 {
-                    yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeOut(false));
+                    if (destState.Relative)
+                    {
+                        yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeOut(false));
 
-                    int endSegment = ZoneManager.Instance.CurrentMapID.Segment + destState.Dest.Segment;
-                    int endFloor = ZoneManager.Instance.CurrentMapID.ID + destState.Dest.ID;
+                        int endSegment = ZoneManager.Instance.CurrentMapID.Segment + destState.Dest.Segment;
+                        int endFloor = ZoneManager.Instance.CurrentMapID.ID + destState.Dest.ID;
 
-                    if (endSegment >= 0 && endFloor >= 0 && endSegment < ZoneManager.Instance.CurrentZone.Segments.Count && endFloor < ZoneManager.Instance.CurrentZone.Segments[endSegment].FloorCount)
-                        GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, new SegLoc(endSegment, endFloor)));
-                    else
+                        if (endSegment >= 0 && endFloor >= 0 && endSegment < ZoneManager.Instance.CurrentZone.Segments.Count && endFloor < ZoneManager.Instance.CurrentZone.Segments[endSegment].FloorCount)
+                            GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, new SegLoc(endSegment, endFloor)));
+                        else
+                            yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
+                    }
+                    else if (!destState.Dest.IsValid())
                         yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
-                }
-                else if (!destState.Dest.IsValid())
-                    yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
-                else//go to a designated dungeon structure
-                {
-                    yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeOut(false));
-                    GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, destState.Dest));
+                    else//go to a designated dungeon structure
+                    {
+                        yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeOut(false));
+                        GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, destState.Dest));
+                    }
                 }
             }
             else if (character.MemberTeam == DungeonScene.Instance.ActiveTeam)
