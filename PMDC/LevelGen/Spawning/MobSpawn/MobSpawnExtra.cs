@@ -8,6 +8,9 @@ using PMDC.Data;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// Spawns the mob with a 35% fullness and 50% PP.
+    /// </summary>
     [Serializable]
     public class MobSpawnWeak : MobSpawnExtra
     {
@@ -33,6 +36,9 @@ namespace PMDC.LevelGen
         }
     }
 
+    /// <summary>
+    /// Spawns the mob with a custom shiny chance.
+    /// </summary>
     [Serializable]
     public class MobSpawnAltColor : MobSpawnExtra
     {
@@ -61,10 +67,14 @@ namespace PMDC.LevelGen
         }
     }
 
+    /// <summary>
+    /// Spawns the mob with moves turned off.
+    /// </summary>
     [Serializable]
     public class MobSpawnMovesOff : MobSpawnExtra
     {
         public int StartAt;
+        public bool Remove;
 
         public MobSpawnMovesOff() { }
         public MobSpawnMovesOff(int startAt)
@@ -74,13 +84,22 @@ namespace PMDC.LevelGen
         public MobSpawnMovesOff(MobSpawnMovesOff other)
         {
             StartAt = other.StartAt;
+            Remove = other.Remove;
         }
         public override MobSpawnExtra Copy() { return new MobSpawnMovesOff(this); }
 
         public override void ApplyFeature(IMobSpawnMap map, Character newChar)
         {
-            for (int ii = StartAt; ii < newChar.Skills.Count; ii++)
-                newChar.Skills[ii].Element.Enabled = false;
+            if (Remove)
+            {
+                for (int ii = StartAt; ii < Character.MAX_SKILL_SLOTS; ii++)
+                    newChar.DeleteSkill(StartAt);
+            }
+            else
+            {
+                for (int ii = StartAt; ii < Character.MAX_SKILL_SLOTS; ii++)
+                    newChar.Skills[ii].Element.Enabled = false;
+            }
         }
 
         public override string ToString()
@@ -89,27 +108,9 @@ namespace PMDC.LevelGen
         }
     }
 
-    [Serializable]
-    public class MobSpawnDir : MobSpawnExtra
-    {
-        public Dir8 Dir;
-
-        public MobSpawnDir() { }
-        public MobSpawnDir(Dir8 dir) { Dir = dir; }
-        protected MobSpawnDir(MobSpawnDir other) { Dir = other.Dir; }
-        public override MobSpawnExtra Copy() { return new MobSpawnDir(this); }
-
-        public override void ApplyFeature(IMobSpawnMap map, Character newChar)
-        {
-            newChar.CharDir = Dir;
-        }
-
-        public override string ToString()
-        {
-            return string.Format("{0}: {1}", this.GetType().Name, Dir);
-        }
-    }
-
+    /// <summary>
+    /// Spawn the mob with stat boosts (vitamin boosts)
+    /// </summary>
     [Serializable]
     public class MobSpawnBoost : MobSpawnExtra
     {
@@ -149,6 +150,9 @@ namespace PMDC.LevelGen
         }
     }
 
+    /// <summary>
+    /// Spawn the mob with stat boosts (vitamin boosts) that scale based on level
+    /// </summary>
     [Serializable]
     public class MobSpawnScaledBoost : MobSpawnExtra
     {
@@ -195,6 +199,9 @@ namespace PMDC.LevelGen
         }
     }
 
+    /// <summary>
+    /// Spawn the mob an item
+    /// </summary>
     [Serializable]
     public class MobSpawnItem : MobSpawnExtra
     {
@@ -241,6 +248,9 @@ namespace PMDC.LevelGen
     }
 
 
+    /// <summary>
+    /// Spawn the mob with a level that scales based on the current floor
+    /// </summary>
     [Serializable]
     public class MobSpawnLevelScale : MobSpawnExtra
     {
@@ -278,22 +288,29 @@ namespace PMDC.LevelGen
         }
     }
 
+    /// <summary>
+    /// Spawn the mob with a specific location and direction
+    /// </summary>
     [Serializable]
     public class MobSpawnLoc : MobSpawnExtra
     {
         public Loc Loc;
+        public Dir8 Dir;
 
         public MobSpawnLoc() { }
         public MobSpawnLoc(Loc loc) { Loc = loc; }
+        public MobSpawnLoc(Loc loc, Dir8 dir) { Loc = loc; Dir = dir; }
         public MobSpawnLoc(MobSpawnLoc other)
         {
             Loc = other.Loc;
+            Dir = other.Dir;
         }
         public override MobSpawnExtra Copy() { return new MobSpawnLoc(this); }
 
         public override void ApplyFeature(IMobSpawnMap map, Character newChar)
         {
             newChar.CharLoc = Loc;
+            newChar.CharDir = Dir;
         }
 
         public override string ToString()
@@ -303,6 +320,9 @@ namespace PMDC.LevelGen
     }
 
 
+    /// <summary>
+    /// Spawn the mob with recruitment turned off
+    /// </summary>
     [Serializable]
     public class MobSpawnUnrecruitable : MobSpawnExtra
     {
