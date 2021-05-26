@@ -292,6 +292,7 @@ namespace PMDC
             DataEditor.AddEditor(new MoneySpawnZoneStepEditor());
 
             //DataEditor.AddConverter(new AutoTileBaseConverter());
+            DataEditor.AddEditor(new DataFolderEditor());
             DataEditor.AddEditor(new AnimDataEditor());
             DataEditor.AddEditor(new SoundEditor());
             DataEditor.AddEditor(new MusicEditor());
