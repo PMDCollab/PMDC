@@ -2699,7 +2699,7 @@ namespace PMDC.Dungeon
             //however, only the leader of a team can choose to advance
             if (character == DungeonScene.Instance.ActiveTeam.Leader)
             {
-                if (ZoneManager.Instance.CurrentZoneID < 0 && ZoneManager.Instance.CurrentZone != null) //editor considerations
+                if (ZoneManager.Instance.InDevZone) //editor considerations
                     GameManager.Instance.SceneOutcome = GameManager.Instance.ReturnToEditor();
                 else
                 {
@@ -2737,7 +2737,7 @@ namespace PMDC.Dungeon
             {
                 GameManager.Instance.BattleSE("DUN_Stairs_Down");
 
-                if (ZoneManager.Instance.CurrentZoneID < 0 && ZoneManager.Instance.CurrentZone != null) //editor considerations
+                if (ZoneManager.Instance.InDevZone) //editor considerations
                     GameManager.Instance.SceneOutcome = GameManager.Instance.ReturnToEditor();
                 else
                 {
