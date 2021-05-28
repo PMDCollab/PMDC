@@ -2361,7 +2361,7 @@ namespace PMDC.Dungeon
             }
         }
 
-        private QuestionDialog askItemUseQuestion(int itemSlot)
+        private DialogueBox askItemUseQuestion(int itemSlot)
         {
             return MenuManager.Instance.CreateQuestion(String.Format(new StringKey("DLG_LOCK_KEY").ToLocal()),
                 () => { MenuManager.Instance.EndAction = DungeonScene.Instance.ProcessPlayerInput(new GameAction(GameAction.ActionType.UseItem, Dir8.None, itemSlot, -1)); },
@@ -2472,7 +2472,7 @@ namespace PMDC.Dungeon
             }
         }
 
-        private QuestionDialog createEvoQuestion(Character character, VertChoiceMenu.OnChooseSlot action)
+        private DialogueBox createEvoQuestion(Character character, VertChoiceMenu.OnChooseSlot action)
         {
             return MenuManager.Instance.CreateQuestion(String.Format(new StringKey("DLG_EVO_ASK").ToLocal()), () =>
             {
@@ -2530,7 +2530,7 @@ namespace PMDC.Dungeon
             }, () => { });
         }
 
-        private QuestionDialog createTryEvoQuestion(Character character, VertChoiceMenu.OnChooseSlot action, int branchIndex)
+        private DialogueBox createTryEvoQuestion(Character character, VertChoiceMenu.OnChooseSlot action, int branchIndex)
         {
             MonsterData entry = DataManager.Instance.GetMonster(character.BaseForm.Species);
             PromoteBranch branch = entry.Promotions[branchIndex];

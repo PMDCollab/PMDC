@@ -12386,7 +12386,7 @@ namespace PMDC.Dungeon
         }
 
 
-        private QuestionDialog createLinkBoxDialog(BattleContext context)
+        private DialogueBox createLinkBoxDialog(BattleContext context)
         {
             List<DialogueChoice> choices = new List<DialogueChoice>();
             choices.Add(new DialogueChoice(String.Format(new StringKey("MENU_RECALL_SKILL").ToLocal()), () => { MenuManager.Instance.AddMenu(createRememberDialog(context), false); }));

@@ -20,8 +20,8 @@ namespace Updater
         static void Main(string[] args)
         {
             //1: detect platform and load defaults
-            updatefile = String.Format("http://142.93.65.176/{0}-x64.zip", GetCurrentPlatform());
-            versionfile = "http://142.93.65.176/version";
+            updatefile = String.Format("http://127.0.0.1/{0}-x64.zip", GetCurrentPlatform());
+            versionfile = "http://127.0.0.1/version";
             lastVersion = new Version(0, 0, 0, 0);
             excludedFiles = new List<string>();
             executableFiles = new List<string>();
