@@ -2920,19 +2920,12 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (character.MemberTeam == DungeonScene.Instance.ActiveTeam)
-            {
-                //instant fight whoosh, turn on the music
-                MapStatus status = new MapStatus(21);
-                status.LoadFromData();
-                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
+            if (DungeonScene.Instance.CanUseTeamMode())
+                DungeonScene.Instance.SetTeamMode(true);
 
-                if (DungeonScene.Instance.CanUseTeamMode())
-                    DungeonScene.Instance.SetTeamMode(true);
-
-                //for scanning when all enemies have been defeated
-                ZoneManager.Instance.CurrentMap.CheckEvents.Add(new CheckBossClearEvent());
-            }
+            //for scanning when all enemies have been defeated
+            ZoneManager.Instance.CurrentMap.CheckEvents.Add(new CheckBossClearEvent());
+            yield break;
         }
     }
 

@@ -333,6 +333,7 @@ namespace PMDC
             DataEditor.AddEditor(new TypeEditor());
             DataEditor.AddEditor(new ArrayEditor());
             DataEditor.AddEditor(new DictionaryEditor());
+            DataEditor.AddEditor(new NoDupeListEditor());
             DataEditor.AddEditor(new ListEditor());
             DataEditor.AddEditor(new EnumEditor());
             DataEditor.AddEditor(new StringEditor());
