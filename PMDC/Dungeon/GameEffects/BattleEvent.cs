@@ -12854,7 +12854,21 @@ namespace PMDC.Dungeon
     [Serializable]
     public class RecruitmentEvent : BattleEvent
     {
-        public override GameEvent Clone() { return new RecruitmentEvent(); }
+        public BattleScriptEvent ActionScript;
+
+        public RecruitmentEvent()
+        { }
+        public RecruitmentEvent(BattleScriptEvent scriptEvent)
+        {
+            ActionScript = scriptEvent;
+        }
+
+        public RecruitmentEvent(RecruitmentEvent other)
+        {
+            ActionScript = (BattleScriptEvent)other.ActionScript.Clone();
+        }
+
+        public override GameEvent Clone() { return new RecruitmentEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
@@ -12922,6 +12936,9 @@ namespace PMDC.Dungeon
                         context.Target.MetAt = ZoneManager.Instance.CurrentMap.GetColoredName();
                         //context.Target.MetDungeon = ZoneManager.Instance.CurrentZoneID;
                         //context.Target.MetFloor = ZoneManager.Instance.CurrentMapID;
+                        context.Target.ActionEvents.Clear();
+                        if (ActionScript != null)
+                            context.Target.ActionEvents.Add((BattleEvent)ActionScript.Clone());
                         ZoneManager.Instance.CurrentMap.UpdateExploration(context.Target);
                         yield return new WaitForFrames(40);
 

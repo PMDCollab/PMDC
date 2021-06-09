@@ -389,8 +389,9 @@ namespace PMDC.Data
             newChar.BaseIntrinsics[0] = forme.RollIntrinsic(DataManager.Instance.Save.Rand, 2);
 
             newChar.Discriminator = character.Discriminator;
-
             newChar.MetAt = character.MetAt;
+            foreach (BattleEvent effect in character.ActionEvents)
+                newChar.ActionEvents.Add((BattleEvent)effect.Clone());
 
             Character player = new Character(newChar, character.MemberTeam);
             foreach (BackReference<Skill> move in player.Skills)
