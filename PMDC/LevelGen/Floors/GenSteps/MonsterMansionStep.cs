@@ -108,8 +108,8 @@ namespace PMDC.LevelGen
                 RevealAllEvent reveal = new RevealAllEvent();
                 check.Effects.Add(reveal);
 
-                GiveMapStatusSingleEvent status = new GiveMapStatusSingleEvent(30, 0);
-                check.Effects.Add(status);
+                GiveMapStatusSingleEvent statusEvent = new GiveMapStatusSingleEvent(30, 0);
+                check.Effects.Add(statusEvent);
 
                 MonsterHouseMapEvent house = new MonsterHouseMapEvent();
                 house.Bounds = bounds;
@@ -123,7 +123,14 @@ namespace PMDC.LevelGen
                 }
                 check.Effects.Add(house);
             }
-            map.CheckEvents.Add(check);
+
+            //TODO: remove this magic number
+            int intrudeStatus = 33;
+            MapStatus status = new MapStatus(intrudeStatus);
+            status.LoadFromData();
+            MapCheckState checkState = status.StatusStates.GetWithDefault<MapCheckState>();
+            checkState.CheckEvents.Add(check);
+            map.Map.Status.Add(intrudeStatus, status);
         }
     }
 

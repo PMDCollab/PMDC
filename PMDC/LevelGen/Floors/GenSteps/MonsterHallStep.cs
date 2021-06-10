@@ -258,7 +258,14 @@ namespace PMDC.LevelGen
                 house.Mobs.AddRange(phasedMobs);
                 check.Effects.Add(house);
             }
-            map.CheckEvents.Add(check);
+
+            //TODO: remove this magic number
+            int intrudeStatus = 33;
+            MapStatus status = new MapStatus(intrudeStatus);
+            status.LoadFromData();
+            MapCheckState checkState = status.StatusStates.GetWithDefault<MapCheckState>();
+            checkState.CheckEvents.Add(check);
+            map.Map.Status.Add(intrudeStatus, status);
         }
     }
 

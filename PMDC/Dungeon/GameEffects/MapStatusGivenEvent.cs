@@ -246,6 +246,23 @@ namespace PMDC.Dungeon
     }
 
 
+    [Serializable]
+    public class MapStatusCombineCheckEvent : MapStatusGivenEvent
+    {
+        public MapStatusCombineCheckEvent() { }
+        public override GameEvent Clone() { return new MapStatusCombineCheckEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character, MapStatus status, bool msg)
+        {
+            if (character != null)
+                yield break;
+
+            MapCheckState destChecks = ((MapStatus)owner).StatusStates.GetWithDefault<MapCheckState>();
+            MapCheckState srcChecks = status.StatusStates.GetWithDefault<MapCheckState>();
+            foreach (SingleCharEvent effect in srcChecks.CheckEvents)
+                destChecks.CheckEvents.Add(effect);
+        }
+    }
 
 
     [Serializable]
@@ -259,7 +276,7 @@ namespace PMDC.Dungeon
             if (character != null)
                 yield break;
 
-            if (((MapStatus)owner).StatusStates.GetWithDefault<MapCountDownState>().Counter > -1 && 
+            if (((MapStatus)owner).StatusStates.GetWithDefault<MapCountDownState>().Counter > -1 &&
                 ((MapStatus)owner).StatusStates.GetWithDefault<MapCountDownState>().Counter < status.StatusStates.GetWithDefault<MapCountDownState>().Counter)
                 ((MapStatus)owner).StatusStates.GetWithDefault<MapCountDownState>().Counter = status.StatusStates.GetWithDefault<MapCountDownState>().Counter;
         }

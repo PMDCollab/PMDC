@@ -2915,8 +2915,16 @@ namespace PMDC.Dungeon
     [Serializable]
     public class BeginBattleEvent : SingleCharEvent
     {
+        [DataType(0, DataManager.DataType.MapStatus, false)]
+        public int CheckClearStatus;
+
         public BeginBattleEvent() { }
-        public override GameEvent Clone() { return new BeginBattleEvent(); }
+        public BeginBattleEvent(int checkClear) { CheckClearStatus = checkClear; }
+        public BeginBattleEvent(BeginBattleEvent other)
+        {
+            CheckClearStatus = other.CheckClearStatus;
+        }
+        public override GameEvent Clone() { return new BeginBattleEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
@@ -2924,8 +2932,11 @@ namespace PMDC.Dungeon
                 DungeonScene.Instance.SetTeamMode(true);
 
             //for scanning when all enemies have been defeated
-            ZoneManager.Instance.CurrentMap.CheckEvents.Add(new CheckBossClearEvent());
-            yield break;
+            MapStatus status = new MapStatus(CheckClearStatus);
+            status.LoadFromData();
+            MapCheckState check = status.StatusStates.GetWithDefault<MapCheckState>();
+            check.CheckEvents.Add(new CheckBossClearEvent());
+            yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
         }
     }
 
@@ -2937,15 +2948,23 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (ZoneManager.Instance.CurrentMap.MapTeams.Count == 0)
+            //fail if someone is still alive
+            foreach (Team team in ZoneManager.Instance.CurrentMap.MapTeams)
             {
-                ZoneManager.Instance.CurrentMap.CheckEvents.Remove(this);
-                if (DataManager.Instance.CurrentReplay == null)
-                    yield return CoroutineManager.Instance.StartCoroutine(endSequence());
-                else
-                    yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
+                foreach (Character chara in team.IterateMainByRank())
+                {
+                    if (!chara.Dead)
+                        yield break;
+                }
             }
-            yield break;
+
+            //all dead, clear the game
+            MapCheckState checks = ((MapStatus)owner).StatusStates.GetWithDefault<MapCheckState>();
+            checks.CheckEvents.Remove(this);
+            if (DataManager.Instance.CurrentReplay == null)
+                yield return CoroutineManager.Instance.StartCoroutine(endSequence());
+            else
+                yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
         }
 
         private IEnumerator<YieldInstruction> endSequence()
@@ -3149,10 +3168,6 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            CharAnimation standAnim = new CharAnimIdle(character.CharLoc, character.CharDir);
-            standAnim.MajorAnim = true;
-            yield return CoroutineManager.Instance.StartCoroutine(character.StartAnim(standAnim));
-
             //invoke the unlock sound and animation
             GameManager.Instance.BattleSE("DUN_Open_Chamber");
 
@@ -3414,6 +3429,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
+            //TODO: remove hardcoded everything in this block...
             EffectTile effectTile = (EffectTile)owner;
 
             CharAnimation standAnim = new CharAnimIdle(character.CharLoc, character.CharDir);
@@ -3435,7 +3451,7 @@ namespace PMDC.Dungeon
             //change the chest to open
             Tile tile = ZoneManager.Instance.CurrentMap.Tiles[baseLoc.X][baseLoc.Y];
             if (tile.Effect == owner)
-                tile.Effect = new EffectTile(36, true, tile.Effect.TileLoc);
+                tile.Effect = new EffectTile(36, true, tile.Effect.TileLoc);// magic number
 
             //spawn the items
             Rect bounds = ((EffectTile)owner).TileStates.GetWithDefault<BoundsState>().Bounds;
@@ -3502,7 +3518,7 @@ namespace PMDC.Dungeon
 
             if (((EffectTile)owner).Danger)
             {
-                LockdownTileEvent lockdown = new LockdownTileEvent();
+                LockdownTileEvent lockdown = new LockdownTileEvent(34);// magic number
                 MonsterHouseTileEvent monsterHouse = new MonsterHouseTileEvent();
                 yield return CoroutineManager.Instance.StartCoroutine(lockdown.Apply(owner, ownerChar, character));
                 yield return CoroutineManager.Instance.StartCoroutine(monsterHouse.Apply(owner, ownerChar, character));
@@ -3526,6 +3542,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public abstract class LockdownEvent : SingleCharEvent
     {
+        [DataType(0, DataManager.DataType.MapStatus, false)]
+        public int CheckClearStatus;
+
+        public LockdownEvent() { }
+        public LockdownEvent(int checkClearStatus) { CheckClearStatus = checkClearStatus; }
+        public LockdownEvent(LockdownEvent other) { CheckClearStatus = other.CheckClearStatus; }
 
         protected abstract Rect GetBounds(GameEventOwner owner, Character ownerChar, Character character);
 
@@ -3565,12 +3587,17 @@ namespace PMDC.Dungeon
                 yield return CoroutineManager.Instance.StartCoroutine(shoveTo(moveChar, moveChar.CharLoc, ZoneManager.Instance.CurrentMap.EntryPoints[0].Loc));
             }
 
-            //add a singlechareffect to map.CheckEffects for counting the enemies and allies in the box each time, with a tab kept on what tiles to unlock when finished
-            foreach (SingleCharEvent charEvent in ZoneManager.Instance.CurrentMap.CheckEvents)
+            MapStatus checkStatus;
+            if (ZoneManager.Instance.CurrentMap.Status.TryGetValue(CheckClearStatus, out checkStatus))
             {
-                CheckHouseClearEvent checkEvent = charEvent as CheckHouseClearEvent;
-                if (checkEvent != null)
-                    bounds = Rect.Intersect(bounds, checkEvent.Bounds);
+                MapCheckState check = checkStatus.StatusStates.GetWithDefault<MapCheckState>();
+                //add a singlechareffect to map.CheckEffects for counting the enemies and allies in the box each time, with a tab kept on what tiles to unlock when finished
+                foreach (SingleCharEvent charEvent in check.CheckEvents)
+                {
+                    CheckHouseClearEvent checkEvent = charEvent as CheckHouseClearEvent;
+                    if (checkEvent != null)
+                        bounds = Rect.Intersect(bounds, checkEvent.Bounds);
+                }
             }
 
             List<SingleCharEvent> resultEvents = GetResultEvents(owner, ownerChar, character);
@@ -3578,7 +3605,14 @@ namespace PMDC.Dungeon
             checkEnd.LockedLocs = blockedLocs;
             foreach (SingleCharEvent result in resultEvents)
                 checkEnd.ResultEvents.Add((SingleCharEvent)result.Clone());
-            ZoneManager.Instance.CurrentMap.CheckEvents.Add(checkEnd);
+
+            {
+                MapStatus status = new MapStatus(CheckClearStatus);
+                status.LoadFromData();
+                MapCheckState check = status.StatusStates.GetWithDefault<MapCheckState>();
+                check.CheckEvents.Add(checkEnd);
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
+            }
 
             //various members of the team emote
             EmoteData emoteData = DataManager.Instance.GetEmote(5);
@@ -3670,7 +3704,8 @@ namespace PMDC.Dungeon
     {
         //activate by tiles; use the tile state variables
         public LockdownTileEvent() { }
-        protected LockdownTileEvent(LockdownTileEvent other)
+        public LockdownTileEvent(int checkClear) : base(checkClear) { }
+        protected LockdownTileEvent(LockdownTileEvent other) : base(other)
         { }
         public override GameEvent Clone() { return new LockdownTileEvent(this); }
 
@@ -3699,7 +3734,8 @@ namespace PMDC.Dungeon
 
         public List<SingleCharEvent> ResultEvents;
         public LockdownMapEvent() { }
-        protected LockdownMapEvent(LockdownMapEvent other)
+        public LockdownMapEvent(int checkClear) : base(checkClear) { }
+        protected LockdownMapEvent(LockdownMapEvent other) : base(other)
         {
             Bounds = other.Bounds;
             ResultEvents = new List<SingleCharEvent>();
@@ -4020,7 +4056,8 @@ namespace PMDC.Dungeon
                     house.Mobs.Add(Mobs[ii]);
                 check.Effects.Add(house);
 
-                ZoneManager.Instance.CurrentMap.CheckEvents.Add(check);
+                MapCheckState checks = ((MapStatus)owner).StatusStates.GetWithDefault<MapCheckState>();
+                checks.CheckEvents.Add(check);
             }
         }
     }
@@ -4209,7 +4246,8 @@ namespace PMDC.Dungeon
                     if (!player.Dead && Collision.InBounds(Bounds, player.CharLoc))
                     {
                         //remove this from the map
-                        ZoneManager.Instance.CurrentMap.CheckEvents.Remove(this);
+                        MapCheckState checks = ((MapStatus)owner).StatusStates.GetWithDefault<MapCheckState>();
+                        checks.CheckEvents.Remove(this);
                         //activate the single char effects
                         for (int ii = 0; ii < Effects.Count; ii++)
                             yield return CoroutineManager.Instance.StartCoroutine(Effects[ii].Apply(owner, ownerChar, character));
@@ -4246,7 +4284,8 @@ namespace PMDC.Dungeon
                 if (DataManager.Instance.Save.TotalTurns >= TurnTotal)
                 {
                     //remove this from the map
-                    ZoneManager.Instance.CurrentMap.CheckEvents.Remove(this);
+                    MapCheckState checks = ((MapStatus)owner).StatusStates.GetWithDefault<MapCheckState>();
+                    checks.CheckEvents.Remove(this);
                     //activate the single char effects
                     for (int ii = 0; ii < Effects.Count; ii++)
                         yield return CoroutineManager.Instance.StartCoroutine(Effects[ii].Apply(owner, ownerChar, character));
@@ -4303,10 +4342,11 @@ namespace PMDC.Dungeon
             //when either runs out, resume normal music, and the singlechareffect must be removed from the checklist
             if (noPlayers || noFoes)
             {
-                ZoneManager.Instance.CurrentMap.CheckEvents.Remove(this);
+                MapCheckState checks = ((MapStatus)owner).StatusStates.GetWithDefault<MapCheckState>();
+                checks.CheckEvents.Remove(this);
                 bool returnMusic = true;
                 //check to make sure no other check event is also active
-                foreach (SingleCharEvent charEvent in ZoneManager.Instance.CurrentMap.CheckEvents)
+                foreach (SingleCharEvent charEvent in checks.CheckEvents)
                 {
                     CheckHouseClearEvent checkEvent = charEvent as CheckHouseClearEvent;
                     if (checkEvent != null)
@@ -4342,6 +4382,26 @@ namespace PMDC.Dungeon
                 Loc startLoc = changePoint - new Loc(distance + 2);
                 Loc sizeLoc = new Loc((distance + 2) * 2 + 1);
                 ZoneManager.Instance.CurrentMap.MapModified(startLoc, sizeLoc);
+            }
+        }
+    }
+
+    [Serializable]
+    public class CheckTriggersEvent : SingleCharEvent
+    {
+        public CheckTriggersEvent() { }
+        public override GameEvent Clone() { return new CheckTriggersEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (character == null)
+            {
+                MapCheckState checks = ((MapStatus)owner).StatusStates.GetWithDefault<MapCheckState>();
+                for (int ii = checks.CheckEvents.Count - 1; ii >= 0; ii--)
+                {
+                    SingleCharEvent effect = checks.CheckEvents[ii];
+                    yield return CoroutineManager.Instance.StartCoroutine(effect.Apply(owner, ownerChar, character));
+                }
             }
         }
     }
