@@ -131,15 +131,18 @@ namespace PMDC.Dungeon
                 return false;
         }
 
-        protected bool BlockedByChar(Loc testLoc, bool includeNeutral)
+        protected bool BlockedByChar(Loc testLoc, Alignment alignment)
         {
-            foreach (Character chara in ZoneManager.Instance.CurrentMap.ActiveTeam.EnumerateChars())
+            if ((alignment & Alignment.Self) != Alignment.None)
             {
-                if (!chara.Dead && chara.CharLoc == testLoc)
-                    return true;
+                foreach (Character chara in ZoneManager.Instance.CurrentMap.ActiveTeam.EnumerateChars())
+                {
+                    if (!chara.Dead && chara.CharLoc == testLoc)
+                        return true;
+                }
             }
 
-            if (includeNeutral)
+            if ((alignment & Alignment.Friend) != Alignment.None)
             {
                 for (int ii = 0; ii < ZoneManager.Instance.CurrentMap.AllyTeams.Count; ii++)
                 {
@@ -151,12 +154,15 @@ namespace PMDC.Dungeon
                 }
             }
 
-            for (int ii = 0; ii < ZoneManager.Instance.CurrentMap.MapTeams.Count; ii++)
+            if ((alignment & Alignment.Foe) != Alignment.None)
             {
-                foreach (Character chara in ZoneManager.Instance.CurrentMap.MapTeams[ii].EnumerateChars())
+                for (int ii = 0; ii < ZoneManager.Instance.CurrentMap.MapTeams.Count; ii++)
                 {
-                    if (!chara.Dead && chara.CharLoc == testLoc)
-                        return true;
+                    foreach (Character chara in ZoneManager.Instance.CurrentMap.MapTeams[ii].EnumerateChars())
+                    {
+                        if (!chara.Dead && chara.CharLoc == testLoc)
+                            return true;
+                    }
                 }
             }
 
@@ -231,7 +237,7 @@ namespace PMDC.Dungeon
                 if (BlockedByHazard(controlledChar, testLoc))
                     return true;
 
-                if (respectPeers && BlockedByChar(testLoc, false))
+                if (respectPeers && BlockedByChar(testLoc, Alignment.Self | Alignment.Foe))
                     return true;
 
                 return false;
@@ -266,6 +272,9 @@ namespace PMDC.Dungeon
                 if (BlockedByTrap(controlledChar, testLoc))
                     return true;
                 if (BlockedByHazard(controlledChar, testLoc))
+                    return true;
+
+                if (BlockedByChar(testLoc, Alignment.Self))
                     return true;
 
                 return false;
