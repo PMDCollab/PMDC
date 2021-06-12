@@ -131,7 +131,7 @@ namespace PMDC.Dungeon
                 return false;
         }
 
-        protected bool BlockedByChar(Loc testLoc)
+        protected bool BlockedByChar(Loc testLoc, bool includeNeutral)
         {
             foreach (Character chara in ZoneManager.Instance.CurrentMap.ActiveTeam.EnumerateChars())
             {
@@ -139,12 +139,15 @@ namespace PMDC.Dungeon
                     return true;
             }
 
-            for (int ii = 0; ii < ZoneManager.Instance.CurrentMap.AllyTeams.Count; ii++)
+            if (includeNeutral)
             {
-                foreach (Character chara in ZoneManager.Instance.CurrentMap.AllyTeams[ii].EnumerateChars())
+                for (int ii = 0; ii < ZoneManager.Instance.CurrentMap.AllyTeams.Count; ii++)
                 {
-                    if (!chara.Dead && chara.CharLoc == testLoc)
-                        return true;
+                    foreach (Character chara in ZoneManager.Instance.CurrentMap.AllyTeams[ii].EnumerateChars())
+                    {
+                        if (!chara.Dead && chara.CharLoc == testLoc)
+                            return true;
+                    }
                 }
             }
 
@@ -228,7 +231,7 @@ namespace PMDC.Dungeon
                 if (BlockedByHazard(controlledChar, testLoc))
                     return true;
 
-                if (respectPeers && BlockedByChar(testLoc))
+                if (respectPeers && BlockedByChar(testLoc, false))
                     return true;
 
                 return false;
@@ -237,6 +240,40 @@ namespace PMDC.Dungeon
 
             Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
             return Grid.FindPath(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, end, checkBlock, checkDiagBlock);
+        }
+
+
+        protected List<Loc> GetPathPermissive(Character controlledChar, List<Loc> ends)
+        {
+
+            //requires a valid target tile
+            Grid.LocTest checkDiagBlock = (Loc testLoc) => {
+                return (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, controlledChar.Mobility, true));
+                //enemy/ally blockings don't matter for diagonals
+            };
+
+            Grid.LocTest checkBlock = (Loc testLoc) => {
+
+                foreach (Loc end in ends)
+                {
+                    if (testLoc == end)
+                        return false;
+                }
+
+                if (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, controlledChar.Mobility))
+                    return true;
+
+                if (BlockedByTrap(controlledChar, testLoc))
+                    return true;
+                if (BlockedByHazard(controlledChar, testLoc))
+                    return true;
+
+                return false;
+            };
+
+
+            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
+            return Grid.FindAPath(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, ends.ToArray(), checkBlock, checkDiagBlock);
         }
 
         protected GameAction SelectChoiceFromPath(Character controlledChar, List<Loc> path, bool waitBefore)
@@ -732,7 +769,7 @@ namespace PMDC.Dungeon
 
                         foreach (Character target in seenChars)
                         {
-                            if (DungeonScene.Instance.IsTargeted(controlledChar, target, explosion.TargetAlignments) && callTiles.Contains(target.CharLoc))
+                            if (DungeonScene.Instance.IsTargeted(controlledChar, target, explosion.TargetAlignments, false) && callTiles.Contains(target.CharLoc))
                             {
                                 StatusEffect moveEffect;
                                 if (target.StatusEffects.TryGetValue(searchedStatus, out moveEffect))
@@ -789,7 +826,7 @@ namespace PMDC.Dungeon
 
                         foreach (Character target in seenChars)
                         {
-                            if (DungeonScene.Instance.IsTargeted(controlledChar, target, explosion.TargetAlignments) && callTiles.Contains(target.CharLoc))
+                            if (DungeonScene.Instance.IsTargeted(controlledChar, target, explosion.TargetAlignments, false) && callTiles.Contains(target.CharLoc))
                             {
                                 int recordSlot = -1;
                                 int recordPower = -1;
@@ -845,7 +882,7 @@ namespace PMDC.Dungeon
 
             foreach (Character target in seenChars)
             {
-                if (DungeonScene.Instance.IsTargeted(controlledChar, target, explosion.TargetAlignments) && hitTiles.Contains(target.CharLoc))
+                if (DungeonScene.Instance.IsTargeted(controlledChar, target, explosion.TargetAlignments, false) && hitTiles.Contains(target.CharLoc))
                 {
                     totalTargets++;
                     if (Collision.InFront(controlledChar.CharLoc, target.CharLoc, dir, -1))
@@ -1303,39 +1340,6 @@ namespace PMDC.Dungeon
                 return;
 
             loc_list.Add(border_loc);
-        }
-
-        protected List<Loc> GetPathPermissive(Character controlledChar, List<Loc> ends)
-        {
-
-            //requires a valid target tile
-            Grid.LocTest checkDiagBlock = (Loc testLoc) => {
-                return (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, controlledChar.Mobility, true));
-                //enemy/ally blockings don't matter for diagonals
-            };
-
-            Grid.LocTest checkBlock = (Loc testLoc) => {
-
-                foreach (Loc end in ends)
-                {
-                    if (testLoc == end)
-                        return false;
-                }
-
-                if (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, controlledChar.Mobility))
-                    return true;
-
-                if (BlockedByTrap(controlledChar, testLoc))
-                    return true;
-                if (BlockedByHazard(controlledChar, testLoc))
-                    return true;
-
-                return false;
-            };
-
-
-            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
-            return Grid.FindAPath(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, ends.ToArray(), checkBlock, checkDiagBlock);
         }
     }
 }

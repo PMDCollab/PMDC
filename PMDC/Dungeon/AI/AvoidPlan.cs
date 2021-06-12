@@ -227,7 +227,7 @@ namespace PMDC.Dungeon
                     }
                 }
 
-                if (respectPeers && BlockedByChar(testLoc))
+                if (respectPeers && BlockedByChar(testLoc, false))
                     return true;
 
                 return false;

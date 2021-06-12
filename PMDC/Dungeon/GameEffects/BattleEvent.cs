@@ -418,6 +418,47 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class NpcDialogueBattleEvent : BattleEvent
+    {
+        public StringKey Message;
+        public bool HideSpeaker;
+        public EmoteStyle Emote;
+
+        public NpcDialogueBattleEvent() { }
+        public NpcDialogueBattleEvent(StringKey message) : this(message, false) { }
+        public NpcDialogueBattleEvent(StringKey message, bool hideSpeaker)
+        {
+            Message = message;
+            HideSpeaker = hideSpeaker;
+        }
+        protected NpcDialogueBattleEvent(NpcDialogueBattleEvent other)
+        {
+            Message = other.Message;
+            HideSpeaker = other.HideSpeaker;
+            Emote = other.Emote;
+        }
+        public override GameEvent Clone() { return new NpcDialogueBattleEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (DataManager.Instance.CurrentReplay == null)
+            {
+                if (HideSpeaker)
+                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(Message.ToLocal()));
+                else
+                {
+                    Dir8 oldDir = context.Target.CharDir;
+                    context.Target.CharDir = context.User.CharDir.Reverse();
+                    Character target = context.Target;
+                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(target.Appearance, target.Name, Emote, true, Message.ToLocal()));
+                    context.Target.CharDir = oldDir;
+                }
+                context.CancelState.Cancel = true;
+            }
+        }
+    }
+
+    [Serializable]
     public class BattleLogBattleEvent : BattleEvent
     {
         public StringKey Message;

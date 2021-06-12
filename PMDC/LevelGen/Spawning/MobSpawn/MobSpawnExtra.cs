@@ -5,6 +5,7 @@ using RogueElements;
 using RogueEssence;
 using RogueEssence.LevelGen;
 using PMDC.Data;
+using System.Collections.Generic;
 
 namespace PMDC.LevelGen
 {
@@ -333,6 +334,45 @@ namespace PMDC.LevelGen
             if (newChar.MemberTeam is MonsterTeam)
                 ((MonsterTeam)newChar.MemberTeam).Unrecruitable = true;
             newChar.BaseForm.Skin = 0;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("{0}", this.GetType().Name);
+        }
+    }
+
+
+    /// <summary>
+    /// Spawn the mob with an effect on interaction (allies only)
+    /// </summary>
+    [Serializable]
+    public class MobSpawnInteractable : MobSpawnExtra
+    {
+        public List<BattleEvent> CheckEvents;
+
+        public MobSpawnInteractable()
+        {
+            CheckEvents = new List<BattleEvent>();
+        }
+        public MobSpawnInteractable(params BattleEvent[] checkEvents)
+        {
+            CheckEvents = new List<BattleEvent>();
+            foreach (BattleEvent effect in checkEvents)
+                CheckEvents.Add(effect);
+        }
+
+        public MobSpawnInteractable(MobSpawnInteractable other) : this()
+        {
+            foreach (BattleEvent effect in other.CheckEvents)
+                CheckEvents.Add((BattleEvent)effect.Clone());
+        }
+        public override MobSpawnExtra Copy() { return new MobSpawnInteractable(this); }
+
+        public override void ApplyFeature(IMobSpawnMap map, Character newChar)
+        {
+            foreach (BattleEvent effect in CheckEvents)
+                newChar.ActionEvents.Add((BattleEvent)effect.Clone());
         }
 
         public override string ToString()

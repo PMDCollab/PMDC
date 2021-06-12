@@ -119,7 +119,7 @@ namespace PMDC.Dungeon
                     if (BlockedByHazard(controlledChar, testLoc))
                         return true;
 
-                    if (testLoc != targetChar.CharLoc && respectPeers && BlockedByChar(testLoc))
+                    if (testLoc != targetChar.CharLoc && respectPeers && BlockedByChar(testLoc, false))
                         return true;
 
                     return false;
