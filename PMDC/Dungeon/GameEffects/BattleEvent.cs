@@ -450,7 +450,7 @@ namespace PMDC.Dungeon
                     Dir8 oldDir = context.Target.CharDir;
                     context.Target.CharDir = context.User.CharDir.Reverse();
                     Character target = context.Target;
-                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(target.Appearance, target.Name, Emote, true, Message.ToLocal()));
+                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(target.Appearance, target.GetDisplayName(true), Emote, true, Message.ToLocal()));
                     context.Target.CharDir = oldDir;
                 }
                 context.CancelState.Cancel = true;
