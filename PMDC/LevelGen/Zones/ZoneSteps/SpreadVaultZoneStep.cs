@@ -35,6 +35,8 @@ namespace PMDC.LevelGen
         [RangeBorder(0, true, true)]
         public RangeDict<RandomRoomSpawnStep<ListMapGenContext, MapItem>> ItemPlacements;
         [RangeBorder(0, true, true)]
+        public RangeDict<RandRange> MobAmount;
+        [RangeBorder(0, true, true)]
         public RangeDict<PlaceRandomMobsStep<ListMapGenContext>> MobPlacements;
         //spreads an item through the floors
         //ensures that the space in floors between occurrences is kept tame
@@ -46,6 +48,7 @@ namespace PMDC.LevelGen
             ItemAmount = new RangeDict<RandRange>();
             ItemSpawners = new RangeDict<IStepSpawner<ListMapGenContext, MapItem>>();
             ItemPlacements = new RangeDict<RandomRoomSpawnStep<ListMapGenContext, MapItem>>();
+            MobAmount = new RangeDict<RandRange>();
             MobPlacements = new RangeDict<PlaceRandomMobsStep<ListMapGenContext>>();
         }
         public SpreadVaultZoneStep(Priority itemPriority, Priority mobPriority) : this()
@@ -68,6 +71,7 @@ namespace PMDC.LevelGen
             ItemAmount = other.ItemAmount;
             ItemSpawners = other.ItemSpawners;
             ItemPlacements = other.ItemPlacements;
+            MobAmount = other.MobAmount;
             MobPlacements = other.MobPlacements;
 
             ItemPriority = other.ItemPriority;
@@ -114,7 +118,7 @@ namespace PMDC.LevelGen
 
                     //use bruteforce clone for this
                     PlaceRandomMobsStep<ListMapGenContext> secretMobPlacement = MobPlacements[id].Copy();
-                    secretMobPlacement.Spawn = new TeamPickerSpawner<ListMapGenContext>(specificTeam);
+                    secretMobPlacement.Spawn = new LoopedTeamSpawner<ListMapGenContext>(specificTeam, MobAmount[id]);
                     queue.Enqueue(MobPriority, secretMobPlacement);
                 }
             }
