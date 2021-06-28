@@ -51,6 +51,10 @@ namespace PMDC.Dungeon
         /// will not attack or target sleepers and frozen, full stop
         /// </summary>
         TeamPartner = 256,
+        /// <summary>
+        /// Will attack enemy units if in a neutral faction, and vice versa
+        /// </summary>
+        NeutralFoeConflict = 512,
     }
 
     public struct ActionValue
@@ -123,7 +127,8 @@ namespace PMDC.Dungeon
             Character controlledChar = ZoneManager.Instance.CurrentMap.LookupCharIndex(myCharIndex);
             Character otherChar = ZoneManager.Instance.CurrentMap.LookupCharIndex(charIndex);
 
-            if (DungeonScene.Instance.GetMatchup(controlledChar, otherChar, false) == Alignment.Foe)
+            Faction foeFaction = (IQ & AIFlags.NeutralFoeConflict) != AIFlags.None ? Faction.Foe : Faction.None;
+            if (DungeonScene.Instance.GetMatchup(controlledChar, otherChar, foeFaction, false) == Alignment.Foe)
                 return false;
             else if (!respectLeaders)
                 return true;
@@ -198,7 +203,8 @@ namespace PMDC.Dungeon
                 return false;
             //TODO: pass in the list of seen characters instead of computing them on the spot
             //this is very expensive to do, and the only reason the game isn't lagging is because this check is only called for ally characters!
-            List<Character> seenChars = controlledChar.GetSeenCharacters(Alignment.Foe);
+            Faction foeFaction = (IQ & AIFlags.NeutralFoeConflict) != AIFlags.None ? Faction.Foe : Faction.None;
+            List<Character> seenChars = controlledChar.GetSeenCharacters(Alignment.Foe, foeFaction);
             foreach (Character seenChar in seenChars)
             {
                 if (seenChar.Tactic.ID == 8 && (seenChar.CharLoc - testLoc).Dist8() <= 1 && seenChar.GetStatusEffect(25) == null)//do not approach silcoon/cascoon; NOTE: specialized AI code!
@@ -303,13 +309,14 @@ namespace PMDC.Dungeon
 
         protected GameAction TryAttackChoice(ReRandom rand, Character controlledChar, Character targetChar)
         {
-            List<Character> seenChars = controlledChar.GetSeenCharacters(Alignment.Self | Alignment.Friend | Alignment.Foe);
+            List<Character> seenChars = controlledChar.GetSeenCharacters(Alignment.Self | Alignment.Friend | Alignment.Foe, Faction.None);
 
             bool seesDanger = false;
             foreach (Character seenChar in seenChars)
             {
+                Faction foeFaction = (IQ & AIFlags.NeutralFoeConflict) != AIFlags.None ? Faction.Foe : Faction.None;
                 bool canBetray = (IQ & AIFlags.TeamPartner) == AIFlags.None;
-                if ((DungeonScene.Instance.GetMatchup(controlledChar, seenChar, canBetray) & GetAcceptableTargets()) != Alignment.None)
+                if ((DungeonScene.Instance.GetMatchup(controlledChar, seenChar, foeFaction, canBetray) & GetAcceptableTargets()) != Alignment.None)
                     seesDanger = true;
             }
             if (!seesDanger)
@@ -778,7 +785,7 @@ namespace PMDC.Dungeon
 
                         foreach (Character target in seenChars)
                         {
-                            if (DungeonScene.Instance.IsTargeted(controlledChar, target, explosion.TargetAlignments, false) && callTiles.Contains(target.CharLoc))
+                            if (DungeonScene.Instance.IsTargeted(controlledChar, target, explosion.TargetAlignments) && callTiles.Contains(target.CharLoc))
                             {
                                 StatusEffect moveEffect;
                                 if (target.StatusEffects.TryGetValue(searchedStatus, out moveEffect))
@@ -835,7 +842,7 @@ namespace PMDC.Dungeon
 
                         foreach (Character target in seenChars)
                         {
-                            if (DungeonScene.Instance.IsTargeted(controlledChar, target, explosion.TargetAlignments, false) && callTiles.Contains(target.CharLoc))
+                            if (DungeonScene.Instance.IsTargeted(controlledChar, target, explosion.TargetAlignments) && callTiles.Contains(target.CharLoc))
                             {
                                 int recordSlot = -1;
                                 int recordPower = -1;
@@ -891,7 +898,7 @@ namespace PMDC.Dungeon
 
             foreach (Character target in seenChars)
             {
-                if (DungeonScene.Instance.IsTargeted(controlledChar, target, explosion.TargetAlignments, false) && hitTiles.Contains(target.CharLoc))
+                if (DungeonScene.Instance.IsTargeted(controlledChar, target, explosion.TargetAlignments) && hitTiles.Contains(target.CharLoc))
                 {
                     totalTargets++;
                     if (Collision.InFront(controlledChar.CharLoc, target.CharLoc, dir, -1))
@@ -924,8 +931,9 @@ namespace PMDC.Dungeon
         {
             int delta = GetTargetEffect(controlledChar, moveIndex, entry, seenChars, target, rangeMod);
 
+            Faction foeFaction = (IQ & AIFlags.NeutralFoeConflict) != AIFlags.None ? Faction.Foe : Faction.None;
             bool teamPartner = (IQ & AIFlags.TeamPartner) != AIFlags.None;
-            Alignment matchup = DungeonScene.Instance.GetMatchup(controlledChar, target, !teamPartner);
+            Alignment matchup = DungeonScene.Instance.GetMatchup(controlledChar, target, foeFaction, !teamPartner);
 
 
             if (matchup == Alignment.Foe)
@@ -1022,7 +1030,7 @@ namespace PMDC.Dungeon
             }
             if (moveIndex == 217)//Present; if an ally, use healing calculations; NOTE: specialized AI code!
             {
-                if (DungeonScene.Instance.GetMatchup(controlledChar, target, false) == Alignment.Friend)
+                if (DungeonScene.Instance.GetMatchup(controlledChar, target) == Alignment.Friend)
                 {
                     int healHP = target.MaxHP / 3;
                     int hpMissing = target.MaxHP - target.HP - healHP / 2;
@@ -1039,7 +1047,7 @@ namespace PMDC.Dungeon
                     bool nearEnemy = false;
                     foreach (Character character in seenChars)
                     {
-                        if (DungeonScene.Instance.GetMatchup(controlledChar, character, false) == Alignment.Foe && (character.CharLoc - controlledChar.CharLoc).Dist8() <= 2)
+                        if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Foe && (character.CharLoc - controlledChar.CharLoc).Dist8() <= 2)
                         {
                             nearEnemy = true;
                             break;
@@ -1053,7 +1061,7 @@ namespace PMDC.Dungeon
                     bool nearEnemy = false;
                     foreach (Character character in seenChars)
                     {
-                        if (DungeonScene.Instance.GetMatchup(controlledChar, character, false) == Alignment.Foe && (character.CharLoc - controlledChar.CharLoc).Dist8() <= 1)
+                        if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Foe && (character.CharLoc - controlledChar.CharLoc).Dist8() <= 1)
                         {
                             nearEnemy = true;
                             break;
@@ -1154,7 +1162,7 @@ namespace PMDC.Dungeon
 
                         foreach (Character character in seenChars)
                         {
-                            if (DungeonScene.Instance.GetMatchup(controlledChar, character, false) == Alignment.Friend && (character.CharLoc - controlledChar.CharLoc).Dist8() <= 5)
+                            if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Friend && (character.CharLoc - controlledChar.CharLoc).Dist8() <= 5)
                             {
                                 foundAllies++;
                                 if (foundAllies >= 2)

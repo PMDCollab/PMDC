@@ -10,12 +10,16 @@ namespace PMDC.Dungeon
     [Serializable]
     public class AttackFoesPlan : AIPlan
     {
+        public int StatusIndex;
         //continue to the last place the enemy was found (if no other enemies can be found) before losing aggro
         private Loc? prevLoc;
 
         public AttackFoesPlan() { }
-        public AttackFoesPlan(AIFlags iq, AttackChoice attackPattern) : base(iq, attackPattern) { }
-        protected AttackFoesPlan(AttackFoesPlan other) : base(other) { }
+        public AttackFoesPlan(AIFlags iq, AttackChoice attackPattern, int status) : base(iq, attackPattern)
+        {
+            StatusIndex = status;
+        }
+        protected AttackFoesPlan(AttackFoesPlan other) : base(other) { StatusIndex = other.StatusIndex; }
         public override BasePlan CreateNew() { return new AttackFoesPlan(this); }
         public override void SwitchedIn() { prevLoc = null; base.SwitchedIn(); }
 
@@ -31,7 +35,16 @@ namespace PMDC.Dungeon
             }
 
             //path to the closest enemy
-            List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets());
+            Faction foeFaction = (IQ & AIFlags.NeutralFoeConflict) != AIFlags.None ? Faction.Foe : Faction.None;
+            List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets(), foeFaction);
+
+            StatusEffect lastHit = controlledChar.GetStatusEffect(StatusIndex);
+            if (lastHit != null && lastHit.TargetChar != null)
+            {
+                if (!seenCharacters.Contains(lastHit.TargetChar))
+                    seenCharacters.Add(lastHit.TargetChar);
+            }
+
 
             bool teamPartner = (IQ & AIFlags.TeamPartner) != AIFlags.None;
             if (teamPartner)

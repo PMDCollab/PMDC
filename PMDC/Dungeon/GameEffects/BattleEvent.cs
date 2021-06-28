@@ -4648,11 +4648,14 @@ namespace PMDC.Dungeon
                     yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, otherStatus, null));
                 }
 
-                StatusEffect targetStatus = new StatusEffect(TargetStatusID);
-                targetStatus.LoadFromData();
-                targetStatus.TargetChar = context.User;
-                targetStatus.StatusStates.GetWithDefault<HPState>().HP = dmg;
-                yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, targetStatus, null));
+                if (context.User.MemberTeam != context.Target.MemberTeam)
+                {
+                    StatusEffect targetStatus = new StatusEffect(TargetStatusID);
+                    targetStatus.LoadFromData();
+                    targetStatus.TargetChar = context.User;
+                    targetStatus.StatusStates.GetWithDefault<HPState>().HP = dmg;
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, targetStatus, null));
+                }
             }
         }
     }
