@@ -65,9 +65,9 @@ namespace PMDC.LevelGen
 
         protected SpreadVaultZoneStep(SpreadVaultZoneStep other, ulong seed) : this()
         {
-            VaultSteps = other.VaultSteps;
-            Items = other.Items;
-            Mobs = other.Mobs;
+            VaultSteps.AddRange(other.VaultSteps);
+            Items = other.Items.CopyState();
+            Mobs = other.Mobs.CopyState();
             ItemAmount = other.ItemAmount;
             ItemSpawners = other.ItemSpawners;
             ItemPlacements = other.ItemPlacements;
@@ -84,9 +84,12 @@ namespace PMDC.LevelGen
         public override void Apply(ZoneGenContext zoneContext, IGenContext context, StablePriorityQueue<Priority, IGenStep> queue)
         {
             int id = zoneContext.CurrentID;
-            if (SpreadPlan.CheckIfDistributed(zoneContext, context))
+
+            foreach (int floorId in SpreadPlan.DropPoints)
             {
-                foreach(IGenPriority vaultStep in VaultSteps)
+                if (floorId != zoneContext.CurrentID)
+                    continue;
+                foreach (IGenPriority vaultStep in VaultSteps)
                     queue.Enqueue(vaultStep.Priority, vaultStep.GetItem());
 
                 {

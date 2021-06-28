@@ -60,9 +60,9 @@ namespace PMDC.LevelGen
 
         protected SpreadBossZoneStep(SpreadBossZoneStep other, ulong seed) : this()
         {
-            VaultSteps = other.VaultSteps;
-            Items = other.Items;
-            BossSteps = other.BossSteps;
+            VaultSteps.AddRange(other.VaultSteps);
+            Items = other.Items.CopyState();
+            BossSteps = other.BossSteps.CopyState();
             ItemAmount = other.ItemAmount;
             ItemSpawners = other.ItemSpawners;
             ItemPlacements = other.ItemPlacements;
@@ -77,8 +77,11 @@ namespace PMDC.LevelGen
         public override void Apply(ZoneGenContext zoneContext, IGenContext context, StablePriorityQueue<Priority, IGenStep> queue)
         {
             int id = zoneContext.CurrentID;
-            if (SpreadPlan.CheckIfDistributed(zoneContext, context))
+
+            foreach (int floorId in SpreadPlan.DropPoints)
             {
+                if (floorId != zoneContext.CurrentID)
+                    continue;
                 {
                     SpawnList<AddBossRoomStep<ListMapGenContext>> bossListSlice = BossSteps.GetSpawnList(id);
                     if (!bossListSlice.CanPick)

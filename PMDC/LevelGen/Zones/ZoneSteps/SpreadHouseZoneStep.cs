@@ -49,11 +49,11 @@ namespace PMDC.LevelGen
 
         protected SpreadHouseZoneStep(SpreadHouseZoneStep other, ulong seed) : this()
         {
-            Items = other.Items;
-            ItemThemes = other.ItemThemes;
-            Mobs = other.Mobs;
-            MobThemes = other.MobThemes;
-            HouseStepSpawns = other.HouseStepSpawns;
+            Items = other.Items.CopyState();
+            ItemThemes = other.ItemThemes.CopyState();
+            Mobs = other.Mobs.CopyState();
+            MobThemes = other.MobThemes.CopyState();
+            HouseStepSpawns = (SpawnList<IMonsterHouseBaseStep>)other.HouseStepSpawns.CopyState();
 
             Priority = other.Priority;
             SpreadPlan = other.SpreadPlan.Instantiate(seed);
@@ -64,8 +64,11 @@ namespace PMDC.LevelGen
         public override void Apply(ZoneGenContext zoneContext, IGenContext context, StablePriorityQueue<Priority, IGenStep> queue)
         {
             int id = zoneContext.CurrentID;
-            if (SpreadPlan.CheckIfDistributed(zoneContext, context))
+
+            foreach (int floorId in SpreadPlan.DropPoints)
             {
+                if (floorId != zoneContext.CurrentID)
+                    continue;
                 IMonsterHouseBaseStep monsterHouseStep = HouseStepSpawns.Pick(context.Rand).CreateNew();
                 SpawnList<MapItem> itemListSlice = Items.GetSpawnList(id);
                 for (int jj = 0; jj < itemListSlice.Count; jj++)
