@@ -10,14 +10,16 @@ namespace PMDC.Dungeon
     [Serializable]
     public class AttackFoesPlan : AIPlan
     {
+        public AttackChoice AttackPattern;
         public int StatusIndex;
         //continue to the last place the enemy was found (if no other enemies can be found) before losing aggro
         private Loc? prevLoc;
 
         public AttackFoesPlan() { }
-        public AttackFoesPlan(AIFlags iq, AttackChoice attackPattern, int status) : base(iq, attackPattern)
+        public AttackFoesPlan(AIFlags iq, AttackChoice attackPattern, int status) : base(iq)
         {
             StatusIndex = status;
+            AttackPattern = attackPattern;
         }
         protected AttackFoesPlan(AttackFoesPlan other) : base(other) { StatusIndex = other.StatusIndex; }
         public override BasePlan CreateNew() { return new AttackFoesPlan(this); }
@@ -27,7 +29,7 @@ namespace PMDC.Dungeon
         {
             if (controlledChar.CantWalk)
             {
-                GameAction attack = TryAttackChoice(rand, controlledChar, null);
+                GameAction attack = TryAttackChoice(rand, controlledChar, null, AttackPattern);
                 if (attack.Type != GameAction.ActionType.Wait)
                     return attack;
 
@@ -68,6 +70,11 @@ namespace PMDC.Dungeon
                 }
             }
 
+            // If the attackchoice is SmartAttack, take attack ranges into consideration
+            // the end points should be all locations where one can attack the target
+            // for projectiles, it should be the farthest point where they can attack:
+            
+
             Character closestChar = null;
             List<Loc> closestPath = null;
             //iterate in increasing character indices
@@ -102,23 +109,46 @@ namespace PMDC.Dungeon
 
             if (closestChar != null)
             {
-                GameAction attack = TryAttackChoice(rand, controlledChar, closestChar);
+                GameAction attack = TryAttackChoice(rand, controlledChar, closestChar, AttackPattern);
                 if (attack.Type != GameAction.ActionType.Wait)
                     return attack;
 
                 //pursue the enemy if one is located
                 prevLoc = closestChar.CharLoc;
-                return SelectChoiceFromPath(controlledChar, closestPath, closestPath[0] == closestChar.CharLoc);
+                if (closestPath[0] == closestChar.CharLoc)
+                    closestPath.RemoveAt(0);
+                return SelectChoiceFromPath(controlledChar, closestPath);
             }
             else if (!teamPartner && prevLoc.HasValue && prevLoc.Value != controlledChar.CharLoc)
             {
                 //if no enemy is located, path to the location of the last seen enemy
                 List<Loc> path = GetPath(controlledChar, prevLoc.Value, !preThink);
                 if (path[path.Count - 1] == prevLoc.Value)
-                    return SelectChoiceFromPath(controlledChar, path, false);
+                    return SelectChoiceFromPath(controlledChar, path);
                 else
                     prevLoc = null;
             }
+
+
+            //if (path != null)
+            //{
+            //    GameAction attack = TryAttackChoice(rand, controlledChar, null);
+            //    if (attack.Type != GameAction.ActionType.Wait)
+            //        return attack;
+
+            //    //pursue the enemy if one is located
+            //    prevLoc = path[0];
+            //    return SelectChoiceFromPath(controlledChar, path, false);
+            //}
+            //else if (!teamPartner && prevLoc.HasValue && prevLoc.Value != controlledChar.CharLoc)
+            //{
+            //    //if no enemy is located, path to the location of the last seen enemy
+            //    path = GetPath(controlledChar, prevLoc.Value, !preThink);
+            //    if (path[path.Count - 1] == prevLoc.Value)
+            //        return SelectChoiceFromPath(controlledChar, path, false);
+            //    else
+            //        prevLoc = null;
+            //}
 
             return null;
         }

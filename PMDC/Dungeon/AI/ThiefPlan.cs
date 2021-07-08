@@ -18,8 +18,7 @@ namespace PMDC.Dungeon
         //for thieves and switcheroo thieves
         
         private int origItem;
-        public ThiefPlan(AIFlags iq, AttackChoice attackPattern)
-            : base(iq, attackPattern)
+        public ThiefPlan(AIFlags iq) : base(iq)
         {
             origItem = -1;
         }

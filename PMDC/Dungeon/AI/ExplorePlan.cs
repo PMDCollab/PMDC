@@ -12,7 +12,7 @@ namespace PMDC.Dungeon
     {
         private List<Loc> goalPath;
         private List<Loc> locHistory;
-        public ExplorePlan(AIFlags iq, AttackChoice attackPattern) : base(iq, attackPattern)
+        public ExplorePlan(AIFlags iq) : base(iq)
         {
             goalPath = new List<Loc>();
             locHistory = new List<Loc>();
@@ -131,7 +131,7 @@ namespace PMDC.Dungeon
                 if (destChar != null && ZoneManager.Instance.CurrentMap.TerrainBlocked(controlledChar.CharLoc, destChar.Mobility))
                     return new GameAction(GameAction.ActionType.Wait, Dir8.None);
             }
-            return SelectChoiceFromPath(controlledChar, goalPath, false);
+            return SelectChoiceFromPath(controlledChar, goalPath);
         }
 
     }

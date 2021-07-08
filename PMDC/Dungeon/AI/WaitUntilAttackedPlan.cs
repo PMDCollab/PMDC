@@ -10,7 +10,7 @@ namespace PMDC.Dungeon
     public class WaitUntilAttackedPlan : AIPlan
     {
         public int StatusIndex;
-        public WaitUntilAttackedPlan(AIFlags iq, AIPlan.AttackChoice attackPattern, int status) : base(iq, attackPattern)
+        public WaitUntilAttackedPlan(AIFlags iq, int status) : base(iq)
         {
             StatusIndex = status;
         }

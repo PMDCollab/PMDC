@@ -10,12 +10,14 @@ namespace PMDC.Dungeon
     [Serializable]
     public class PreparePlan : AIPlan
     {
+        public AttackChoice AttackPattern;
         public int StatusIndex;
 
         public PreparePlan() { }
-        public PreparePlan(AIFlags iq, AttackChoice attackPattern, int status) : base(iq, attackPattern)
+        public PreparePlan(AIFlags iq, AttackChoice attackPattern, int status) : base(iq)
         {
             StatusIndex = status;
+            AttackPattern = attackPattern;
         }
         public PreparePlan(PreparePlan other) : base(other) { StatusIndex = other.StatusIndex; }
         public override BasePlan CreateNew() { return new PreparePlan(this); }
@@ -32,7 +34,7 @@ namespace PMDC.Dungeon
                 target = lastHit.TargetChar;
 
             //need attack action check
-            GameAction attackCommand = TryAttackChoice(rand, controlledChar, target);
+            GameAction attackCommand = TryAttackChoice(rand, controlledChar, target, AttackPattern);
             if (attackCommand.Type != GameAction.ActionType.Wait)
                 return attackCommand;
 

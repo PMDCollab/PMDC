@@ -11,7 +11,7 @@ namespace PMDC.Dungeon
     {
         public int Turns;
 
-        public WaitPeriodPlan(AIFlags iq, AIPlan.AttackChoice attackPattern, int turns) : base(iq, attackPattern)
+        public WaitPeriodPlan(AIFlags iq, int turns) : base(iq)
         {
             Turns = turns;
         }

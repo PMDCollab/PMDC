@@ -9,7 +9,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class AvoidAllPlan : AvoidPlan
     {
-        public AvoidAllPlan(AIFlags iq, AttackChoice attackPattern) : base(iq, attackPattern) { }
+        public AvoidAllPlan(AIFlags iq) : base(iq) { }
         protected AvoidAllPlan(AvoidAllPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new AvoidAllPlan(this); }
 

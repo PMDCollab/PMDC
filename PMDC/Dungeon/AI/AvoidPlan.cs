@@ -13,7 +13,7 @@ namespace PMDC.Dungeon
         private List<Loc> goalPath;
         private List<Loc> locHistory;
 
-        public AvoidPlan(AIFlags iq, AttackChoice attackPattern) : base(iq, attackPattern)
+        public AvoidPlan(AIFlags iq) : base(iq)
         {
             goalPath = new List<Loc>();
             locHistory = new List<Loc>();
@@ -168,7 +168,7 @@ namespace PMDC.Dungeon
                 if (destChar != null && ZoneManager.Instance.CurrentMap.TerrainBlocked(controlledChar.CharLoc, destChar.Mobility))
                     return new GameAction(GameAction.ActionType.Wait, Dir8.None);
             }
-            return SelectChoiceFromPath(controlledChar, goalPath, false);
+            return SelectChoiceFromPath(controlledChar, goalPath);
 
         }
         private GameAction DumbAvoid(Character controlledChar, bool preThink, List<Character> seenCharacters, CharIndex ownIndex, ReRandom rand)

@@ -13,7 +13,7 @@ namespace PMDC.Dungeon
         const int MAX_RANGE = 5;
 
         private Loc targetLoc;
-        public StayInRangePlan(AIFlags iq, AttackChoice attackPattern) : base(iq, attackPattern)
+        public StayInRangePlan(AIFlags iq) : base(iq)
         {
             targetLoc = new Loc(-1);
         }

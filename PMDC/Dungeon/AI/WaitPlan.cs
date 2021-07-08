@@ -10,7 +10,7 @@ namespace PMDC.Dungeon
     public class WaitPlan : AIPlan
     {
         public WaitPlan() { }
-        public WaitPlan(AIFlags iq, AttackChoice attackPattern) : base(iq, attackPattern) { }
+        public WaitPlan(AIFlags iq) : base(iq) { }
         protected WaitPlan(WaitPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new WaitPlan(this); }
 

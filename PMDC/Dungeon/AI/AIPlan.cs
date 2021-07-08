@@ -96,7 +96,6 @@ namespace PMDC.Dungeon
         /// <summary>
         /// The strategy that the monster takes when it goes aggro
         /// </summary>
-        public AttackChoice AttackPattern;
         public AIFlags IQ;
 
         public enum AttackChoice
@@ -110,15 +109,13 @@ namespace PMDC.Dungeon
         public AIPlan() { }
         //public AIPlan(AIFlags iq) : this(iq, true, AttackChoice.SmartAttack) { }
 
-        public AIPlan(AIFlags iq, AttackChoice attackPattern)
+        public AIPlan(AIFlags iq)
         {
             this.IQ = iq;
-            AttackPattern = attackPattern;
         }
 
         protected AIPlan(AIPlan other)
         {
-            AttackPattern = other.AttackPattern;
             IQ = other.IQ;
         }
 
@@ -221,6 +218,13 @@ namespace PMDC.Dungeon
             return target;
         }
 
+        /// <summary>
+        /// Gets the path directly to a target
+        /// </summary>
+        /// <param name="controlledChar"></param>
+        /// <param name="end"></param>
+        /// <param name="respectPeers"></param>
+        /// <returns></returns>
         protected List<Loc> GetPath(Character controlledChar, Loc end, bool respectPeers)
         {
 
@@ -254,6 +258,43 @@ namespace PMDC.Dungeon
             return Grid.FindPath(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, end, checkBlock, checkDiagBlock);
         }
 
+        /// <summary>
+        /// Gets a path to a position that one can attack from
+        /// </summary>
+        /// <param name="controlledChar"></param>
+        /// <param name="end"></param>
+        /// <param name="respectPeers"></param>
+        /// <returns></returns>
+        protected List<Loc>[] GetAttackPath(Character controlledChar, Loc[] end, bool respectPeers)
+        {
+
+            //requires a valid target tile
+            Grid.LocTest checkDiagBlock = (Loc loc) => {
+                return (ZoneManager.Instance.CurrentMap.TileBlocked(loc, controlledChar.Mobility, true));
+                //enemy/ally blockings don't matter for diagonals
+            };
+
+            Grid.LocTest checkBlock = (Loc testLoc) => {
+
+                if (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, controlledChar.Mobility))
+                    return true;
+
+                if (BlockedByTrap(controlledChar, testLoc))
+                    return true;
+                if (BlockedByHazard(controlledChar, testLoc))
+                    return true;
+
+                if (respectPeers && BlockedByChar(testLoc, Alignment.Self | Alignment.Foe))
+                    return true;
+
+                return false;
+            };
+
+
+            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
+
+            return Grid.FindNPaths(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, end, checkBlock, checkDiagBlock, 1, true);
+        }
 
         protected List<Loc> GetPathPermissive(Character controlledChar, List<Loc> ends)
         {
@@ -291,12 +332,10 @@ namespace PMDC.Dungeon
             return Grid.FindAPath(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, ends.ToArray(), checkBlock, checkDiagBlock);
         }
 
-        protected GameAction SelectChoiceFromPath(Character controlledChar, List<Loc> path, bool waitBefore)
+        protected GameAction SelectChoiceFromPath(Character controlledChar, List<Loc> path)
         {
             if (path.Count <= 1)
                 return new GameAction(GameAction.ActionType.Wait, Dir8.None);
-            else if (path.Count <= 2 && waitBefore)
-                return new GameAction(GameAction.ActionType.Wait, DirExt.GetDir(path[path.Count - 1], path[path.Count - 2]));
             else
                 return TrySelectWalk(controlledChar, DirExt.GetDir(path[path.Count - 1], path[path.Count - 2]));
         }
@@ -307,7 +346,7 @@ namespace PMDC.Dungeon
             return new GameAction(GameAction.ActionType.Move, dir, ((IQ & AIFlags.ItemGrabber) != AIFlags.None) ? 1 : 0);
         }
 
-        protected GameAction TryAttackChoice(ReRandom rand, Character controlledChar, Character targetChar)
+        protected GameAction TryAttackChoice(ReRandom rand, Character controlledChar, Character targetChar, AttackChoice attackPattern)
         {
             List<Character> seenChars = controlledChar.GetSeenCharacters(Alignment.Self | Alignment.Friend | Alignment.Foe, Faction.None);
 
@@ -326,11 +365,11 @@ namespace PMDC.Dungeon
             if (controlledChar.AttackOnly)
                 return TryForcedAttackChoice(rand, controlledChar, seenChars);
 
-            if (AttackPattern == AttackChoice.DumbApproach)
+            if (attackPattern == AttackChoice.DumbApproach)
                 return TryDumbAttackChoice(rand, controlledChar, targetChar, seenChars);
-            else if (AttackPattern == AttackChoice.RandomAttack)
+            else if (attackPattern == AttackChoice.RandomAttack)
                 return TryRandomMoveChoice(rand, controlledChar, targetChar, seenChars, false);
-            else if (AttackPattern == AttackChoice.RandomApproach)
+            else if (attackPattern == AttackChoice.RandomApproach)
                 return TryRandomMoveChoice(rand, controlledChar, targetChar, seenChars, true);
             else
                 return TryBestAttackChoice(rand, controlledChar, seenChars);

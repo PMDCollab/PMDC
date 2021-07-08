@@ -12,7 +12,7 @@ namespace PMDC.Dungeon
     {
         public int Factor;
 
-        public RetreaterPlan(AIFlags iq, AttackChoice attackPattern, int factor) : base(iq, attackPattern) { Factor = factor; }
+        public RetreaterPlan(AIFlags iq, int factor) : base(iq) { Factor = factor; }
         protected RetreaterPlan(RetreaterPlan other) : base(other) { Factor = other.Factor; }
         public override BasePlan CreateNew() { return new RetreaterPlan(this); }
 
