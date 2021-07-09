@@ -24,19 +24,30 @@ namespace PMDC.Dungeon
 
         public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
         {
-            Faction foeFaction = (IQ & AIFlags.NeutralFoeConflict) != AIFlags.None ? Faction.Foe : Faction.None;
-            List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets(), foeFaction);
             Character target = null;
-            if (seenCharacters.Count > 0)
-                target = seenCharacters[0];
             StatusEffect lastHit = controlledChar.GetStatusEffect(StatusIndex);
             if (lastHit != null && lastHit.TargetChar != null)
                 target = lastHit.TargetChar;
+            Faction foeFaction = (IQ & AIFlags.NeutralFoeConflict) != AIFlags.None ? Faction.Foe : Faction.None;
+            List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets(), foeFaction);
+            if (target == null && seenCharacters.Count > 0)
+            {
+                target = seenCharacters[0];
+                for (int ii = 1; ii < seenCharacters.Count; ii++)
+                {
+                    if ((seenCharacters[ii].CharLoc - controlledChar.CharLoc).DistSquared() < (target.CharLoc - controlledChar.CharLoc).DistSquared())
+                        target = seenCharacters[ii];
+                }
+            }
 
             //need attack action check
-            GameAction attackCommand = TryAttackChoice(rand, controlledChar, target, AttackPattern);
-            if (attackCommand.Type != GameAction.ActionType.Wait)
-                return attackCommand;
+            if (target != null)
+            {
+                Dir8 closestDir = (target.CharLoc - controlledChar.CharLoc).ApproximateDir8();
+                GameAction attackCommand = TryAttackChoice(rand, controlledChar, closestDir, AttackPattern);
+                if (attackCommand.Type != GameAction.ActionType.Wait)
+                    return attackCommand;
+            }
 
             return null;
         }

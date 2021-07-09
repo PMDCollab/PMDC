@@ -27,16 +27,6 @@ namespace PMDC.Dungeon
 
         public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
         {
-            if (controlledChar.CantWalk)
-            {
-                GameAction attack = TryAttackChoice(rand, controlledChar, null, AttackPattern);
-                if (attack.Type != GameAction.ActionType.Wait)
-                    return attack;
-
-                return null;
-            }
-
-            //path to the closest enemy
             Faction foeFaction = (IQ & AIFlags.NeutralFoeConflict) != AIFlags.None ? Faction.Foe : Faction.None;
             List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets(), foeFaction);
 
@@ -46,7 +36,6 @@ namespace PMDC.Dungeon
                 if (!seenCharacters.Contains(lastHit.TargetChar))
                     seenCharacters.Add(lastHit.TargetChar);
             }
-
 
             bool teamPartner = (IQ & AIFlags.TeamPartner) != AIFlags.None;
             if (teamPartner)
@@ -69,6 +58,26 @@ namespace PMDC.Dungeon
                     }
                 }
             }
+
+            if (controlledChar.CantWalk)
+            {
+                Character target = seenCharacters[0];
+                for (int ii = 1; ii < seenCharacters.Count; ii++)
+                {
+                    if ((seenCharacters[ii].CharLoc - controlledChar.CharLoc).DistSquared() < (target.CharLoc - controlledChar.CharLoc).DistSquared())
+                        target = seenCharacters[ii];
+                }
+                Dir8 closestDir = (target.CharLoc - controlledChar.CharLoc).ApproximateDir8();
+                GameAction attack = TryAttackChoice(rand, controlledChar, closestDir, AttackPattern);
+                if (attack.Type != GameAction.ActionType.Wait)
+                    return attack;
+
+                return null;
+            }
+
+            //path to the closest enemy
+
+
 
             // If the attackchoice is SmartAttack, take attack ranges into consideration
             // the end points should be all locations where one can attack the target
@@ -109,7 +118,8 @@ namespace PMDC.Dungeon
 
             if (closestChar != null)
             {
-                GameAction attack = TryAttackChoice(rand, controlledChar, closestChar, AttackPattern);
+                Dir8 closestLoc = (closestChar.CharLoc - controlledChar.CharLoc).ApproximateDir8();
+                GameAction attack = TryAttackChoice(rand, controlledChar, closestLoc, AttackPattern);
                 if (attack.Type != GameAction.ActionType.Wait)
                     return attack;
 
