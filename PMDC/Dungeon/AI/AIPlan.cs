@@ -215,9 +215,10 @@ namespace PMDC.Dungeon
         /// </summary>
         /// <param name="controlledChar"></param>
         /// <param name="end"></param>
+        /// <param name="freeGoal">Determines whether the goal should be reachable even if blocked.</param>
         /// <param name="respectPeers"></param>
         /// <returns></returns>
-        protected List<Loc> GetPath(Character controlledChar, Loc end, bool respectPeers)
+        protected List<Loc>[] GetPaths(Character controlledChar, Loc[] ends, bool freeGoal, bool respectPeers)
         {
 
             //requires a valid target tile
@@ -228,8 +229,14 @@ namespace PMDC.Dungeon
 
             Grid.LocTest checkBlock = (Loc testLoc) => {
 
-                if (testLoc == end)
-                    return false;
+                if (freeGoal)
+                {
+                    foreach (Loc end in ends)
+                    {
+                        if (testLoc == end)
+                            return false;
+                    }
+                }
 
                 if (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, controlledChar.Mobility))
                     return true;
@@ -247,45 +254,7 @@ namespace PMDC.Dungeon
 
 
             Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
-            return Grid.FindPath(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, end, checkBlock, checkDiagBlock);
-        }
-
-        /// <summary>
-        /// Gets a path to a position that one can attack from
-        /// </summary>
-        /// <param name="controlledChar"></param>
-        /// <param name="end"></param>
-        /// <param name="respectPeers"></param>
-        /// <returns></returns>
-        protected List<Loc>[] GetAttackPath(Character controlledChar, Loc[] end, bool respectPeers)
-        {
-
-            //requires a valid target tile
-            Grid.LocTest checkDiagBlock = (Loc loc) => {
-                return (ZoneManager.Instance.CurrentMap.TileBlocked(loc, controlledChar.Mobility, true));
-                //enemy/ally blockings don't matter for diagonals
-            };
-
-            Grid.LocTest checkBlock = (Loc testLoc) => {
-
-                if (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, controlledChar.Mobility))
-                    return true;
-
-                if (BlockedByTrap(controlledChar, testLoc))
-                    return true;
-                if (BlockedByHazard(controlledChar, testLoc))
-                    return true;
-
-                if (respectPeers && BlockedByChar(testLoc, Alignment.Self | Alignment.Foe))
-                    return true;
-
-                return false;
-            };
-
-
-            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
-
-            return Grid.FindNPaths(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, end, checkBlock, checkDiagBlock, 1, true);
+            return Grid.FindNPaths(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, ends, checkBlock, checkDiagBlock, 1, true);
         }
 
         protected List<Loc> GetPathPermissive(Character controlledChar, List<Loc> ends)
@@ -374,6 +343,19 @@ namespace PMDC.Dungeon
                 if (controlledChar.Skills[ii].Element.SkillNum > -1 && controlledChar.Skills[ii].Element.Charges > 0 && !controlledChar.Skills[ii].Element.Sealed && controlledChar.Skills[ii].Element.Enabled)
                     yield return ii;
             }
+        }
+
+        private void updateDistanceTargetHash(Dictionary<Loc, RangeTarget> endHash, Character chara, Loc diff)
+        {
+            int weight = diff.Dist8();
+            Loc loc = chara.CharLoc + diff;
+            if (endHash.ContainsKey(loc))
+            {
+                if (weight < endHash[loc].Weight)
+                    endHash[loc] = new RangeTarget(chara, weight);
+            }
+            else
+                endHash[loc] = new RangeTarget(chara, weight);
         }
 
         protected GameAction TryDumbAttackChoice(ReRandom rand, Character controlledChar, Dir8 defaultDir, List<Character> seenChars)
@@ -701,14 +683,12 @@ namespace PMDC.Dungeon
         {
             SkillData entry = DataManager.Instance.GetSkill(moveIndex);
 
-            bool canHitSomething = false;
             if (entry.HitboxAction is AreaAction && ((AreaAction)entry.HitboxAction).HitArea == Hitbox.AreaLimit.Full
                 || entry.HitboxAction is SelfAction || entry.HitboxAction is ProjectileAction && ((ProjectileAction)entry.HitboxAction).Rays == ProjectileAction.RayCount.Eight)
             {
                 if (defaultDir == Dir8.None)
                     defaultDir = controlledChar.CharDir;
                 ActionValue highestVal = GetActionDirValue(moveIndex, entry, controlledChar, seenChars, defaultDir);
-                canHitSomething = (highestVal.Value > 0);
                 dirs[(int)defaultDir] = highestVal;
             }
             else
@@ -730,23 +710,112 @@ namespace PMDC.Dungeon
                     if (vals[ii].CompareTo(highestVal) == 0)
                         dirs[ii] = vals[ii];
                 }
-
-                canHitSomething = (highestVal.Value > 0);
             }
         }
 
-        protected ActionValue GetActionDirValue(int skillIndex, SkillData entry, Character controlledChar, List<Character> seenChars, Dir8 dir)
+
+        protected void FillRangeTargets(Character controlledChar, List<Character> seenCharacters, Dictionary<Loc, RangeTarget> endHash)
         {
-
-            //Dig/Fly/Dive/Phantom Force/Focus Punch; NOTE: specialized AI code!
-            if (skillIndex == 91 || skillIndex == 19 || skillIndex == 291 || skillIndex == 566 || skillIndex == 264)//Focus Punch;
+            foreach (Character seenChar in seenCharacters)
             {
-                //always activate if not already forced to attack
-                if (!controlledChar.AttackOnly)
-                    return new ActionValue(100, true);
-            }
+                foreach (int skillSlot in iterateUsableSkillIndices(controlledChar))
+                {
+                    int skillIndex = controlledChar.Skills[skillSlot].Element.SkillNum;
+                    SkillData entry = DataManager.Instance.GetSkill(skillIndex);
 
-            int rangeMod = 0;
+                    int rangeMod = 0;
+
+                    CombatAction hitboxAction = entry.HitboxAction;
+                    ExplosionData explosion = entry.Explosion;
+
+                    Dir8 approxDir = (seenChar.CharLoc - controlledChar.CharLoc).ApproximateDir8();
+                    getActionHitboxes(controlledChar, seenCharacters, approxDir, ref skillIndex, ref entry, ref rangeMod, ref hitboxAction, ref explosion);
+
+                    if (entry.HitboxAction is AreaAction || entry.HitboxAction is ThrowAction)
+                    {
+                        AreaAction areaAction = entry.HitboxAction as AreaAction;
+                        int range = Math.Max(1, areaAction.Range + rangeMod);
+                        //add everything in radius
+                        for (int xx = -range; xx <= range; xx++)
+                        {
+                            for (int yy = -range; yy <= range; yy++)
+                                updateDistanceTargetHash(endHash, seenChar, new Loc(xx, yy));
+                        }
+                    }
+                    else if (entry.HitboxAction is LinearAction)
+                    {
+                        LinearAction lineAction = entry.HitboxAction as LinearAction;
+                        int range = Math.Max(1, lineAction.Range + rangeMod);
+                        //add everything in line
+                        for (int ii = 0; ii < DirExt.DIR8_COUNT; ii++)
+                        {
+                            Dir8 dir = (Dir8)ii;
+                            for (int jj = 1; jj <= range; jj++)
+                            {
+                                updateDistanceTargetHash(endHash, seenChar, dir.GetLoc() * jj);
+                                if (lineAction.IsWide())
+                                {
+                                    Dir8 left = DirExt.AddAngles(dir, Dir8.Left);
+                                    Dir8 right = DirExt.AddAngles(dir, Dir8.Right);
+                                    if (dir.IsDiagonal())
+                                    {
+                                        left = DirExt.AddAngles(dir, Dir8.UpLeft);
+                                        right = DirExt.AddAngles(dir, Dir8.UpRight);
+                                    }
+                                    //add everything on the sides if it's a wide action
+                                    updateDistanceTargetHash(endHash, seenChar, left.GetLoc() + dir.GetLoc() * jj);
+                                    updateDistanceTargetHash(endHash, seenChar, right.GetLoc() + dir.GetLoc() * jj);
+                                }
+                            }
+                        }
+                    }
+                    else if (entry.HitboxAction is OffsetAction)
+                    {
+                        OffsetAction offsetAction = entry.HitboxAction as OffsetAction;
+                        int range = Math.Max(1, offsetAction.Range + rangeMod);
+                        //add everything in the offset
+                        for (int ii = 0; ii < DirExt.DIR8_COUNT; ii++)
+                        {
+                            Dir8 dir = (Dir8)ii;
+                            switch (offsetAction.HitArea)
+                            {
+                                case OffsetAction.OffsetArea.Tile:
+                                    updateDistanceTargetHash(endHash, seenChar, dir.GetLoc() * range);
+                                    break;
+                                case OffsetAction.OffsetArea.Sides:
+                                    {
+                                        updateDistanceTargetHash(endHash, seenChar, dir.GetLoc() * range);
+                                        Dir8 left = DirExt.AddAngles(dir, Dir8.Left);
+                                        Dir8 right = DirExt.AddAngles(dir, Dir8.Right);
+                                        if (dir.IsDiagonal())
+                                        {
+                                            left = DirExt.AddAngles(dir, Dir8.UpLeft);
+                                            right = DirExt.AddAngles(dir, Dir8.UpRight);
+                                        }
+                                        //add everything on the sides if it's a wide action
+                                        updateDistanceTargetHash(endHash, seenChar, left.GetLoc() + dir.GetLoc() * range);
+                                        updateDistanceTargetHash(endHash, seenChar, right.GetLoc() + dir.GetLoc() * range);
+                                    }
+                                    break;
+                                case OffsetAction.OffsetArea.Area:
+                                    {
+                                        for (int xx = -1; xx <= 1; xx++)
+                                        {
+                                            for (int yy = -1; yy <= 1; yy++)
+                                                updateDistanceTargetHash(endHash, seenChar, dir.GetLoc() * range + new Loc(xx, yy));
+                                        }
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+                }
+                updateDistanceTargetHash(endHash, seenChar, Loc.Zero);
+            }
+        }
+
+        private void getActionHitboxes(Character controlledChar, List<Character> seenChars, Dir8 dir, ref int skillIndex, ref SkillData entry, ref  int rangeMod, ref CombatAction hitboxAction, ref ExplosionData explosion)
+        {
             //check for passives that modify range; NOTE: specialized AI code!
             foreach (PassiveContext passive in controlledChar.IteratePassives(GameEventPriority.USER_PORT_PRIORITY))
             {
@@ -765,9 +834,11 @@ namespace PMDC.Dungeon
                     }
                 }
             }
+            //check for moves that want to wait until within range
+            if (skillIndex == 13)//wait until enemy is wihin two tiles of razor wind's hitbox, to prevent immediate walk-away; NOTE: specialized AI code!
+                rangeMod--;
 
-            CombatAction hitboxAction = entry.HitboxAction;
-            ExplosionData explosion = entry.Explosion;
+            rangeMod = Math.Min(Math.Max(-3, rangeMod), 3);
 
             //check for moves that change range on conditions; NOTE: specialized AI code!
             switch (skillIndex)
@@ -789,7 +860,7 @@ namespace PMDC.Dungeon
 
                         int calledMove = -1;
                         HashSet<Loc> callTiles = new HashSet<Loc>();
-                        foreach (Loc loc in hitboxAction.GetPreTargets(controlledChar, dir, Math.Min(Math.Max(-3, rangeMod), 3)))
+                        foreach (Loc loc in hitboxAction.GetPreTargets(controlledChar, dir, rangeMod))
                             explosion.AddTargetedTiles(loc, callTiles);
 
                         foreach (Character target in seenChars)
@@ -804,15 +875,21 @@ namespace PMDC.Dungeon
                                 }
                             }
                         }
-                        if (calledMove == -1)
-                            return new ActionValue(0, false);
-
-                        SkillData calledEntry = DataManager.Instance.GetSkill(calledMove);
                         skillIndex = calledMove;
-                        entry = calledEntry;
+                        if (calledMove == -1)
+                        {
+                            entry = null;
+                            hitboxAction = null;
+                            explosion = null;
+                        }
+                        else
+                        {
+                            SkillData calledEntry = DataManager.Instance.GetSkill(calledMove);
+                            entry = calledEntry;
 
-                        hitboxAction = entry.HitboxAction;
-                        explosion = entry.Explosion;
+                            hitboxAction = entry.HitboxAction;
+                            explosion = entry.Explosion;
+                        }
                     }
                     break;
                 case 174: // curse
@@ -846,7 +923,7 @@ namespace PMDC.Dungeon
                     {
                         int calledMove = -1;
                         HashSet<Loc> callTiles = new HashSet<Loc>();
-                        foreach (Loc loc in hitboxAction.GetPreTargets(controlledChar, dir, Math.Min(Math.Max(-3, rangeMod), 3)))
+                        foreach (Loc loc in hitboxAction.GetPreTargets(controlledChar, dir, rangeMod))
                             explosion.AddTargetedTiles(loc, callTiles);
 
                         foreach (Character target in seenChars)
@@ -883,21 +960,50 @@ namespace PMDC.Dungeon
                                 break;
                             }
                         }
-                        if (calledMove == -1)
-                            return new ActionValue(0, false);
 
-                        SkillData calledEntry = DataManager.Instance.GetSkill(calledMove);
                         skillIndex = calledMove;
-                        entry = calledEntry;
+                        if (calledMove == -1)
+                        {
+                            entry = null;
+                            hitboxAction = null;
+                            explosion = null;
+                        }
+                        else
+                        {
+                            SkillData calledEntry = DataManager.Instance.GetSkill(calledMove);
+                            entry = calledEntry;
 
-                        hitboxAction = entry.HitboxAction;
-                        explosion = entry.Explosion;
+                            hitboxAction = entry.HitboxAction;
+                            explosion = entry.Explosion;
+                        }
                     }
                     break;
             }
+        }
+
+        protected ActionValue GetActionDirValue(int skillIndex, SkillData entry, Character controlledChar, List<Character> seenChars, Dir8 dir)
+        {
+
+            //Dig/Fly/Dive/Phantom Force/Focus Punch; NOTE: specialized AI code!
+            if (skillIndex == 91 || skillIndex == 19 || skillIndex == 291 || skillIndex == 566 || skillIndex == 264)//Focus Punch;
+            {
+                //always activate if not already forced to attack
+                if (!controlledChar.AttackOnly)
+                    return new ActionValue(100, true);
+            }
+
+            int rangeMod = 0;
+
+            CombatAction hitboxAction = entry.HitboxAction;
+            ExplosionData explosion = entry.Explosion;
+
+            getActionHitboxes(controlledChar, seenChars, dir, ref skillIndex, ref entry, ref rangeMod, ref hitboxAction, ref explosion);
+
+            if (hitboxAction == null)
+                return new ActionValue(0, false);
 
             HashSet<Loc> hitTiles = new HashSet<Loc>();
-            foreach (Loc loc in hitboxAction.GetPreTargets(controlledChar, dir, Math.Min(Math.Max(-3, rangeMod), 3)))
+            foreach (Loc loc in hitboxAction.GetPreTargets(controlledChar, dir, rangeMod))
                 explosion.AddTargetedTiles(loc, hitTiles);
 
             bool directHit = false;
@@ -913,7 +1019,7 @@ namespace PMDC.Dungeon
                     if (Collision.InFront(controlledChar.CharLoc, target.CharLoc, dir, -1))
                         directHit = true;
 
-                    int newVal = GetAttackValue(controlledChar, skillIndex, entry, seenChars, target, Math.Min(Math.Max(-3, rangeMod), 3));
+                    int newVal = GetAttackValue(controlledChar, skillIndex, entry, seenChars, target, rangeMod);
                     totalValue += newVal;
                     if (newVal >= 0)
                         maxValue = Math.Max(newVal, maxValue);
@@ -1366,6 +1472,18 @@ namespace PMDC.Dungeon
                 return;
 
             loc_list.Add(border_loc);
+        }
+    }
+
+    public class RangeTarget
+    {
+        public int Weight;
+        public Character Origin;
+
+        public RangeTarget(Character origin, int weight)
+        {
+            Origin = origin;
+            Weight = weight;
         }
     }
 }

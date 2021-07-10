@@ -13,7 +13,7 @@ namespace PMDC.Dungeon
         public AttackChoice AttackPattern;
         public int StatusIndex;
         //continue to the last place the enemy was found (if no other enemies can be found) before losing aggro
-        private Loc? prevLoc;
+        private Loc? targetLoc;
 
         public AttackFoesPlan() { }
         public AttackFoesPlan(AIFlags iq, AttackChoice attackPattern, int status) : base(iq)
@@ -23,7 +23,7 @@ namespace PMDC.Dungeon
         }
         protected AttackFoesPlan(AttackFoesPlan other) : base(other) { StatusIndex = other.StatusIndex; }
         public override BasePlan CreateNew() { return new AttackFoesPlan(this); }
-        public override void SwitchedIn() { prevLoc = null; base.SwitchedIn(); }
+        public override void SwitchedIn() { targetLoc = null; base.SwitchedIn(); }
 
         public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
         {
@@ -76,89 +76,98 @@ namespace PMDC.Dungeon
             }
 
             //path to the closest enemy
-
-
+            List<Loc> path = null;
+            Character targetChar = null;
+            Dictionary<Loc, RangeTarget> endHash = new Dictionary<Loc, RangeTarget>();
+            Loc[] ends = null;
+            bool aimForDistance = false; // detrmines if we are pathing directly to the target or to a tile we can hit the target from
 
             // If the attackchoice is SmartAttack, take attack ranges into consideration
             // the end points should be all locations where one can attack the target
             // for projectiles, it should be the farthest point where they can attack:
-            
-
-            Character closestChar = null;
-            List<Loc> closestPath = null;
-            //iterate in increasing character indices
-            foreach (Character seenChar in seenCharacters)
+            if (AttackPattern == AttackChoice.SmartAttack)
             {
-                //try to path to each
-                List<Loc> path = GetPath(controlledChar, seenChar.CharLoc, !preThink);
-                //if a path can be found, check against closest character
-                bool newGoal = (path[0] == seenChar.CharLoc);
-                if (!teamPartner && closestChar == null || newGoal)
+                //get all move ranges and use all their ranges to denote destination tiles.
+                FillRangeTargets(controlledChar, seenCharacters, endHash);
+                List<Loc> endList = new List<Loc>();
+                foreach (Loc endLoc in endHash.Keys)
                 {
-                    closestChar = seenChar;
-                    closestPath = path;
+                    if (aimForDistance)
+                    {
+                        if (endHash[endLoc].Weight > 0)
+                            endList.Add(endLoc);
+                    }
+                    else
+                    {
+                        if (endHash[endLoc].Weight > 0)
+                        {
+                            aimForDistance = true;
+                            endList.Clear();
+                        }
+                        endList.Add(endLoc);
+                    }
                 }
-                else if (closestPath != null)
+                ends = endList.ToArray();
+            }
+            else
+            {
+                ends = new Loc[seenCharacters.Count];
+                for (int ii = 0; ii < seenCharacters.Count; ii++)
                 {
-                    bool oldGoal = (closestPath[0] == closestChar.CharLoc);
-                    if (!oldGoal && newGoal)
-                    {
-                        //between characters of which exist a path, and characters that don't, the ones that do win out.
-                        closestChar = seenChar;
-                        closestPath = path;
-                    }
-                    else if ((oldGoal == newGoal) && path.Count < closestPath.Count)
-                    {
-                        //of all characters which exist a path, the closest one wins
-                        closestChar = seenChar;
-                        closestPath = path;
-                    }
+                    endHash[seenCharacters[ii].CharLoc] = new RangeTarget(seenCharacters[ii], 0);
+                    ends[ii] = seenCharacters[ii].CharLoc;
                 }
             }
 
-            if (closestChar != null)
+            if (ends.Length > 0)
             {
-                Dir8 closestLoc = (closestChar.CharLoc - controlledChar.CharLoc).ApproximateDir8();
-                GameAction attack = TryAttackChoice(rand, controlledChar, closestLoc, AttackPattern);
+                List<Loc>[] closestPaths = GetPaths(controlledChar, ends, false, !preThink);
+                int closestIdx = -1;
+                for (int ii = 0; ii < ends.Length; ii++)
+                {
+                    if (closestPaths[ii] != null)
+                    {
+                        if (closestIdx == -1)
+                            closestIdx = ii;
+                        else
+                        {
+                            if (endHash[ends[ii]].Weight > endHash[ends[closestIdx]].Weight)
+                                closestIdx = ii;
+                        }
+                    }
+                }
+
+                path = closestPaths[closestIdx];
+                targetChar = endHash[ends[closestIdx]].Origin;
+            }
+
+            //update last-seen target location if we have a target, otherwise leave it alone
+            if (targetChar != null)
+                targetLoc = targetChar.CharLoc;
+
+
+            if (path != null)
+            {
+                Dir8 closestDir = (targetChar.CharLoc - controlledChar.CharLoc).ApproximateDir8();
+                GameAction attack = TryAttackChoice(rand, controlledChar, closestDir, AttackPattern);
                 if (attack.Type != GameAction.ActionType.Wait)
                     return attack;
 
                 //pursue the enemy if one is located
-                prevLoc = closestChar.CharLoc;
-                if (closestPath[0] == closestChar.CharLoc)
-                    closestPath.RemoveAt(0);
-                return SelectChoiceFromPath(controlledChar, closestPath);
+                if (path[0] == targetChar.CharLoc)
+                    path.RemoveAt(0);
+                return SelectChoiceFromPath(controlledChar, path);
             }
-            else if (!teamPartner && prevLoc.HasValue && prevLoc.Value != controlledChar.CharLoc)
+            else if (!teamPartner && targetLoc.HasValue && targetLoc.Value != controlledChar.CharLoc)
             {
                 //if no enemy is located, path to the location of the last seen enemy
-                List<Loc> path = GetPath(controlledChar, prevLoc.Value, !preThink);
-                if (path[path.Count - 1] == prevLoc.Value)
+                List<Loc>[] paths = GetPaths(controlledChar, new Loc[1] { targetLoc.Value }, false, !preThink);
+                path = paths[0];
+                if (path.Count > 1)
                     return SelectChoiceFromPath(controlledChar, path);
                 else
-                    prevLoc = null;
+                    targetLoc = null;
             }
-
-
-            //if (path != null)
-            //{
-            //    GameAction attack = TryAttackChoice(rand, controlledChar, null);
-            //    if (attack.Type != GameAction.ActionType.Wait)
-            //        return attack;
-
-            //    //pursue the enemy if one is located
-            //    prevLoc = path[0];
-            //    return SelectChoiceFromPath(controlledChar, path, false);
-            //}
-            //else if (!teamPartner && prevLoc.HasValue && prevLoc.Value != controlledChar.CharLoc)
-            //{
-            //    //if no enemy is located, path to the location of the last seen enemy
-            //    path = GetPath(controlledChar, prevLoc.Value, !preThink);
-            //    if (path[path.Count - 1] == prevLoc.Value)
-            //        return SelectChoiceFromPath(controlledChar, path, false);
-            //    else
-            //        prevLoc = null;
-            //}
 
             return null;
         }
