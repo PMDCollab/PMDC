@@ -6,6 +6,10 @@ using RogueEssence;
 using RogueEssence.LevelGen;
 using PMDC.Data;
 using System.Collections.Generic;
+using RogueEssence.Dev;
+using RogueEssence.Script;
+using NLua;
+using System.Linq;
 
 namespace PMDC.LevelGen
 {
@@ -344,7 +348,7 @@ namespace PMDC.LevelGen
 
 
     /// <summary>
-    /// Spawn the mob with an effect on interaction (allies only)
+    /// Spawn the mob with an effect on interaction (shows up for allies only)
     /// </summary>
     [Serializable]
     public class MobSpawnInteractable : MobSpawnExtra
@@ -373,6 +377,35 @@ namespace PMDC.LevelGen
         {
             foreach (BattleEvent effect in CheckEvents)
                 newChar.ActionEvents.Add((BattleEvent)effect.Clone());
+        }
+
+        public override string ToString()
+        {
+            return string.Format("{0}", this.GetType().Name);
+        }
+    }
+
+
+    /// <summary>
+    /// Spawn the mob with a lua data table
+    /// </summary>
+    [Serializable]
+    public class MobSpawnLuaTable : MobSpawnExtra
+    {
+        [Multiline(0)]
+        public string LuaTable;
+
+        public MobSpawnLuaTable() { LuaTable = "{}"; }
+        public MobSpawnLuaTable(string luaTable) { LuaTable = luaTable; }
+        protected MobSpawnLuaTable(MobSpawnLuaTable other)
+        {
+            LuaTable = other.LuaTable;
+        }
+        public override MobSpawnExtra Copy() { return new MobSpawnLuaTable(this); }
+
+        public override void ApplyFeature(IMobSpawnMap map, Character newChar)
+        {
+            newChar.LuaDataTable = LuaEngine.Instance.RunString("return " + LuaTable).First() as LuaTable;
         }
 
         public override string ToString()
