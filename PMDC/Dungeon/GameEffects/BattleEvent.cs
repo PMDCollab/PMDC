@@ -1715,8 +1715,8 @@ namespace PMDC.Dungeon
             if (judgment != null && judgment.Elements.Count > context.StrikesMade)
                 context.Data.Element = judgment.Elements[context.StrikesMade];
 
-            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SKILL_TO_ELEMENT").ToLocal(), context.Data.Element));
-
+            ElementData element = DataManager.Instance.GetElement(context.Data.Element);
+            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SKILL_TO_ELEMENT").ToLocal(), element.GetIconName()));
             yield break;
         }
     }
