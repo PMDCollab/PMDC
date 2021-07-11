@@ -19,7 +19,11 @@ namespace PMDC.Dungeon
             StatusIndex = status;
             AttackPattern = attackPattern;
         }
-        public PreparePlan(PreparePlan other) : base(other) { StatusIndex = other.StatusIndex; }
+        public PreparePlan(PreparePlan other) : base(other)
+        {
+            StatusIndex = other.StatusIndex;
+            AttackPattern = other.AttackPattern;
+        }
         public override BasePlan CreateNew() { return new PreparePlan(this); }
 
         public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
@@ -31,20 +35,12 @@ namespace PMDC.Dungeon
             Faction foeFaction = (IQ & AIFlags.NeutralFoeConflict) != AIFlags.None ? Faction.Foe : Faction.None;
             List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets(), foeFaction);
             if (target == null && seenCharacters.Count > 0)
-            {
                 target = seenCharacters[0];
-                for (int ii = 1; ii < seenCharacters.Count; ii++)
-                {
-                    if ((seenCharacters[ii].CharLoc - controlledChar.CharLoc).DistSquared() < (target.CharLoc - controlledChar.CharLoc).DistSquared())
-                        target = seenCharacters[ii];
-                }
-            }
 
             //need attack action check
             if (target != null)
             {
-                Dir8 closestDir = (target.CharLoc - controlledChar.CharLoc).ApproximateDir8();
-                GameAction attackCommand = TryAttackChoice(rand, controlledChar, closestDir, AttackPattern);
+                GameAction attackCommand = TryAttackChoice(rand, controlledChar, AttackPattern);
                 if (attackCommand.Type != GameAction.ActionType.Wait)
                     return attackCommand;
             }

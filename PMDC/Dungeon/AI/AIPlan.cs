@@ -57,31 +57,6 @@ namespace PMDC.Dungeon
         NeutralFoeConflict = 512,
     }
 
-    public struct ActionValue
-    {
-        public int Value;
-        public bool DirectHit;
-
-        public ActionValue(int value, bool direct)
-        {
-            Value = value;
-            DirectHit = direct;
-        }
-
-        public int CompareTo(ActionValue other)
-        {
-            int val = Value.CompareTo(other.Value);
-            if (val != 0)
-                return val;
-
-            int direct = DirectHit.CompareTo(other.DirectHit);
-            if (direct != 0)
-                return direct;
-
-            return 0;
-        }
-    }
-
     [Serializable]
     public abstract class AIPlan : BasePlan
     {
@@ -92,14 +67,20 @@ namespace PMDC.Dungeon
 
         public enum AttackChoice
         {
-            SmartAttack,//always chooses the best move, and always attacks when within range
+            StandardAttack,
+            DumbAttack,//randomly chooses moves based on weight, sometimes walks within range due to missing moves having weight
             RandomAttack,//randomly chooses moves based on weight, always attacks when within range
-            RandomApproach,//randomly chooses moves based on weight, sometimes walks when within range
-            DumbApproach//
+            SmartAttack,//always chooses the best move, and always attacks when within range
+        }
+
+        public enum PositionChoice
+        {
+            Approach,//move in even if it's out of range of moves
+            Close,//move in as close as possible within range of moves
+            Avoid,//move as far as possible within range
         }
 
         public AIPlan() { }
-        //public AIPlan(AIFlags iq) : this(iq, true, AttackChoice.SmartAttack) { }
 
         public AIPlan(AIFlags iq)
         {
@@ -307,33 +288,44 @@ namespace PMDC.Dungeon
             return new GameAction(GameAction.ActionType.Move, dir, ((IQ & AIFlags.ItemGrabber) != AIFlags.None) ? 1 : 0);
         }
 
-        protected GameAction TryAttackChoice(ReRandom rand, Character controlledChar, Dir8 defaultDir, AttackChoice attackPattern)
+        protected GameAction TryAttackChoice(ReRandom rand, Character controlledChar, AttackChoice attackPattern)
         {
             List<Character> seenChars = controlledChar.GetSeenCharacters(Alignment.Self | Alignment.Friend | Alignment.Foe, Faction.None);
 
             bool seesDanger = false;
+            int closestDiff = Int32.MaxValue;
+            Character closestThreat = null;
             foreach (Character seenChar in seenChars)
             {
                 Faction foeFaction = (IQ & AIFlags.NeutralFoeConflict) != AIFlags.None ? Faction.Foe : Faction.None;
                 bool canBetray = (IQ & AIFlags.TeamPartner) == AIFlags.None;
                 if ((DungeonScene.Instance.GetMatchup(controlledChar, seenChar, foeFaction, canBetray) & GetAcceptableTargets()) != Alignment.None)
+                {
                     seesDanger = true;
+
+                    Loc diff = seenChar.CharLoc - controlledChar.CharLoc;
+                    if (diff.Dist8() < closestDiff)
+                    {
+                        closestDiff = diff.Dist8();
+                        closestThreat = seenChar;
+                    }
+                }
             }
+
             if (!seesDanger)
                 return new GameAction(GameAction.ActionType.Wait, Dir8.None);
 
-
             if (controlledChar.AttackOnly)
-                return TryForcedAttackChoice(rand, controlledChar, seenChars);
+                return TryForcedAttackChoice(rand, controlledChar, seenChars, closestThreat);
 
-            if (attackPattern == AttackChoice.DumbApproach)
-                return TryDumbAttackChoice(rand, controlledChar, defaultDir, seenChars);
+            if (attackPattern == AttackChoice.StandardAttack)
+                return TryDefaultAttackChoice(rand, controlledChar, seenChars, closestThreat);
+            else if (attackPattern == AttackChoice.DumbAttack)
+                return TryDumbAttackChoice(rand, controlledChar, seenChars, closestThreat);
             else if (attackPattern == AttackChoice.RandomAttack)
-                return TryRandomMoveChoice(rand, controlledChar, defaultDir, seenChars, false);
-            else if (attackPattern == AttackChoice.RandomApproach)
-                return TryRandomMoveChoice(rand, controlledChar, defaultDir, seenChars, true);
+                return TryRandomMoveChoice(rand, controlledChar, seenChars, closestThreat);
             else
-                return TryBestAttackChoice(rand, controlledChar, defaultDir, seenChars);
+                return TryBestAttackChoice(rand, controlledChar, seenChars, closestThreat);
         }
 
         private IEnumerable<int> iterateUsableSkillIndices(Character controlledChar)
@@ -358,29 +350,47 @@ namespace PMDC.Dungeon
                 endHash[loc] = new RangeTarget(chara, weight);
         }
 
-        protected GameAction TryDumbAttackChoice(ReRandom rand, Character controlledChar, Dir8 defaultDir, List<Character> seenChars)
+
+        protected GameAction TryDefaultAttackChoice(ReRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
         {
-            List<Tuple<int, ActionValue>> moveIndices = new List<Tuple<int, ActionValue>>();
+            List<ActionDirValue> backupIndices = new List<ActionDirValue>();
+            //default on attacking if no moves are to be found
+            {
+                HitValue[] attackDirs = new HitValue[8];
+                GetActionValues(controlledChar, seenChars, closestThreat, 0, attackDirs, false);
+                UpdateTotalIndices(rand, backupIndices, CharData.MAX_SKILL_SLOTS, attackDirs);
+            }
+
+            //if that attempt failed, because we hit a move that would hit no one, then we default to attempting attack
+            if (backupIndices.Count > 0)
+            {
+                ActionDirValue actionVal = backupIndices[rand.Next(backupIndices.Count)];
+                if (actionVal.MoveIndex < CharData.MAX_SKILL_SLOTS)
+                    return new GameAction(GameAction.ActionType.UseSkill, actionVal.Dir, actionVal.MoveIndex);
+                else
+                    return new GameAction(GameAction.ActionType.Attack, actionVal.Dir);
+            }
+            //if we can't attack, then we pass along to movement
+            return new GameAction(GameAction.ActionType.Wait, Dir8.None);
+        }
+
+        protected GameAction TryDumbAttackChoice(ReRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
+        {
+            List<ActionDirValue> moveIndices = new List<ActionDirValue>();
             foreach (int ii in iterateUsableSkillIndices(controlledChar))
             {
-                ActionValue[] moveDirs = new ActionValue[8];
-                GetActionValues(controlledChar, defaultDir, seenChars, controlledChar.Skills[ii].Element.SkillNum, moveDirs);
-
-                SkillData entry = DataManager.Instance.GetSkill(controlledChar.Skills[ii].Element.SkillNum);
+                HitValue[] moveDirs = new HitValue[8];
+                GetActionValues(controlledChar, seenChars, closestThreat, controlledChar.Skills[ii].Element.SkillNum, moveDirs, true);
                 UpdateTotalIndices(rand, moveIndices, ii, moveDirs);
             }
 
-            List<Tuple<int, ActionValue>> backupIndices = new List<Tuple<int, ActionValue>>();
             //default on attacking if no moves are to be found
             {
-                ActionValue[] attackDirs = new ActionValue[8];
-                GetActionValues(controlledChar, defaultDir, seenChars, 0, attackDirs);
+                HitValue[] attackDirs = new HitValue[8];
+                GetActionValues(controlledChar, seenChars, closestThreat, 0, attackDirs, true);
                 for (int ii = 0; ii < attackDirs.Length; ii++)
                     attackDirs[ii].Value = attackDirs[ii].Value * 2;
                 UpdateTotalIndices(rand, moveIndices, CharData.MAX_SKILL_SLOTS, attackDirs);
-                for (int ii = 0; ii < attackDirs.Length; ii++)
-                    attackDirs[ii].Value = attackDirs[ii].Value;
-                UpdateTotalIndices(rand, backupIndices, CharData.MAX_SKILL_SLOTS, attackDirs);
             }
 
             //just try to choose once
@@ -389,201 +399,115 @@ namespace PMDC.Dungeon
                 //get a random move based on weighted chance
                 int totalPoints = 0;
                 for (int ii = 0; ii < moveIndices.Count; ii++)
-                    totalPoints += moveIndices[ii].Item2.Value;
+                    totalPoints += moveIndices[ii].Hit.Value;
 
                 int pointChoice = rand.Next(totalPoints);
                 int choice = 0;
                 while (choice < moveIndices.Count)
                 {
-                    if (pointChoice < moveIndices[choice].Item2.Value)
+                    if (pointChoice < moveIndices[choice].Hit.Value)
                         break;
-                    pointChoice -= moveIndices[choice].Item2.Value;
+                    pointChoice -= moveIndices[choice].Hit.Value;
                     choice++;
                 }
 
-                //if the move is a "false hit", that means it won't have any effect, but had a value that meant it could if it was in range; so move up if not in range
-
-                int chosenMove = moveIndices[choice].Item1;
-                int moveIndex = chosenMove / 8;
-                int dirIndex = chosenMove % 8;
-                if (moveIndex < CharData.MAX_SKILL_SLOTS)
-                    return new GameAction(GameAction.ActionType.UseSkill, (Dir8)dirIndex, moveIndex);
+                ActionDirValue actionVal = moveIndices[choice];
+                if (actionVal.Hit.ImaginedHit)
+                {
+                    //if we chose an imagined hit, we fall through and skip choosing a move altogether
+                    //this is equivalent of choosing a move that is out of range and thus doing nothing
+                }
                 else
-                    return new GameAction(GameAction.ActionType.Attack, (Dir8)dirIndex);
+                {
+                    if (actionVal.MoveIndex < CharData.MAX_SKILL_SLOTS)
+                        return new GameAction(GameAction.ActionType.UseSkill, actionVal.Dir, actionVal.MoveIndex);
+                    else
+                        return new GameAction(GameAction.ActionType.Attack, actionVal.Dir);
+                }
             }
 
-            //if that attempt failed, because we hit a move that would hit no one, then we default to attempting attack
-            if (backupIndices.Count > 0)
-            {
-                int chosenMove = backupIndices[rand.Next(backupIndices.Count)].Item1;
-                int moveIndex = chosenMove / 8;
-                int dirIndex = chosenMove % 8;
-                if (moveIndex < CharData.MAX_SKILL_SLOTS)
-                    return new GameAction(GameAction.ActionType.UseSkill, (Dir8)dirIndex, moveIndex);
-                else
-                    return new GameAction(GameAction.ActionType.Attack, (Dir8)dirIndex);
-            }
             //if we can't attack, then we pass along to movement
             return new GameAction(GameAction.ActionType.Wait, Dir8.None);
         }
 
-        protected GameAction TryRandomMoveChoice(ReRandom rand, Character controlledChar, Dir8 defaultDir, List<Character> seenChars, bool allowApproach)
+
+        protected GameAction TryRandomMoveChoice(ReRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
         {
-            List<Tuple<int, ActionValue>> moveIndices = new List<Tuple<int, ActionValue>>();
-            List<Tuple<int, ActionValue>> attackMoveIndices = new List<Tuple<int, ActionValue>>();
+            List<ActionDirValue> moveIndices = new List<ActionDirValue>();
             foreach (int ii in iterateUsableSkillIndices(controlledChar))
             {
-                ActionValue[] moveDirs = new ActionValue[8];
-                GetActionValues(controlledChar, defaultDir, seenChars, controlledChar.Skills[ii].Element.SkillNum, moveDirs);
-
-                SkillData entry = DataManager.Instance.GetSkill(controlledChar.Skills[ii].Element.SkillNum);
+                HitValue[] moveDirs = new HitValue[8];
+                GetActionValues(controlledChar, seenChars, closestThreat, controlledChar.Skills[ii].Element.SkillNum, moveDirs, false);
                 UpdateTotalIndices(rand, moveIndices, ii, moveDirs);
-                if (entry.Data.Category != BattleData.SkillCategory.Status)
-                    UpdateTotalIndices(rand, attackMoveIndices, ii, moveDirs);
             }
 
-            List<Tuple<int, ActionValue>> backupIndices = new List<Tuple<int, ActionValue>>();
-            //default on attacking if no moves are to be found
-            {
-                ActionValue[] attackDirs = new ActionValue[8];
-
-                //setting approach to false will result in an AI that will NEVER favor walking forwards over attacking
-                //"I can already hit you from where I am, so you're gonna have to come to me"
-                if (allowApproach)
-                {
-                    GetActionValues(controlledChar, defaultDir, seenChars, 0, attackDirs);
-                    for (int ii = 0; ii < attackDirs.Length; ii++)
-                        attackDirs[ii].Value = attackDirs[ii].Value * 2;
-                    UpdateTotalIndices(rand, moveIndices, CharData.MAX_SKILL_SLOTS, attackDirs);
-                    for (int ii = 0; ii < attackDirs.Length; ii++)
-                        attackDirs[ii].Value = attackDirs[ii].Value;
-                    UpdateTotalIndices(rand, backupIndices, CharData.MAX_SKILL_SLOTS, attackDirs);
-                }
-                else
-                {
-                    GetActionValues(controlledChar, defaultDir, seenChars, 0, attackDirs);
-                    UpdateTotalIndices(rand, backupIndices, CharData.MAX_SKILL_SLOTS, attackDirs);
-                }
-            }
-
-
+            //just try to choose once
             if (moveIndices.Count > 0)
             {
                 //get a random move based on weighted chance
                 int totalPoints = 0;
                 for (int ii = 0; ii < moveIndices.Count; ii++)
-                    totalPoints += moveIndices[ii].Item2.Value;
+                    totalPoints += moveIndices[ii].Hit.Value;
 
                 int pointChoice = rand.Next(totalPoints);
                 int choice = 0;
                 while (choice < moveIndices.Count)
                 {
-                    if (pointChoice < moveIndices[choice].Item2.Value)
+                    if (pointChoice < moveIndices[choice].Hit.Value)
                         break;
-                    pointChoice -= moveIndices[choice].Item2.Value;
+                    pointChoice -= moveIndices[choice].Hit.Value;
                     choice++;
                 }
 
-                //if the move is a "false hit", that means it won't have any effect, but had a value that meant it could if it was in range; so move up if not in range
-                //also, prevent attacking in any way in this step.
-                if (moveIndices[choice].Item1 / 8 < CharData.MAX_SKILL_SLOTS)
-                {
-                    int chosenMove = moveIndices[choice].Item1;
-                    int moveIndex = chosenMove / 8;
-                    int dirIndex = chosenMove % 8;
-                    if (moveIndex < CharData.MAX_SKILL_SLOTS)
-                        return new GameAction(GameAction.ActionType.UseSkill, (Dir8)dirIndex, moveIndex);
-                    else
-                        return new GameAction(GameAction.ActionType.Attack, (Dir8)dirIndex);
-                }
-                else if (backupIndices.Count == 0)//check if attack isn't an option; in which case just move forward
-                    return new GameAction(GameAction.ActionType.Wait, Dir8.None);
-            }
-
-            //try again since regular attack is a last resort, but only if we have attacking moves; we've abandoned using status moves at this point in code
-            if (attackMoveIndices.Count > 0)
-            {
-                int totalPoints = 0;
-                for (int ii = 0; ii < attackMoveIndices.Count; ii++)
-                    totalPoints += attackMoveIndices[ii].Item2.Value;
-
-                int pointChoice = rand.Next(totalPoints);
-                int choice = 0;
-                while (choice < attackMoveIndices.Count)
-                {
-                    if (pointChoice < attackMoveIndices[choice].Item2.Value)
-                        break;
-                    pointChoice -= attackMoveIndices[choice].Item2.Value;
-                    choice++;
-                }
-
-                if (choice < attackMoveIndices.Count)
-                {
-                    int chosenMove = attackMoveIndices[choice].Item1;
-                    int moveIndex = chosenMove / 8;
-                    int dirIndex = chosenMove % 8;
-                    if (moveIndex < CharData.MAX_SKILL_SLOTS)
-                        return new GameAction(GameAction.ActionType.UseSkill, (Dir8)dirIndex, moveIndex);
-                    else
-                        return new GameAction(GameAction.ActionType.Attack, (Dir8)dirIndex);
-                }
-            }
-
-            //no attacking moves?  how about regular attack?
-            if (backupIndices.Count > 0)
-            {
-                int chosenMove = backupIndices[rand.Next(backupIndices.Count)].Item1;
-                int moveIndex = chosenMove / 8;
-                int dirIndex = chosenMove % 8;
-                if (moveIndex < CharData.MAX_SKILL_SLOTS)
-                    return new GameAction(GameAction.ActionType.UseSkill, (Dir8)dirIndex, moveIndex);
+                ActionDirValue actionVal = moveIndices[choice];
+                if (actionVal.MoveIndex < CharData.MAX_SKILL_SLOTS)
+                    return new GameAction(GameAction.ActionType.UseSkill, actionVal.Dir, actionVal.MoveIndex);
                 else
-                    return new GameAction(GameAction.ActionType.Attack, (Dir8)dirIndex);
+                    return new GameAction(GameAction.ActionType.Attack, actionVal.Dir);
             }
-            //not even regular attack?  we leave it to the backup plans...
+
+            //if we can't attack, then we pass along to movement
             return new GameAction(GameAction.ActionType.Wait, Dir8.None);
         }
 
-        protected GameAction TryBestAttackChoice(ReRandom rand, Character controlledChar, Dir8 defaultDir, List<Character> seenChars)
+        /// <summary>
+        /// Always chooses the best attack
+        /// </summary>
+        /// <param name="rand"></param>
+        /// <param name="controlledChar"></param>
+        /// <param name="defaultDir"></param>
+        /// <param name="seenChars"></param>
+        /// <returns></returns>
+        protected GameAction TryBestAttackChoice(ReRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
         {
-            int highestScore = 1;
-            int highestStatusScore = 1;
-            List<int> highestIndices = new List<int>();
-            List<int> highestStatusIndices = new List<int>();
+            List<ActionDirValue> highestIndices = new List<ActionDirValue>();
+            List<ActionDirValue> highestStatusIndices = new List<ActionDirValue>();
             foreach (int ii in iterateUsableSkillIndices(controlledChar))
             {
-                ActionValue[] moveDirs = new ActionValue[8];
-                GetActionValues(controlledChar, defaultDir, seenChars, controlledChar.Skills[ii].Element.SkillNum, moveDirs);
+                HitValue[] moveDirs = new HitValue[8];
+                GetActionValues(controlledChar, seenChars, closestThreat, controlledChar.Skills[ii].Element.SkillNum, moveDirs, false);
 
                 SkillData entry = DataManager.Instance.GetSkill(controlledChar.Skills[ii].Element.SkillNum);
                 if (entry.Data.Category == BattleData.SkillCategory.Status)
-                    UpdateHighestIndices(ref highestStatusScore, highestStatusIndices, ii, moveDirs);
+                    UpdateHighestIndices(highestStatusIndices, ii, moveDirs);
                 else
-                    UpdateHighestIndices(ref highestScore, highestIndices, ii, moveDirs);
-            }
-
-            {
-                ActionValue[] attackDirs = new ActionValue[8];
-                GetActionValues(controlledChar, defaultDir, seenChars, 0, attackDirs);
-                UpdateHighestIndices(ref highestScore, highestIndices, CharData.MAX_SKILL_SLOTS, attackDirs);
+                    UpdateHighestIndices(highestIndices, ii, moveDirs);
             }
 
             if (highestIndices.Count > 0 || highestStatusIndices.Count > 0)
             {
                 int randIndex = rand.Next(highestIndices.Count + highestStatusIndices.Count);
-                int chosenMove = (randIndex < highestIndices.Count) ? highestIndices[randIndex] : highestStatusIndices[randIndex - highestIndices.Count];
-                int moveIndex = chosenMove / 8;
-                int dirIndex = chosenMove % 8;
-                if (moveIndex < CharData.MAX_SKILL_SLOTS)
-                    return new GameAction(GameAction.ActionType.UseSkill, (Dir8)dirIndex, moveIndex);
+                ActionDirValue actionVal = (randIndex < highestIndices.Count) ? highestIndices[randIndex] : highestStatusIndices[randIndex - highestIndices.Count];
+                if (actionVal.MoveIndex < CharData.MAX_SKILL_SLOTS)
+                    return new GameAction(GameAction.ActionType.UseSkill, actionVal.Dir, actionVal.MoveIndex);
                 else
-                    return new GameAction(GameAction.ActionType.Attack, (Dir8)dirIndex);
+                    return new GameAction(GameAction.ActionType.Attack, actionVal.Dir);
             }
 
             return new GameAction(GameAction.ActionType.Wait, Dir8.None);
         }
 
-        protected GameAction TryForcedAttackChoice(ReRandom rand, Character controlledChar, List<Character> seenChars)
+        protected GameAction TryForcedAttackChoice(ReRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
         {
             //check to see if currently under a force-move status
             //if so, aim a regular attack according to that move
@@ -604,36 +528,26 @@ namespace PMDC.Dungeon
             }
 
 
-            int highestScore = 1;
-            int highestStatusScore = 1;
-            List<int> highestIndices = new List<int>();
-            List<int> highestStatusIndices = new List<int>();
+            List<ActionDirValue> highestIndices = new List<ActionDirValue>();
 
             if (forcedMove > -1)
             {
-                ActionValue[] moveDirs = new ActionValue[8];
-                GetActionValues(controlledChar, Dir8.None, seenChars, forcedMove, moveDirs);
-
-                SkillData entry = DataManager.Instance.GetSkill(forcedMove);
-                if (entry.Data.Category == BattleData.SkillCategory.Status)
-                    UpdateHighestIndices(ref highestStatusScore, highestStatusIndices, CharData.MAX_SKILL_SLOTS, moveDirs);
-                else
-                    UpdateHighestIndices(ref highestScore, highestIndices, CharData.MAX_SKILL_SLOTS, moveDirs);
+                HitValue[] moveDirs = new HitValue[8];
+                GetActionValues(controlledChar, seenChars, closestThreat, forcedMove, moveDirs, false);
+                UpdateHighestIndices(highestIndices, CharData.MAX_SKILL_SLOTS, moveDirs);
             }
             else
             {
                 //default on attacking if no moves are to be found
-                ActionValue[] attackDirs = new ActionValue[8];
-                GetActionValues(controlledChar, Dir8.None, seenChars, 0, attackDirs);
-                UpdateHighestIndices(ref highestScore, highestIndices, CharData.MAX_SKILL_SLOTS, attackDirs);
+                HitValue[] attackDirs = new HitValue[8];
+                GetActionValues(controlledChar, seenChars, closestThreat, 0, attackDirs, false);
+                UpdateHighestIndices(highestIndices, CharData.MAX_SKILL_SLOTS, attackDirs);
             }
 
-            if (highestIndices.Count > 0 || highestStatusIndices.Count > 0)
+            if (highestIndices.Count > 0)
             {
-                int randIndex = rand.Next(highestIndices.Count + highestStatusIndices.Count);
-                int chosenMove = (randIndex < highestIndices.Count) ? highestIndices[randIndex] : highestStatusIndices[randIndex - highestIndices.Count];
-                int dirIndex = chosenMove % 8;
-                return new GameAction(GameAction.ActionType.Attack, (Dir8)dirIndex);
+                ActionDirValue actionVal = highestIndices[rand.Next(highestIndices.Count)];
+                return new GameAction(GameAction.ActionType.Attack, actionVal.Dir);
             }
 
             if (controlledChar.CantWalk)
@@ -642,24 +556,28 @@ namespace PMDC.Dungeon
                 return new GameAction(GameAction.ActionType.Wait, Dir8.None);
         }
 
-        protected void UpdateHighestIndices(ref int highestScore, List<int> highestIndices, int moveIndex, ActionValue[] attackDirs)
+        protected void UpdateHighestIndices(List<ActionDirValue> highestIndices, int moveIndex, HitValue[] attackDirs)
         {
+            int highestScore = 1;
+            if (highestIndices.Count > 0)
+                highestScore = highestIndices[0].Hit.Value;
+
             for (int ii = 0; ii < attackDirs.Length; ii++)
             {
                 if (attackDirs[ii].Value > highestScore)
                 {
                     highestIndices.Clear();
-                    highestIndices.Add(ii + moveIndex * attackDirs.Length);
+                    highestIndices.Add(new ActionDirValue(moveIndex, (Dir8)ii, attackDirs[ii]));
                     highestScore = attackDirs[ii].Value;
                 }
                 else if (attackDirs[ii].Value == highestScore)
-                    highestIndices.Add(ii + moveIndex * attackDirs.Length);
+                    highestIndices.Add(new ActionDirValue(moveIndex, (Dir8)ii, attackDirs[ii]));
             }
         }
 
-        protected void UpdateTotalIndices(ReRandom rand, List<Tuple<int, ActionValue>> totalIndices, int moveIndex, ActionValue[] attackDirs)
+        protected void UpdateTotalIndices(ReRandom rand, List<ActionDirValue> totalIndices, int moveIndex, HitValue[] attackDirs)
         {
-            ActionValue highestScore = new ActionValue(0, false);
+            HitValue highestScore = new HitValue(0, false);
             List<int> highestDirs = new List<int>();
             for (int ii = 0; ii < attackDirs.Length; ii++)
             {
@@ -675,31 +593,46 @@ namespace PMDC.Dungeon
             if (highestScore.Value > 0)
             {
                 int highestDir = highestDirs[rand.Next(highestDirs.Count)];
-                totalIndices.Add(new Tuple<int, ActionValue>(highestDir + moveIndex * attackDirs.Length, highestScore));
+                totalIndices.Add(new ActionDirValue(moveIndex, (Dir8)highestDir, highestScore));
             }
         }
 
-        protected void GetActionValues(Character controlledChar, Dir8 defaultDir, List<Character> seenChars, int moveIndex, ActionValue[] dirs)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="controlledChar"></param>
+        /// <param name="modelChar">A character that will be used to judge an imagined hit.</param>
+        /// <param name="seenChars"></param>
+        /// <param name="moveIndex"></param>
+        /// <param name="dirs"></param>
+        /// <param name="includeImagined">Whether or not we want to consider hypothetical hit weights.</param>
+        protected void GetActionValues(Character controlledChar, List<Character> seenChars, Character closestThreat, int moveIndex, HitValue[] dirs, bool includeImagined)
         {
             SkillData entry = DataManager.Instance.GetSkill(moveIndex);
 
+            bool canHitSomething;
             if (entry.HitboxAction is AreaAction && ((AreaAction)entry.HitboxAction).HitArea == Hitbox.AreaLimit.Full
                 || entry.HitboxAction is SelfAction || entry.HitboxAction is ProjectileAction && ((ProjectileAction)entry.HitboxAction).Rays == ProjectileAction.RayCount.Eight)
             {
+                Dir8 defaultDir = Dir8.None;
+                if (closestThreat != null)
+                    defaultDir = DirExt.ApproximateDir8(closestThreat.CharLoc - controlledChar.CharLoc);
                 if (defaultDir == Dir8.None)
                     defaultDir = controlledChar.CharDir;
-                ActionValue highestVal = GetActionDirValue(moveIndex, entry, controlledChar, seenChars, defaultDir);
+                HitValue highestVal = GetActionDirValue(moveIndex, entry, controlledChar, seenChars, defaultDir);
+                canHitSomething = (highestVal.Value > 0);
                 dirs[(int)defaultDir] = highestVal;
             }
             else
             {
-                ActionValue[] vals = new ActionValue[8];
-                ActionValue highestVal = new ActionValue(0, false);
+                HitValue[] vals = new HitValue[8];
+                HitValue highestVal = new HitValue(0, false);
 
                 //get the values of firing off an attack in the given direction, keeping track of the highest value
                 for (int ii = 0; ii < DirExt.DIR8_COUNT; ii++)
                 {
-                    vals[ii] = GetActionDirValue(moveIndex, entry, controlledChar, seenChars, (Dir8)ii);
+                    Dir8 dir = (Dir8)ii;
+                    vals[ii] = GetActionDirValue(moveIndex, entry, controlledChar, seenChars, dir);
                     if (vals[ii].CompareTo(highestVal) > 0)
                         highestVal = vals[ii];
                 }
@@ -710,13 +643,25 @@ namespace PMDC.Dungeon
                     if (vals[ii].CompareTo(highestVal) == 0)
                         dirs[ii] = vals[ii];
                 }
+                canHitSomething = (highestVal.Value > 0);
+            }
+
+            if (!canHitSomething && includeImagined && closestThreat != null)
+            {
+                //in the event that no targets are found, and there is a non-null targetChar, calculate the potential attack value in a hypothetical hit scenario
+
+                int newVal = GetAttackValue(controlledChar, moveIndex, entry, seenChars, closestThreat, 0);
+                //then, add it to the dirs value on the stipulation that it is a "desired" value- if chosen, it will cause the character to return "wait" instead.
+                //this action value represents how valuable the action *would* be if in range
+                if (newVal > 0)
+                    dirs[(int)controlledChar.CharDir] = new HitValue(newVal, true, true);
             }
         }
 
 
-        protected void FillRangeTargets(Character controlledChar, List<Character> seenCharacters, Dictionary<Loc, RangeTarget> endHash)
+        protected void FillRangeTargets(Character controlledChar, List<Character> seenChars, Dictionary<Loc, RangeTarget> endHash)
         {
-            foreach (Character seenChar in seenCharacters)
+            foreach (Character seenChar in seenChars)
             {
                 foreach (int skillSlot in iterateUsableSkillIndices(controlledChar))
                 {
@@ -728,13 +673,38 @@ namespace PMDC.Dungeon
                     CombatAction hitboxAction = entry.HitboxAction;
                     ExplosionData explosion = entry.Explosion;
 
-                    Dir8 approxDir = (seenChar.CharLoc - controlledChar.CharLoc).ApproximateDir8();
-                    getActionHitboxes(controlledChar, seenCharacters, approxDir, ref skillIndex, ref entry, ref rangeMod, ref hitboxAction, ref explosion);
+                    //only check moves that hit foes
+                    if ((explosion.TargetAlignments & Alignment.Foe) == Alignment.None)
+                        continue;
 
-                    if (entry.HitboxAction is AreaAction || entry.HitboxAction is ThrowAction)
+                    Dir8 approxDir = (seenChar.CharLoc - controlledChar.CharLoc).ApproximateDir8();
+                    getActionHitboxes(controlledChar, seenChars, approxDir, ref skillIndex, ref entry, ref rangeMod, ref hitboxAction, ref explosion);
+
+                    if (hitboxAction == null)
+                        continue;
+
+                    //the attack has no effect on the target; don't count its tiles
+                    int atkVal = GetAttackValue(controlledChar, skillIndex, entry, seenChars, seenChar, rangeMod);
+                    if (atkVal <= 0)
+                        continue;
+
+                    if (entry.HitboxAction is AreaAction)
                     {
                         AreaAction areaAction = entry.HitboxAction as AreaAction;
                         int range = Math.Max(1, areaAction.Range + rangeMod);
+
+                        //add everything in radius
+                        for (int xx = -range; xx <= range; xx++)
+                        {
+                            for (int yy = -range; yy <= range; yy++)
+                                updateDistanceTargetHash(endHash, seenChar, new Loc(xx, yy));
+                        }
+                    }
+                    else if (entry.HitboxAction is ThrowAction)
+                    {
+                        ThrowAction throwAction = entry.HitboxAction as ThrowAction;
+                        int range = Math.Max(1, throwAction.Range + rangeMod);
+
                         //add everything in radius
                         for (int xx = -range; xx <= range; xx++)
                         {
@@ -981,7 +951,7 @@ namespace PMDC.Dungeon
             }
         }
 
-        protected ActionValue GetActionDirValue(int skillIndex, SkillData entry, Character controlledChar, List<Character> seenChars, Dir8 dir)
+        protected HitValue GetActionDirValue(int skillIndex, SkillData entry, Character controlledChar, List<Character> seenChars, Dir8 dir)
         {
 
             //Dig/Fly/Dive/Phantom Force/Focus Punch; NOTE: specialized AI code!
@@ -989,7 +959,7 @@ namespace PMDC.Dungeon
             {
                 //always activate if not already forced to attack
                 if (!controlledChar.AttackOnly)
-                    return new ActionValue(100, true);
+                    return new HitValue(100, true);
             }
 
             int rangeMod = 0;
@@ -1000,7 +970,7 @@ namespace PMDC.Dungeon
             getActionHitboxes(controlledChar, seenChars, dir, ref skillIndex, ref entry, ref rangeMod, ref hitboxAction, ref explosion);
 
             if (hitboxAction == null)
-                return new ActionValue(0, false);
+                return new HitValue(0, false);
 
             HashSet<Loc> hitTiles = new HashSet<Loc>();
             foreach (Loc loc in hitboxAction.GetPreTargets(controlledChar, dir, rangeMod))
@@ -1037,9 +1007,9 @@ namespace PMDC.Dungeon
             }
 
             if (entry.Data.Category == BattleData.SkillCategory.Status && maxValue > 0)
-                return new ActionValue(totalValue / totalTargets, directHit);
+                return new HitValue(totalValue / totalTargets, directHit);
             else
-                return new ActionValue(maxValue, directHit);
+                return new HitValue(maxValue, directHit);
         }
 
         protected int GetAttackValue(Character controlledChar, int moveIndex, SkillData entry, List<Character> seenChars, Character target, int rangeMod)
@@ -1233,6 +1203,16 @@ namespace PMDC.Dungeon
                                     return 100;
                             }
                         }
+                        return 0;
+                    }
+                    else if (effect is MimicBattleEvent)
+                    {
+                        //mimic only if there is something to mimic
+                        MimicBattleEvent giveEffect = (MimicBattleEvent)effect;
+
+                        StatusEffect moveEffect;
+                        if (target.StatusEffects.TryGetValue(giveEffect.LastMoveStatusID, out moveEffect))
+                            return 100;
                         return 0;
                     }
                     else if (effect is ChangeToAbilityEvent)
@@ -1472,6 +1452,54 @@ namespace PMDC.Dungeon
                 return;
 
             loc_list.Add(border_loc);
+        }
+    }
+
+    public struct ActionDirValue
+    {
+        public int MoveIndex;
+        public Dir8 Dir;
+        public HitValue Hit;
+
+        public ActionDirValue(int moveIndex, Dir8 dir, HitValue hit)
+        {
+            MoveIndex = moveIndex;
+            Dir = dir;
+            Hit = hit;
+        }
+    }
+
+    public struct HitValue
+    {
+        public int Value;
+        public bool DirectHit;
+        public bool ImaginedHit;
+
+        public HitValue(int value, bool direct)
+        {
+            Value = value;
+            DirectHit = direct;
+            ImaginedHit = false;
+        }
+
+        public HitValue(int value, bool direct, bool imagined)
+        {
+            Value = value;
+            DirectHit = direct;
+            ImaginedHit = imagined;
+        }
+
+        public int CompareTo(HitValue other)
+        {
+            int val = Value.CompareTo(other.Value);
+            if (val != 0)
+                return val;
+
+            int direct = DirectHit.CompareTo(other.DirectHit);
+            if (direct != 0)
+                return direct;
+
+            return 0;
         }
     }
 
