@@ -98,7 +98,7 @@ namespace PMDC.Dungeon
             if (PositionPattern != PositionChoice.Approach)
             {
                 //get all move ranges and use all their ranges to denote destination tiles.
-                FillRangeTargets(controlledChar, seenCharacters, endHash);
+                FillRangeTargets(controlledChar, seenCharacters, endHash, PositionPattern != PositionChoice.Avoid);
                 List<Loc> endList = new List<Loc>();
                 foreach (Loc endLoc in endHash.Keys)
                 {

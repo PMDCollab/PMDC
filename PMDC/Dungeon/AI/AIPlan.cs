@@ -337,10 +337,13 @@ namespace PMDC.Dungeon
             }
         }
 
-        private void updateDistanceTargetHash(Dictionary<Loc, RangeTarget> endHash, Character chara, Loc diff)
+        private void updateDistanceTargetHash(Character controlledChar, Dictionary<Loc, RangeTarget> endHash, Character chara, Loc diff)
         {
-            int weight = diff.Dist8();
             Loc loc = chara.CharLoc + diff;
+            if (!controlledChar.CanSeeLocFromLoc(loc, chara.CharLoc, controlledChar.GetCharSight()))
+                return;
+
+            int weight = diff.Dist8();
             if (endHash.ContainsKey(loc))
             {
                 if (weight < endHash[loc].Weight)
@@ -659,7 +662,14 @@ namespace PMDC.Dungeon
         }
 
 
-        protected void FillRangeTargets(Character controlledChar, List<Character> seenChars, Dictionary<Loc, RangeTarget> endHash)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="controlledChar"></param>
+        /// <param name="seenChars"></param>
+        /// <param name="endHash"></param>
+        /// <param name="blindspotOnly">Will only treat blindspot attacks as attacks that need to path to tiles.</param>
+        protected void FillRangeTargets(Character controlledChar, List<Character> seenChars, Dictionary<Loc, RangeTarget> endHash, bool blindspotOnly)
         {
             foreach (Character seenChar in seenChars)
             {
@@ -690,6 +700,8 @@ namespace PMDC.Dungeon
 
                     if (entry.HitboxAction is AreaAction)
                     {
+                        if (blindspotOnly)
+                            continue;
                         AreaAction areaAction = entry.HitboxAction as AreaAction;
                         int range = Math.Max(1, areaAction.Range + rangeMod);
 
@@ -697,11 +709,13 @@ namespace PMDC.Dungeon
                         for (int xx = -range; xx <= range; xx++)
                         {
                             for (int yy = -range; yy <= range; yy++)
-                                updateDistanceTargetHash(endHash, seenChar, new Loc(xx, yy));
+                                updateDistanceTargetHash(controlledChar, endHash, seenChar, new Loc(xx, yy));
                         }
                     }
                     else if (entry.HitboxAction is ThrowAction)
                     {
+                        if (blindspotOnly)
+                            continue;
                         ThrowAction throwAction = entry.HitboxAction as ThrowAction;
                         int range = Math.Max(1, throwAction.Range + rangeMod);
 
@@ -709,11 +723,13 @@ namespace PMDC.Dungeon
                         for (int xx = -range; xx <= range; xx++)
                         {
                             for (int yy = -range; yy <= range; yy++)
-                                updateDistanceTargetHash(endHash, seenChar, new Loc(xx, yy));
+                                updateDistanceTargetHash(controlledChar, endHash, seenChar, new Loc(xx, yy));
                         }
                     }
                     else if (entry.HitboxAction is LinearAction)
                     {
+                        if (blindspotOnly)
+                            continue;
                         LinearAction lineAction = entry.HitboxAction as LinearAction;
                         int range = Math.Max(1, lineAction.Range + rangeMod);
                         //add everything in line
@@ -722,7 +738,11 @@ namespace PMDC.Dungeon
                             Dir8 dir = (Dir8)ii;
                             for (int jj = 1; jj <= range; jj++)
                             {
-                                updateDistanceTargetHash(endHash, seenChar, dir.GetLoc() * jj);
+                                bool blocked = DungeonScene.Instance.ShotBlocked(controlledChar, seenChar.CharLoc + dir.GetLoc() * (jj - 1), dir, Alignment.None, false, lineAction.StopAtWall);
+                                if (blocked)
+                                    break;
+
+                                updateDistanceTargetHash(controlledChar, endHash, seenChar, dir.GetLoc() * jj);
                                 if (lineAction.IsWide())
                                 {
                                     Dir8 left = DirExt.AddAngles(dir, Dir8.Left);
@@ -733,8 +753,8 @@ namespace PMDC.Dungeon
                                         right = DirExt.AddAngles(dir, Dir8.UpRight);
                                     }
                                     //add everything on the sides if it's a wide action
-                                    updateDistanceTargetHash(endHash, seenChar, left.GetLoc() + dir.GetLoc() * jj);
-                                    updateDistanceTargetHash(endHash, seenChar, right.GetLoc() + dir.GetLoc() * jj);
+                                    updateDistanceTargetHash(controlledChar, endHash, seenChar, left.GetLoc() + dir.GetLoc() * jj);
+                                    updateDistanceTargetHash(controlledChar, endHash, seenChar, right.GetLoc() + dir.GetLoc() * jj);
                                 }
                             }
                         }
@@ -750,11 +770,11 @@ namespace PMDC.Dungeon
                             switch (offsetAction.HitArea)
                             {
                                 case OffsetAction.OffsetArea.Tile:
-                                    updateDistanceTargetHash(endHash, seenChar, dir.GetLoc() * range);
+                                    updateDistanceTargetHash(controlledChar, endHash, seenChar, dir.GetLoc() * range);
                                     break;
                                 case OffsetAction.OffsetArea.Sides:
                                     {
-                                        updateDistanceTargetHash(endHash, seenChar, dir.GetLoc() * range);
+                                        updateDistanceTargetHash(controlledChar, endHash, seenChar, dir.GetLoc() * range);
                                         Dir8 left = DirExt.AddAngles(dir, Dir8.Left);
                                         Dir8 right = DirExt.AddAngles(dir, Dir8.Right);
                                         if (dir.IsDiagonal())
@@ -763,8 +783,8 @@ namespace PMDC.Dungeon
                                             right = DirExt.AddAngles(dir, Dir8.UpRight);
                                         }
                                         //add everything on the sides if it's a wide action
-                                        updateDistanceTargetHash(endHash, seenChar, left.GetLoc() + dir.GetLoc() * range);
-                                        updateDistanceTargetHash(endHash, seenChar, right.GetLoc() + dir.GetLoc() * range);
+                                        updateDistanceTargetHash(controlledChar, endHash, seenChar, left.GetLoc() + dir.GetLoc() * range);
+                                        updateDistanceTargetHash(controlledChar, endHash, seenChar, right.GetLoc() + dir.GetLoc() * range);
                                     }
                                     break;
                                 case OffsetAction.OffsetArea.Area:
@@ -772,7 +792,7 @@ namespace PMDC.Dungeon
                                         for (int xx = -1; xx <= 1; xx++)
                                         {
                                             for (int yy = -1; yy <= 1; yy++)
-                                                updateDistanceTargetHash(endHash, seenChar, dir.GetLoc() * range + new Loc(xx, yy));
+                                                updateDistanceTargetHash(controlledChar, endHash, seenChar, dir.GetLoc() * range + new Loc(xx, yy));
                                         }
                                     }
                                     break;
@@ -780,7 +800,7 @@ namespace PMDC.Dungeon
                         }
                     }
                 }
-                updateDistanceTargetHash(endHash, seenChar, Loc.Zero);
+                updateDistanceTargetHash(controlledChar, endHash, seenChar, Loc.Zero);
             }
         }
 
