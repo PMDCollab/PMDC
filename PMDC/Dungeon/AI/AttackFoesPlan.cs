@@ -159,8 +159,11 @@ namespace PMDC.Dungeon
                     }
                 }
 
-                path = closestPaths[closestIdx];
-                targetChar = endHash[ends[closestIdx]].Origin;
+                if (closestIdx > -1)
+                {
+                    path = closestPaths[closestIdx];
+                    targetChar = endHash[ends[closestIdx]].Origin;
+                }
             }
 
             //update last-seen target location if we have a target, otherwise leave it alone

@@ -69,7 +69,7 @@ namespace PMDC.Dungeon
         {
             StandardAttack,
             DumbAttack,//randomly chooses moves based on weight, sometimes walks within range due to missing moves having weight
-            RandomAttack,//randomly chooses moves based on weight, always attacks when within range
+            RandomAttack,//randomly chooses moves based on weight, always attacks with damaging moves when within range, but sometimes moves forward if the only choice is a status move
             SmartAttack,//always chooses the best move, and always attacks when within range
         }
 
@@ -350,6 +350,33 @@ namespace PMDC.Dungeon
                 endHash[loc] = new RangeTarget(chara, weight);
         }
 
+        private ActionDirValue weightedActionChoice(List<ActionDirValue> moveIndices, ReRandom rand)
+        {
+            //get a random move based on weighted chance
+            int totalPoints = 0;
+            for (int ii = 0; ii < moveIndices.Count; ii++)
+                totalPoints += moveIndices[ii].Hit.Value;
+
+            int pointChoice = rand.Next(totalPoints);
+            int choice = 0;
+            while (choice < moveIndices.Count)
+            {
+                if (pointChoice < moveIndices[choice].Hit.Value)
+                    break;
+                pointChoice -= moveIndices[choice].Hit.Value;
+                choice++;
+            }
+
+            return moveIndices[choice];
+        }
+
+        private GameAction actionFromActionVal(ActionDirValue actionVal)
+        {
+            if (actionVal.MoveIndex < CharData.MAX_SKILL_SLOTS)
+                return new GameAction(GameAction.ActionType.UseSkill, actionVal.Dir, actionVal.MoveIndex);
+            else
+                return new GameAction(GameAction.ActionType.Attack, actionVal.Dir);
+        }
 
         protected GameAction TryDefaultAttackChoice(ReRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
         {
@@ -365,10 +392,7 @@ namespace PMDC.Dungeon
             if (backupIndices.Count > 0)
             {
                 ActionDirValue actionVal = backupIndices[rand.Next(backupIndices.Count)];
-                if (actionVal.MoveIndex < CharData.MAX_SKILL_SLOTS)
-                    return new GameAction(GameAction.ActionType.UseSkill, actionVal.Dir, actionVal.MoveIndex);
-                else
-                    return new GameAction(GameAction.ActionType.Attack, actionVal.Dir);
+                return actionFromActionVal(actionVal);
             }
             //if we can't attack, then we pass along to movement
             return new GameAction(GameAction.ActionType.Wait, Dir8.None);
@@ -396,34 +420,12 @@ namespace PMDC.Dungeon
             //just try to choose once
             if (moveIndices.Count > 0)
             {
-                //get a random move based on weighted chance
-                int totalPoints = 0;
-                for (int ii = 0; ii < moveIndices.Count; ii++)
-                    totalPoints += moveIndices[ii].Hit.Value;
+                ActionDirValue actionVal = weightedActionChoice(moveIndices, rand);
+                if (!actionVal.Hit.ImaginedHit)
+                    return actionFromActionVal(actionVal);
 
-                int pointChoice = rand.Next(totalPoints);
-                int choice = 0;
-                while (choice < moveIndices.Count)
-                {
-                    if (pointChoice < moveIndices[choice].Hit.Value)
-                        break;
-                    pointChoice -= moveIndices[choice].Hit.Value;
-                    choice++;
-                }
-
-                ActionDirValue actionVal = moveIndices[choice];
-                if (actionVal.Hit.ImaginedHit)
-                {
-                    //if we chose an imagined hit, we fall through and skip choosing a move altogether
-                    //this is equivalent of choosing a move that is out of range and thus doing nothing
-                }
-                else
-                {
-                    if (actionVal.MoveIndex < CharData.MAX_SKILL_SLOTS)
-                        return new GameAction(GameAction.ActionType.UseSkill, actionVal.Dir, actionVal.MoveIndex);
-                    else
-                        return new GameAction(GameAction.ActionType.Attack, actionVal.Dir);
-                }
+                //if we chose an imagined hit, we fall through and skip choosing a move altogether
+                //this is equivalent of choosing a move that is out of range and thus doing nothing
             }
 
             //if we can't attack, then we pass along to movement
@@ -433,37 +435,45 @@ namespace PMDC.Dungeon
 
         protected GameAction TryRandomMoveChoice(ReRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
         {
+            //first pass list of move candidates containing all moves, including hypothetical
             List<ActionDirValue> moveIndices = new List<ActionDirValue>();
+            //backup list containing only attacking moves, none hypothetical
+            List<ActionDirValue> attackIndices = new List<ActionDirValue>();
+            //the result is that we choose moves like dumb attack, but if we choose a hypothetical we roll again from attack moves assured to work
             foreach (int ii in iterateUsableSkillIndices(controlledChar))
             {
                 HitValue[] moveDirs = new HitValue[8];
-                GetActionValues(controlledChar, seenChars, closestThreat, controlledChar.Skills[ii].Element.SkillNum, moveDirs, false);
+                GetActionValues(controlledChar, seenChars, closestThreat, controlledChar.Skills[ii].Element.SkillNum, moveDirs, true);
                 UpdateTotalIndices(rand, moveIndices, ii, moveDirs);
+
+                SkillData entry = DataManager.Instance.GetSkill(controlledChar.Skills[ii].Element.SkillNum);
+                if (entry.Data.Category != BattleData.SkillCategory.Status)
+                {
+                    for (int jj = 0; jj < moveDirs.Length; jj++)
+                    {
+                        if (moveDirs[jj].ImaginedHit)
+                            moveDirs[jj] = new HitValue();
+                    }
+                    UpdateTotalIndices(rand, attackIndices, ii, moveDirs);
+                }
             }
 
-            //just try to choose once
             if (moveIndices.Count > 0)
             {
+                ActionDirValue actionVal = weightedActionChoice(moveIndices, rand);
+                if (!actionVal.Hit.ImaginedHit)
+                    return actionFromActionVal(actionVal);
+
+                //if we chose an imagined hit, we fall through and skip choosing a move altogether
+                //this is equivalent of choosing a move that is out of range and thus doing nothing
+            }
+
+            // if we fell to here, we likely chose an imagined hit.  Fall back to an attacking move.
+            if (attackIndices.Count > 0)
+            {
                 //get a random move based on weighted chance
-                int totalPoints = 0;
-                for (int ii = 0; ii < moveIndices.Count; ii++)
-                    totalPoints += moveIndices[ii].Hit.Value;
-
-                int pointChoice = rand.Next(totalPoints);
-                int choice = 0;
-                while (choice < moveIndices.Count)
-                {
-                    if (pointChoice < moveIndices[choice].Hit.Value)
-                        break;
-                    pointChoice -= moveIndices[choice].Hit.Value;
-                    choice++;
-                }
-
-                ActionDirValue actionVal = moveIndices[choice];
-                if (actionVal.MoveIndex < CharData.MAX_SKILL_SLOTS)
-                    return new GameAction(GameAction.ActionType.UseSkill, actionVal.Dir, actionVal.MoveIndex);
-                else
-                    return new GameAction(GameAction.ActionType.Attack, actionVal.Dir);
+                ActionDirValue actionVal = weightedActionChoice(attackIndices, rand);
+                return actionFromActionVal(actionVal);
             }
 
             //if we can't attack, then we pass along to movement
@@ -498,10 +508,7 @@ namespace PMDC.Dungeon
             {
                 int randIndex = rand.Next(highestIndices.Count + highestStatusIndices.Count);
                 ActionDirValue actionVal = (randIndex < highestIndices.Count) ? highestIndices[randIndex] : highestStatusIndices[randIndex - highestIndices.Count];
-                if (actionVal.MoveIndex < CharData.MAX_SKILL_SLOTS)
-                    return new GameAction(GameAction.ActionType.UseSkill, actionVal.Dir, actionVal.MoveIndex);
-                else
-                    return new GameAction(GameAction.ActionType.Attack, actionVal.Dir);
+                return actionFromActionVal(actionVal);
             }
 
             return new GameAction(GameAction.ActionType.Wait, Dir8.None);
@@ -530,19 +537,12 @@ namespace PMDC.Dungeon
 
             List<ActionDirValue> highestIndices = new List<ActionDirValue>();
 
-            if (forcedMove > -1)
-            {
-                HitValue[] moveDirs = new HitValue[8];
-                GetActionValues(controlledChar, seenChars, closestThreat, forcedMove, moveDirs, false);
-                UpdateHighestIndices(highestIndices, CharData.MAX_SKILL_SLOTS, moveDirs);
-            }
-            else
-            {
-                //default on attacking if no moves are to be found
-                HitValue[] attackDirs = new HitValue[8];
-                GetActionValues(controlledChar, seenChars, closestThreat, 0, attackDirs, false);
-                UpdateHighestIndices(highestIndices, CharData.MAX_SKILL_SLOTS, attackDirs);
-            }
+            if (forcedMove < 0) // default to regular attack if no moves are to be found
+                forcedMove = 0;
+
+            HitValue[] moveDirs = new HitValue[8];
+            GetActionValues(controlledChar, seenChars, closestThreat, forcedMove, moveDirs, false);
+            UpdateHighestIndices(highestIndices, CharData.MAX_SKILL_SLOTS, moveDirs);
 
             if (highestIndices.Count > 0)
             {
