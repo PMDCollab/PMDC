@@ -43,6 +43,9 @@ namespace PMDC.Dungeon
                 GameAction attackCommand = TryAttackChoice(rand, controlledChar, AttackPattern);
                 if (attackCommand.Type != GameAction.ActionType.Wait)
                     return attackCommand;
+                attackCommand = TryAttackChoice(rand, controlledChar, AttackChoice.StandardAttack);
+                if (attackCommand.Type != GameAction.ActionType.Wait)
+                    return attackCommand;
             }
 
             return null;
