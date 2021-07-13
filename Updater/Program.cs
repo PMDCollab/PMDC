@@ -30,6 +30,36 @@ namespace Updater
 
             try
             {
+                Console.WriteLine("Updater Options:");
+                Console.WriteLine("1: Force Update");
+                Console.WriteLine("2: Uninstall (Retain Save Data)");
+                Console.WriteLine("3: Reset Updater XML");
+                Console.WriteLine("Press any other key to check for updates.");
+                ConsoleKeyInfo choice = Console.ReadKey();
+                Console.WriteLine();
+                bool force = false;
+                if (choice.Key == ConsoleKey.D1)
+                    force = true;
+                else if (choice.Key == ConsoleKey.D2)
+                {
+                    Console.WriteLine("Uninstalling...");
+                    DeleteWithExclusions("PMDO");
+                    DeleteWithExclusions("WaypointServer");
+                    DeleteWithExclusions("temp");
+                    Console.WriteLine("Done.");
+                    Console.ReadKey();
+                    return;
+                }
+                else if (choice.Key == ConsoleKey.D3)
+                {
+                    Console.WriteLine("Resetting XML");
+                    DefaultXml();
+                    SaveXml();
+                    Console.WriteLine("Done.");
+                    Console.ReadKey();
+                    return;
+                }
+
                 //3: read from site what version is uploaded. if greater than the current version, upgrade
                 using (var wc = new WebClient())
                 {
@@ -39,9 +69,16 @@ namespace Updater
 
                     if (lastVersion >= nextVersion)
                     {
-                        Console.WriteLine("You are up to date. {0} >= {1}", lastVersion, nextVersion);
-                        Console.ReadKey();
-                        return;
+                        if (force)
+                        {
+                            Console.WriteLine("Update will be forced. {0} >= {1}", lastVersion, nextVersion);
+                        }
+                        else
+                        {
+                            Console.WriteLine("You are up to date. {0} >= {1}", lastVersion, nextVersion);
+                            Console.ReadKey();
+                            return;
+                        }
                     }
 
                     Console.WriteLine("Version {0} will be downloaded from {1}.\nPress any key to continue.", nextVersion, updatefile);
@@ -144,22 +181,8 @@ namespace Updater
                 }
                 else
                 {
-                    excludedFiles.Clear();
-                    excludedFiles.Add("PMDO/Config.xml");
-                    excludedFiles.Add("PMDO/Keyboard.xml");
-                    excludedFiles.Add("PMDO/Gamepad.xml");
-                    excludedFiles.Add("PMDO/Contacts.xml");
-                    excludedFiles.Add("PMDO/LOG/");
-                    excludedFiles.Add("PMDO/MODS/");
-                    excludedFiles.Add("PMDO/REPLAY/");
-                    excludedFiles.Add("PMDO/RESCUE/");
-                    excludedFiles.Add("PMDO/SAVE/");
-                    executableFiles.Clear();
-                    executableFiles.Add("PMDO/PMDO");
-                    executableFiles.Add("PMDO/dev.sh");
-                    executableFiles.Add("PMDO/MapGenTest");
-                    executableFiles.Add("WaypointServer/WaypointServer");
-                    executableFiles.Add("WaypointServer.app/Contents/MacOS/WaypointServer");
+                    DefaultXml();
+                    SaveXml();
                 }
             }
             catch (Exception ex)
@@ -167,6 +190,31 @@ namespace Updater
                 Console.Write(ex.ToString());
                 Console.ReadKey();
             }
+        }
+
+        static void DefaultXml()
+        {
+            updatefile = String.Format("http://127.0.0.1/{0}-x64.zip", GetCurrentPlatform());
+            versionfile = "http://127.0.0.1/version";
+            lastVersion = new Version(0, 0, 0, 0);
+            excludedFiles = new List<string>();
+            executableFiles = new List<string>();
+            excludedFiles.Clear();
+            excludedFiles.Add("PMDO/Config.xml");
+            excludedFiles.Add("PMDO/Keyboard.xml");
+            excludedFiles.Add("PMDO/Gamepad.xml");
+            excludedFiles.Add("PMDO/Contacts.xml");
+            excludedFiles.Add("PMDO/LOG/");
+            excludedFiles.Add("PMDO/MODS/");
+            excludedFiles.Add("PMDO/REPLAY/");
+            excludedFiles.Add("PMDO/RESCUE/");
+            excludedFiles.Add("PMDO/SAVE/");
+            executableFiles.Clear();
+            executableFiles.Add("PMDO/PMDO");
+            executableFiles.Add("PMDO/dev.sh");
+            executableFiles.Add("PMDO/MapGenTest");
+            executableFiles.Add("WaypointServer/WaypointServer");
+            executableFiles.Add("WaypointServer.app/Contents/MacOS/WaypointServer");
         }
 
         static void SaveXml()
@@ -201,6 +249,45 @@ namespace Updater
 
                 xmldoc.Save("Updater.xml");
             }
+        }
+
+        static bool DeleteWithExclusions(string path)
+        {
+            if (isExcluded(path))
+                return false;
+
+            bool deletedAll = true;
+            string[] listDir = Directory.GetDirectories(path);
+            foreach (string dir in listDir)
+            {
+                bool deletedAllSub = DeleteWithExclusions(dir);
+
+                if (deletedAllSub)
+                    Directory.Delete(dir, false);
+                else
+                    deletedAll = false;
+            }
+            string[] listFiles = Directory.GetFiles(path);
+            foreach (string file in listFiles)
+            {
+                if (!isExcluded(file))
+                    File.Delete(file);
+                else
+                    deletedAll = false;
+            }
+            return deletedAll;
+        }
+
+        static bool isExcluded(string path)
+        {
+            string fullPath = Path.GetFullPath(path).Replace("\\", "/").Trim('/');
+            foreach (string exclusion in excludedFiles)
+            {
+                string fullExclusion = Path.GetFullPath(exclusion).Replace("\\", "/").Trim('/');
+                if (string.Equals(fullPath, fullExclusion, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
         }
 
         private static string GetCurrentPlatform()
