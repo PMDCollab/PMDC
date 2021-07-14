@@ -68,19 +68,8 @@ namespace PMDC.Dungeon
                 //check for statuses that may make them ineligible targets
                 for (int ii = seenCharacters.Count - 1; ii >= 0; ii--)
                 {
-                    //NOTE: specialized AI code!
-                    if (seenCharacters[ii].GetStatusEffect(1) != null || seenCharacters[ii].GetStatusEffect(3) != null)//if they're asleep or frozen, do not attack
+                    if (!teamPartnerCanAttack(seenCharacters[ii]))
                         seenCharacters.RemoveAt(ii);
-                    else if (seenCharacters[ii].GetStatusEffect(25) == null)//last targeted by someone; NOTE: specialized AI code!
-                    {
-                        //don't attack certain kinds of foes that won't attack first
-                        if (seenCharacters[ii].Tactic.ID == 10)//weird tree; NOTE: specialized AI code!
-                            seenCharacters.RemoveAt(ii);
-                        else if (seenCharacters[ii].Tactic.ID == 8)//wait attack; NOTE: specialized AI code!
-                            seenCharacters.RemoveAt(ii);
-                        else if (seenCharacters[ii].Tactic.ID == 18)//tit for tat; NOTE: specialized AI code!
-                            seenCharacters.RemoveAt(ii);
-                    }
                 }
             }
 

@@ -28,14 +28,24 @@ namespace PMDC.Dungeon
 
         public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
         {
+            bool teamPartner = (IQ & AIFlags.TeamPartner) != AIFlags.None;
             Character target = null;
             StatusEffect lastHit = controlledChar.GetStatusEffect(StatusIndex);
             if (lastHit != null && lastHit.TargetChar != null)
-                target = lastHit.TargetChar;
-            Faction foeFaction = (IQ & AIFlags.NeutralFoeConflict) != AIFlags.None ? Faction.Foe : Faction.None;
-            List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets(), foeFaction);
-            if (target == null && seenCharacters.Count > 0)
-                target = seenCharacters[0];
+            {
+                if (!teamPartner || teamPartnerCanAttack(lastHit.TargetChar))
+                    target = lastHit.TargetChar;
+            }
+            if (target == null)
+            {
+                Faction foeFaction = (IQ & AIFlags.NeutralFoeConflict) != AIFlags.None ? Faction.Foe : Faction.None;
+                List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets(), foeFaction);
+                foreach (Character seenChar in seenCharacters)
+                {
+                    if (!teamPartner || teamPartnerCanAttack(seenChar))
+                        target = seenChar;
+                }
+            }
 
             //need attack action check
             if (target != null)
