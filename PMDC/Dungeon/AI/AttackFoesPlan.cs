@@ -106,7 +106,7 @@ namespace PMDC.Dungeon
                         }
                         addLoc = true;
                     }
-                    if (addLoc && endLoc != controlledChar.CharLoc)
+                    if (addLoc && endLoc != controlledChar.CharLoc)//destination cannot be the current location
                         endList.Add(endLoc);
                 }
                 ends = endList.ToArray();
@@ -127,23 +127,28 @@ namespace PMDC.Dungeon
                 int closestIdx = -1;
                 for (int ii = 0; ii < ends.Length; ii++)
                 {
-                    if (closestPaths[ii] != null && closestPaths[ii][0] == ends[ii])
+                    if (closestPaths[ii] == null)//no path was found
+                        continue;
+                    if (closestPaths[ii][0] != ends[ii])//an incomplete path was found
                     {
-                        if (closestIdx == -1)
+                        if (endHash[ends[ii]].Origin.CharLoc != ends[ii]) // but only for pathing that goes to a tile to hit the target from
+                            continue;
+                    }
+
+                    if (closestIdx == -1)
+                        closestIdx = ii;
+                    else
+                    {
+                        int cmp = comparePathValues(endHash[ends[ii]], endHash[ends[closestIdx]]);
+                        if (cmp > 0)
                             closestIdx = ii;
-                        else
+                        else if (cmp == 0)
                         {
-                            int cmp = comparePathValues(endHash[ends[ii]], endHash[ends[closestIdx]]);
-                            if (cmp > 0)
+                            // among ties, the tile closest to the target wins
+                            int curDiff = (ends[closestIdx] - endHash[ends[closestIdx]].Origin.CharLoc).DistSquared();
+                            int newDiff = (ends[ii] - endHash[ends[ii]].Origin.CharLoc).DistSquared();
+                            if (newDiff < curDiff)
                                 closestIdx = ii;
-                            else if (cmp == 0)
-                            {
-                                // among ties, the tile closest to the target wins
-                                int curDiff = (ends[closestIdx] - endHash[ends[closestIdx]].Origin.CharLoc).DistSquared();
-                                int newDiff = (ends[ii] - endHash[ends[ii]].Origin.CharLoc).DistSquared();
-                                if (newDiff < curDiff)
-                                    closestIdx = ii;
-                            }
                         }
                     }
                 }
@@ -180,6 +185,7 @@ namespace PMDC.Dungeon
                     attack = TryAttackChoice(rand, controlledChar, AttackChoice.StandardAttack);
                 if (attack.Type != GameAction.ActionType.Wait)
                     return attack;
+                return new GameAction(GameAction.ActionType.Wait, Dir8.None);
             }
             else if (!teamPartner && targetLoc.HasValue && targetLoc.Value != controlledChar.CharLoc)
             {
