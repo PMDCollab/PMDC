@@ -305,6 +305,7 @@ namespace PMDC
 
             DataEditor.AddEditor(new MapTilesEditor());
             DataEditor.AddEditor(new BaseEmitterEditor());
+            DataEditor.AddEditor(new ZoneDataEditor());
             DataEditor.AddEditor(new BattleDataEditor());
             DataEditor.AddEditor(new BattleFXEditor());
             DataEditor.AddEditor(new CircleSquareEmitterEditor());
