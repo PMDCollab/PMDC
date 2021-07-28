@@ -46,8 +46,7 @@ namespace PMDC.Dungeon
                 alignment |= Alignment.Friend;
             if (RunFromFoes)
                 alignment |= Alignment.Foe;
-            Faction foeFaction = (IQ & AIFlags.NeutralFoeConflict) != AIFlags.None ? Faction.Foe : Faction.None;
-            List<Character> seenCharacters = controlledChar.GetSeenCharacters(alignment, foeFaction);
+            List<Character> seenCharacters = controlledChar.GetSeenCharacters(alignment);
 
             if (seenCharacters.Count == 0)
                 return null;

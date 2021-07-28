@@ -52,15 +52,7 @@ namespace PMDC.Dungeon
 
             //past this point, using moves won't work, so try to find a path
 
-            Faction foeFaction = (IQ & AIFlags.NeutralFoeConflict) != AIFlags.None ? Faction.Foe : Faction.None;
-            List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets(), foeFaction);
-
-            StatusEffect lastHit = controlledChar.GetStatusEffect(StatusIndex);
-            if (lastHit != null && lastHit.TargetChar != null)
-            {
-                if (!seenCharacters.Contains(lastHit.TargetChar))
-                    seenCharacters.Add(lastHit.TargetChar);
-            }
+            List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets());
 
             bool teamPartner = (IQ & AIFlags.TeamPartner) != AIFlags.None;
             if (teamPartner)

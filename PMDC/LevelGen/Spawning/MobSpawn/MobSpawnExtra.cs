@@ -348,6 +348,27 @@ namespace PMDC.LevelGen
 
 
     /// <summary>
+    /// Spawn the mob with recruitment turned off
+    /// </summary>
+    [Serializable]
+    public class MobSpawnFoeConflict : MobSpawnExtra
+    {
+        public override MobSpawnExtra Copy() { return new MobSpawnFoeConflict(); }
+
+        public override void ApplyFeature(IMobSpawnMap map, Character newChar)
+        {
+            if (newChar.MemberTeam is MonsterTeam)
+                newChar.MemberTeam.FoeConflict = true;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("{0}", this.GetType().Name);
+        }
+    }
+
+
+    /// <summary>
     /// Spawn the mob with an effect on interaction (shows up for allies only)
     /// </summary>
     [Serializable]

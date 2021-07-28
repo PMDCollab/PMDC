@@ -30,21 +30,11 @@ namespace PMDC.Dungeon
         {
             bool teamPartner = (IQ & AIFlags.TeamPartner) != AIFlags.None;
             Character target = null;
-            StatusEffect lastHit = controlledChar.GetStatusEffect(StatusIndex);
-            if (lastHit != null && lastHit.TargetChar != null)
+            List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets());
+            foreach (Character seenChar in seenCharacters)
             {
-                if (!teamPartner || teamPartnerCanAttack(lastHit.TargetChar))
-                    target = lastHit.TargetChar;
-            }
-            if (target == null)
-            {
-                Faction foeFaction = (IQ & AIFlags.NeutralFoeConflict) != AIFlags.None ? Faction.Foe : Faction.None;
-                List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets(), foeFaction);
-                foreach (Character seenChar in seenCharacters)
-                {
-                    if (!teamPartner || teamPartnerCanAttack(seenChar))
-                        target = seenChar;
-                }
+                if (!teamPartner || teamPartnerCanAttack(seenChar))
+                    target = seenChar;
             }
 
             //need attack action check

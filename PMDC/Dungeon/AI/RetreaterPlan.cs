@@ -24,8 +24,7 @@ namespace PMDC.Dungeon
         {
             if (controlledChar.HP * Factor < controlledChar.MaxHP)
             {
-                Faction foeFaction = (IQ & AIFlags.NeutralFoeConflict) != AIFlags.None ? Faction.Foe : Faction.None;
-                List<Character> seenCharacters = controlledChar.GetSeenCharacters(Alignment.Foe, foeFaction);
+                List<Character> seenCharacters = controlledChar.GetSeenCharacters(Alignment.Foe);
                 if (seenCharacters.Count == 0)
                     return null;
 
