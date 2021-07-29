@@ -4406,4 +4406,28 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    [Serializable]
+    public class NullCharEvent : SingleCharEvent
+    {
+        public SingleCharEvent BaseEvent;
+
+        public NullCharEvent()
+        { }
+        public NullCharEvent(SingleCharEvent baseEvent)
+        {
+            BaseEvent = baseEvent;
+        }
+        protected NullCharEvent(NullCharEvent other)
+        {
+            BaseEvent = (SingleCharEvent)other.BaseEvent.Clone();
+        }
+        public override GameEvent Clone() { return new NullCharEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (character == null)
+                yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, character));
+        }
+    }
 }
