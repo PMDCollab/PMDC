@@ -303,6 +303,9 @@ namespace PMDC
             DataEditor.AddEditor(new TeamStepSpawnerEditor());
             DataEditor.AddEditor(new MonsterIDEditor());
 
+            DataEditor.AddEditor(new TeamMemberSpawnEditor());
+            DataEditor.AddEditor(new MobSpawnEditor());
+
             DataEditor.AddEditor(new MapTilesEditor());
             DataEditor.AddEditor(new BaseEmitterEditor());
             DataEditor.AddEditor(new ZoneDataEditor());
