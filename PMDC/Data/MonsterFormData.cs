@@ -259,12 +259,6 @@ namespace PMDC.Data
                 return 21;
         }
 
-        public override int GetExp(int level, int recipientLv)
-        {
-            int multNum = 2 * level + 10;
-            int multDen = recipientLv + level + 10;
-            return (int)((ulong)ExpYield * (ulong)level * (ulong)multNum * (ulong)multNum * (ulong)multNum / (ulong)multDen / (ulong)multDen / (ulong)multDen / 5) + 1;
-        }
 
         public override bool CanLearnSkill(int skill)
         {

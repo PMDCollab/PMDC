@@ -9,6 +9,7 @@ using RogueEssence.Ground;
 using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Dev;
+using PMDC.Data;
 
 namespace PMDC.Dungeon
 {
@@ -737,6 +738,126 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    [Serializable]
+    public abstract class HandoutExpEvent : SingleCharEvent
+    {
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (!character.Dead)
+                yield break;
+
+
+            if (character.MemberTeam == DungeonScene.Instance.ActiveTeam)
+                yield return new WaitForFrames(60);
+            else
+            {
+                if (character.EXPMarked)
+                {
+                    if (character.MemberTeam is ExplorerTeam)
+                    {
+                        //TODO: hand out EXP only when the final member is defeated
+                    }
+                    else
+                    {
+                        for (int ii = 0; ii < DungeonScene.Instance.ActiveTeam.Players.Count; ii++)
+                        {
+                            if (ii >= DungeonScene.Instance.GainedEXP.Count)
+                                DungeonScene.Instance.GainedEXP.Add(0);
+
+                            int exp = GetExp(owner, ownerChar, character, ii);
+                            DungeonScene.Instance.GainedEXP[ii] += exp;
+                        }
+                    }
+                }
+                DataManager.Instance.Save.SeenMonster(character.BaseForm.Species);
+            }
+        }
+
+        protected abstract int GetExp(GameEventOwner owner, Character ownerChar, Character character, int idx);
+    }
+
+    [Serializable]
+    public class HandoutScaledExpEvent : HandoutExpEvent
+    {
+        public int Numerator;
+        public int Denominator;
+        public HandoutScaledExpEvent() { }
+        public HandoutScaledExpEvent(int numerator, int denominator, int levelBuffer) { Numerator = numerator; Denominator = denominator; }
+        protected HandoutScaledExpEvent(HandoutScaledExpEvent other)
+        {
+            this.Numerator = other.Numerator;
+            this.Denominator = other.Denominator;
+        }
+        public override GameEvent Clone() { return new HandoutScaledExpEvent(this); }
+
+        protected override int GetExp(GameEventOwner owner, Character ownerChar, Character character, int idx)
+        {
+            MonsterData monsterData = DataManager.Instance.GetMonster(character.BaseForm.Species);
+            MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[character.BaseForm.Form];
+            return expFormula(monsterForm.ExpYield, character.Level);
+        }
+
+        private int expFormula(int expYield, int level)
+        {
+            return (int)((ulong)expYield * (ulong)Numerator * (ulong)level / (ulong)Denominator) + 1;
+        }
+    }
+
+
+    [Serializable]
+    public class HandoutConstantExpEvent : HandoutExpEvent
+    {
+        public HandoutConstantExpEvent() { }
+        public override GameEvent Clone() { return new HandoutConstantExpEvent(); }
+
+        protected override int GetExp(GameEventOwner owner, Character ownerChar, Character character, int idx)
+        {
+            MonsterData monsterData = DataManager.Instance.GetMonster(character.BaseForm.Species);
+            MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[character.BaseForm.Form];
+            return monsterForm.ExpYield;
+        }
+    }
+
+    [Serializable]
+    public class HandoutRelativeExpEvent : HandoutExpEvent
+    {
+        public int Numerator;
+        public int Denominator;
+        public int LevelBuffer;
+        public HandoutRelativeExpEvent() { }
+        public HandoutRelativeExpEvent(int numerator, int denominator, int levelBuffer) { Numerator = numerator; Denominator = denominator; LevelBuffer = levelBuffer; }
+        protected HandoutRelativeExpEvent(HandoutRelativeExpEvent other)
+        {
+            this.Numerator = other.Numerator;
+            this.Denominator = other.Denominator;
+            this.LevelBuffer = other.LevelBuffer;
+        }
+        public override GameEvent Clone() { return new HandoutRelativeExpEvent(this); }
+
+        protected override int GetExp(GameEventOwner owner, Character ownerChar, Character character, int idx)
+        {
+            int levelDiff = 0;
+            Character player = DungeonScene.Instance.ActiveTeam.Players[idx];
+            int growth = DataManager.Instance.GetMonster(player.BaseForm.Species).EXPTable;
+            GrowthData growthData = DataManager.Instance.GetGrowth(growth);
+            while (player.Level + levelDiff < DataManager.Instance.MaxLevel && player.EXP + DungeonScene.Instance.GainedEXP[idx] >= growthData.GetExpTo(player.Level, player.Level + levelDiff + 1))
+                levelDiff++;
+
+            MonsterData monsterData = DataManager.Instance.GetMonster(character.BaseForm.Species);
+            MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[character.BaseForm.Form];
+            return expFormula(monsterForm.ExpYield, character.Level, player.Level + levelDiff);
+        }
+
+        private int expFormula(int expYield, int level, int recipientLv)
+        {
+            int multNum = 2 * level + LevelBuffer;
+            int multDen = recipientLv + level + LevelBuffer;
+            return (int)((ulong)expYield * (ulong)Numerator * (ulong)level * (ulong)multNum * (ulong)multNum * (ulong)multNum / (ulong)multDen / (ulong)multDen / (ulong)multDen / (ulong)Denominator) + 1;
+        }
+    }
+
+
     [Serializable]
     public class ImpostorReviveEvent : SingleCharEvent
     {
@@ -775,10 +896,6 @@ namespace PMDC.Dungeon
             }
         }
     }
-
-
-
-
 
     [Serializable]
     public class MercyReviveEvent : SingleCharEvent

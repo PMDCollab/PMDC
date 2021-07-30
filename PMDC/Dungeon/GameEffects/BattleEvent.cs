@@ -5677,8 +5677,8 @@ namespace PMDC.Dungeon
             if (knockedOut)
             {
                 MonsterData monsterData = DataManager.Instance.GetMonster(context.Target.BaseForm.Species);
-                BaseMonsterForm monsterForm = monsterData.Forms[context.Target.BaseForm.Form];
-                int exp = monsterForm.GetExp(context.Target.Level, context.Target.Level);
+                MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[context.Target.BaseForm.Form];
+                int exp = expFormula(monsterForm.ExpYield, context.Target.Level);
                 if (context.Target.MemberTeam is ExplorerTeam)
                     exp *= 2;
                 int gainedMoney = exp;
@@ -5687,6 +5687,11 @@ namespace PMDC.Dungeon
                     yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropMoney(gainedMoney, context.Target.CharLoc, context.Target.CharLoc));
                 }
             }
+        }
+
+        private int expFormula(int expYield, int level)
+        {
+            return (int)((ulong)expYield * (ulong)level / 5) + 1;
         }
     }
 
