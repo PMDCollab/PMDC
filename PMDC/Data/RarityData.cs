@@ -17,7 +17,7 @@ namespace PMDC.Data
         public override DataManager.DataType TriggerType => DataManager.DataType.Item;
 
         /// <summary>
-        /// Maps monster, rarity to list of requisite 
+        /// Maps monster, rarity to list of applicable items 
         /// </summary>
         public Dictionary<int, Dictionary<int, List<int>>> RarityMap;
 
@@ -55,7 +55,8 @@ namespace PMDC.Data
                 string file = Path.GetFileNameWithoutExtension(dir);
                 int num = Convert.ToInt32(file);
                 ItemData data = (ItemData)DataManager.LoadData(dir);
-                computeSummary(num, data);
+                if (data.Released)
+                    computeSummary(num, data);
             }
         }
 
