@@ -4511,14 +4511,11 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (character == null)
+            MapCheckState checks = ((MapStatus)owner).StatusStates.GetWithDefault<MapCheckState>();
+            for (int ii = checks.CheckEvents.Count - 1; ii >= 0; ii--)
             {
-                MapCheckState checks = ((MapStatus)owner).StatusStates.GetWithDefault<MapCheckState>();
-                for (int ii = checks.CheckEvents.Count - 1; ii >= 0; ii--)
-                {
-                    SingleCharEvent effect = checks.CheckEvents[ii];
-                    yield return CoroutineManager.Instance.StartCoroutine(effect.Apply(owner, ownerChar, character));
-                }
+                SingleCharEvent effect = checks.CheckEvents[ii];
+                yield return CoroutineManager.Instance.StartCoroutine(effect.Apply(owner, ownerChar, character));
             }
         }
     }
