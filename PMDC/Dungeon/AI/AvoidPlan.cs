@@ -124,7 +124,7 @@ namespace PMDC.Dungeon
             //later, rate the exits based on how far they are from the tail point of the lochistory
             //add them to a sorted list
 
-            int selectedIndex = -1;
+            List<Loc> forwardFacingLocs = new List<Loc>();
             if (locHistory.Count > 0)
             {
                 List<int> forwardFacingIndices = new List<int>();
@@ -132,19 +132,12 @@ namespace PMDC.Dungeon
                 for (int ii = 0; ii < seenExits.Count; ii++)
                 {
                     if (Loc.Dot(pastDir, (seenExits[ii] - controlledChar.CharLoc)) <= 0)
-                        forwardFacingIndices.Add(ii);
+                    {
+                        forwardFacingLocs.Add(seenExits[ii]);
+                        seenExits.RemoveAt(ii);
+                    }
                 }
-                if (forwardFacingIndices.Count > 0)
-                    selectedIndex = forwardFacingIndices[rand.Next(forwardFacingIndices.Count)];
             }
-            //consolation exit
-            if (selectedIndex == -1)
-                selectedIndex = rand.Next(seenExits.Count);
-
-            //the selected node will be index 0
-            Loc temp = seenExits[0];
-            seenExits[0] = seenExits[selectedIndex];
-            seenExits[selectedIndex] = temp;
 
             //if any of the tiles are reached in the search, they will be automatically chosen
 
@@ -155,7 +148,16 @@ namespace PMDC.Dungeon
             //if there's many exits, and they're all impossible, the speed is faster - #2 fastest case
             //if there's many exits, and only the backtrack is possible, the speed is faster - #2 fastest case
 
-            goalPath = GetPathPermissive(controlledChar, seenExits);
+            if (forwardFacingLocs.Count > 0)
+                goalPath = GetRandomPathPermissive(rand, controlledChar, forwardFacingLocs);
+
+            //then attempt remaining locations
+            if (goalPath.Count == 0)
+                goalPath = GetRandomPathPermissive(rand, controlledChar, seenExits);
+
+            if (goalPath.Count == 0)
+                return null;
+
             if (locHistory.Count == 0 || locHistory[locHistory.Count - 1] != controlledChar.CharLoc)
                 locHistory.Add(controlledChar.CharLoc);
 

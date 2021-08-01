@@ -250,9 +250,26 @@ namespace PMDC.Dungeon
             return Grid.FindNPaths(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, ends, checkBlock, checkDiagBlock, 1, true);
         }
 
-        protected List<Loc> GetPathPermissive(Character controlledChar, List<Loc> ends)
+        protected List<Loc> GetRandomPathPermissive(ReRandom rand, Character controlledChar, List<Loc> seenExits)
         {
+            List<Loc>[] paths = GetPathsPermissive(controlledChar, seenExits);
+            List<int> idx_list = new List<int>();
+            for (int ii = 0; ii < paths.Length; ii++)
+                idx_list.Add(ii);
+            while (idx_list.Count > 0)
+            {
+                int list_idx = rand.Next(idx_list.Count);
+                int idx = idx_list[list_idx];
+                //check to make sure the path reaches the end
+                if (paths[idx][0] == seenExits[idx])
+                    return paths[idx];
+                idx_list.RemoveAt(list_idx);
+            }
+            return new List<Loc>();
+        }
 
+        protected List<Loc>[] GetPathsPermissive(Character controlledChar, List<Loc> ends)
+        {
             //requires a valid target tile
             Grid.LocTest checkDiagBlock = (Loc testLoc) => {
                 return (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, controlledChar.Mobility, true));
@@ -281,9 +298,8 @@ namespace PMDC.Dungeon
                 return false;
             };
 
-
             Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
-            return Grid.FindAPath(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, ends.ToArray(), checkBlock, checkDiagBlock);
+            return Grid.FindAllPaths(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, ends.ToArray(), checkBlock, checkDiagBlock);
         }
 
         protected GameAction SelectChoiceFromPath(Character controlledChar, List<Loc> path)
