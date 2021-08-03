@@ -17,8 +17,12 @@ namespace Updater
         static List<string> excludedFiles;
         static List<string> executableFiles;
         static Version lastVersion;
+        static int argNum;
         static void Main(string[] args)
         {
+            argNum = -1;
+            if (args.Length > 0)
+                Int32.TryParse(args[0], out argNum);
             //1: detect platform and load defaults
             updatefile = String.Format("http://127.0.0.1/{0}-x64.zip", GetCurrentPlatform());
             versionfile = "http://127.0.0.1/version";
@@ -35,28 +39,45 @@ namespace Updater
                 Console.WriteLine("2: Uninstall (Retain Save Data)");
                 Console.WriteLine("3: Reset Updater XML");
                 Console.WriteLine("Press any other key to check for updates.");
-                ConsoleKeyInfo choice = Console.ReadKey();
+                ConsoleKey choice;
+                if (argNum > -1)
+                {
+                    if (argNum == 1)
+                        choice = ConsoleKey.D1;
+                    else if (argNum == 2)
+                        choice = ConsoleKey.D2;
+                    else if (argNum == 3)
+                        choice = ConsoleKey.D3;
+                    else
+                        choice = ConsoleKey.Enter;
+                }
+                else
+                {
+                    ConsoleKeyInfo keyInfo = Console.ReadKey();
+                    choice = keyInfo.Key;
+                }
+
                 Console.WriteLine();
                 bool force = false;
-                if (choice.Key == ConsoleKey.D1)
+                if (choice == ConsoleKey.D1)
                     force = true;
-                else if (choice.Key == ConsoleKey.D2)
+                else if (choice == ConsoleKey.D2)
                 {
                     Console.WriteLine("Uninstalling...");
                     DeleteWithExclusions("PMDO");
                     DeleteWithExclusions("WaypointServer");
                     DeleteWithExclusions("temp");
                     Console.WriteLine("Done.");
-                    Console.ReadKey();
+                    ReadKey();
                     return;
                 }
-                else if (choice.Key == ConsoleKey.D3)
+                else if (choice == ConsoleKey.D3)
                 {
                     Console.WriteLine("Resetting XML");
                     DefaultXml();
                     SaveXml();
                     Console.WriteLine("Done.");
-                    Console.ReadKey();
+                    ReadKey();
                     return;
                 }
 
@@ -76,13 +97,13 @@ namespace Updater
                         else
                         {
                             Console.WriteLine("You are up to date. {0} >= {1}", lastVersion, nextVersion);
-                            Console.ReadKey();
+                            ReadKey();
                             return;
                         }
                     }
 
                     Console.WriteLine("Version {0} will be downloaded from {1}.\nPress any key to continue.", nextVersion, updatefile);
-                    Console.ReadKey();
+                    ReadKey();
 
                     //4: download the respective zip from specified location
                     if (!Directory.Exists("temp"))
@@ -145,14 +166,20 @@ namespace Updater
                     //6: create a new xml and save
                     SaveXml();
                     Console.WriteLine("Done.", updatefile);
-                    Console.ReadKey();
+                    ReadKey();
                 }
             }
             catch (Exception ex)
             {
                 Console.Write(ex.ToString());
-                Console.ReadKey();
+                ReadKey();
             }
+        }
+
+        static void ReadKey()
+        {
+            if (argNum == -1)
+                Console.ReadKey();
         }
 
         static void LoadXml()
