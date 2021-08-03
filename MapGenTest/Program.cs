@@ -4,6 +4,7 @@ using RogueEssence;
 using RogueEssence.Data;
 using RogueEssence.Content;
 using RogueEssence.Script;
+using System.Runtime.Versioning;
 
 namespace MapGenTest
 {
@@ -11,9 +12,8 @@ namespace MapGenTest
     {
         static void Main()
         {
-            Console.WindowWidth = Console.LargestWindowWidth;
-            Console.WindowHeight = Console.LargestWindowHeight;
-            //Console.OutputEncoding = Encoding.UTF8;
+            if (OperatingSystem.IsWindows())
+                enlargeConsole();
 
             string[] args = Environment.GetCommandLineArgs();
             PathMod.InitExePath(System.IO.Path.GetDirectoryName(args[0]));
@@ -53,5 +53,12 @@ namespace MapGenTest
             Console.ReadKey();
         }
 
+        [SupportedOSPlatform("windows")]
+        private static void enlargeConsole()
+        {
+            Console.WindowWidth = Console.LargestWindowWidth;
+            Console.WindowHeight = Console.LargestWindowHeight;
+            //Console.OutputEncoding = Encoding.UTF8;
+        }
     }
 }
