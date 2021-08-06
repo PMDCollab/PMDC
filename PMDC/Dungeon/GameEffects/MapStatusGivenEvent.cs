@@ -247,6 +247,33 @@ namespace PMDC.Dungeon
 
 
     [Serializable]
+    public class BeginShopEvent : MapStatusGivenEvent
+    {
+        [Music(0)]
+        public string BGM;
+
+        public BeginShopEvent() { }
+        public BeginShopEvent(string bgm)
+        {
+            BGM = bgm;
+        }
+        protected BeginShopEvent(BeginShopEvent other)
+        {
+            BGM = other.BGM;
+        }
+        public override GameEvent Clone() { return new BeginShopEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character, MapStatus status, bool msg)
+        {
+            if (status != owner || character != null)
+                yield break;
+
+            GameManager.Instance.BGM(BGM, true);
+            yield break;
+        }
+    }
+
+    [Serializable]
     public class MapStatusCombineCheckEvent : MapStatusGivenEvent
     {
         public MapStatusCombineCheckEvent() { }
@@ -314,4 +341,16 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    [Serializable]
+    public class MapStatusIgnoreEvent : MapStatusGivenEvent
+    {
+        public MapStatusIgnoreEvent() { }
+        public override GameEvent Clone() { return new MapStatusIgnoreEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character, MapStatus status, bool msg)
+        {
+            yield break;
+        }
+    }
 }

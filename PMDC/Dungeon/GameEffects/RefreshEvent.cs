@@ -311,6 +311,15 @@ namespace PMDC.Dungeon
         }
     }
     [Serializable]
+    public class NoSwitchEvent : RefreshEvent
+    {
+        public override GameEvent Clone() { return new NoSwitchEvent(); }
+        public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            character.NoSwitch = true;
+        }
+    }
+    [Serializable]
     public class ParaPauseEvent : RefreshEvent
     {
         public override GameEvent Clone() { return new ParaPauseEvent(); }

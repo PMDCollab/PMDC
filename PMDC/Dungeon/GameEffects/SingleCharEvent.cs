@@ -4521,6 +4521,33 @@ namespace PMDC.Dungeon
     }
 
 
+
+    [Serializable]
+    public class EndShopEvent : SingleCharEvent
+    {
+        [DataType(0, DataManager.DataType.Tile, false)]
+        public int ShopTile;
+
+        public EndShopEvent() { }
+        public EndShopEvent(int shopTile) { ShopTile = shopTile; }
+        public EndShopEvent(EndShopEvent other) { this.ShopTile = other.ShopTile; }
+        public override GameEvent Clone() { return new EndShopEvent(this); }
+
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            Loc baseLoc = DungeonScene.Instance.ActiveTeam.Leader.CharLoc;
+            Tile tile = ZoneManager.Instance.CurrentMap.Tiles[baseLoc.X][baseLoc.Y];
+
+            if (tile.Effect.ID != ShopTile)
+            {
+                GameManager.Instance.BGM(ZoneManager.Instance.CurrentMap.Music, true);
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus((owner.GetID())));
+            }
+        }
+    }
+
+
     [Serializable]
     public class NullCharEvent : SingleCharEvent
     {
@@ -4541,6 +4568,32 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
             if (character == null)
+                yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, character));
+        }
+    }
+
+
+
+    [Serializable]
+    public class LeaderCharEvent : SingleCharEvent
+    {
+        public SingleCharEvent BaseEvent;
+
+        public LeaderCharEvent()
+        { }
+        public LeaderCharEvent(SingleCharEvent baseEvent)
+        {
+            BaseEvent = baseEvent;
+        }
+        protected LeaderCharEvent(LeaderCharEvent other)
+        {
+            BaseEvent = (SingleCharEvent)other.BaseEvent.Clone();
+        }
+        public override GameEvent Clone() { return new LeaderCharEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (character == DungeonScene.Instance.ActiveTeam.Leader)
                 yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, character));
         }
     }

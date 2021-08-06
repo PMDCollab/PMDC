@@ -4299,6 +4299,44 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    [Serializable]
+    public class PreventItemIndexEvent : BattleEvent
+    {
+        [DataType(1, DataManager.DataType.Item, false)]
+        public List<int> UseTypes;
+        public StringKey Message;
+
+        public PreventItemIndexEvent() { UseTypes = new List<int>(); }
+        public PreventItemIndexEvent(StringKey message, params int[] useTypes)
+        {
+            Message = message;
+            UseTypes = new List<int>();
+            UseTypes.AddRange(useTypes);
+        }
+        protected PreventItemIndexEvent(PreventItemIndexEvent other) : this()
+        {
+            Message = other.Message;
+            foreach (int useType in other.UseTypes)
+                UseTypes.Add(useType);
+        }
+        public override GameEvent Clone() { return new PreventItemIndexEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.ActionType == BattleActionType.Item)
+            {
+                if (UseTypes.Contains(context.Item.ID))
+                {
+                    if (Message.Key != null)
+                        DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false)));
+                    context.CancelState.Cancel = true;
+                }
+            }
+            yield break;
+        }
+    }
+
     [Serializable]
     public class DodgeFoodEvent : BattleEvent
     {
@@ -13090,7 +13128,6 @@ namespace PMDC.Dungeon
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_REVIVE_NONE").ToLocal()));
         }
     }
-
 
     [Serializable]
     public class ExitDungeonEvent : BattleEvent
