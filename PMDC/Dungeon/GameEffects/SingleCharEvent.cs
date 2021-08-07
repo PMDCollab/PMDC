@@ -452,6 +452,44 @@ namespace PMDC.Dungeon
         }
     }
 
+    [Serializable]
+    public class SingleMapStatusExceptEvent : SingleCharEvent
+    {
+        [DataType(1, DataManager.DataType.MapStatus, false)]
+        public List<int> States;
+
+        public SingleCharEvent BaseEvent;
+
+
+        public SingleMapStatusExceptEvent() { States = new List<int>(); }
+        public SingleMapStatusExceptEvent(int mapStatus, SingleCharEvent baseEvent) : this()
+        {
+            States.Add(mapStatus);
+            BaseEvent = baseEvent;
+        }
+        public SingleMapStatusExceptEvent(SingleMapStatusExceptEvent other) : this()
+        {
+            States.AddRange(other.States);
+            BaseEvent = (SingleCharEvent)other.BaseEvent.Clone();
+        }
+
+        public override GameEvent Clone() { return new SingleMapStatusExceptEvent(this); }
+
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            //check if the attacker has the right charstate
+            bool hasState = false;
+            foreach (int state in States)
+            {
+                if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(state))
+                    hasState = true;
+            }
+            if (!hasState)
+                yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, character));
+        }
+
+    }
 
     [Serializable]
     public class SingleExceptEvent : SingleCharEvent
@@ -4521,6 +4559,23 @@ namespace PMDC.Dungeon
     }
 
 
+    [Serializable]
+    public class PeriodicSpawnEntranceGuards : SingleCharEvent
+    {
+        public int Period;
+
+        public PeriodicSpawnEntranceGuards() { }
+        public PeriodicSpawnEntranceGuards(int period) { Period = period; }
+        public PeriodicSpawnEntranceGuards(PeriodicSpawnEntranceGuards other) { this.Period = other.Period; }
+        public override GameEvent Clone() { return new PeriodicSpawnEntranceGuards(this); }
+
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            // TODO: periodically spawn a guard at the entrance
+            yield break;
+        }
+    }
 
     [Serializable]
     public class EndShopEvent : SingleCharEvent

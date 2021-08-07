@@ -245,23 +245,40 @@ namespace PMDC.Dungeon
         }
     }
 
+    [Serializable]
+    public class MapStatusSpawnStartGuardsEvent : MapStatusGivenEvent
+    {
+        public MapStatusSpawnStartGuardsEvent() { }
+        public override GameEvent Clone() { return new MapStatusSpawnStartGuardsEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character, MapStatus status, bool msg)
+        {
+            if (status != owner || character != null)
+                yield break;
+
+            // TODO: spawn start guards
+
+            yield break;
+        }
+    }
+
 
     [Serializable]
-    public class BeginShopEvent : MapStatusGivenEvent
+    public class MapStatusBGMEvent : MapStatusGivenEvent
     {
         [Music(0)]
         public string BGM;
 
-        public BeginShopEvent() { }
-        public BeginShopEvent(string bgm)
+        public MapStatusBGMEvent() { }
+        public MapStatusBGMEvent(string bgm)
         {
             BGM = bgm;
         }
-        protected BeginShopEvent(BeginShopEvent other)
+        protected MapStatusBGMEvent(MapStatusBGMEvent other)
         {
             BGM = other.BGM;
         }
-        public override GameEvent Clone() { return new BeginShopEvent(this); }
+        public override GameEvent Clone() { return new MapStatusBGMEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character, MapStatus status, bool msg)
         {

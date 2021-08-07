@@ -13142,6 +13142,13 @@ namespace PMDC.Dungeon
                 GameManager.Instance.BGM("", true);
                 yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeOut(true));
 
+                // remove all unpaid items
+                for (int ii = DungeonScene.Instance.ActiveTeam.GetInvCount() - 1; ii >= 0; ii--)
+                {
+                    if (DungeonScene.Instance.ActiveTeam.GetInv(ii).Price > 0)
+                        DungeonScene.Instance.ActiveTeam.RemoveFromInv(ii);
+                }
+
                 yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Escaped));
             }
         }

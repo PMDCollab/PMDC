@@ -6,6 +6,7 @@ using RogueEssence.Data;
 using RogueEssence.LevelGen;
 using System.Text;
 using RogueEssence.Dev;
+using PMDC.Dungeon;
 
 namespace PMDC.LevelGen
 {
@@ -89,6 +90,38 @@ namespace PMDC.LevelGen
             if (status.Length == 1)
                 status = DataManager.Instance.DataIndices[DataManager.DataType.MapStatus].Entries[status[0]].Name.ToLocal();
             return String.Format("{0}: {1}", this.GetType().Name, status);
+        }
+    }
+
+
+
+    [Serializable]
+    public class ShopStatusStep<T> : GenStep<T> where T : BaseMapGenContext
+    {
+        public int MapStatus;
+        public int TotalPrice;
+        public SpawnList<MobSpawn> Security;
+
+        public ShopStatusStep()
+        {
+            Security = new SpawnList<MobSpawn>();
+        }
+        public ShopStatusStep(int mapStatus, int totalPrice, SpawnList<MobSpawn> security)
+        {
+            MapStatus = mapStatus;
+            TotalPrice = totalPrice;
+            Security = security;
+        }
+
+        public override void Apply(T map)
+        {
+            MapStatus status = new MapStatus(MapStatus);
+            status.LoadFromData();
+            ShopPriceState priceState = status.StatusStates.Get<ShopPriceState>();
+            priceState.Amount = TotalPrice;
+            ShopSecurityState securityState = status.StatusStates.Get<ShopSecurityState>();
+            securityState.Security = Security;
+            map.Map.Status.Add(MapStatus, status);
         }
     }
 }
