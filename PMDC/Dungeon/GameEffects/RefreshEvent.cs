@@ -527,4 +527,25 @@ namespace PMDC.Dungeon
             character.CharStates.Set(Effect.Clone<CharState>());
         }
     }
+
+
+    [Serializable]
+    public class MapNoSwitchEvent : RefreshEvent
+    {
+        public override GameEvent Clone() { return new MapNoSwitchEvent(); }
+        public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            ZoneManager.Instance.CurrentMap.NoSwitching = true;
+        }
+    }
+
+    [Serializable]
+    public class MapNoRescueEvent : RefreshEvent
+    {
+        public override GameEvent Clone() { return new MapNoRescueEvent(); }
+        public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            ZoneManager.Instance.CurrentMap.NoRescue = true;
+        }
+    }
 }
