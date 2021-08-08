@@ -4572,7 +4572,81 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            // TODO: periodically spawn a guard at the entrance
+            if (character != null)
+                yield break;
+
+            if (ZoneManager.Instance.CurrentMap.MapTurns % Period != 0)
+                yield break;
+
+            MapStatus status = (MapStatus)owner;
+            // spawn a guard at the entrance
+            ShopSecurityState securityState = status.StatusStates.Get<ShopSecurityState>();
+
+            List<Loc> exitLocs = WarpToEndEvent.FindExits();
+            //spawn once specifically on the stairs
+            foreach (Loc exitLoc in exitLocs)
+            {
+                MobSpawn spawn = securityState.Security.Pick(DataManager.Instance.Save.Rand);
+                MonsterTeam team = new MonsterTeam();
+                Character mob = spawn.Spawn(team, ZoneManager.Instance.CurrentMap);
+                mob.CharLoc = exitLoc;
+                ZoneManager.Instance.CurrentMap.MapTeams.Add(team);
+                mob.RefreshTraits();
+
+                CharAnimDrop dropAnim = new CharAnimDrop();
+                dropAnim.CharLoc = mob.CharLoc;
+                dropAnim.CharDir = mob.CharDir;
+                yield return CoroutineManager.Instance.StartCoroutine(mob.StartAnim(dropAnim));
+                mob.Tactic.Initialize(mob);
+
+                yield return CoroutineManager.Instance.StartCoroutine(mob.OnMapStart());
+                ZoneManager.Instance.CurrentMap.UpdateExploration(mob);
+            }
+
+            // if they're not there, spawn in a random location
+            if (exitLocs.Count == 0)
+            {
+                List<Character> respawns = ZoneManager.Instance.CurrentMap.RespawnMob();
+                foreach (Character respawn in respawns)
+                {
+                    respawn.Tactic.Initialize(respawn);
+                    if (!respawn.Dead)
+                    {
+                        yield return CoroutineManager.Instance.StartCoroutine(respawn.OnMapStart());
+                        ZoneManager.Instance.CurrentMap.UpdateExploration(respawn);
+                    }
+                }
+            }
+        }
+    }
+
+    [Serializable]
+    public class InitShopPriceEvent : SingleCharEvent
+    {
+        [DataType(0, DataManager.DataType.Tile, false)]
+        public int ShopTile;
+
+        public InitShopPriceEvent() { }
+        public InitShopPriceEvent(int shopTile) { ShopTile = shopTile; }
+        public InitShopPriceEvent(InitShopPriceEvent other) { ShopTile = other.ShopTile; }
+        public override GameEvent Clone() { return new InitShopPriceEvent(this); }
+
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            int price = 0;
+            // iterate all items
+            foreach (MapItem item in ZoneManager.Instance.CurrentMap.Items)
+            {
+                Tile tile = ZoneManager.Instance.CurrentMap.Tiles[item.TileLoc.X][item.TileLoc.Y];
+                if (tile.Effect.ID == ShopTile)
+                    price += item.Price;
+            }
+
+            // all items that have a price and are on top of a mat are counted.
+            MapStatus status = (MapStatus)owner;
+            ShopPriceState priceState = status.StatusStates.Get<ShopPriceState>();
+            priceState.Amount = price;
             yield break;
         }
     }

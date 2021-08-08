@@ -99,17 +99,15 @@ namespace PMDC.LevelGen
     public class ShopStatusStep<T> : GenStep<T> where T : BaseMapGenContext
     {
         public int MapStatus;
-        public int TotalPrice;
         public SpawnList<MobSpawn> Security;
 
         public ShopStatusStep()
         {
             Security = new SpawnList<MobSpawn>();
         }
-        public ShopStatusStep(int mapStatus, int totalPrice, SpawnList<MobSpawn> security)
+        public ShopStatusStep(int mapStatus, SpawnList<MobSpawn> security)
         {
             MapStatus = mapStatus;
-            TotalPrice = totalPrice;
             Security = security;
         }
 
@@ -117,8 +115,6 @@ namespace PMDC.LevelGen
         {
             MapStatus status = new MapStatus(MapStatus);
             status.LoadFromData();
-            ShopPriceState priceState = status.StatusStates.Get<ShopPriceState>();
-            priceState.Amount = TotalPrice;
             ShopSecurityState securityState = status.StatusStates.Get<ShopSecurityState>();
             securityState.Security = Security;
             map.Map.Status.Add(MapStatus, status);

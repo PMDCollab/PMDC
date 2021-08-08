@@ -9824,6 +9824,22 @@ namespace PMDC.Dungeon
         }
 
 
+        public static List<Loc> FindExits()
+        {
+            List<Loc> exits = new List<Loc>();
+            for (int xx = 0; xx < ZoneManager.Instance.CurrentMap.Width; xx++)
+            {
+                for (int yy = 0; yy < ZoneManager.Instance.CurrentMap.Height; yy++)
+                {
+                    Tile tile = ZoneManager.Instance.CurrentMap.Tiles[xx][yy];
+
+                    if (tile.Effect.ID == 1 || tile.Effect.ID == 2)//TODO: remove this magic number
+                        exits.Add(new Loc(xx, yy));
+                }
+            }
+            return exits;
+        }
+
         public static IEnumerator<YieldInstruction> WarpToEnd(Character character, int radius, int diffRange, bool msg = true)
         {
             List<Character> characters = new List<Character>();
