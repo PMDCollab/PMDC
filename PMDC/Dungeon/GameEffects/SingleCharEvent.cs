@@ -4010,7 +4010,7 @@ namespace PMDC.Dungeon
 
             //force everyone to skip their turn for this entire session
             if (NeedTurnEnd)
-                ZoneManager.Instance.CurrentMap.CurrentTurnMap.CurrentOrder.SkipAll = true;
+                ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
         }
     }
 
@@ -4356,7 +4356,7 @@ namespace PMDC.Dungeon
             }
 
             //force everyone to skip their turn for this entire session
-            ZoneManager.Instance.CurrentMap.CurrentTurnMap.CurrentOrder.SkipAll = true;
+            ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
         }
 
 
@@ -4613,6 +4613,7 @@ namespace PMDC.Dungeon
         public static IEnumerator<YieldInstruction> PlaceGuard(MobSpawn spawn, Loc dest, int guardStatusId)
         {
             ExplorerTeam team = new ExplorerTeam();
+            team.SetRank(0);
             Character mob = spawn.Spawn(team, ZoneManager.Instance.CurrentMap);
 
             //add guard status

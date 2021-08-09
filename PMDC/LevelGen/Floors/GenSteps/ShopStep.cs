@@ -137,6 +137,7 @@ namespace PMDC.LevelGen
             {
                 MobSpawn shopkeeper = Mobs.Pick(map.Rand);
                 ExplorerTeam newTeam = new ExplorerTeam();
+                newTeam.SetRank(0);
                 shopkeeper.Spawn(newTeam, map);
 
                 Loc randLoc = itemTiles[map.Rand.Next(itemTiles.Count)];
