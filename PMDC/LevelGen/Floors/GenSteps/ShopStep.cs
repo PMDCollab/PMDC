@@ -136,7 +136,7 @@ namespace PMDC.LevelGen
             // place the mob running the shop
             {
                 MobSpawn shopkeeper = Mobs.Pick(map.Rand);
-                MonsterTeam newTeam = new MonsterTeam();
+                ExplorerTeam newTeam = new ExplorerTeam();
                 shopkeeper.Spawn(newTeam, map);
 
                 Loc randLoc = itemTiles[map.Rand.Next(itemTiles.Count)];

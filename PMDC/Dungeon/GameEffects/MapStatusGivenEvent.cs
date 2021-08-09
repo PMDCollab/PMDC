@@ -261,17 +261,17 @@ namespace PMDC.Dungeon
             if (status != owner || character != null)
                 yield break;
 
-            //remove existing spawns
-            ZoneManager.Instance.CurrentMap.TeamSpawns.Clear();
+            ////remove existing spawns
+            //ZoneManager.Instance.CurrentMap.TeamSpawns.Clear();
 
-            //add guard spawns
             ShopSecurityState securityState = status.StatusStates.Get<ShopSecurityState>();
 
-            for (int ii = 0; ii < securityState.Security.Count; ii++)
-            {
-                SpecificTeamSpawner post_team = new SpecificTeamSpawner(securityState.Security.GetSpawn(ii).Copy());
-                ZoneManager.Instance.CurrentMap.TeamSpawns.Add(post_team, securityState.Security.GetSpawnRate(ii));
-            }
+            ////add guard spawns
+            //for (int ii = 0; ii < securityState.Security.Count; ii++)
+            //{
+            //    SpecificTeamSpawner post_team = new SpecificTeamSpawner(securityState.Security.GetSpawn(ii).Copy());
+            //    ZoneManager.Instance.CurrentMap.TeamSpawns.Add(post_team, securityState.Security.GetSpawnRate(ii));
+            //}
 
             //set spawn rate
             ZoneManager.Instance.CurrentMap.RespawnTime = 0;
@@ -280,53 +280,27 @@ namespace PMDC.Dungeon
             ZoneManager.Instance.CurrentMap.MaxFoes = 0;
 
             //spawn 10 times
+            List<Loc> randLocs = ZoneManager.Instance.CurrentMap.GetFreeToSpawnTiles();
             for (int ii = 0; ii < 10; ii++)
             {
-                List<Character> respawns = ZoneManager.Instance.CurrentMap.RespawnMob();
-                foreach (Character respawn in respawns)
-                {
-                    //add guard status
-                    StatusEffect guardStatus = new StatusEffect(GuardStatus);
-                    guardStatus.LoadFromData();
-                    respawn.StatusEffects.Add(guardStatus.ID, guardStatus);
+                if (randLocs.Count == 0)
+                    break;
 
-                    respawn.Tactic.Initialize(respawn);
-                    if (!respawn.Dead)
-                    {
-                        yield return CoroutineManager.Instance.StartCoroutine(respawn.OnMapStart());
-                        ZoneManager.Instance.CurrentMap.UpdateExploration(respawn);
-                    }
-                }
+                Loc dest = randLocs[DataManager.Instance.Save.Rand.Next(randLocs.Count)];
+                MobSpawn spawn = securityState.Security.Pick(DataManager.Instance.Save.Rand);
+                yield return CoroutineManager.Instance.StartCoroutine(PeriodicSpawnEntranceGuards.PlaceGuard(spawn, dest, GuardStatus));
             }
+
             List<Loc> exitLocs = WarpToEndEvent.FindExits();
             //spawn once specifically on the stairs
             foreach(Loc exitLoc in exitLocs)
             {
-                MobSpawn spawn = securityState.Security.Pick(DataManager.Instance.Save.Rand);
-                MonsterTeam team = new MonsterTeam();
-                Character mob = spawn.Spawn(team, ZoneManager.Instance.CurrentMap);
-
-                Loc? dest = ZoneManager.Instance.CurrentMap.GetClosestTileForChar(mob, exitLoc);
+                Loc? dest = ZoneManager.Instance.CurrentMap.GetClosestTileForChar(null, exitLoc);
                 if (!dest.HasValue)
                     continue;
 
-                //add guard status
-                StatusEffect guardStatus = new StatusEffect(GuardStatus);
-                guardStatus.LoadFromData();
-                mob.StatusEffects.Add(guardStatus.ID, guardStatus);
-
-                mob.CharLoc = dest.Value;
-                ZoneManager.Instance.CurrentMap.MapTeams.Add(team);
-                mob.RefreshTraits();
-
-                CharAnimDrop dropAnim = new CharAnimDrop();
-                dropAnim.CharLoc = mob.CharLoc;
-                dropAnim.CharDir = mob.CharDir;
-                yield return CoroutineManager.Instance.StartCoroutine(mob.StartAnim(dropAnim));
-                mob.Tactic.Initialize(mob);
-
-                yield return CoroutineManager.Instance.StartCoroutine(mob.OnMapStart());
-                ZoneManager.Instance.CurrentMap.UpdateExploration(mob);
+                MobSpawn spawn = securityState.Security.Pick(DataManager.Instance.Save.Rand);
+                yield return CoroutineManager.Instance.StartCoroutine(PeriodicSpawnEntranceGuards.PlaceGuard(spawn, dest.Value, GuardStatus));
             }
         }
     }

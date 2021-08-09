@@ -4587,46 +4587,51 @@ namespace PMDC.Dungeon
             //spawn once specifically on the stairs
             foreach (Loc exitLoc in exitLocs)
             {
-                MobSpawn spawn = securityState.Security.Pick(DataManager.Instance.Save.Rand);
-                MonsterTeam team = new MonsterTeam();
-                Character mob = spawn.Spawn(team, ZoneManager.Instance.CurrentMap);
-
-                Loc? dest = ZoneManager.Instance.CurrentMap.GetClosestTileForChar(mob, exitLoc);
+                Loc? dest = ZoneManager.Instance.CurrentMap.GetClosestTileForChar(null, exitLoc);
                 if (!dest.HasValue)
                     continue;
 
-                StatusEffect guardStatus = new StatusEffect(GuardStatus);
-                guardStatus.LoadFromData();
-                mob.StatusEffects.Add(guardStatus.ID, guardStatus);
-
-                mob.CharLoc = dest.Value;
-                ZoneManager.Instance.CurrentMap.MapTeams.Add(team);
-                mob.RefreshTraits();
-
-                CharAnimDrop dropAnim = new CharAnimDrop();
-                dropAnim.CharLoc = mob.CharLoc;
-                dropAnim.CharDir = mob.CharDir;
-                yield return CoroutineManager.Instance.StartCoroutine(mob.StartAnim(dropAnim));
-                mob.Tactic.Initialize(mob);
-
-                yield return CoroutineManager.Instance.StartCoroutine(mob.OnMapStart());
-                ZoneManager.Instance.CurrentMap.UpdateExploration(mob);
+                MobSpawn spawn = securityState.Security.Pick(DataManager.Instance.Save.Rand);
+                yield return CoroutineManager.Instance.StartCoroutine(PlaceGuard(spawn, dest.Value, GuardStatus));
             }
 
             // if they're not there, spawn in a random location
             if (exitLocs.Count == 0)
             {
-                List<Character> respawns = ZoneManager.Instance.CurrentMap.RespawnMob();
-                foreach (Character respawn in respawns)
-                {
-                    respawn.Tactic.Initialize(respawn);
-                    if (!respawn.Dead)
-                    {
-                        yield return CoroutineManager.Instance.StartCoroutine(respawn.OnMapStart());
-                        ZoneManager.Instance.CurrentMap.UpdateExploration(respawn);
-                    }
-                }
+                List<Loc> randLocs = ZoneManager.Instance.CurrentMap.GetFreeToSpawnTiles();
+
+                if (randLocs.Count == 0)
+                    yield break;
+
+                Loc dest = randLocs[DataManager.Instance.Save.Rand.Next(randLocs.Count)];
+                MobSpawn spawn = securityState.Security.Pick(DataManager.Instance.Save.Rand);
+                yield return CoroutineManager.Instance.StartCoroutine(PlaceGuard(spawn, dest, GuardStatus));
             }
+        }
+
+
+        public static IEnumerator<YieldInstruction> PlaceGuard(MobSpawn spawn, Loc dest, int guardStatusId)
+        {
+            ExplorerTeam team = new ExplorerTeam();
+            Character mob = spawn.Spawn(team, ZoneManager.Instance.CurrentMap);
+
+            //add guard status
+            StatusEffect guardStatus = new StatusEffect(guardStatusId);
+            guardStatus.LoadFromData();
+            mob.StatusEffects.Add(guardStatus.ID, guardStatus);
+
+            mob.CharLoc = dest;
+            ZoneManager.Instance.CurrentMap.MapTeams.Add(team);
+            mob.RefreshTraits();
+
+            CharAnimDrop dropAnim = new CharAnimDrop();
+            dropAnim.CharLoc = mob.CharLoc;
+            dropAnim.CharDir = mob.CharDir;
+            yield return CoroutineManager.Instance.StartCoroutine(mob.StartAnim(dropAnim));
+            mob.Tactic.Initialize(mob);
+
+            yield return CoroutineManager.Instance.StartCoroutine(mob.OnMapStart());
+            ZoneManager.Instance.CurrentMap.UpdateExploration(mob);
         }
     }
 
