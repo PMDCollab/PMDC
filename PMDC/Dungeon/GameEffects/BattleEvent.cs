@@ -11810,43 +11810,57 @@ namespace PMDC.Dungeon
     [Serializable]
     public class TransformEvent : BattleEvent
     {
-        public override GameEvent Clone() { return new TransformEvent(); }
+        public bool AffectTarget;
+
+        public TransformEvent() { }
+        public TransformEvent(bool affectTarget)
+        {
+            AffectTarget = affectTarget;
+        }
+        protected TransformEvent(TransformEvent other)
+        {
+            AffectTarget = other.AffectTarget;
+        }
+        public override GameEvent Clone() { return new TransformEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.Target.Dead)
+            Character target = (AffectTarget ? context.Target : context.User);
+            Character user = (AffectTarget ? context.User : context.Target);
+
+            if (target.Dead || user.Dead)
                 yield break;
 
-            if (context.User.BaseForm.Species != context.User.CurrentForm.Species)
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ALREADY_TRANSFORMED").ToLocal(), context.User.GetDisplayName(false)));
-            else if (context.User.CurrentForm.Species == context.Target.CurrentForm.Species)
+            if (target.BaseForm.Species != target.CurrentForm.Species)
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ALREADY_TRANSFORMED").ToLocal(), target.GetDisplayName(false)));
+            else if (target.CurrentForm.Species == user.CurrentForm.Species)
             {
-                MonsterData entry = DataManager.Instance.GetMonster(context.User.CurrentForm.Species);
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ALREADY_HAS_SPECIES").ToLocal(), context.User.GetDisplayName(false), entry.GetColoredName()));
+                MonsterData entry = DataManager.Instance.GetMonster(target.CurrentForm.Species);
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ALREADY_HAS_SPECIES").ToLocal(), target.GetDisplayName(false), entry.GetColoredName()));
             }
             else
             {
-                context.User.Transform(context.Target.CurrentForm);
+                target.Transform(user.CurrentForm);
 
                 //proxy stats
-                context.User.ProxyAtk = context.Target.Atk;
-                context.User.ProxyDef = context.Target.Def;
-                context.User.ProxyMAtk = context.Target.MAtk;
-                context.User.ProxyMDef = context.Target.MDef;
-                context.User.ProxySpeed = context.Target.Speed;
+                target.ProxyAtk = user.Atk;
+                target.ProxyDef = user.Def;
+                target.ProxyMAtk = user.MAtk;
+                target.ProxyMDef = user.MDef;
+                target.ProxySpeed = user.Speed;
 
                 //ability
                 for (int ii = 0; ii < CharData.MAX_INTRINSIC_SLOTS; ii++)
-                    yield return CoroutineManager.Instance.StartCoroutine(context.User.ReplaceIntrinsic(ii, context.Target.Intrinsics[ii].Element.ID, false, false));
+                    yield return CoroutineManager.Instance.StartCoroutine(target.ReplaceIntrinsic(ii, user.Intrinsics[ii].Element.ID, false, false));
 
                 //type
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.ChangeElement(context.Target.Element1, context.Target.Element2, false, false));
+                yield return CoroutineManager.Instance.StartCoroutine(target.ChangeElement(user.Element1, user.Element2, false, false));
 
                 //moves
                 for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
-                    context.User.ChangeSkill(ii, context.Target.Skills[ii].Element.SkillNum);
+                    target.ChangeSkill(ii, user.Skills[ii].Element.SkillNum);
                 
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRANSFORM").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRANSFORM").ToLocal(), target.GetDisplayName(false), user.GetDisplayName(false)));
             }
         }
     }
