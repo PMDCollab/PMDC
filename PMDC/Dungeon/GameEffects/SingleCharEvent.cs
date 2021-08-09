@@ -4563,10 +4563,11 @@ namespace PMDC.Dungeon
     public class PeriodicSpawnEntranceGuards : SingleCharEvent
     {
         public int Period;
+        public int GuardStatus;
 
         public PeriodicSpawnEntranceGuards() { }
-        public PeriodicSpawnEntranceGuards(int period) { Period = period; }
-        public PeriodicSpawnEntranceGuards(PeriodicSpawnEntranceGuards other) { this.Period = other.Period; }
+        public PeriodicSpawnEntranceGuards(int period, int guardStatus) { Period = period; GuardStatus = guardStatus; }
+        public PeriodicSpawnEntranceGuards(PeriodicSpawnEntranceGuards other) { this.Period = other.Period; GuardStatus = other.GuardStatus; }
         public override GameEvent Clone() { return new PeriodicSpawnEntranceGuards(this); }
 
 
@@ -4589,7 +4590,16 @@ namespace PMDC.Dungeon
                 MobSpawn spawn = securityState.Security.Pick(DataManager.Instance.Save.Rand);
                 MonsterTeam team = new MonsterTeam();
                 Character mob = spawn.Spawn(team, ZoneManager.Instance.CurrentMap);
-                mob.CharLoc = exitLoc;
+
+                Loc? dest = ZoneManager.Instance.CurrentMap.GetClosestTileForChar(mob, exitLoc);
+                if (!dest.HasValue)
+                    continue;
+
+                StatusEffect guardStatus = new StatusEffect(GuardStatus);
+                guardStatus.LoadFromData();
+                mob.StatusEffects.Add(guardStatus.ID, guardStatus);
+
+                mob.CharLoc = dest.Value;
                 ZoneManager.Instance.CurrentMap.MapTeams.Add(team);
                 mob.RefreshTraits();
 
@@ -4634,6 +4644,9 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
+            if (character != null)
+                yield break;
+
             int price = 0;
             // iterate all items
             foreach (MapItem item in ZoneManager.Instance.CurrentMap.Items)
@@ -4647,7 +4660,6 @@ namespace PMDC.Dungeon
             MapStatus status = (MapStatus)owner;
             ShopPriceState priceState = status.StatusStates.Get<ShopPriceState>();
             priceState.Amount = price;
-            yield break;
         }
     }
 

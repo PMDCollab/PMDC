@@ -11,17 +11,14 @@ namespace PMDC.Dungeon
     public class PreparePlan : AIPlan
     {
         public AttackChoice AttackPattern;
-        public int StatusIndex;
 
         public PreparePlan() { }
-        public PreparePlan(AIFlags iq, AttackChoice attackPattern, int status) : base(iq)
+        public PreparePlan(AIFlags iq, AttackChoice attackPattern) : base(iq)
         {
-            StatusIndex = status;
             AttackPattern = attackPattern;
         }
         public PreparePlan(PreparePlan other) : base(other)
         {
-            StatusIndex = other.StatusIndex;
             AttackPattern = other.AttackPattern;
         }
         public override BasePlan CreateNew() { return new PreparePlan(this); }

@@ -250,7 +250,10 @@ namespace PMDC.Dungeon
     [Serializable]
     public class MapStatusSpawnStartGuardsEvent : MapStatusGivenEvent
     {
+        public int GuardStatus;
         public MapStatusSpawnStartGuardsEvent() { }
+        public MapStatusSpawnStartGuardsEvent(int guardStatus) { GuardStatus = guardStatus; }
+        public MapStatusSpawnStartGuardsEvent(MapStatusSpawnStartGuardsEvent other) { GuardStatus = other.GuardStatus; }
         public override GameEvent Clone() { return new MapStatusSpawnStartGuardsEvent(); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character, MapStatus status, bool msg)
@@ -282,6 +285,11 @@ namespace PMDC.Dungeon
                 List<Character> respawns = ZoneManager.Instance.CurrentMap.RespawnMob();
                 foreach (Character respawn in respawns)
                 {
+                    //add guard status
+                    StatusEffect guardStatus = new StatusEffect(GuardStatus);
+                    guardStatus.LoadFromData();
+                    respawn.StatusEffects.Add(guardStatus.ID, guardStatus);
+
                     respawn.Tactic.Initialize(respawn);
                     if (!respawn.Dead)
                     {
@@ -297,7 +305,17 @@ namespace PMDC.Dungeon
                 MobSpawn spawn = securityState.Security.Pick(DataManager.Instance.Save.Rand);
                 MonsterTeam team = new MonsterTeam();
                 Character mob = spawn.Spawn(team, ZoneManager.Instance.CurrentMap);
-                mob.CharLoc = exitLoc;
+
+                Loc? dest = ZoneManager.Instance.CurrentMap.GetClosestTileForChar(mob, exitLoc);
+                if (!dest.HasValue)
+                    continue;
+
+                //add guard status
+                StatusEffect guardStatus = new StatusEffect(GuardStatus);
+                guardStatus.LoadFromData();
+                mob.StatusEffects.Add(guardStatus.ID, guardStatus);
+
+                mob.CharLoc = dest.Value;
                 ZoneManager.Instance.CurrentMap.MapTeams.Add(team);
                 mob.RefreshTraits();
 

@@ -57,30 +57,31 @@ namespace PMDC.LevelGen
     }
 
     [Serializable]
-    public class MapStatusStep<T> : GenStep<T> where T : BaseMapGenContext
+    public class DefaultMapStatusStep<T> : GenStep<T> where T : BaseMapGenContext
     {
+        [DataType(0, DataManager.DataType.MapStatus, false)]
+        public int SetterID;
+        [DataType(1, DataManager.DataType.MapStatus, false)]
         public int[] DefaultMapStatus;
 
-        public MapStatusStep()
+        public DefaultMapStatusStep()
         {
             DefaultMapStatus = new int[1] { 0 };
         }
-        public MapStatusStep(params int[] defaultStatus)
+        public DefaultMapStatusStep(int statusSetter, params int[] defaultStatus)
         {
+            SetterID = statusSetter;
             DefaultMapStatus = defaultStatus;
         }
 
         public override void Apply(T map)
         {
             int chosenStatus = DefaultMapStatus[map.Rand.Next(DefaultMapStatus.Length)];
-            MapStatus status = new MapStatus(chosenStatus);
-            status.LoadFromData();
-            int setterID = status.StatusStates.Contains<MapWeatherState>() ? 24 : 25;
-            MapStatus statusSetter = new MapStatus(setterID);
+            MapStatus statusSetter = new MapStatus(SetterID);
             statusSetter.LoadFromData();
             MapIndexState indexState = statusSetter.StatusStates.GetWithDefault<MapIndexState>();
             indexState.Index = chosenStatus;
-            map.Map.Status.Add(setterID, statusSetter);
+            map.Map.Status.Add(SetterID, statusSetter);
         }
 
 
@@ -96,27 +97,27 @@ namespace PMDC.LevelGen
 
 
     [Serializable]
-    public class ShopStatusStep<T> : GenStep<T> where T : BaseMapGenContext
+    public class StateMapStatusStep<T> : GenStep<T> where T : BaseMapGenContext
     {
         public int MapStatus;
-        public SpawnList<MobSpawn> Security;
+        public StateCollection<MapStatusState> States;
 
-        public ShopStatusStep()
+        public StateMapStatusStep()
         {
-            Security = new SpawnList<MobSpawn>();
+            States = new StateCollection<MapStatusState>();
         }
-        public ShopStatusStep(int mapStatus, SpawnList<MobSpawn> security)
+        public StateMapStatusStep(int mapStatus, MapStatusState state) : this()
         {
             MapStatus = mapStatus;
-            Security = security;
+            States.Set(state);
         }
 
         public override void Apply(T map)
         {
             MapStatus status = new MapStatus(MapStatus);
             status.LoadFromData();
-            ShopSecurityState securityState = status.StatusStates.Get<ShopSecurityState>();
-            securityState.Security = Security;
+            foreach(MapStatusState state in States)
+                status.StatusStates.Set((MapStatusState)state.Clone());
             map.Map.Status.Add(MapStatus, status);
         }
     }

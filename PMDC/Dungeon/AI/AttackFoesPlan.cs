@@ -12,20 +12,17 @@ namespace PMDC.Dungeon
     {
         public AttackChoice AttackPattern;
         public PositionChoice PositionPattern;
-        public int StatusIndex;
         //continue to the last place the enemy was found (if no other enemies can be found) before losing aggro
         private Loc? targetLoc;
 
         public AttackFoesPlan() { }
-        public AttackFoesPlan(AIFlags iq, AttackChoice attackPattern, PositionChoice positionPattern, int status) : base(iq)
+        public AttackFoesPlan(AIFlags iq, AttackChoice attackPattern, PositionChoice positionPattern) : base(iq)
         {
-            StatusIndex = status;
             AttackPattern = attackPattern;
             PositionPattern = positionPattern;
         }
         protected AttackFoesPlan(AttackFoesPlan other) : base(other)
         {
-            StatusIndex = other.StatusIndex;
             AttackPattern = other.AttackPattern;
             PositionPattern = other.PositionPattern;
         }
