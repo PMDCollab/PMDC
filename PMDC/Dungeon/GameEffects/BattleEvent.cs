@@ -817,6 +817,25 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class NeededMoveEvent : InvokedMoveEvent
+    {
+        public override GameEvent Clone() { return new RandomMoveEvent(); }
+
+        protected override int GetInvokedMove(GameEventOwner owner, BattleContext context)
+        {
+            //TODO: scroll of need style move choice
+            List<int> releasedMoves = new List<int>();
+            for (int ii = 1; ii < DataManager.Instance.DataIndices[DataManager.DataType.Skill].Count; ii++)
+            {
+                if (DataManager.Instance.DataIndices[DataManager.DataType.Skill].Entries[ii].Released)
+                    releasedMoves.Add(ii);
+            }
+            int randIndex = DataManager.Instance.Save.Rand.Next(releasedMoves.Count);
+            return releasedMoves[randIndex];
+        }
+    }
+
+    [Serializable]
     public class NatureMoveEvent : InvokedMoveEvent
     {
         public Dictionary<int, int> TerrainPair;
@@ -7674,6 +7693,41 @@ namespace PMDC.Dungeon
             }
         }
     }
+
+
+    [Serializable]
+    public class SpecificSkillNeededEvent : BattleEvent
+    {
+        //can be used for hit-consequence effects
+        public BattleEvent BaseEvent;
+        [DataType(1, DataManager.DataType.Skill, false)]
+        public List<int> AcceptedMoves;
+
+        public SpecificSkillNeededEvent() { AcceptedMoves = new List<int>(); }
+        public SpecificSkillNeededEvent(BattleEvent effect, params int[] acceptableMoves)
+            : this()
+        {
+            BaseEvent = effect;
+            AcceptedMoves.AddRange(acceptableMoves);
+        }
+        protected SpecificSkillNeededEvent(SpecificSkillNeededEvent other)
+            : this()
+        {
+            BaseEvent = (BattleEvent)other.BaseEvent.Clone();
+            AcceptedMoves.AddRange(other.AcceptedMoves);
+
+        }
+        public override GameEvent Clone() { return new SpecificSkillNeededEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.ActionType == BattleActionType.Skill && AcceptedMoves.Contains(context.Data.ID))
+            {
+                yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, context));
+            }
+        }
+    }
+
 
 
     [Serializable]

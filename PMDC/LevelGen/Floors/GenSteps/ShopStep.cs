@@ -17,7 +17,10 @@ namespace PMDC.LevelGen
         public SpawnList<MapItem> Items { get; set; }
         public SpawnList<ItemTheme> ItemThemes { get; set; }
         public SpawnList<MobSpawn> Mobs { get; set; }
+        public MobSpawn StartMob { get; set; }
         public List<BaseRoomFilter> Filters { get; set; }
+
+        public int Personality;
 
         public ShopStep() : base()
         {
@@ -130,16 +133,15 @@ namespace PMDC.LevelGen
                 for (int ii = 0; ii < Mobs.Count; ii++)
                     securityState.Security.Add(Mobs.GetSpawn(ii).Copy(), Mobs.GetSpawnRate(ii));
                 status.StatusStates.Set(securityState);
+                status.StatusStates.Set(new MapIndexState(Personality));
                 map.Map.Status.Add(SecurityStatus, status);
             }
 
             // place the mob running the shop
             {
-                MobSpawn shopkeeper = Mobs.Pick(map.Rand);
                 ExplorerTeam newTeam = new ExplorerTeam();
                 newTeam.SetRank(0);
-                shopkeeper.Spawn(newTeam, map);
-
+                Character shopkeeper = StartMob.Spawn(newTeam, map);
                 Loc randLoc = itemTiles[map.Rand.Next(itemTiles.Count)];
                 ((IGroupPlaceableGenContext<TeamSpawn>)map).PlaceItems(new TeamSpawn(newTeam, true), new Loc[] { randLoc });
             }

@@ -434,4 +434,34 @@ namespace PMDC.LevelGen
             return string.Format("{0}", this.GetType().Name);
         }
     }
+
+
+
+
+    /// <summary>
+    /// Spawn the mob with a lua data table
+    /// </summary>
+    [Serializable]
+    public class MobSpawnDiscriminator : MobSpawnExtra
+    {
+        public int Discriminator;
+
+        public MobSpawnDiscriminator() { }
+        public MobSpawnDiscriminator(int discriminator) { Discriminator = discriminator; }
+        protected MobSpawnDiscriminator(MobSpawnDiscriminator other)
+        {
+            Discriminator = other.Discriminator;
+        }
+        public override MobSpawnExtra Copy() { return new MobSpawnDiscriminator(this); }
+
+        public override void ApplyFeature(IMobSpawnMap map, Character newChar)
+        {
+            newChar.Discriminator = Discriminator;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("{0}", this.GetType().Name);
+        }
+    }
 }
