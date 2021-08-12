@@ -330,10 +330,12 @@ namespace PMDC.Dungeon
         {
             GameManager.Instance.BattleSE(Sound);
 
-            FiniteEmitter endEmitter = (FiniteEmitter)Emitter.Clone();
-            endEmitter.SetupEmit(character.MapLoc, character.MapLoc, character.CharDir);
-            DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
-
+            if (!character.Unidentifiable)
+            {
+                FiniteEmitter endEmitter = (FiniteEmitter)Emitter.Clone();
+                endEmitter.SetupEmit(character.MapLoc, character.MapLoc, character.CharDir);
+                DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+            }
             yield return new WaitForFrames(Delay);
         }
     }
@@ -600,9 +602,13 @@ namespace PMDC.Dungeon
                 if (!context.CancelState.Cancel)
                 {
                     GameManager.Instance.BattleSE(TriggerSound);
-                    FiniteEmitter endEmitter = (FiniteEmitter)TriggerEmitter.Clone();
-                    endEmitter.SetupEmit(character.MapLoc, character.MapLoc, character.CharDir);
-                    DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+
+                    if (!character.Unidentifiable)
+                    {
+                        FiniteEmitter endEmitter = (FiniteEmitter)TriggerEmitter.Clone();
+                        endEmitter.SetupEmit(character.MapLoc, character.MapLoc, character.CharDir);
+                        DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+                    }
 
                     if (TriggerMsg.Key != null)
                         DungeonScene.Instance.LogMsg(String.Format(TriggerMsg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
@@ -3170,10 +3176,13 @@ namespace PMDC.Dungeon
                 {
                     tile.Effect.Revealed = true;
 
-                    SingleEmitter emitter = new SingleEmitter(new AnimData("Emote_Exclaim", 1));
-                    emitter.LocHeight = 24;
-                    emitter.SetupEmit(character.MapLoc + character.CharDir.GetLoc() * GraphicsManager.TileSize / 2, character.MapLoc + character.CharDir.GetLoc() * GraphicsManager.TileSize / 2, character.CharDir);
-                    DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
+                    if (!character.Unidentifiable)
+                    {
+                        SingleEmitter emitter = new SingleEmitter(new AnimData("Emote_Exclaim", 1));
+                        emitter.LocHeight = 24;
+                        emitter.SetupEmit(character.MapLoc + character.CharDir.GetLoc() * GraphicsManager.TileSize / 2, character.MapLoc + character.CharDir.GetLoc() * GraphicsManager.TileSize / 2, character.CharDir);
+                        DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
+                    }
 
                     yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(20)+20);
                 }

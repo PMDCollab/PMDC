@@ -118,7 +118,8 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new VanishEvent(); }
         public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            character.Invis = true;
+            character.Unidentifiable = true;
+            character.Unlocatable = true;
         }
     }
     [Serializable]

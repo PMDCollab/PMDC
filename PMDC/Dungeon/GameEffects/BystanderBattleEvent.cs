@@ -73,9 +73,12 @@ namespace PMDC.Dungeon
 
 
             GameManager.Instance.BattleSE(Sound);
-            FiniteEmitter endEmitter = (FiniteEmitter)Emitter.Clone();
-            endEmitter.SetupEmit(ownerChar.MapLoc, ownerChar.MapLoc, ownerChar.CharDir);
-            DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+            if (!ownerChar.Unidentifiable)
+            {
+                FiniteEmitter endEmitter = (FiniteEmitter)Emitter.Clone();
+                endEmitter.SetupEmit(ownerChar.MapLoc, ownerChar.MapLoc, ownerChar.CharDir);
+                DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+            }
 
             CharAnimAction SpinAnim = new CharAnimAction(ownerChar.CharLoc, (context.Target.CharLoc - ownerChar.CharLoc).ApproximateDir8(), 05);//Attack
             SpinAnim.MajorAnim = true;

@@ -557,9 +557,12 @@ namespace PMDC.Dungeon
             Character target = (AffectTarget ? context.Target : context.User);
 
             GameManager.Instance.BattleSE(Sound);
-            FiniteEmitter endEmitter = (FiniteEmitter)Emitter.Clone();
-            endEmitter.SetupEmit(target.MapLoc, target.MapLoc, target.CharDir);
-            DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+            if (!target.Unidentifiable)
+            {
+                FiniteEmitter endEmitter = (FiniteEmitter)Emitter.Clone();
+                endEmitter.SetupEmit(target.MapLoc, target.MapLoc, target.CharDir);
+                DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+            }
             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(Delay));
         }
     }
@@ -6651,8 +6654,12 @@ namespace PMDC.Dungeon
                     GameManager.Instance.BattleSE("DUN_Hit_NVE");
                     endEmitter = new SingleEmitter(new AnimData("Hit_Neutral", 3));
                 }
-                endEmitter.SetupEmit(context.Target.MapLoc, context.User.MapLoc, context.Target.CharDir);
-                DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+
+                if (!context.Target.Unidentifiable)
+                {
+                    endEmitter.SetupEmit(context.Target.MapLoc, context.User.MapLoc, context.Target.CharDir);
+                    DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+                }
             }
 
             bool endure = context.ContextStates.Contains<AttackEndure>();
@@ -9295,9 +9302,12 @@ namespace PMDC.Dungeon
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HIT_RECOIL").ToLocal(), context.User.GetDisplayName(false)));
 
                     GameManager.Instance.BattleSE("DUN_Hit_Neutral");
-                    SingleEmitter endEmitter = new SingleEmitter(new AnimData("Hit_Neutral", 3));
-                    endEmitter.SetupEmit(context.User.MapLoc, context.User.MapLoc, context.User.CharDir);
-                    DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+                    if (!context.User.Unidentifiable)
+                    {
+                        SingleEmitter endEmitter = new SingleEmitter(new AnimData("Hit_Neutral", 3));
+                        endEmitter.SetupEmit(context.User.MapLoc, context.User.MapLoc, context.User.CharDir);
+                        DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+                    }
 
                     int recoil = Math.Max(1, damageDone / DamageFraction);
                     yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(recoil));
@@ -9363,9 +9373,12 @@ namespace PMDC.Dungeon
                 if (VFX)
                 {
                     GameManager.Instance.BattleSE("DUN_Hit_Neutral");
-                    SingleEmitter endEmitter = new SingleEmitter(new AnimData("Hit_Neutral", 3));
-                    endEmitter.SetupEmit(context.User.MapLoc, context.User.MapLoc, context.User.CharDir);
-                    DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+                    if (!context.Target.Unidentifiable)
+                    {
+                        SingleEmitter endEmitter = new SingleEmitter(new AnimData("Hit_Neutral", 3));
+                        endEmitter.SetupEmit(context.User.MapLoc, context.User.MapLoc, context.User.CharDir);
+                        DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+                    }
                 }
                 int recoil = Math.Max(1, context.User.MaxHP / HPFraction);
                 yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(recoil, !SkipAction));
@@ -9393,9 +9406,12 @@ namespace PMDC.Dungeon
             if (!context.Target.CharStates.Contains<MagicGuardState>())
             {
                 GameManager.Instance.BattleSE("DUN_Hit_Neutral");
-                SingleEmitter endEmitter = new SingleEmitter(new AnimData("Hit_Neutral", 3));
-                endEmitter.SetupEmit(context.Target.MapLoc, context.Target.MapLoc, context.Target.CharDir);
-                DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+                if (!context.Target.Unidentifiable)
+                {
+                    SingleEmitter endEmitter = new SingleEmitter(new AnimData("Hit_Neutral", 3));
+                    endEmitter.SetupEmit(context.Target.MapLoc, context.Target.MapLoc, context.Target.CharDir);
+                    DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+                }
 
                 int dmg = Math.Max(1, context.Target.MaxHP / HPFraction);
                 yield return CoroutineManager.Instance.StartCoroutine(context.Target.InflictDamage(dmg));
@@ -9434,9 +9450,12 @@ namespace PMDC.Dungeon
                 if (effectiveness > 0)
                 {
                     GameManager.Instance.BattleSE("DUN_Hit_Neutral");
-                    SingleEmitter endEmitter = new SingleEmitter(new AnimData("Hit_Neutral", 3));
-                    endEmitter.SetupEmit(context.Target.MapLoc, context.Target.MapLoc, context.Target.CharDir);
-                    DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+                    if (!context.Target.Unidentifiable)
+                    {
+                        SingleEmitter endEmitter = new SingleEmitter(new AnimData("Hit_Neutral", 3));
+                        endEmitter.SetupEmit(context.Target.MapLoc, context.Target.MapLoc, context.Target.CharDir);
+                        DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+                    }
 
                     int dmg = Math.Max(1, context.Target.MaxHP / HPFraction * effectiveness / 4);
                     yield return CoroutineManager.Instance.StartCoroutine(context.Target.InflictDamage(dmg));
@@ -9695,9 +9714,12 @@ namespace PMDC.Dungeon
             public IEnumerator<YieldInstruction> Hit(Character targetChar, Character attacker)
             {
                 GameManager.Instance.BattleSE("DUN_Hit_Neutral");
-                SingleEmitter endEmitter = new SingleEmitter(new AnimData("Hit_Neutral", 3));
-                endEmitter.SetupEmit(targetChar.MapLoc, attacker.MapLoc, targetChar.CharDir);
-                DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+                if (!targetChar.Unidentifiable)
+                {
+                    SingleEmitter endEmitter = new SingleEmitter(new AnimData("Hit_Neutral", 3));
+                    endEmitter.SetupEmit(targetChar.MapLoc, attacker.MapLoc, targetChar.CharDir);
+                    DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+                }
 
                 yield return CoroutineManager.Instance.StartCoroutine(targetChar.InflictDamage(Damage, true));
             }
@@ -10782,10 +10804,13 @@ namespace PMDC.Dungeon
 
 
                     //item steal animation
-                    int MaxDistance = (int)Math.Sqrt(((target.CharLoc - origin.CharLoc) * GraphicsManager.TileSize).DistSquared());
-                    ItemAnim itemAnim = new ItemAnim(target.CharLoc, origin.CharLoc, DataManager.Instance.GetItem(item.ID).Sprite, MaxDistance / 2, 0);
-                    DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
-                    yield return new WaitForFrames(ItemAnim.ITEM_ACTION_TIME);
+                    if (!target.Unidentifiable && !origin.Unidentifiable)
+                    {
+                        int MaxDistance = (int)Math.Sqrt(((target.CharLoc - origin.CharLoc) * GraphicsManager.TileSize).DistSquared());
+                        ItemAnim itemAnim = new ItemAnim(target.CharLoc, origin.CharLoc, DataManager.Instance.GetItem(item.ID).Sprite, MaxDistance / 2, 0);
+                        DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
+                        yield return new WaitForFrames(ItemAnim.ITEM_ACTION_TIME);
+                    }
 
                     DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), origin.GetDisplayName(false), item.GetDisplayName(), target.GetDisplayName(false), owner.GetDisplayName()));
 
@@ -10888,10 +10913,13 @@ namespace PMDC.Dungeon
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_GIVE_ITEM_AWAY").ToLocal(), target.GetDisplayName(false), item.GetDisplayName()));
 
                     //item steal animation
-                    int MaxDistance = (int)Math.Sqrt(((target.CharLoc - origin.CharLoc) * GraphicsManager.TileSize).DistSquared());
-                    ItemAnim itemAnim = new ItemAnim(target.CharLoc, origin.CharLoc, DataManager.Instance.GetItem(item.ID).Sprite, MaxDistance / 2, 0);
-                    DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
-                    yield return new WaitForFrames(ItemAnim.ITEM_ACTION_TIME);
+                    if (!target.Unidentifiable && !origin.Unidentifiable)
+                    {
+                        int MaxDistance = (int)Math.Sqrt(((target.CharLoc - origin.CharLoc) * GraphicsManager.TileSize).DistSquared());
+                        ItemAnim itemAnim = new ItemAnim(target.CharLoc, origin.CharLoc, DataManager.Instance.GetItem(item.ID).Sprite, MaxDistance / 2, 0);
+                        DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
+                        yield return new WaitForFrames(ItemAnim.ITEM_ACTION_TIME);
+                    }
                     
                     if (!origin.EquippedItem.Cursed || origin.CanRemoveStuck)
                     {

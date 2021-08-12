@@ -1015,9 +1015,12 @@ namespace PMDC.Dungeon
                 yield break;
 
             GameManager.Instance.BattleSE(Sound);
-            FiniteEmitter endEmitter = (FiniteEmitter)Emitter.Clone();
-            endEmitter.SetupEmit(context.Target.MapLoc, context.Target.MapLoc, context.Target.CharDir);
-            DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+            if (!context.Target.Unidentifiable)
+            {
+                FiniteEmitter endEmitter = (FiniteEmitter)Emitter.Clone();
+                endEmitter.SetupEmit(context.Target.MapLoc, context.Target.MapLoc, context.Target.CharDir);
+                DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+            }
             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(Delay));
         }
     }
@@ -1442,9 +1445,13 @@ namespace PMDC.Dungeon
                     if (boost > 0)
                     {
                         GameManager.Instance.BattleSE(StatUpSound);
-                        StaticAnim anim = new StaticAnim(new AnimData(StatCircle, 3));
-                        anim.SetupEmitted(context.Target.MapLoc, -6, context.Target.CharDir);
-                        DungeonScene.Instance.CreateAnim(anim, DrawLayer.Bottom);
+
+                        if (!context.Target.Unidentifiable)
+                        {
+                            StaticAnim anim = new StaticAnim(new AnimData(StatCircle, 3));
+                            anim.SetupEmitted(context.Target.MapLoc, -6, context.Target.CharDir);
+                            DungeonScene.Instance.CreateAnim(anim, DrawLayer.Bottom);
+                        }
 
                         emitter = new SqueezedAreaEmitter(new AnimData(StatLines, 2, Dir8.Up));
                     }
@@ -1454,15 +1461,18 @@ namespace PMDC.Dungeon
                         emitter = new SqueezedAreaEmitter(new AnimData(StatLines, 2, Dir8.Down));
                     }
 
-                    emitter.Bursts = 3;
-                    emitter.ParticlesPerBurst = 2;
-                    emitter.BurstTime = 6;
-                    emitter.Range = GraphicsManager.TileSize;
-                    emitter.StartHeight = 0;
-                    emitter.HeightSpeed = 6;
-                    emitter.SetupEmit(context.Target.MapLoc, context.Target.MapLoc, context.Target.CharDir);
+                    if (!context.Target.Unidentifiable)
+                    {
+                        emitter.Bursts = 3;
+                        emitter.ParticlesPerBurst = 2;
+                        emitter.BurstTime = 6;
+                        emitter.Range = GraphicsManager.TileSize;
+                        emitter.StartHeight = 0;
+                        emitter.HeightSpeed = 6;
+                        emitter.SetupEmit(context.Target.MapLoc, context.Target.MapLoc, context.Target.CharDir);
 
-                    DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
+                        DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
+                    }
                 }
             }
             yield break;

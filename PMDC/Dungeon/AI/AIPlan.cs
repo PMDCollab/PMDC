@@ -185,7 +185,8 @@ namespace PMDC.Dungeon
             if ((IQ & AIFlags.TeamPartner) == AIFlags.None)
                 return false;
             //TODO: pass in the list of seen characters instead of computing them on the spot
-            //this is very expensive to do, and the only reason the game isn't lagging is because this check is only called for ally characters!
+            //this is very slow and expensive to do, and can lead to performance bottlenecks
+            //and the only reason the game isn't lagging is because this check is only called for ally characters!
             List<Character> seenChars = controlledChar.GetSeenCharacters(Alignment.Foe);
             foreach (Character seenChar in seenChars)
             {
@@ -312,8 +313,12 @@ namespace PMDC.Dungeon
 
         protected GameAction TrySelectWalk(Character controlledChar, Dir8 dir)
         {
-            //assumes that this direction was checked for blocking, and no-walking
-            return new GameAction(GameAction.ActionType.Move, dir, ((IQ & AIFlags.ItemGrabber) != AIFlags.None) ? 1 : 0);
+            //assumes that this direction was checked for blocking against VISIBLE enemies, and no-walking
+            Character invisibleChar = ZoneManager.Instance.CurrentMap.GetCharAtLoc(controlledChar.CharLoc + dir.GetLoc());
+            if (invisibleChar != null && DungeonScene.Instance.GetMatchup(controlledChar, invisibleChar, false) == Alignment.Foe)
+                return new GameAction(GameAction.ActionType.Attack, dir);
+            else
+                return new GameAction(GameAction.ActionType.Move, dir, ((IQ & AIFlags.ItemGrabber) != AIFlags.None) ? 1 : 0);
         }
 
         protected GameAction TryAttackChoice(ReRandom rand, Character controlledChar, AttackChoice attackPattern)
@@ -427,6 +432,7 @@ namespace PMDC.Dungeon
             //if we can't attack, then we pass along to movement
             return new GameAction(GameAction.ActionType.Wait, Dir8.None);
         }
+
 
         protected GameAction TryDumbAttackChoice(ReRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
         {
