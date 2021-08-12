@@ -4572,11 +4572,12 @@ namespace PMDC.Dungeon
     public class PeriodicSpawnEntranceGuards : SingleCharEvent
     {
         public int Period;
+        public int Maximum;
         public int GuardStatus;
 
         public PeriodicSpawnEntranceGuards() { }
-        public PeriodicSpawnEntranceGuards(int period, int guardStatus) { Period = period; GuardStatus = guardStatus; }
-        public PeriodicSpawnEntranceGuards(PeriodicSpawnEntranceGuards other) { this.Period = other.Period; GuardStatus = other.GuardStatus; }
+        public PeriodicSpawnEntranceGuards(int period, int maximum, int guardStatus) { Period = period; Maximum = maximum; GuardStatus = guardStatus; }
+        public PeriodicSpawnEntranceGuards(PeriodicSpawnEntranceGuards other) { this.Period = other.Period; Maximum = other.Maximum; GuardStatus = other.GuardStatus; }
         public override GameEvent Clone() { return new PeriodicSpawnEntranceGuards(this); }
 
 
@@ -4586,6 +4587,9 @@ namespace PMDC.Dungeon
                 yield break;
 
             if (ZoneManager.Instance.CurrentMap.MapTurns % Period != 0)
+                yield break;
+
+            if (ZoneManager.Instance.CurrentMap.MapTeams.Count >= Maximum)
                 yield break;
 
             MapStatus status = (MapStatus)owner;
