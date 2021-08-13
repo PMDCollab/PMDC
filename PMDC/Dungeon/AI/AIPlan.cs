@@ -66,6 +66,7 @@ namespace PMDC.Dungeon
             StandardAttack,
             DumbAttack,//randomly chooses moves based on weight, sometimes walks within range due to missing moves having weight
             RandomAttack,//randomly chooses moves based on weight, always attacks with damaging moves when within range, but sometimes moves forward if the only choice is a status move
+            StatusAttack,//randomly chooses a status move first and foremost
             SmartAttack,//always chooses the best move, and always attacks when within range
         }
 
@@ -167,9 +168,12 @@ namespace PMDC.Dungeon
             {
                 TileData entry = DataManager.Instance.GetTile(tile.Effect.ID);
                 if (entry.StepType == TileData.TriggerType.Trap || entry.StepType == TileData.TriggerType.Site || entry.StepType == TileData.TriggerType.Switch)
-                    return true;
+                {
+                    if (tile.Effect.Owner != ZoneManager.Instance.CurrentMap.GetTileOwner(controlledChar))
+                        return true;
+                }
             }
-            TerrainData terrain = tile.Data.GetData();
+
             if (tile.Data.ID == 4 && !controlledChar.HasElement(07))//check for lava; NOTE: specialized AI code!
                 return true;
             if (tile.Data.ID == 6 && !controlledChar.HasElement(14) && !controlledChar.HasElement(17))//check for poison; NOTE: specialized AI code!
@@ -356,6 +360,8 @@ namespace PMDC.Dungeon
                 return TryDumbAttackChoice(rand, controlledChar, seenChars, closestThreat);
             else if (attackPattern == AttackChoice.RandomAttack)
                 return TryRandomMoveChoice(rand, controlledChar, seenChars, closestThreat);
+            else if (attackPattern == AttackChoice.StatusAttack)
+                return TryStatusMoveChoice(rand, controlledChar, seenChars, closestThreat);
             else
                 return TryBestAttackChoice(rand, controlledChar, seenChars, closestThreat);
         }
@@ -364,9 +370,16 @@ namespace PMDC.Dungeon
         {
             for (int ii = 0; ii < controlledChar.Skills.Count; ii++)
             {
-                if (controlledChar.Skills[ii].Element.SkillNum > -1 && controlledChar.Skills[ii].Element.Charges > 0 && !controlledChar.Skills[ii].Element.Sealed && controlledChar.Skills[ii].Element.Enabled)
+                if (IsSkillUsable(controlledChar, ii))
                     yield return ii;
             }
+        }
+
+        public bool IsSkillUsable(Character controlledChar, int ii)
+        {
+            if (controlledChar.Skills[ii].Element.SkillNum > -1 && controlledChar.Skills[ii].Element.Charges > 0 && !controlledChar.Skills[ii].Element.Sealed && controlledChar.Skills[ii].Element.Enabled)
+                return true;
+            return false;
         }
 
         private void updateDistanceTargetHash(Character controlledChar, Dictionary<Loc, RangeTarget> endHash, Character chara, Loc diff)
@@ -468,6 +481,33 @@ namespace PMDC.Dungeon
             return new GameAction(GameAction.ActionType.Wait, Dir8.None);
         }
 
+
+        protected GameAction TryStatusMoveChoice(ReRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
+        {
+            //first pass list of move candidates containing all status moves
+            List<ActionDirValue> moveIndices = new List<ActionDirValue>();
+            //the result is that we choose moves like dumb attack, but if we choose a hypothetical we roll again from attack moves assured to work
+            foreach (int ii in iterateUsableSkillIndices(controlledChar))
+            {
+                SkillData entry = DataManager.Instance.GetSkill(controlledChar.Skills[ii].Element.SkillNum);
+                if (entry.Data.Category == BattleData.SkillCategory.Status)
+                {
+                    HitValue[] moveDirs = new HitValue[8];
+                    GetActionValues(controlledChar, seenChars, closestThreat, controlledChar.Skills[ii].Element.SkillNum, moveDirs, true);
+                    UpdateTotalIndices(rand, moveIndices, ii, moveDirs);
+                }
+            }
+
+            if (moveIndices.Count > 0)
+            {
+                ActionDirValue actionVal = weightedActionChoice(moveIndices, rand);
+                if (!actionVal.Hit.ImaginedHit)
+                    return actionFromActionVal(actionVal);
+            }
+
+            //if we can't attack, then we pass along to movement
+            return new GameAction(GameAction.ActionType.Wait, Dir8.None);
+        }
 
         protected GameAction TryRandomMoveChoice(ReRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
         {
@@ -1216,8 +1256,7 @@ namespace PMDC.Dungeon
                 {
                     if (controlledChar.EquippedItem.ID > -1)
                         return 100;
-                    else
-                        return 0;
+                    return 0;
                 }
                 else if (moveIndex == 281)//yawn; use only if the target is OK; NOTE: specialized AI code!
                 {
@@ -1233,6 +1272,16 @@ namespace PMDC.Dungeon
                         return 0;
                 }
 
+                foreach (BattleEvent effect in entry.Data.OnHitTiles)
+                {
+                    if (effect is SetTrapEvent)
+                    {
+                        Tile checkTile = ZoneManager.Instance.CurrentMap.Tiles[target.CharLoc.X][target.CharLoc.Y];
+                        if (checkTile.Effect.ID == -1)
+                            return 70;
+                        return 0;
+                    }
+                }
 
                 //heal checker/status removal checker/other effects
                 foreach (BattleEvent effect in entry.Data.OnHits)
@@ -1271,30 +1320,66 @@ namespace PMDC.Dungeon
                     {
                         if (target.Intrinsics[0].Element.ID != ((ChangeToAbilityEvent)effect).TargetAbility)
                             return 100;
-                        else
-                            return 0;
+                        return 0;
                     }
                     else if (effect is ReflectAbilityEvent)
                     {
                         if (target.Intrinsics[0].Element.ID != controlledChar.Intrinsics[0].Element.ID)
                             return 100;
-                        else
+                        return 0;
+                    }
+                    else if (effect is PowerTrickEvent)
+                    {
+                        if (target.ProxyAtk == -1 || target.ProxyDef == -1)
+                            return 100;
+                        return 0;
+                    }
+                    else if (effect is SetItemStickyEvent)
+                    {
+                        if (target.EquippedItem.ID > -1)
+                        {
+                            if (target.EquippedItem.Cursed)
+                                return 0;
+                            return 100;
+                        }
+                        int startVal = 100;
+                        bool foundNonStick = false;
+                        for (int ii = 0; ii < target.MemberTeam.GetInvCount(); ii++)
+                        {
+                            if (target.MemberTeam.GetInv(ii).Cursed)
+                            {
+                                if (startVal < 50)
+                                    startVal -= 5;
+                                else
+                                    startVal -= 10;
+                            }
+                            else
+                                foundNonStick = true;
+                        }
+                        if (!foundNonStick)
                             return 0;
+                        return Math.Max(startVal, 10);
+                    }
+                    else if (effect is StatSplitEvent)
+                    {
+                        bool attackStats = ((StatSplitEvent)effect).AttackStats;
+                        if (attackStats)
+                            return target.Atk + target.MAtk - controlledChar.Atk - controlledChar.MAtk;
+                        else
+                            return target.Def + target.MDef - controlledChar.Def - controlledChar.MDef;
                     }
                     else if (effect is SwapAbilityEvent)
                     {
                         if (target.Intrinsics[0].Element.ID != controlledChar.Intrinsics[0].Element.ID &&
                             controlledChar.Intrinsics[0].Element.ID == controlledChar.BaseIntrinsics[0])
                             return 100;
-                        else
-                            return 0;
+                        return 0;
                     }
                     else if (effect is AddElementEvent)
                     {
                         if (target.HasElement(((AddElementEvent)effect).TargetElement))
                             return 0;
-                        else
-                            return 100;
+                        return 100;
                     }
                     else if (effect is RestEvent)
                     {

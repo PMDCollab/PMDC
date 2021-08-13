@@ -49,7 +49,7 @@ namespace PMDC.LevelGen
                     continue;
 
                 //also do not choose a room that contains the end stairs
-                IViewPlaceableGenContext<IExit> exitMap = (IViewPlaceableGenContext<IExit>)map;
+                IViewPlaceableGenContext<MapGenExit> exitMap = (IViewPlaceableGenContext<MapGenExit>)map;
                 if (Collision.InBounds(testPlan.RoomGen.Draw, exitMap.GetLoc(0)))
                     continue;
 

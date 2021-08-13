@@ -70,13 +70,17 @@ namespace PMDC.Dungeon
             Loc[] ends = null;
             bool aimForDistance = false; // determines if we are pathing directly to the target or to a tile we can hit the target from
 
-            // If the attackchoice is SmartAttack, take attack ranges into consideration
+            PositionChoice positioning = PositionPattern;
+            if (controlledChar.AttackOnly)
+                positioning = PositionChoice.Approach;
+
+            // If the Positionchoice is Avoid, take attack ranges into consideration
             // the end points should be all locations where one can attack the target
             // for projectiles, it should be the farthest point where they can attack:
-            if (PositionPattern != PositionChoice.Approach)
+            if (positioning != PositionChoice.Approach)
             {
                 //get all move ranges and use all their ranges to denote destination tiles.
-                FillRangeTargets(controlledChar, seenCharacters, endHash, PositionPattern != PositionChoice.Avoid);
+                FillRangeTargets(controlledChar, seenCharacters, endHash, positioning != PositionChoice.Avoid);
                 List<Loc> endList = new List<Loc>();
                 foreach (Loc endLoc in endHash.Keys)
                 {
