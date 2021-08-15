@@ -1375,6 +1375,25 @@ namespace PMDC.Dungeon
                             return 100;
                         return 0;
                     }
+                    else if (effect is BegItemEvent)
+                    {
+                        if (target.EquippedItem.ID > -1)
+                        {
+                            if (target.EquippedItem.Cursed)
+                                return 0;
+                            return 100;
+                        }
+
+                        int startVal = 0;
+                        for (int ii = 0; ii < target.MemberTeam.GetInvCount(); ii++)
+                        {
+                            if (startVal < 50)
+                                startVal += 10;
+                            else
+                                startVal += 5;
+                        }
+                        return startVal;
+                    }
                     else if (effect is AddElementEvent)
                     {
                         if (target.HasElement(((AddElementEvent)effect).TargetElement))

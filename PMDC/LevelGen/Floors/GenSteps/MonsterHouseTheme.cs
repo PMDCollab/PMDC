@@ -60,6 +60,7 @@ namespace PMDC.LevelGen
         }
     }
 
+
     [Serializable]
     public class ItemThemeNone : ItemTheme
     {
@@ -100,15 +101,21 @@ namespace PMDC.LevelGen
     public class ItemThemeType : ItemTheme
     {
         public ItemData.UseType UseType;
+        public bool UseMapItems;
+        public bool UseSpecialItems;
 
         public ItemThemeType() { }
-        public ItemThemeType(ItemData.UseType useType, RandRange amount) : base(amount)
+        public ItemThemeType(ItemData.UseType useType, bool mapItems, bool specialItems, RandRange amount) : base(amount)
         {
             UseType = useType;
+            UseMapItems = mapItems;
+            UseSpecialItems = specialItems;
         }
         protected ItemThemeType(ItemThemeType other) : base(other)
         {
             UseType = other.UseType;
+            UseMapItems = other.UseMapItems;
+            UseSpecialItems = other.UseSpecialItems;
         }
         public override ItemTheme Copy() { return new ItemThemeType(this); }
 
@@ -118,28 +125,34 @@ namespace PMDC.LevelGen
             List<MapItem> spawners = new List<MapItem>();
 
             SpawnList<MapItem> subList = new SpawnList<MapItem>();
-            for (int ii = 0; ii < specialItems.Count; ii++)
+            if (UseSpecialItems)
             {
-                MapItem spawn = specialItems.GetSpawn(ii);
-                if (!spawn.IsMoney)
+                for (int ii = 0; ii < specialItems.Count; ii++)
                 {
-                    ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[ii] as ItemEntrySummary;
+                    MapItem spawn = specialItems.GetSpawn(ii);
+                    if (!spawn.IsMoney)
+                    {
+                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.Value] as ItemEntrySummary;
 
-                    if (itemEntry.UsageType == UseType)
-                        subList.Add(spawn, specialItems.GetSpawnRate(ii));
+                        if (itemEntry.UsageType == UseType)
+                            subList.Add(spawn, specialItems.GetSpawnRate(ii));
+                    }
                 }
             }
 
-            foreach(string key in map.ItemSpawns.Spawns.GetKeys())
+            if (UseMapItems)
             {
-                SpawnList<InvItem> spawns = map.ItemSpawns.Spawns.GetSpawn(key);
-                for (int ii = 0; ii < spawns.Count; ii++)
+                foreach (string key in map.ItemSpawns.Spawns.GetKeys())
                 {
-                    //TODO: spawn rate is somewhat distorted here
-                    InvItem spawn = spawns.GetSpawn(ii);
-                    ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.ID] as ItemEntrySummary;
-                    if (itemEntry.UsageType == UseType)
-                        subList.Add(new MapItem(spawn), spawns.GetSpawnRate(ii));
+                    SpawnList<InvItem> spawns = map.ItemSpawns.Spawns.GetSpawn(key);
+                    for (int ii = 0; ii < spawns.Count; ii++)
+                    {
+                        //TODO: spawn rate is somewhat distorted here
+                        InvItem spawn = spawns.GetSpawn(ii);
+                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.ID] as ItemEntrySummary;
+                        if (itemEntry.UsageType == UseType)
+                            subList.Add(new MapItem(spawn), spawns.GetSpawnRate(ii));
+                    }
                 }
             }
 
@@ -158,15 +171,21 @@ namespace PMDC.LevelGen
     {
         [StringTypeConstraint(0, typeof(ItemState))]
         public FlagType UseType;
+        public bool UseMapItems;
+        public bool UseSpecialItems;
 
         public ItemStateType() { }
-        public ItemStateType(FlagType useType, RandRange amount) : base(amount)
+        public ItemStateType(FlagType useType, bool mapItems, bool specialItems, RandRange amount) : base(amount)
         {
             UseType = useType;
+            UseMapItems = mapItems;
+            UseSpecialItems = specialItems;
         }
         protected ItemStateType(ItemStateType other) : base(other)
         {
             UseType = other.UseType;
+            UseMapItems = other.UseMapItems;
+            UseSpecialItems = other.UseSpecialItems;
         }
         public override ItemTheme Copy() { return new ItemStateType(this); }
 
@@ -176,27 +195,33 @@ namespace PMDC.LevelGen
             List<MapItem> spawners = new List<MapItem>();
 
             SpawnList<MapItem> subList = new SpawnList<MapItem>();
-            for (int ii = 0; ii < specialItems.Count; ii++)
+            if (UseSpecialItems)
             {
-                MapItem spawn = specialItems.GetSpawn(ii);
-                if (!spawn.IsMoney)
+                for (int ii = 0; ii < specialItems.Count; ii++)
                 {
-                    ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.Value] as ItemEntrySummary;
-                    if (itemEntry.ContainsState(UseType.FullType))
-                        subList.Add(spawn, specialItems.GetSpawnRate(ii));
+                    MapItem spawn = specialItems.GetSpawn(ii);
+                    if (!spawn.IsMoney)
+                    {
+                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.Value] as ItemEntrySummary;
+                        if (itemEntry.ContainsState(UseType.FullType))
+                            subList.Add(spawn, specialItems.GetSpawnRate(ii));
+                    }
                 }
             }
 
-            foreach (string key in map.ItemSpawns.Spawns.GetKeys())
+            if (UseMapItems)
             {
-                SpawnList<InvItem> spawns = map.ItemSpawns.Spawns.GetSpawn(key);
-                for (int ii = 0; ii < spawns.Count; ii++)
+                foreach (string key in map.ItemSpawns.Spawns.GetKeys())
                 {
-                    //TODO: spawn rate is somewhat distorted here
-                    InvItem spawn = spawns.GetSpawn(ii);
-                    ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.ID] as ItemEntrySummary;
-                    if (itemEntry.ContainsState(UseType.FullType))
-                        subList.Add(new MapItem(spawn), spawns.GetSpawnRate(ii));
+                    SpawnList<InvItem> spawns = map.ItemSpawns.Spawns.GetSpawn(key);
+                    for (int ii = 0; ii < spawns.Count; ii++)
+                    {
+                        //TODO: spawn rate is somewhat distorted here
+                        InvItem spawn = spawns.GetSpawn(ii);
+                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.ID] as ItemEntrySummary;
+                        if (itemEntry.ContainsState(UseType.FullType))
+                            subList.Add(new MapItem(spawn), spawns.GetSpawnRate(ii));
+                    }
                 }
             }
 
@@ -291,15 +316,21 @@ namespace PMDC.LevelGen
     public class ItemThemeRange : ItemTheme
     {
         public IntRange Range;
+        public bool UseMapItems;
+        public bool UseSpecialItems;
 
         public ItemThemeRange() { }
-        public ItemThemeRange(IntRange range, RandRange amount) : base(amount)
+        public ItemThemeRange(IntRange range, bool mapItems, bool specialItems, RandRange amount) : base(amount)
         {
             Range = range;
+            UseMapItems = mapItems;
+            UseSpecialItems = specialItems;
         }
         protected ItemThemeRange(ItemThemeRange other) : base(other)
         {
             Range = other.Range;
+            UseMapItems = other.UseMapItems;
+            UseSpecialItems = other.UseSpecialItems;
         }
         public override ItemTheme Copy() { return new ItemThemeRange(this); }
 
@@ -309,26 +340,32 @@ namespace PMDC.LevelGen
             List<MapItem> spawners = new List<MapItem>();
 
             SpawnList<MapItem> subList = new SpawnList<MapItem>();
-            for (int ii = 0; ii < specialItems.Count; ii++)
+            if (UseSpecialItems)
             {
-                MapItem spawn = specialItems.GetSpawn(ii);
-                if (!spawn.IsMoney)
+                for (int ii = 0; ii < specialItems.Count; ii++)
                 {
-                    if (Range.Min <= spawn.Value && spawn.Value < Range.Max)
-                        subList.Add(spawn, specialItems.GetSpawnRate(ii));
+                    MapItem spawn = specialItems.GetSpawn(ii);
+                    if (!spawn.IsMoney)
+                    {
+                        if (Range.Min <= spawn.Value && spawn.Value < Range.Max)
+                            subList.Add(spawn, specialItems.GetSpawnRate(ii));
+                    }
                 }
             }
 
-            foreach (string key in map.ItemSpawns.Spawns.GetKeys())
+            if (UseMapItems)
             {
-                SpawnList<InvItem> spawns = map.ItemSpawns.Spawns.GetSpawn(key);
-                for (int ii = 0; ii < spawns.Count; ii++)
+                foreach (string key in map.ItemSpawns.Spawns.GetKeys())
                 {
-                    //TODO: spawn rate is somewhat distorted here
-                    InvItem spawn = spawns.GetSpawn(ii);
-                    //ItemData data = DataManager.Instance.GetItem(spawn.ID);
-                    if (Range.Min <= spawn.ID && spawn.ID < Range.Max)
-                        subList.Add(new MapItem(spawn), spawns.GetSpawnRate(ii));
+                    SpawnList<InvItem> spawns = map.ItemSpawns.Spawns.GetSpawn(key);
+                    for (int ii = 0; ii < spawns.Count; ii++)
+                    {
+                        //TODO: spawn rate is somewhat distorted here
+                        InvItem spawn = spawns.GetSpawn(ii);
+                        //ItemData data = DataManager.Instance.GetItem(spawn.ID);
+                        if (Range.Min <= spawn.ID && spawn.ID < Range.Max)
+                            subList.Add(new MapItem(spawn), spawns.GetSpawnRate(ii));
+                    }
                 }
             }
 
