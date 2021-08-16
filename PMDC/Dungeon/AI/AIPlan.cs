@@ -877,6 +877,26 @@ namespace PMDC.Dungeon
             }
         }
 
+        private T getConditionalEvent<T>(Character controlledChar, PassiveContext passiveContext, BattleEvent effect) where T : BattleEvent
+        {
+            if (effect is T)
+                return (T)effect;
+
+            //TODO: add other conditions
+            FamilyBattleEvent familyEffect = effect as FamilyBattleEvent;
+            if (familyEffect != null)
+            {
+                ItemData entry = DataManager.Instance.GetItem(passiveContext.Passive.ID);
+                FamilyState family;
+                if (!entry.ItemStates.TryGet<FamilyState>(out family))
+                    return null;
+
+                if (family.Members.Contains(controlledChar.BaseForm.Species))
+                    return getConditionalEvent<T>(controlledChar, passiveContext, familyEffect.BaseEvent);
+            }
+            return null;
+        }
+
         private void getActionHitboxes(Character controlledChar, List<Character> seenChars, Dir8 dir, ref int skillIndex, ref SkillData entry, ref  int rangeMod, ref CombatAction hitboxAction, ref ExplosionData explosion)
         {
             //check for passives that modify range; NOTE: specialized AI code!
@@ -884,16 +904,27 @@ namespace PMDC.Dungeon
             {
                 foreach (BattleEvent effect in passive.EventData.OnActions)
                 {
-                    if (effect is AddRangeEvent)
+                    AddRangeEvent addRangeEvent = getConditionalEvent<AddRangeEvent>(controlledChar, passive, effect);
+                    if (addRangeEvent != null)
                     {
-                        AddRangeEvent rangeEffect = (AddRangeEvent)effect;
-                        rangeMod += rangeEffect.Range;
+                        rangeMod += addRangeEvent.Range;
+                        continue;
                     }
-                    else if (effect is CategoryAddRangeEvent)
+
+                    CategoryAddRangeEvent categoryRangeEvent = getConditionalEvent<CategoryAddRangeEvent>(controlledChar, passive, effect);
+                    if (categoryRangeEvent != null)
                     {
-                        CategoryAddRangeEvent rangeEffect = (CategoryAddRangeEvent)effect;
-                        if (entry.Data.Category == rangeEffect.Category)
-                            rangeMod += rangeEffect.Range;
+                        if (entry.Data.Category == categoryRangeEvent.Category)
+                            rangeMod += categoryRangeEvent.Range;
+                        continue;
+                    }
+
+                    WeatherAddRangeEvent weatherRangeEvent = getConditionalEvent<WeatherAddRangeEvent>(controlledChar, passive, effect);
+                    if (weatherRangeEvent != null)
+                    {
+                        if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(weatherRangeEvent.WeatherID))
+                            rangeMod += weatherRangeEvent.Range;
+                        continue;
                     }
                 }
             }
@@ -1435,7 +1466,49 @@ namespace PMDC.Dungeon
                         Character statusTarget = giveEffect.AffectTarget ? target : controlledChar;
                         StatusEffect status = statusTarget.GetStatusEffect(giveEffect.StatusID);
                         if (status == null)
-                            minStatusRedundancy = 0;
+                        {
+                            if (giveEffect.StatusID == 21)//attract NOTE: Specialized code!
+                            {
+                                if ((statusTarget.CurrentForm.Gender == Gender.Genderless) != (statusTarget.CurrentForm.Gender == controlledChar.CurrentForm.Gender))
+                                {
+                                    //failure
+                                }
+                                else
+                                    minStatusRedundancy = 0;
+                            }
+                            else if (giveEffect.StatusID == 2 && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//burn NOTE: specialized code!
+                            {
+                                if (!statusTarget.HasElement(07))
+                                    minStatusRedundancy = 0;
+                            }
+                            else if (giveEffect.StatusID == 3 && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//freeze NOTE: specialized code!
+                            {
+                                if (!statusTarget.HasElement(12))
+                                    minStatusRedundancy = 0;
+                            }
+                            else if (giveEffect.StatusID == 4 && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//paralyze NOTE: specialized code!
+                            {
+                                if (!statusTarget.HasElement(04))
+                                    minStatusRedundancy = 0;
+                            }
+                            else if ((giveEffect.StatusID == 5 || giveEffect.StatusID == 6) && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//poison NOTE: specialized code!
+                            {
+                                if (!statusTarget.HasElement(14) && !statusTarget.HasElement(17))
+                                    minStatusRedundancy = 0;
+                            }
+                            else if (giveEffect.StatusID == 90 && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//immobilize NOTE: specialized code!
+                            {
+                                if (!statusTarget.HasElement(09))
+                                    minStatusRedundancy = 0;
+                            }
+                            else if (giveEffect.StatusID == 60)//disable NOTE: specialized code!
+                            {
+                                if (statusTarget.StatusEffects.ContainsKey(26))
+                                    minStatusRedundancy = 0;
+                            }
+                            else
+                                minStatusRedundancy = 0;
+                        }
                         else if (effect is StatusStackBattleEvent)
                         {
                             StatusData statusEntry = DataManager.Instance.GetStatus(giveEffect.StatusID);

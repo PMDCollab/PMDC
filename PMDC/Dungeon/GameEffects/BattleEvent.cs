@@ -822,17 +822,371 @@ namespace PMDC.Dungeon
     [Serializable]
     public class NeededMoveEvent : InvokedMoveEvent
     {
-        public override GameEvent Clone() { return new RandomMoveEvent(); }
+        public override GameEvent Clone() { return new NeededMoveEvent(); }
+
+        private void tryAddMove(List<int> moves, int move)
+        {
+            if (DataManager.Instance.DataIndices[DataManager.DataType.Skill].Entries[move].Released)
+                moves.Add(move);
+        }
+
+
+        private void tryAddTargetMove(Character user, List<Character> seenChars, List<int> moves, int move)
+        {
+            int effectiveness = 0;
+            SkillData skill = DataManager.Instance.GetSkill(move);
+            HashSet<Loc> targetLocs = new HashSet<Loc>();
+            foreach (Loc loc in skill.HitboxAction.GetPreTargets(user, user.CharDir, 0))
+                targetLocs.Add(loc);
+            foreach (Character seenChar in seenChars)
+            {
+                if (targetLocs.Contains(seenChar.CharLoc))
+                    effectiveness += PreTypeEvent.GetDualEffectiveness(user, seenChar, skill.Data.Element) - PreTypeEvent.NRM_2;
+            }
+
+            if (effectiveness > 0)
+                tryAddMove(moves, move);
+        }
 
         protected override int GetInvokedMove(GameEventOwner owner, BattleContext context)
         {
-            //TODO: scroll of need style move choice
+            // scroll of need style move choice
+
+            List<Character> seenAllies = context.User.GetSeenCharacters(Alignment.Friend);
+
+            List<List<int>> tryingCategories = new List<List<int>>();
+            //conditions:
+            //are you wounded?
+            bool needHeal = false;
+            if (context.User.HP < context.User.MaxHP * 2 / 3)
+            {
+                List<int> tryingMoves = new List<int>();
+                tryAddMove(tryingMoves, 105);//recover
+                tryAddMove(tryingMoves, 235);//synthesis
+                tryAddMove(tryingMoves, 355);//roost
+                tryAddMove(tryingMoves, 303);//slack off
+                tryingCategories.Add(tryingMoves);
+                if (context.User.HP < context.User.MaxHP / 3)
+                    needHeal = true;
+            }
+
+            //are your allies wounded? 2+ separate mons needed
+            int woundedAllies = 0;
+            foreach (Character ally in seenAllies)
+            {
+                if (ally.HP < ally.MaxHP * 2 / 3)
+                {
+                    woundedAllies++;
+                    if (ally.HP < ally.MaxHP / 3)
+                        needHeal = true;
+                }
+            }
+            if (woundedAllies >= 2)
+            {
+                List<int> tryingMoves = new List<int>();
+                tryAddMove(tryingMoves, 236);//moonlight
+                tryAddMove(tryingMoves, 234);//morning sun
+                tryAddMove(tryingMoves, 208);//milk drink
+                tryingCategories.Add(tryingMoves);
+            }
+
+            //how about for the target?
+            //are any of yours or your targetable ally stats lowered? raise stat
+
+
+            //status effects?  3+ needed in party
+            int badStates = 0;
+            foreach (StatusEffect status in context.User.IterateStatusEffects())
+            {
+                if (status.StatusStates.Contains<BadStatusState>())
+                    badStates++;
+            }
+            foreach (Character ally in seenAllies)
+            {
+                foreach (StatusEffect status in ally.IterateStatusEffects())
+                {
+                    if (status.StatusStates.Contains<BadStatusState>())
+                        badStates++;
+                }
+            }
+            if (badStates > 2)
+            {
+                List<int> tryingMoves = new List<int>();
+                tryAddMove(tryingMoves, 215);//heal bell
+                tryAddMove(tryingMoves, 287);//refresh
+                tryingCategories.Add(tryingMoves);
+            }
+
+            if (!needHeal)
+            {
+                List<int> tryingMoves = new List<int>();
+                //enemy is weak to a type and can die from it?  use that type move, base it on your higher stat
+                //multiple enemies weak to the same type?  use that type move, base it on your higher stat
+                HashSet<int> availableWeaknesses = new HashSet<int>();
+                List<Character> seenFoes = context.User.GetSeenCharacters(Alignment.Foe);
+                foreach (Character chara in seenFoes)
+                {
+                    for (int ii = 0; ii < DataManager.Instance.DataIndices[DataManager.DataType.Element].Count; ii++)
+                    {
+                        if (PreTypeEvent.GetDualEffectiveness(context.User, chara, ii) > PreTypeEvent.NRM_2)
+                            availableWeaknesses.Add(ii);
+                    }
+                }
+
+                foreach (int ii in availableWeaknesses)
+                {
+                    switch (ii)
+                    {
+                        case 01://bug
+                            {
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 454);//attack order
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 404);//x-scissor
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 224);//megahorn
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 405);//bug buzz
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 324);//signal beam
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 318);//silver wind
+                            }
+                            break;
+                        case 02://dark
+                            {
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 621);//hyperspace fury
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 539);//night daze
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 372);//assurance
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 400);//night slash
+                            }
+                            break;
+                        case 03://dragon
+                            {
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 459);//roar of time
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 434);//draco meteor
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 460);//spacial rend
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 200);//outrage
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 337);//dragon claw
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 525);//dragon tail
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 407);//dragon rush
+                            }
+                            break;
+                        case 04://electric
+                            {
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 435);//discharge
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 344);//volt tackle
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 192);//zap cannon
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 87);//thunder
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 550);//bolt strike
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 559);//fusion bolt
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 570);//parabolic charge
+                            }
+                            break;
+                        case 05://fairy
+                            {
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 617);//light of ruin
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 585);//moonblast
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 583);//play rough
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 605);//dazzling gleam
+                            }
+                            break;
+                        case 06://fighting
+                            {
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 136);//high jump kick
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 370);//close combat
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 411);//focus blast
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 238);//cross chop
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 533);//sacred sword
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 396);//aura sphere
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 548);//secret sword
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 409);//drain punch
+                            }
+                            break;
+                        case 07://fire
+                            {
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 557);//v-create
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 307);//blast burn
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 284);//eruption
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 221);//sacred fire
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 394);//flare blitz
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 551);//blue flare
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 126);//fire blast
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 463);//magma storm
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 517);//inferno
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 257);//heat wave
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 545);//searing shot
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 552);//fiery dance
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 558);//fusion flare
+                            }
+                            break;
+                        case 08://flying
+                            {
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 413);//brave bird
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 620);//dragon ascent
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 542);//hurricane
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 177);//aeroblast
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 613);//oblivion wing
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 143);//sky attack
+                            }
+                            break;
+                        case 09://ghost
+                            {
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 467);//shadow force
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 247);//shadow ball
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 466);//ominous wind
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 506);//hex
+                            }
+                            break;
+                        case 10://grass
+                            {
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 437);//leaf storm
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 338);//frenzy plant
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 438);//power whip
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 452);//wood hammer
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 412);//energy ball
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 572);//petal blizzard
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 402);//seed bomb
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 76);//solar beam
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 202);//giga drain
+                            }
+                            break;
+                        case 11://ground
+                            {
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 619);//precipice blades
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 616);//land's wrath
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 414);//earth power
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 529);//drill run
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 614);//thousand arrows
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 615);//thousand waves
+                            }
+                            break;
+                        case 12://ice
+                            {
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 59);//blizzard
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 58);//ice beam
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 556);//icicle crash
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 333);//icicle spear
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 554);//ice burn
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 553);//freeze shock
+                            }
+                            break;
+                        case 13://normal
+                            {
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 304);//hyper voice
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 416);//giga impact
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 38);//double-edge
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 161);//tri-attack
+                            }
+                            break;
+                        case 14://poison
+                            {
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 441);//gunk shot
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 482);//sludge wave
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 188);//sludge bomb
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 440);//cross poison
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 474);//venoshock
+                            }
+                            break;
+                        case 15://psychic
+                            {
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 94);//psychic
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 593);//hyperspace hole
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 354);//psycho boost
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 540);//psystrike
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 428);//zen headbutt
+                            }
+                            break;
+                        case 16://rock
+                            {
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 457);//head smash
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 439);//rock wrecker
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 350);//rock blast
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 408);//power gem
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 246);//ancient power
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 205);//rollout
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 591);//diamond storm
+                            }
+                            break;
+                        case 17://steel
+                            {
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 309);//meteor mash
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 231);//iron tail
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 430);//flash cannon
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 442);//iron head
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 443);//magnet bomb
+                            }
+                            break;
+                        case 18://water
+                            {
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 308);//hydro cannon
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 56);//hydro pump
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 618);//origin pulse
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 323);//water spout
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 592);//steam eruption
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 152);//crabhammer
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 401);//aqua tail
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 127);//waterfall
+                            }
+                            break;
+                    }
+                }
+                if (tryingMoves.Count > 0)
+                    tryingCategories.Add(tryingMoves);
+            }
+
+            //are you surrounded by enemies and cannot hit them all? crowd control: dark void, spore, stun spore
+
+            //otherwise?  give a random buff attack
+            if (tryingCategories.Count == 0)
+            {
+                List<int> tryingMoves = new List<int>();
+                if (!context.User.StatusEffects.ContainsKey(77))
+                    tryAddMove(tryingMoves, 392);//aqua ring
+                if (!context.User.StatusEffects.ContainsKey(17))
+                    tryAddMove(tryingMoves, 115);//reflect
+                if (!context.User.StatusEffects.ContainsKey(18))
+                    tryAddMove(tryingMoves, 113);//light screen
+                if (!context.User.StatusEffects.ContainsKey(57))
+                    tryAddMove(tryingMoves, 273);//wish
+                if (!context.User.StatusEffects.ContainsKey(69))
+                    tryAddMove(tryingMoves, 54);//mist
+                if (!context.User.StatusEffects.ContainsKey(68))
+                    tryAddMove(tryingMoves, 219);//safeguard
+                if (!context.User.StatusEffects.ContainsKey(82))
+                    tryAddMove(tryingMoves, 277);//magic coat
+                if (!context.User.StatusEffects.ContainsKey(66))
+                    tryAddMove(tryingMoves, 243);//mirror coat
+                if (!context.User.StatusEffects.ContainsKey(67))
+                    tryAddMove(tryingMoves, 68);//counter
+                if (!context.User.StatusEffects.ContainsKey(83))
+                    tryAddMove(tryingMoves, 368);//metal burst
+                if (!context.User.StatusEffects.ContainsKey(76))
+                    tryAddMove(tryingMoves, 381);//lucky chant
+                if (!context.User.StatusEffects.ContainsKey(78))
+                    tryAddMove(tryingMoves, 116);//focus energy
+                if (!context.User.StatusEffects.ContainsKey(98))
+                    tryAddMove(tryingMoves, 199);//lock-on
+                tryingCategories.Add(tryingMoves);
+            }
+
+
+            //threat of status effects from enemies? safeguard
+            //does the enemy have an ability that covers their weakness?  gastro acid
+
+            //does your target have unusually high stat boosts?  clear stat boosts
+
+
+            //do nearby targets have a high attack/special attack?  boost defense in that side
+            //are you alone with summonable friends? beat up
+
+            if (tryingCategories.Count > 0)
+            {
+                //75% chance of picking a good move
+                if (DataManager.Instance.Save.Rand.Next(100) < 80)
+                {
+                    List<int> tryingMoves = tryingCategories[DataManager.Instance.Save.Rand.Next(tryingCategories.Count)];
+                    return tryingMoves[DataManager.Instance.Save.Rand.Next(tryingMoves.Count)];
+                }
+            }
+
             List<int> releasedMoves = new List<int>();
             for (int ii = 1; ii < DataManager.Instance.DataIndices[DataManager.DataType.Skill].Count; ii++)
-            {
-                if (DataManager.Instance.DataIndices[DataManager.DataType.Skill].Entries[ii].Released)
-                    releasedMoves.Add(ii);
-            }
+                tryAddMove(releasedMoves, ii);
             int randIndex = DataManager.Instance.Save.Rand.Next(releasedMoves.Count);
             return releasedMoves[randIndex];
         }
@@ -2758,6 +3112,34 @@ namespace PMDC.Dungeon
         }
     }
 
+    [Serializable]
+    public class WeatherAddRangeEvent : BattleEvent
+    {
+        [DataType(0, DataManager.DataType.MapStatus, false)]
+        public int WeatherID;
+        public int Range;
+
+        public WeatherAddRangeEvent() { }
+        public WeatherAddRangeEvent(int weatherId, int range)
+        {
+            WeatherID = weatherId;
+            Range = range;
+        }
+        protected WeatherAddRangeEvent(WeatherAddRangeEvent other)
+        {
+            WeatherID = other.WeatherID;
+            Range = other.Range;
+        }
+        public override GameEvent Clone() { return new WeatherAddRangeEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(WeatherID))
+                context.RangeMod += Range;
+            yield break;
+        }
+    }
+
 
     [Serializable]
     public class MeleeHitTilesEvent : BattleEvent
@@ -3651,7 +4033,8 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             int diff = (context.StrikeStartTile - context.Target.CharLoc).Dist8();
-            context.AddContextStateMult<DmgMult>(false, diff, 1);
+            for(int ii = 0; ii < diff; ii++)
+                context.AddContextStateMult<DmgMult>(false, 2, 1);
             yield break;
         }
     }
@@ -7220,6 +7603,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WeatherNeededEvent : BattleEvent
     {
+        [DataType(0, DataManager.DataType.MapStatus, false)]
         public int WeatherID;
         public List<BattleEvent> BaseEvents;
 
@@ -11533,17 +11917,22 @@ namespace PMDC.Dungeon
     {
         public int TargetAbility;
         public bool AffectTarget;
+        public bool SilentCheck;
 
         public ChangeToAbilityEvent() { }
-        public ChangeToAbilityEvent(int ability, bool affectTarget)
+        public ChangeToAbilityEvent(int ability, bool affectTarget) : this(ability, affectTarget, false)
+        { }
+        public ChangeToAbilityEvent(int ability, bool affectTarget, bool silentCheck)
         {
             TargetAbility = ability;
             AffectTarget = affectTarget;
+            SilentCheck = silentCheck;
         }
         protected ChangeToAbilityEvent(ChangeToAbilityEvent other)
         {
             TargetAbility = other.TargetAbility;
             AffectTarget = other.AffectTarget;
+            SilentCheck = other.SilentCheck;
         }
         public override GameEvent Clone() { return new ChangeToAbilityEvent(this); }
 
@@ -11551,6 +11940,9 @@ namespace PMDC.Dungeon
         {
             Character target = (AffectTarget ? context.Target : context.User);
             //change to ability
+            if (SilentCheck && target.Intrinsics[0].Element.ID == TargetAbility)
+                yield break;
+
             yield return CoroutineManager.Instance.StartCoroutine(target.ReplaceIntrinsic(0, TargetAbility, true, false));
         }
     }
@@ -11950,8 +12342,22 @@ namespace PMDC.Dungeon
     [Serializable]
     public class DevolveEvent : BattleEvent
     {
-        public DevolveEvent() { }
-        public override GameEvent Clone() { return new DevolveEvent(); }
+        public bool SilentCheck;
+        public List<BattleAnimEvent> Anims;
+
+        public DevolveEvent() { Anims = new List<BattleAnimEvent>(); }
+        public DevolveEvent(bool silentCheck, params BattleAnimEvent[] anims) : this()
+        {
+            SilentCheck = silentCheck;
+            Anims.AddRange(anims);
+        }
+        public DevolveEvent(DevolveEvent other) : this()
+        {
+            SilentCheck = other.SilentCheck;
+            foreach (BattleAnimEvent anim in other.Anims)
+                Anims.Add((BattleAnimEvent)anim.Clone());
+        }
+        public override GameEvent Clone() { return new DevolveEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
@@ -11959,7 +12365,7 @@ namespace PMDC.Dungeon
                 yield break;
 
             MonsterData candidateDex = DataManager.Instance.GetMonster(context.Target.CurrentForm.Species);
-            
+
             if (candidateDex.PromoteFrom > -1)
             {
                 string prevName = context.Target.GetDisplayName(false);
@@ -11979,9 +12385,16 @@ namespace PMDC.Dungeon
                         context.Target.ChangeSkill(ii, -1);
                 }
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_DEVOLVE").ToLocal(), prevName, dex.GetColoredName()));
+
+                foreach (BattleAnimEvent anim in Anims)
+                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
+
             }
             else
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_DEVOLVE_FAIL").ToLocal(), context.Target.GetDisplayName(false)));
+            {
+                if (!SilentCheck)
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_DEVOLVE_FAIL").ToLocal(), context.Target.GetDisplayName(false)));
+            }
         }
     }
 

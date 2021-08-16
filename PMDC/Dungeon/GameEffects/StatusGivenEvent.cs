@@ -950,6 +950,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WeatherNeededStatusEvent : StatusGivenEvent
     {
+        [DataType(0, DataManager.DataType.MapStatus, false)]
         public int WeatherID;
         public List<StatusGivenEvent> BaseEvents;
 

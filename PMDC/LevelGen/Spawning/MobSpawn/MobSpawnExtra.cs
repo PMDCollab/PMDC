@@ -254,6 +254,49 @@ namespace PMDC.LevelGen
 
 
     /// <summary>
+    /// Spawn the mob an item
+    /// </summary>
+    [Serializable]
+    public class MobSpawnInv : MobSpawnExtra
+    {
+        public List<InvItem> Items;
+        public bool MapStartOnly;
+
+        public MobSpawnInv()
+        {
+            Items = new List<InvItem>();
+        }
+        public MobSpawnInv(bool startOnly, params int[] itemNum) : this()
+        {
+            MapStartOnly = startOnly;
+            for (int ii = 0; ii < itemNum.Length; ii++)
+                Items.Add(new InvItem(itemNum[ii]));
+        }
+
+        public MobSpawnInv(MobSpawnInv other) : this()
+        {
+            MapStartOnly = other.MapStartOnly;
+            for (int ii = 0; ii < other.Items.Count; ii++)
+                Items.Add(new InvItem(other.Items[ii]));
+        }
+        public override MobSpawnExtra Copy() { return new MobSpawnInv(this); }
+
+        public override void ApplyFeature(IMobSpawnMap map, Character newChar)
+        {
+            if (MapStartOnly && map.Begun)
+                return;
+
+            for (int ii = 0; ii < Items.Count; ii++)
+                newChar.MemberTeam.AddToInv(Items[ii], true);
+        }
+
+        public override string ToString()
+        {
+            return string.Format("{0}", this.GetType().Name);
+        }
+    }
+
+    /// <summary>
     /// Spawn the mob with a level that scales based on the current floor
     /// </summary>
     [Serializable]
