@@ -8466,16 +8466,23 @@ namespace PMDC.Dungeon
             else
             {
                 StatusCheckContext statusContext = new StatusCheckContext(Anonymous ? null : origin, target, status, false);
-                yield return CoroutineManager.Instance.StartCoroutine(target.BeforeStatusCheck(statusContext));
-                if (!statusContext.CancelState.Cancel)
+                if (!Anonymous)
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(TriggerMsg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
-
-                    foreach (BattleAnimEvent anim in Anims)
-                        yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
-
-                    yield return CoroutineManager.Instance.StartCoroutine(target.AddStatusEffect(Anonymous ? null : origin, status, Anonymous ? null : context.ContextStates, !SilentCheck, true));
+                    foreach (ContextState state in context.ContextStates)
+                        statusContext.ContextStates.Set(state.Clone<ContextState>());
                 }
+
+                yield return CoroutineManager.Instance.StartCoroutine(target.BeforeStatusCheck(statusContext));
+                if (statusContext.CancelState.Cancel)
+                    yield break;
+
+                DungeonScene.Instance.LogMsg(String.Format(TriggerMsg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
+                statusContext.msg = true;
+
+                foreach (BattleAnimEvent anim in Anims)
+                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
+
+                yield return CoroutineManager.Instance.StartCoroutine(target.ExecuteAddStatus(statusContext));
             }
         }
     }

@@ -596,24 +596,26 @@ namespace PMDC.Dungeon
                 yield return CoroutineManager.Instance.StartCoroutine(character.AddStatusEffect(null, status, null, !SilentCheck, true));
             else
             {
+                StatusCheckContext statusContext = new StatusCheckContext(null, character, status, false);
 
-                StatusCheckContext context = new StatusCheckContext(null, character, status, false);
-                yield return CoroutineManager.Instance.StartCoroutine(character.BeforeStatusCheck(context));
-                if (!context.CancelState.Cancel)
+                yield return CoroutineManager.Instance.StartCoroutine(character.BeforeStatusCheck(statusContext));
+                if (statusContext.CancelState.Cancel)
+                    yield break;
+
+                if (TriggerMsg.Key != null)
+                    DungeonScene.Instance.LogMsg(String.Format(TriggerMsg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
+                statusContext.msg = true;
+
+                GameManager.Instance.BattleSE(TriggerSound);
+
+                if (!character.Unidentifiable)
                 {
-                    GameManager.Instance.BattleSE(TriggerSound);
-
-                    if (!character.Unidentifiable)
-                    {
-                        FiniteEmitter endEmitter = (FiniteEmitter)TriggerEmitter.Clone();
-                        endEmitter.SetupEmit(character.MapLoc, character.MapLoc, character.CharDir);
-                        DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
-                    }
-
-                    if (TriggerMsg.Key != null)
-                        DungeonScene.Instance.LogMsg(String.Format(TriggerMsg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
-                    yield return CoroutineManager.Instance.StartCoroutine(character.AddStatusEffect(null, status, null, !SilentCheck, true));
+                    FiniteEmitter endEmitter = (FiniteEmitter)TriggerEmitter.Clone();
+                    endEmitter.SetupEmit(character.MapLoc, character.MapLoc, character.CharDir);
+                    DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
                 }
+
+                yield return CoroutineManager.Instance.StartCoroutine(character.ExecuteAddStatus(statusContext));
             }
         }
     }
