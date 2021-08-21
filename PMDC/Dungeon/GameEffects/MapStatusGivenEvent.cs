@@ -286,9 +286,11 @@ namespace PMDC.Dungeon
                 if (randLocs.Count == 0)
                     break;
 
-                Loc dest = randLocs[DataManager.Instance.Save.Rand.Next(randLocs.Count)];
+                int randIndex = DataManager.Instance.Save.Rand.Next(randLocs.Count);
+                Loc dest = randLocs[randIndex];
                 MobSpawn spawn = securityState.Security.Pick(DataManager.Instance.Save.Rand);
                 yield return CoroutineManager.Instance.StartCoroutine(PeriodicSpawnEntranceGuards.PlaceGuard(spawn, dest, GuardStatus));
+                randLocs.RemoveAt(randIndex);
             }
 
             List<Loc> exitLocs = WarpToEndEvent.FindExits();
