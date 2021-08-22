@@ -689,8 +689,8 @@ namespace PMDC.Dungeon
             newContext.Strikes = 1;
             newContext.Item = new InvItem();
 
-            TileData entry = DataManager.Instance.GetTile(owner.GetID());
-            newContext.SetActionMsg(String.Format(Msg.ToLocal(), newContext.User.GetDisplayName(false)));
+            if (Msg.Key != null)
+                newContext.SetActionMsg(String.Format(Msg.ToLocal(), newContext.User.GetDisplayName(false)));
 
             //process the attack
             yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.PreProcessAction(newContext));
