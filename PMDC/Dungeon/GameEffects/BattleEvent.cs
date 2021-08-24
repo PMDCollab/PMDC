@@ -67,7 +67,7 @@ namespace PMDC.Dungeon
         public static int ApplyEvasionMod(int baseAcc, int statStage)
         {
             int bound_level = Math.Min(Math.Max(0, statStage + 6), EvasionLevels.Length - 1);
-            return baseAcc * EvasionLevels[statStage + 6];
+            return baseAcc * EvasionLevels[bound_level];
         }
 
 
