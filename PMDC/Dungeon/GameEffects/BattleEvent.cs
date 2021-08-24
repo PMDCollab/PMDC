@@ -4110,8 +4110,17 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
+            if (context.ActionType != BattleActionType.Skill)
+                yield break;
+            if (Category != BattleData.SkillCategory.None && context.Data.Category != Category)
+                yield break;
+            if (context.User.Dead)
+                yield break;
+            if (DungeonScene.Instance.GetMatchup(context.User, context.Target) == Alignment.Self)
+                yield break;
+
             int damage = context.GetContextStateInt<DamageDealt>(0);
-            if (damage > 0 && context.ActionType == BattleActionType.Skill && (Category == BattleData.SkillCategory.None || context.Data.Category == Category) && DungeonScene.Instance.GetMatchup(context.User, context.Target) != Alignment.Self)
+            if (damage > 0)
             {
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_REFLECT").ToLocal()));
 
