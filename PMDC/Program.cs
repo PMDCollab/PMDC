@@ -279,8 +279,8 @@ namespace PMDC
         public static void InitDllMap()
         {
             CoreDllMap.Init();
-            Assembly fnaAssembly = Assembly.GetAssembly(typeof(Game));
-            CoreDllMap.Register(fnaAssembly);
+            //Assembly fnaAssembly = Assembly.GetAssembly(typeof(Game));
+            //CoreDllMap.Register(fnaAssembly);
             //load SDL first before FNA3D to sidestep multiple dylibs problem
             SDL.SDL_GetPlatform();
         }
