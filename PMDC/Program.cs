@@ -274,11 +274,11 @@ namespace PMDC
             }
         }
 
-        // TheSpyDog's branch on resolving dllmap for DotNetCore
-        // https://github.com/FNA-XNA/FNA/pull/315
+        // We used to have to map dlls manually, but FNA has a provisional solution now.
+        // Keep these comments for clarity
         public static void InitDllMap()
         {
-            CoreDllMap.Init();
+            //CoreDllMap.Init();
             //Assembly fnaAssembly = Assembly.GetAssembly(typeof(Game));
             //CoreDllMap.Register(fnaAssembly);
             //load SDL first before FNA3D to sidestep multiple dylibs problem
