@@ -6,6 +6,7 @@ using RogueEssence;
 using RogueEssence.Data;
 using RogueEssence.Dungeon;
 using RogueEssence.Dev;
+using PMDC.Dungeon;
 
 namespace PMDC.Data
 {
@@ -14,7 +15,6 @@ namespace PMDC.Data
     public class MonsterFormData : BaseMonsterForm
     {
         public const int MAX_STAT_BOOST = 128;
-        public const int ALT_COLOR_ODDS = 1024;
 
         public int Generation;
 
@@ -90,7 +90,10 @@ namespace PMDC.Data
 
         public override int RollSkin(IRandom rand)
         {
-            return (rand.Next(ALT_COLOR_ODDS) == 0) ? 1 : 0;
+            SkinTableState table = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<SkinTableState>();
+            if (table.AltColorOdds == 0)
+                return 0;
+            return (rand.Next(table.AltColorOdds) == 0) ? 1 : 0;
         }
 
         public override int GetPersonalityType(int discriminator)

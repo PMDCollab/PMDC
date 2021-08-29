@@ -54,23 +54,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class AttemptHitEvent : BattleEvent
     {
-
-        static int[] AccuracyLevels = new int[13] { 105, 120, 140, 168, 210, 280, 420, 630, 840, 1050, 1260, 1470, 1680 };
-        static int[] EvasionLevels = new int[13] { 1680, 1470, 1260, 1050, 840, 630, 420, 280, 210, 168, 140, 120, 105 };
-
-        public static int ApplyAccuracyMod(int baseAcc, int statStage)
-        {
-            int bound_level = Math.Min(Math.Max(0, statStage + 6), AccuracyLevels.Length - 1);
-            return baseAcc * AccuracyLevels[bound_level];
-        }
-
-        public static int ApplyEvasionMod(int baseAcc, int statStage)
-        {
-            int bound_level = Math.Min(Math.Max(0, statStage + 6), EvasionLevels.Length - 1);
-            return baseAcc * EvasionLevels[bound_level];
-        }
-
-
+        public AttemptHitEvent() { }
         public override GameEvent Clone() { return new AttemptHitEvent(); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
@@ -92,10 +76,11 @@ namespace PMDC.Dungeon
                     hit = true;
                 else
                 {
-                    acc = ApplyAccuracyMod(acc, context.GetContextStateInt<UserAccuracyBoost>(0));
-                    acc /= 420;
-                    acc = ApplyEvasionMod(acc, context.GetContextStateInt<TargetEvasionBoost>(0));
-                    acc /= 420;
+                    HitRateLevelTableState table = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<HitRateLevelTableState>();
+                    acc = table.ApplyAccuracyMod(acc, context.GetContextStateInt<UserAccuracyBoost>(0));
+                    acc /= table.AccuracyLevels[-table.MinAccuracy];
+                    acc = table.ApplyEvasionMod(acc, context.GetContextStateInt<TargetEvasionBoost>(0));
+                    acc /= table.EvasionLevels[-table.MinEvasion];
                     acc *= context.User.Speed;
                     acc /= context.Target.Speed;
 
@@ -7129,28 +7114,8 @@ namespace PMDC.Dungeon
     [Serializable]
     public class DamageFormulaEvent : CalculatedDamageEvent
     {
-
-        static int[] CritLevels = new int[5] { 0, 3, 4, 6, 12 };
-
         public DamageFormulaEvent() { }
         public override GameEvent Clone() { return new DamageFormulaEvent(); }
-
-        private static int GetCritChance(int level)
-        {
-            int bound_level = Math.Min(Math.Max(0, level), CritLevels.Length-1);
-            return CritLevels[bound_level];
-        }
-
-        private static int StatLevelMult(int stat, int level)
-        {
-            int bound_level = Math.Min(Math.Max(-6, level), 6);
-            if (bound_level < 0)
-                return stat * 4 / (4 - level);
-            else if (bound_level > 0)
-                return stat * (4 + level) / 4;
-            else
-                return stat;
-        }
 
         public override int CalculateDamage(GameEventOwner owner, BattleContext context)
         {
@@ -7199,7 +7164,8 @@ namespace PMDC.Dungeon
                 }
 
                 int critLevel = context.GetContextStateInt<CritLevel>(0);
-                if (DataManager.Instance.Save.Rand.Next(0, 12) < GetCritChance(critLevel))
+                CritRateLevelTableState critTable = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<CritRateLevelTableState>();
+                if (DataManager.Instance.Save.Rand.Next(0, 12) < critTable.GetCritChance(critLevel))
                 {
                     //see if it criticals
                     if (context.User.CharStates.Contains<SnipeState>())
@@ -7214,8 +7180,9 @@ namespace PMDC.Dungeon
                     context.ContextStates.Set(new AttackCrit());
                 }
 
-                int attackStat = StatLevelMult(context.GetContextStateInt<AttackerStat>(0), atkBoost);
-                int defenseStat = Math.Max(1, StatLevelMult(context.GetContextStateInt<TargetStat>(0), defBoost));
+                AtkDefLevelTableState dmgModTable = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<AtkDefLevelTableState>();
+                int attackStat = dmgModTable.AtkLevelMult(context.GetContextStateInt<AttackerStat>(0), atkBoost);
+                int defenseStat = Math.Max(1, dmgModTable.DefLevelMult(context.GetContextStateInt<TargetStat>(0), defBoost));
 
                 //STAB
                 if (context.User.HasElement(context.Data.Element))
@@ -7229,11 +7196,11 @@ namespace PMDC.Dungeon
                     else
                         effectivenessMsg = String.Format(PreTypeEvent.EffectivenessToPhrase(typeMatchup), context.Target.GetDisplayName(false));
 
-                    int effectiveness = PreTypeEvent.Effectiveness[typeMatchup];
+                    int effectiveness = PreTypeEvent.GetEffectivenessMult(typeMatchup);
                     if (effectiveness == 0)
                         effectiveness = -1;
 
-                    context.AddContextStateMult<DmgMult>(false, effectiveness, PreTypeEvent.Effectiveness[PreTypeEvent.NRM_2]);
+                    context.AddContextStateMult<DmgMult>(false, effectiveness, PreTypeEvent.GetEffectivenessMult(PreTypeEvent.NRM_2));
                 }
 
                 if (effectivenessMsg != null)
@@ -9846,7 +9813,7 @@ namespace PMDC.Dungeon
             if (!context.Target.CharStates.Contains<MagicGuardState>())
             {
                 int typeMatchup = PreTypeEvent.GetDualEffectiveness(null, context.Target, Element);
-                int effectiveness = PreTypeEvent.Effectiveness[typeMatchup];
+                int effectiveness = PreTypeEvent.GetEffectivenessMult(typeMatchup);
                 if (effectiveness > 0)
                 {
                     GameManager.Instance.BattleSE("DUN_Hit_Neutral");
@@ -13464,7 +13431,7 @@ namespace PMDC.Dungeon
             int matchup2 = PreTypeEvent.CalculateTypeMatchup(context.User.Element1, context.Target.Element1);
             matchup2 += PreTypeEvent.CalculateTypeMatchup(context.User.Element1, context.Target.Element2);
 
-            return PreTypeEvent.Effectiveness[Math.Max(matchup1, matchup2)] * 20 - 80;//between + and - 80 recruit rate
+            return PreTypeEvent.GetEffectivenessMult(Math.Max(matchup1, matchup2)) * 20 - 80;//between + and - 80 recruit rate
         }
     }
 

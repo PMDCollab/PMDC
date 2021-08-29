@@ -1640,8 +1640,8 @@ namespace PMDC.Dungeon
                 }
 
                 int matchup = PreTypeEvent.GetDualEffectiveness(controlledChar, target, entry.Data);
-                power *= PreTypeEvent.Effectiveness[matchup];
-                power /= PreTypeEvent.Effectiveness[PreTypeEvent.NRM_2];
+                power *= PreTypeEvent.GetEffectivenessMult(matchup);
+                power /= PreTypeEvent.GetEffectivenessMult(PreTypeEvent.NRM_2);
 
                 return power;
             }
