@@ -5805,7 +5805,7 @@ namespace PMDC.Dungeon
 
             int heal = 5;
             List<Stat> stats = new List<Stat>();
-            if (TargetElement == 00 || context.Target.HasElement(TargetElement))
+            if (TargetElement == 00 || form.Element1 == TargetElement || form.Element2 == TargetElement)
             {
                 heal = 15;
                 stats.Add(Stat.HP);
