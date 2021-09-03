@@ -2055,17 +2055,17 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            List<int> candidateSpecies = new List<int>();
+            List<MonsterID> candidateSpecies = new List<MonsterID>();
             foreach (Character target in ZoneManager.Instance.CurrentMap.IterateCharacters())
             {
                 if (!character.Dead && character.CurrentForm.Species != target.CurrentForm.Species)
-                    candidateSpecies.Add(target.CurrentForm.Species);
+                    candidateSpecies.Add(target.CurrentForm);
             }
             if (candidateSpecies.Count > 0)
             {
                 StatusEffect status = new StatusEffect(IllusionID);
                 status.LoadFromData();
-                status.StatusStates.Set(new IndexState(candidateSpecies[DataManager.Instance.Save.Rand.Next(candidateSpecies.Count)]));
+                status.StatusStates.Set(new MonsterIDState(candidateSpecies[DataManager.Instance.Save.Rand.Next(candidateSpecies.Count)]));
                 yield return CoroutineManager.Instance.StartCoroutine(character.AddStatusEffect(status));
             }
         }

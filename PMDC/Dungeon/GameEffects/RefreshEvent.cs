@@ -128,8 +128,9 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new IllusionEvent(); }
         public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            character.ProxySprite.Species = ((StatusEffect)owner).StatusStates.GetWithDefault<IndexState>().Index;
-            MonsterData dex = DataManager.Instance.GetMonster(character.Appearance.Species);
+            MonsterID proxy = ((StatusEffect)owner).StatusStates.GetWithDefault<MonsterIDState>().MonID;
+            character.ProxySprite = proxy;
+            character.ProxyName = Character.GetFullFormName(character.Appearance);
         }
     }
     [Serializable]
