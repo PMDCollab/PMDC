@@ -1713,6 +1713,57 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    [Serializable]
+    public class SetDamageEvent : BattleEvent
+    {
+        public BattleEvent BaseEvent;
+
+        public List<BattleAnimEvent> Anims;
+
+        public SetDamageEvent() { Anims = new List<BattleAnimEvent>(); }
+        public SetDamageEvent(BattleEvent battleEffect, params BattleAnimEvent[] anims)
+            : this()
+        {
+            BaseEvent = battleEffect;
+            Anims.AddRange(anims);
+        }
+        protected SetDamageEvent(SetDamageEvent other) : this()
+        {
+            BaseEvent = other.BaseEvent;
+            Anims = new List<BattleAnimEvent>();
+            foreach (BattleAnimEvent anim in other.Anims)
+                Anims.Add((BattleAnimEvent)anim.Clone());
+        }
+
+        public override GameEvent Clone() { return new SetDamageEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.User != context.Target)
+            {
+                BattleData newData = new BattleData(context.Data);
+
+                foreach (BattleAnimEvent anim in Anims)
+                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
+
+                foreach (Priority priority in newData.OnHits.GetPriorities())
+                {
+                    int count = newData.OnHits.GetCountAtPriority(priority);
+                    for (int jj = 0; jj < count; jj++)
+                    {
+                        BattleEvent effect = newData.OnHits.Get(priority, jj);
+                        if (effect is DirectDamageEvent)
+                            newData.OnHits.Set(priority, jj, (BattleEvent)BaseEvent.Clone());
+                    }
+                }
+
+                context.Data = newData;
+            }
+            yield break;
+        }
+    }
+
     [Serializable]
     public class MultiplyElementEvent : BattleEvent
     {
@@ -2805,6 +2856,10 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
+            //typeless attacks bypass
+            if (context.Data.Element == 0)
+                yield break;
+
             int typeMatchup = PreTypeEvent.GetDualEffectiveness(context.User, context.Target, context.Data);
             if (typeMatchup <= PreTypeEvent.NRM_2 && (context.Data.Category == BattleData.SkillCategory.Physical || context.Data.Category == BattleData.SkillCategory.Magical))
             {
@@ -7253,6 +7308,25 @@ namespace PMDC.Dungeon
             if (state != null)
                 return state.Power;
             return 0;
+        }
+    }
+
+    [Serializable]
+    public class SpecificDamageEvent : FixedDamageEvent
+    {
+        public int Damage;
+
+        public SpecificDamageEvent() { }
+        public SpecificDamageEvent(int dmg) { Damage = dmg; }
+        public SpecificDamageEvent(SpecificDamageEvent other)
+        {
+            Damage = other.Damage;
+        }
+
+        public override GameEvent Clone() { return new SpecificDamageEvent(this); }
+        protected override int CalculateFixedDamage(GameEventOwner owner, BattleContext context)
+        {
+            return Damage;
         }
     }
 
