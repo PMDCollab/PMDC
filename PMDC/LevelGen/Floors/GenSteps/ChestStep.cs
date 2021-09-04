@@ -112,6 +112,8 @@ namespace PMDC.LevelGen
             if (freeTiles.Count == 0)
                 return;
 
+            if (!ItemThemes.CanPick)
+                return;
             //choose which item theme to work with
             ItemTheme chosenItemTheme = ItemThemes.Pick(map.Rand);
 
@@ -128,8 +130,9 @@ namespace PMDC.LevelGen
 
             EffectTile spawnedChest = new EffectTile(37, true);
 
-            if (Ambush)
+            if (Ambush && MobThemes.CanPick)
             {
+
                 spawnedChest.Danger = true;
                 //the mob theme will be selected randomly
                 MobTheme chosenMobTheme = MobThemes.Pick(map.Rand);

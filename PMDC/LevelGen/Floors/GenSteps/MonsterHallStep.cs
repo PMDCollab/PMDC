@@ -23,6 +23,12 @@ namespace PMDC.LevelGen
 
         public override void Apply(T map)
         {
+            if (!ItemThemes.CanPick)
+                return;
+
+            if (!MobThemes.CanPick)
+                return;
+
             //choose a room to cram all the items in
             List<(IRoomGen, Loc, List<Rect>, int[])> possibleRooms = new List<(IRoomGen, Loc, List<Rect>, int[])>();
             for (int ii = 0; ii < map.RoomPlan.HallCount; ii++)
