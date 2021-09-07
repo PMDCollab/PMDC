@@ -9814,7 +9814,7 @@ namespace PMDC.Dungeon
                 if (VFX)
                 {
                     GameManager.Instance.BattleSE("DUN_Hit_Neutral");
-                    if (!context.Target.Unidentifiable)
+                    if (!context.User.Unidentifiable)
                     {
                         SingleEmitter endEmitter = new SingleEmitter(new AnimData("Hit_Neutral", 3));
                         endEmitter.SetupEmit(context.User.MapLoc, context.User.MapLoc, context.User.CharDir);
