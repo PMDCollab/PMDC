@@ -9122,6 +9122,7 @@ namespace PMDC.Dungeon
 
                 if (context.GlobalContextStates.Contains<TaintedDrain>())
                 {
+                    GameManager.Instance.BattleSE("DUN_Toxic");
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LIQUID_OOZE").ToLocal(), context.User.GetDisplayName(false)));
                     yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(heal * 4));
                 }

@@ -1343,15 +1343,27 @@ namespace PMDC.Dungeon
                 int seeddmg = Math.Max(1, character.MaxHP / 12);
 
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LEECH_SEED").ToLocal(), character.GetDisplayName(false)));
+                
+                GameManager.Instance.BattleSE("DUN_Hit_Neutral");
+                if (!character.Unidentifiable)
+                {
+                    SingleEmitter endEmitter = new SingleEmitter(new AnimData("Hit_Neutral", 3));
+                    endEmitter.SetupEmit(character.MapLoc, character.MapLoc, character.CharDir);
+                    DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+                }
+
                 yield return CoroutineManager.Instance.StartCoroutine(character.InflictDamage(seeddmg, false));
 
                 if (character.CharStates.Contains<DrainDamageState>())
                 {
+                    GameManager.Instance.BattleSE("DUN_Toxic");
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LIQUID_OOZE").ToLocal(), target.GetDisplayName(false)));
-                    yield return CoroutineManager.Instance.StartCoroutine(target.InflictDamage(seeddmg*4, false));
+                    yield return CoroutineManager.Instance.StartCoroutine(target.InflictDamage(seeddmg * 4, false));
                 }
                 else if (target.HP < target.MaxHP)
+                {
                     yield return CoroutineManager.Instance.StartCoroutine(target.RestoreHP(seeddmg, false));
+                }
             }
         }
     }
