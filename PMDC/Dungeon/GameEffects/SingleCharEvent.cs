@@ -1194,25 +1194,30 @@ namespace PMDC.Dungeon
     [Serializable]
     public class PerishEvent : SingleCharEvent
     {
-        public int Counter;
+        public int Mult;
 
         public PerishEvent() { }
-        public PerishEvent(int counter)
+        public PerishEvent(int mult)
         {
-            Counter = counter;
+            Mult = mult;
         }
         protected PerishEvent(PerishEvent other)
         {
-            Counter = other.Counter;
+            Mult = other.Mult;
         }
         public override GameEvent Clone() { return new PerishEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            Counter--;
-            if (Counter % 10 == 0)
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PERISH_COUNT").ToLocal(), character.GetDisplayName(false), Counter / 10));
-            if (Counter <= 0)
+            CountDownState counter = ((StatusEffect)owner).StatusStates.GetWithDefault<CountDownState>();
+            if (counter.Counter < 0)
+                yield break;
+
+            counter.Counter--;
+
+            if (counter.Counter % Mult == 0)
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PERISH_COUNT").ToLocal(), character.GetDisplayName(false), counter.Counter / Mult));
+            if (counter.Counter <= 0)
             {
                 yield return CoroutineManager.Instance.StartCoroutine(character.RemoveStatusEffect(((StatusEffect)owner).ID, false));
                 GameManager.Instance.BattleSE("DUN_Hit_Super_Effective");

@@ -11889,7 +11889,10 @@ namespace PMDC.Dungeon
             if (!context.Target.HasElement(TargetElement))
                 yield return CoroutineManager.Instance.StartCoroutine(context.Target.ChangeElement(TargetElement, context.Target.Element1));
             else
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ALREADY_HAS_ELEMENT").ToLocal(), context.Target.GetDisplayName(false), TargetElement));
+            {
+                ElementData typeData = DataManager.Instance.GetElement(TargetElement);
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ALREADY_HAS_ELEMENT").ToLocal(), context.Target.GetDisplayName(false), typeData.GetIconName()));
+            }
         }
     }
 
