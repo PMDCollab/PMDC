@@ -1191,17 +1191,22 @@ namespace PMDC.Dungeon
                 }
             }
 
-            if (matchup == Alignment.Friend || matchup == Alignment.Self)
-            {
-                if ((entry.Explosion.TargetAlignments & Alignment.Foe) == Alignment.Foe)
-                    return -delta;
-                else
-                    return delta;
-            }
-            //matchup is foe
-            return delta;
+            if (matchup == Alignment.Foe) //for enemies, having a positive effect on the target is a negative outcome for the player, so flip sign
+                return -delta;
+            else // for allies/self, having a positive effect on the target is a positive outcome for the player, keep sign
+                return delta;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="controlledChar"></param>
+        /// <param name="moveIndex"></param>
+        /// <param name="entry"></param>
+        /// <param name="seenChars"></param>
+        /// <param name="target"></param>
+        /// <param name="rangeMod"></param>
+        /// <returns>Positive number means a positive effect for the target, negative number means a negative effect for the target.</returns>
         protected int GetTargetEffect(Character controlledChar, int moveIndex, SkillData entry, List<Character> seenChars, Character target, int rangeMod)
         {
             //when trying to attack an enemy, first check for getting in range of any attack, and use that attack if possible
@@ -1238,11 +1243,13 @@ namespace PMDC.Dungeon
             }
             if (moveIndex == 217)//Present; if an ally, use healing calculations; NOTE: specialized AI code!
             {
-                if (DungeonScene.Instance.GetMatchup(controlledChar, target) == Alignment.Friend)
+                if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
                 {
                     int healHP = target.MaxHP / 3;
-                    int hpMissing = target.MaxHP - target.HP - healHP / 2;
-                    return -hpMissing * 200 / healHP;
+                    int hpToHeal = target.MaxHP - target.HP;
+                    int hpWorthHealing = Math.Max(hpToHeal - healHP / 2, 0);
+                    //the healing only has worth if the target is missing at least half the HP the healing would give
+                    return hpToHeal * 200 / healHP;
                 }
             }
                 
@@ -1278,6 +1285,11 @@ namespace PMDC.Dungeon
                     if (!nearEnemy)
                         return 0;
                 }
+                else if (moveIndex == 195)//perish song; don't care if it hits self or allies; NOTE: specialized AI code!
+                {
+                    if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
+                        return 0;
+                }
                 else if (moveIndex == 392)//aqua ring; use only if damaged; NOTE: specialized AI code!
                 {
                     if (target.HP * 4 / 3 > target.MaxHP)
@@ -1285,8 +1297,8 @@ namespace PMDC.Dungeon
                 }
                 else if (moveIndex == 516)//Bestow; use only if you have an item to give; NOTE: specialized AI code!
                 {
-                    if (controlledChar.EquippedItem.ID > -1)
-                        return 100;
+                    if (controlledChar.EquippedItem.ID > -1)//let's assume the item is always bad
+                        return -100;
                     return 0;
                 }
                 else if (moveIndex == 281)//yawn; use only if the target is OK; NOTE: specialized AI code!
@@ -1309,7 +1321,7 @@ namespace PMDC.Dungeon
                     {
                         Tile checkTile = ZoneManager.Instance.CurrentMap.Tiles[target.CharLoc.X][target.CharLoc.Y];
                         if (checkTile.Effect.ID == -1)
-                            return 70;
+                            return -70;
                         return 0;
                     }
                 }
@@ -1321,21 +1333,36 @@ namespace PMDC.Dungeon
                     {
                         IHealEvent giveEffect = (IHealEvent)effect;
                         int healHP = target.MaxHP * giveEffect.HPNum / giveEffect.HPDen;
-                        int hpMissing = target.MaxHP - target.HP - healHP / 2;
-                        return hpMissing * 200 / healHP;
+                        int hpToHeal = target.MaxHP - target.HP;
+                        int hpWorthHealing = Math.Max(hpToHeal - healHP / 2, 0);
+                        //the healing only has worth if the target is missing at least half the HP the healing would give
+                        return hpToHeal * 200 / healHP;
                     }
                     else if (effect is RemoveStateStatusBattleEvent)
                     {
+                        int totalEffect = 0;
                         RemoveStateStatusBattleEvent giveEffect = (RemoveStateStatusBattleEvent)effect;
                         foreach (StatusEffect status in target.IterateStatusEffects())
                         {
+                            int addedEffect = 0;
                             foreach (FlagType state in giveEffect.States)
                             {
                                 if (status.StatusStates.Contains(state.FullType))
-                                    return 100;
+                                {
+                                    addedEffect = -100;
+                                    break;
+                                }
+                            }
+                            if (status.StatusStates.Contains<BadStatusState>())
+                                addedEffect *= -1;
+                            StackState stack = status.StatusStates.Get<StackState>();
+                            if (stack != null)
+                            {
+                                addedEffect *= stack.Stack;
+                                addedEffect /= 2;
                             }
                         }
-                        return 0;
+                        return totalEffect;
                     }
                     else if (effect is MimicBattleEvent)
                     {
@@ -1344,25 +1371,39 @@ namespace PMDC.Dungeon
 
                         StatusEffect moveEffect;
                         if (target.StatusEffects.TryGetValue(giveEffect.LastMoveStatusID, out moveEffect))
-                            return 100;
+                        {
+                            //beneficial to self/ally, detrimental to foe
+                            if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
+                                return 100;
+                            else
+                                return -100;
+                        }
                         return 0;
                     }
                     else if (effect is ChangeToAbilityEvent)
                     {
+                        //assume always pointed at foe, always detrimental
                         if (target.Intrinsics[0].Element.ID != ((ChangeToAbilityEvent)effect).TargetAbility)
-                            return 100;
+                            return -100;
                         return 0;
                     }
                     else if (effect is ReflectAbilityEvent)
                     {
+                        //assume always pointed at foe, always detrimental
                         if (target.Intrinsics[0].Element.ID != controlledChar.Intrinsics[0].Element.ID)
-                            return 100;
+                            return -100;
                         return 0;
                     }
                     else if (effect is PowerTrickEvent)
                     {
                         if (target.ProxyAtk == -1 || target.ProxyDef == -1)
-                            return 100;
+                        {
+                            //beneficial to self/ally, detrimental to foe
+                            if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
+                                return 100;
+                            else
+                                return -100;
+                        }
                         return 0;
                     }
                     else if (effect is SetItemStickyEvent)
@@ -1371,7 +1412,7 @@ namespace PMDC.Dungeon
                         {
                             if (target.EquippedItem.Cursed)
                                 return 0;
-                            return 100;
+                            return -100;
                         }
                         int startVal = 100;
                         bool foundNonStick = false;
@@ -1389,22 +1430,7 @@ namespace PMDC.Dungeon
                         }
                         if (!foundNonStick)
                             return 0;
-                        return Math.Max(startVal, 10);
-                    }
-                    else if (effect is StatSplitEvent)
-                    {
-                        bool attackStats = ((StatSplitEvent)effect).AttackStats;
-                        if (attackStats)
-                            return target.Atk + target.MAtk - controlledChar.Atk - controlledChar.MAtk;
-                        else
-                            return target.Def + target.MDef - controlledChar.Def - controlledChar.MDef;
-                    }
-                    else if (effect is SwapAbilityEvent)
-                    {
-                        if (target.Intrinsics[0].Element.ID != controlledChar.Intrinsics[0].Element.ID &&
-                            controlledChar.Intrinsics[0].Element.ID == controlledChar.BaseIntrinsics[0])
-                            return 100;
-                        return 0;
+                        return -Math.Max(startVal, 10);
                     }
                     else if (effect is BegItemEvent)
                     {
@@ -1412,7 +1438,7 @@ namespace PMDC.Dungeon
                         {
                             if (target.EquippedItem.Cursed)
                                 return 0;
-                            return 100;
+                            return -100;
                         }
 
                         int startVal = 0;
@@ -1423,13 +1449,34 @@ namespace PMDC.Dungeon
                             else
                                 startVal += 5;
                         }
-                        return startVal;
+                        return -startVal;
+                    }
+                    else if (effect is StatSplitEvent)
+                    {
+                        bool attackStats = ((StatSplitEvent)effect).AttackStats;
+                        //higher self stats mean a positive effect on target, lower self stats mean a negative effect on the target
+                        int statDiff;
+                        if (attackStats)
+                            statDiff = (controlledChar.Atk + controlledChar.MAtk) - (target.Atk + target.MAtk);
+                        else
+                            statDiff = (controlledChar.Def + controlledChar.MDef) - (target.Def + target.MDef);
+                        //TODO: if the stat diff is below a certain threshold, do not bother
+                        return statDiff;
+                    }
+                    else if (effect is SwapAbilityEvent)
+                    {
+                        //assume always pointed at foe, always detrimental
+                        if (target.Intrinsics[0].Element.ID != controlledChar.Intrinsics[0].Element.ID &&
+                            controlledChar.Intrinsics[0].Element.ID == controlledChar.BaseIntrinsics[0])
+                            return -100;
+                        return 0;
                     }
                     else if (effect is AddElementEvent)
                     {
-                        if (target.HasElement(((AddElementEvent)effect).TargetElement))
-                            return 0;
-                        return 100;
+                        //assume always pointed at foe, always detrimental
+                        if (!target.HasElement(((AddElementEvent)effect).TargetElement))
+                            return -100;
+                        return 0;
                     }
                     else if (effect is RestEvent)
                     {
@@ -1451,21 +1498,42 @@ namespace PMDC.Dungeon
                                     return 0;
                             }
                         }
+                        //beneficial for self, detrimental to foe
+                        if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
+                            return 100;
+                        else
+                            return -100;
+                    }
+                    else if (effect is GiveMapStatusEvent)
+                    {
+                        GiveMapStatusEvent giveEffect = (GiveMapStatusEvent)effect;
+                        if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(giveEffect.StatusID))
+                            return 0;
+                        else//assume always pointed at self, always beneficial
+                        {
+                            //beneficial for self, detrimental to foe
+                            if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
+                                return 100;
+                            else
+                                return -100;
+                        }
                     }
                 }
 
                 //status checker
                 bool givesStatus = false;
-                int minStatusRedundancy = -1;
+                int statusWorth = 0;
                 foreach (BattleEvent effect in entry.Data.OnHits)
                 {
                     if (effect is StatusBattleEvent)
                     {
                         givesStatus = true;
+                        int addedWorth = 0;
                         StatusBattleEvent giveEffect = (StatusBattleEvent)effect;
+                        StatusData statusData = DataManager.Instance.GetStatus(giveEffect.StatusID);
                         Character statusTarget = giveEffect.AffectTarget ? target : controlledChar;
-                        StatusEffect status = statusTarget.GetStatusEffect(giveEffect.StatusID);
-                        if (status == null)
+                        StatusEffect existingStatus = statusTarget.GetStatusEffect(giveEffect.StatusID);
+                        if (existingStatus == null)
                         {
                             if (giveEffect.StatusID == 21)//attract NOTE: Specialized code!
                             {
@@ -1474,43 +1542,44 @@ namespace PMDC.Dungeon
                                     //failure
                                 }
                                 else
-                                    minStatusRedundancy = 0;
+                                    addedWorth = 100;
                             }
                             else if (giveEffect.StatusID == 2 && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//burn NOTE: specialized code!
                             {
                                 if (!statusTarget.HasElement(07))
-                                    minStatusRedundancy = 0;
+                                    addedWorth = 100;
                             }
                             else if (giveEffect.StatusID == 3 && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//freeze NOTE: specialized code!
                             {
                                 if (!statusTarget.HasElement(12))
-                                    minStatusRedundancy = 0;
+                                    addedWorth = 100;
                             }
                             else if (giveEffect.StatusID == 4 && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//paralyze NOTE: specialized code!
                             {
                                 if (!statusTarget.HasElement(04))
-                                    minStatusRedundancy = 0;
+                                    addedWorth = 100;
                             }
                             else if ((giveEffect.StatusID == 5 || giveEffect.StatusID == 6) && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//poison NOTE: specialized code!
                             {
                                 if (!statusTarget.HasElement(14) && !statusTarget.HasElement(17))
-                                    minStatusRedundancy = 0;
+                                    addedWorth = 100;
                             }
                             else if (giveEffect.StatusID == 90 && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//immobilize NOTE: specialized code!
                             {
                                 if (!statusTarget.HasElement(09))
-                                    minStatusRedundancy = 0;
+                                    addedWorth = 100;
                             }
                             else if (giveEffect.StatusID == 60)//disable NOTE: specialized code!
                             {
                                 if (statusTarget.StatusEffects.ContainsKey(26))
-                                    minStatusRedundancy = 0;
+                                    addedWorth = 100;
                             }
                             else
-                                minStatusRedundancy = 0;
+                                addedWorth = 100;
                         }
                         else if (effect is StatusStackBattleEvent)
                         {
+                            addedWorth = 64;
                             StatusData statusEntry = DataManager.Instance.GetStatus(giveEffect.StatusID);
                             int minStack = 0;
                             int maxStack = 0;
@@ -1523,42 +1592,43 @@ namespace PMDC.Dungeon
                                 }
                             }
                             StatusStackBattleEvent stackEffect = (StatusStackBattleEvent)effect;
-                            int existingStack = status.StatusStates.GetWithDefault<StackState>().Stack;
-                            if (stackEffect.Stack > 0 && existingStack < maxStack)
-                                minStatusRedundancy = (minStatusRedundancy == -1 ? Math.Abs(existingStack * 6 / maxStack) : Math.Min(minStatusRedundancy, Math.Abs(existingStack * 6 / maxStack)));
-                            else if (stackEffect.Stack < 0 && existingStack > minStack)
-                                minStatusRedundancy = (minStatusRedundancy == -1 ? Math.Abs(-existingStack * 6 / minStack) : Math.Min(minStatusRedundancy, Math.Abs(-existingStack * 6 / minStack)));
+                            int existingStack = existingStatus.StatusStates.GetWithDefault<StackState>().Stack;
+                            if (stackEffect.Stack > 0)
+                            {
+                                //positive stack implies a positive effect
+                                int addableStack = Math.Min(stackEffect.Stack, maxStack - existingStack);
+                                addedWorth *= addableStack;
+                                addedWorth /= stackEffect.Stack;
+
+                                for (int ii = 0; ii < existingStack; ii++)
+                                    addedWorth /= 2;
+                            }
+                            else if (stackEffect.Stack < 0)
+                            {
+                                //negative stack implies a negative effect
+                                addedWorth *= -1;
+                                int addableStack = Math.Max(stackEffect.Stack, maxStack - existingStack);
+                                //addedWorth will always be multiplied and divided by a negative number, resulting in no sign change
+                                addedWorth *= addableStack;
+                                addedWorth /= stackEffect.Stack;
+
+                                for (int ii = 0; ii < -existingStack; ii++)
+                                    addedWorth /= 2;
+                            }
                         }
+
+                        if (statusData.StatusStates.Contains<BadStatusState>())
+                            addedWorth *= -1;
+
+                        statusWorth += addedWorth;
                     }
                 }
 
                 if (givesStatus)
-                {
-                    if (minStatusRedundancy == -1)
-                        return 0;
-                    else
-                    {
-                        int redundantVal = 64;
-                        for (int ii = 0; ii < minStatusRedundancy; ii++)
-                            redundantVal /= 2;
-                        return redundantVal;
-                    }
-                }
+                    return statusWorth;
 
-                //weather checker
-                foreach (BattleEvent effect in entry.Data.OnHits)
-                {
-                    if (effect is GiveMapStatusEvent)
-                    {
-                        GiveMapStatusEvent giveEffect = (GiveMapStatusEvent)effect;
-                        if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(giveEffect.StatusID))
-                            return 0;
-                        else
-                            return 100;
-                    }
-                }
-
-                return 100;
+                //for any other effect, assume it has a negative effect on the target
+                return -100;
             }
             else
             {
@@ -1643,7 +1713,8 @@ namespace PMDC.Dungeon
                 power *= PreTypeEvent.GetEffectivenessMult(matchup);
                 power /= PreTypeEvent.GetEffectivenessMult(PreTypeEvent.NRM_2);
 
-                return power;
+                //positive power means positive damage, meaning negative effect
+                return -power;
             }
         }
 
