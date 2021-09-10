@@ -36,10 +36,13 @@ namespace PMDC.Dungeon
                 GameAction attack = TryAttackChoice(rand, controlledChar, AttackPattern);
                 if (attack.Type != GameAction.ActionType.Wait)
                     return attack;
-
                 return null;
             }
-            else
+
+            //if we have another move we can make, take this turn to reposition
+            int extraTurns = controlledChar.MovementSpeed - controlledChar.TiersUsed;
+
+            if (extraTurns <= 0)
             {
                 //attempt to use a move
                 GameAction attack = TryAttackChoice(rand, controlledChar, AttackPattern);
@@ -68,9 +71,13 @@ namespace PMDC.Dungeon
             Character targetChar = null;
             Dictionary<Loc, RangeTarget> endHash = new Dictionary<Loc, RangeTarget>();
             Loc[] ends = null;
+            bool hasSelfEnd = false;//the controlledChar's destination is included among ends
             bool aimForDistance = false; // determines if we are pathing directly to the target or to a tile we can hit the target from
 
             PositionChoice positioning = PositionPattern;
+            if (extraTurns > 0)
+                positioning = PositionChoice.Avoid;
+
             if (controlledChar.AttackOnly)
                 positioning = PositionChoice.Approach;
 
@@ -99,8 +106,19 @@ namespace PMDC.Dungeon
                         }
                         addLoc = true;
                     }
-                    if (addLoc && endLoc != controlledChar.CharLoc)//destination cannot be the current location
-                        endList.Add(endLoc);
+                    if (addLoc)
+                    {
+                        if (endLoc != controlledChar.CharLoc)//destination cannot be the current location (unless we have turns to spare)
+                            endList.Add(endLoc);
+                        else
+                        {
+                            if (extraTurns > 0)
+                            {
+                                endList.Add(endLoc);
+                                hasSelfEnd = true;
+                            }
+                        }
+                    }
                 }
                 ends = endList.ToArray();
             }
@@ -114,9 +132,10 @@ namespace PMDC.Dungeon
                 }
             }
 
+            //now actually decide the path to get there
             if (ends.Length > 0)
             {
-                List<Loc>[] closestPaths = GetPaths(controlledChar, ends, !aimForDistance, !preThink);
+                List<Loc>[] closestPaths = GetPaths(controlledChar, ends, !aimForDistance, !preThink, hasSelfEnd ? 2 : 1);
                 int closestIdx = -1;
                 for (int ii = 0; ii < ends.Length; ii++)
                 {
@@ -132,7 +151,7 @@ namespace PMDC.Dungeon
                         closestIdx = ii;
                     else
                     {
-                        int cmp = comparePathValues(endHash[ends[ii]], endHash[ends[closestIdx]]);
+                        int cmp = comparePathValues(positioning, endHash[ends[ii]], endHash[ends[closestIdx]]);
                         if (cmp > 0)
                             closestIdx = ii;
                         else if (cmp == 0)
@@ -200,12 +219,12 @@ namespace PMDC.Dungeon
         /// <param name="newVal"></param>
         /// <param name="curBest"></param>
         /// <returns></returns>
-        private int comparePathValues(RangeTarget newVal, RangeTarget curBest)
+        private int comparePathValues(PositionChoice positioning, RangeTarget newVal, RangeTarget curBest)
         {
             if (newVal.Weight == curBest.Weight)
                 return 0;
 
-            switch (PositionPattern)
+            switch (positioning)
             {
                 case PositionChoice.Avoid:
                     if (newVal.Weight > curBest.Weight)

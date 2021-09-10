@@ -216,7 +216,7 @@ namespace PMDC.Dungeon
         /// <param name="freeGoal">Determines whether the goal should be reachable even if blocked.</param>
         /// <param name="respectPeers"></param>
         /// <returns></returns>
-        protected List<Loc>[] GetPaths(Character controlledChar, Loc[] ends, bool freeGoal, bool respectPeers)
+        protected List<Loc>[] GetPaths(Character controlledChar, Loc[] ends, bool freeGoal, bool respectPeers, int limit = 1)
         {
 
             //requires a valid target tile
@@ -252,7 +252,7 @@ namespace PMDC.Dungeon
 
 
             Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
-            return Grid.FindNPaths(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, ends, checkBlock, checkDiagBlock, 1, true);
+            return Grid.FindNPaths(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, ends, checkBlock, checkDiagBlock, limit, true);
         }
 
         protected List<Loc> GetRandomPathPermissive(ReRandom rand, Character controlledChar, List<Loc> seenExits)
