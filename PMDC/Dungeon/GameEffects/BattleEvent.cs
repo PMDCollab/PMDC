@@ -5862,31 +5862,18 @@ namespace PMDC.Dungeon
             List<Stat> stats = new List<Stat>();
             if (TargetElement == 00 || form.Element1 == TargetElement || form.Element2 == TargetElement)
             {
-                heal = 15;
+                heal = 20;
                 stats.Add(Stat.HP);
                 stats.Add(Stat.Attack);
                 stats.Add(Stat.Defense);
                 stats.Add(Stat.MAtk);
                 stats.Add(Stat.MDef);
                 stats.Add(Stat.Speed);
-            }
-            else if (typeMatchup < PreTypeEvent.NRM_2)
-            {
-                heal = 10;
-                stats.Add(Stat.Attack);
-                stats.Add(Stat.MAtk);
-            }
-            else if (typeMatchup > PreTypeEvent.NRM_2)
-            {
-                heal = 10;
-                stats.Add(Stat.Defense);
-                stats.Add(Stat.MDef);
             }
             else
             {
-                heal = 5;
-                stats.Add(Stat.HP);
-                stats.Add(Stat.Speed);
+                heal = 10;
+                stats.Add((Stat)DataManager.Instance.Save.Rand.Next(6));
             }
 
             foreach (Stat stat in stats)
@@ -6256,7 +6243,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            context.Data.Element = 1 + DataManager.Instance.Save.Rand.Next() % 18;
+            context.Data.Element = 1 + DataManager.Instance.Save.Rand.Next() % (DataManager.Instance.DataIndices[DataManager.DataType.Element].Count - 1);
             ElementData element = DataManager.Instance.GetElement(context.Data.Element);
             DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SKILL_TO_ELEMENT").ToLocal(), element.GetIconName()));
             yield break;
