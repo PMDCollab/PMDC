@@ -5870,10 +5870,23 @@ namespace PMDC.Dungeon
                 stats.Add(Stat.MDef);
                 stats.Add(Stat.Speed);
             }
-            else
+            else if (typeMatchup < PreTypeEvent.NRM_2)
             {
                 heal = 10;
-                stats.Add((Stat)DataManager.Instance.Save.Rand.Next(6));
+                stats.Add(Stat.Attack);
+                stats.Add(Stat.MAtk);
+            }
+            else if (typeMatchup > PreTypeEvent.NRM_2)
+            {
+                heal = 10;
+                stats.Add(Stat.Defense);
+                stats.Add(Stat.MDef);
+            }
+            else
+            {
+                heal = 5;
+                stats.Add(Stat.HP);
+                stats.Add(Stat.Speed);
             }
 
             foreach (Stat stat in stats)
