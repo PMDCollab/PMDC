@@ -41,6 +41,7 @@ namespace PMDC
             string[] args = System.Environment.GetCommandLineArgs();
             PathMod.InitExePath(System.IO.Path.GetDirectoryName(args[0]));
             DiagManager.InitInstance();
+            DiagManager.Instance.CurSettings = DiagManager.Instance.LoadSettings();
             DiagManager.Instance.UpgradeBinder = new UpgradeBinder();
 
             try
