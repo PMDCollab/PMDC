@@ -1284,6 +1284,8 @@ namespace PMDC.Dungeon
                     }
                     if (!nearEnemy)
                         return 0;
+                    //always use on self; considered good on self
+                    return 100;
                 }
                 else if (moveIndex == 195)//perish song; don't care if it hits self or allies; NOTE: specialized AI code!
                 {
@@ -1309,10 +1311,12 @@ namespace PMDC.Dungeon
                             return 0;
                     }
                 }
-                else if (moveIndex == 100)//teleport; never use here; handle it elsewhere; NOTE: specialized AI code!
+                else if (moveIndex == 100)//teleport; never use here if we attack to escape; handle it elsewhere; NOTE: specialized AI code!
                 {
                     if ((IQ & AIFlags.AttackToEscape) == AIFlags.None)
                         return 0;
+                    else//always use on self; considered good on self
+                        return 100;
                 }
 
                 foreach (BattleEvent effect in entry.Data.OnHitTiles)
@@ -1533,8 +1537,50 @@ namespace PMDC.Dungeon
                         StatusData statusData = DataManager.Instance.GetStatus(giveEffect.StatusID);
                         Character statusTarget = giveEffect.AffectTarget ? target : controlledChar;
                         StatusEffect existingStatus = statusTarget.GetStatusEffect(giveEffect.StatusID);
-                        if (existingStatus == null)
+                        if (effect is StatusStackBattleEvent)
                         {
+                            addedWorth = 64;
+                            StatusData statusEntry = DataManager.Instance.GetStatus(giveEffect.StatusID);
+                            int minStack = 0;
+                            int maxStack = 0;
+                            foreach (StatusGivenEvent beforeEffect in statusEntry.BeforeStatusAdds)
+                            {
+                                if (beforeEffect is StatusStackCheck)
+                                {
+                                    minStack = ((StatusStackCheck)beforeEffect).Minimum;
+                                    maxStack = ((StatusStackCheck)beforeEffect).Maximum;
+                                }
+                            }
+                            StatusStackBattleEvent stackEffect = (StatusStackBattleEvent)effect;
+                            int existingStack = 0;
+                            if (existingStatus != null)
+                                existingStack = existingStatus.StatusStates.GetWithDefault<StackState>().Stack;
+                            if (stackEffect.Stack > 0)
+                            {
+                                //positive stack implies a positive effect
+                                int addableStack = Math.Min(stackEffect.Stack, maxStack - existingStack);
+                                addedWorth *= addableStack;
+                                addedWorth /= stackEffect.Stack;
+
+                                for (int ii = 0; ii < existingStack; ii++)
+                                    addedWorth /= 2;
+                            }
+                            else if (stackEffect.Stack < 0)
+                            {
+                                //negative stack implies a negative effect
+                                addedWorth *= -1;
+                                int addableStack = Math.Max(stackEffect.Stack, minStack - existingStack);
+                                //addedWorth will always be multiplied and divided by a negative number, resulting in no sign change
+                                addedWorth *= addableStack;
+                                addedWorth /= stackEffect.Stack;
+
+                                for (int ii = 0; ii < -existingStack; ii++)
+                                    addedWorth /= 2;
+                            }
+                        }
+                        else if (existingStatus == null)
+                        {
+                            //Not a stackable status, and it doesn't exist on the target yet
                             if (giveEffect.StatusID == 21)//attract NOTE: Specialized code!
                             {
                                 if ((statusTarget.CurrentForm.Gender == Gender.Genderless) != (statusTarget.CurrentForm.Gender == controlledChar.CurrentForm.Gender))
@@ -1577,45 +1623,6 @@ namespace PMDC.Dungeon
                             else
                                 addedWorth = 100;
                         }
-                        else if (effect is StatusStackBattleEvent)
-                        {
-                            addedWorth = 64;
-                            StatusData statusEntry = DataManager.Instance.GetStatus(giveEffect.StatusID);
-                            int minStack = 0;
-                            int maxStack = 0;
-                            foreach (StatusGivenEvent beforeEffect in statusEntry.BeforeStatusAdds)
-                            {
-                                if (beforeEffect is StatusStackCheck)
-                                {
-                                    minStack = ((StatusStackCheck)beforeEffect).Minimum;
-                                    maxStack = ((StatusStackCheck)beforeEffect).Maximum;
-                                }
-                            }
-                            StatusStackBattleEvent stackEffect = (StatusStackBattleEvent)effect;
-                            int existingStack = existingStatus.StatusStates.GetWithDefault<StackState>().Stack;
-                            if (stackEffect.Stack > 0)
-                            {
-                                //positive stack implies a positive effect
-                                int addableStack = Math.Min(stackEffect.Stack, maxStack - existingStack);
-                                addedWorth *= addableStack;
-                                addedWorth /= stackEffect.Stack;
-
-                                for (int ii = 0; ii < existingStack; ii++)
-                                    addedWorth /= 2;
-                            }
-                            else if (stackEffect.Stack < 0)
-                            {
-                                //negative stack implies a negative effect
-                                addedWorth *= -1;
-                                int addableStack = Math.Max(stackEffect.Stack, maxStack - existingStack);
-                                //addedWorth will always be multiplied and divided by a negative number, resulting in no sign change
-                                addedWorth *= addableStack;
-                                addedWorth /= stackEffect.Stack;
-
-                                for (int ii = 0; ii < -existingStack; ii++)
-                                    addedWorth /= 2;
-                            }
-                        }
 
                         if (statusData.StatusStates.Contains<BadStatusState>())
                             addedWorth *= -1;
@@ -1627,8 +1634,11 @@ namespace PMDC.Dungeon
                 if (givesStatus)
                     return statusWorth;
 
-                //for any other effect, assume it has a negative effect on the target
-                return -100;
+                //for any other effect, assume it has a negative effect on foes, and positive effect on allies
+                if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
+                    return 100;
+                else
+                    return -100;
             }
             else
             {
