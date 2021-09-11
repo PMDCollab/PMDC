@@ -105,7 +105,7 @@ namespace PMDC.LevelGen
                     }
                     PresetMultiRand<IStepSpawner<ListMapGenContext, MapItem>> groupRand = new PresetMultiRand<IStepSpawner<ListMapGenContext, MapItem>>(steps.ToArray());
                     RandomRoomSpawnStep<ListMapGenContext, MapItem> detourItems = ItemPlacements[id].Copy();
-                    detourItems.Spawn = new StepSpawner<ListMapGenContext, MapItem>(groupRand);
+                    detourItems.Spawn = new MultiStepSpawner<ListMapGenContext, MapItem>(groupRand);
                     queue.Enqueue(ItemPriority, detourItems);
                 }
 

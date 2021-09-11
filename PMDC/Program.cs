@@ -299,8 +299,24 @@ namespace PMDC
             DataEditor.AddEditor(new EntryDataEditor());
             DataEditor.AddEditor(new FrameTypeEditor());
             DataEditor.AddEditor(new MapItemEditor());
-            DataEditor.AddEditor(new StepSpawnerEditor());
+            
+            DataEditor.AddEditor(new MultiStepSpawnerEditor());
+            DataEditor.AddEditor(new PickerSpawnerEditor());
+            DataEditor.AddEditor(new ContextSpawnerEditor());
             DataEditor.AddEditor(new TeamStepSpawnerEditor());
+            DataEditor.AddEditor(new StepSpawnerEditor());
+
+            DataEditor.AddEditor(new GridPathCircleEditor());
+            DataEditor.AddEditor(new GridPathBranchEditor());
+
+            DataEditor.AddEditor(new AddConnectedRoomsStepEditor());
+            DataEditor.AddEditor(new AddDisconnectedRoomsStepEditor());
+            DataEditor.AddEditor(new ConnectRoomStepEditor());
+            DataEditor.AddEditor(new FloorPathBranchEditor());
+
+            DataEditor.AddEditor(new RoomGenCrossEditor());
+            DataEditor.AddEditor(new SizedRoomGenEditor());
+
             DataEditor.AddEditor(new MonsterIDEditor());
 
             DataEditor.AddEditor(new TeamMemberSpawnEditor());
@@ -321,17 +337,17 @@ namespace PMDC
             DataEditor.AddEditor(new ColumnAnimEditor());
             DataEditor.AddEditor(new StaticAnimEditor());
             DataEditor.AddEditor(new TypeDictEditor());
-            DataEditor.AddEditor(new RangeDictEditor());
+            DataEditor.AddEditor(new RangeDictEditor(false, true));
             DataEditor.AddEditor(new SpawnListEditor());
-            DataEditor.AddEditor(new SpawnRangeListEditor());
+            DataEditor.AddEditor(new SpawnRangeListEditor(false, true));
             DataEditor.AddEditor(new PriorityListEditor());
             DataEditor.AddEditor(new PriorityEditor());
             DataEditor.AddEditor(new SegLocEditor());
             DataEditor.AddEditor(new LocEditor());
-            DataEditor.AddEditor(new RandRangeEditor());
+            DataEditor.AddEditor(new RandRangeEditor(false, true));
             DataEditor.AddEditor(new RandPickerEditor());
             DataEditor.AddEditor(new MultiRandPickerEditor());
-            DataEditor.AddEditor(new IntRangeEditor());
+            DataEditor.AddEditor(new IntRangeEditor(false, true));
             DataEditor.AddEditor(new FlagTypeEditor());
             DataEditor.AddEditor(new ColorEditor());
             DataEditor.AddEditor(new TypeEditor());
