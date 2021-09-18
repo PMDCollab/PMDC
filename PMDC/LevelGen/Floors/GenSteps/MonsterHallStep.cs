@@ -12,7 +12,7 @@ namespace PMDC.LevelGen
     public class MonsterHallStep<T> : MonsterHouseBaseStep<T> where T : ListMapGenContext
     {
         public MonsterHallStep() : base() { Filters = new List<BaseRoomFilter>(); }
-        public MonsterHallStep(List<BaseRoomFilter> filters) : base() { Filters = filters; }
+        public MonsterHallStep(Loc size, List<BaseRoomFilter> filters) : base() { Size = size; Filters = filters; }
         public MonsterHallStep(MonsterHallStep<T> other) : base(other)
         {
             Filters = new List<BaseRoomFilter>();
@@ -20,6 +20,131 @@ namespace PMDC.LevelGen
         }
         public override MonsterHouseBaseStep<T> CreateNew() { return new MonsterHallStep<T>(this); }
         public List<BaseRoomFilter> Filters { get; set; }
+
+        public Loc Size { get; set; }
+
+        private Rect clampToBounds(Rect input, Rect bounds)
+        {
+            Rect output = input;
+            //correct monsterhouse bounds within the room bounds
+            if (output.Bottom > bounds.Bottom - 1)
+                output.Start = new Loc(output.Start.X, output.Start.Y - (output.Bottom - (bounds.Bottom - 1)));
+            if (output.Right > bounds.Right - 1)
+                output.Start = new Loc(output.Start.X - (output.Right - (bounds.Right - 1)), output.Start.Y);
+
+            if (output.Top < bounds.Top + 1)
+                output.Start = new Loc(output.Start.X, bounds.Top + 1);
+            if (output.Left < bounds.Left + 1)
+                output.Start = new Loc(bounds.Left + 1, output.Start.Y);
+
+            output.Size = new Loc(Math.Min(output.Width, bounds.Width - 2), Math.Min(output.Height, bounds.Height - 2));
+            return output;
+        }
+
+        private void TryAddPossibleRoom(T map, List<(Loc, List<Rect>, int[])> possibleRooms, IRoomGen cand, Loc originPoint)
+        {
+            //verify it is not blocked
+            if (map.TileBlocked(originPoint))
+                return;
+
+            //verify that it is a chokepoint
+            bool chokePoint = Grid.IsChokePoint(originPoint - new Loc(1), new Loc(3), originPoint,
+                map.TileBlocked, (Loc testLoc) => { return true; });
+
+            if (!chokePoint)
+                return;
+
+            int stages = 4;
+            Loc size = new Loc(Math.Max(Size.X, 1 + stages * 2), Math.Max(Size.Y, 1 + stages * 2));
+            Rect potentialBounds = new Rect(originPoint - new Loc(size.X / 2, size.Y / 2), size);
+
+            ////correct monsterhouse bounds within the room bounds
+            //clampToBounds(potentialBounds, cand.Draw);
+
+            potentialBounds = clampToBounds(potentialBounds, new Rect(0, 0, map.Width, map.Height));
+
+            //check to see if every phase of the crumble will sufficiently remove enough walls
+            //also check against unbreakable tiles; if we find any, the room is invalid
+            List<Rect> phases = new List<Rect>();
+            phases.Add(new Rect(originPoint, new Loc(1)));
+            phases.Add(potentialBounds);
+
+            //middle
+            {
+                Rect phaseFrom = phases[0];
+                Rect phaseTo = phases[1];
+                Rect midpoint = Rect.FromPoints(new Loc((phaseFrom.Start.X + phaseTo.Start.X) / 2, (phaseFrom.Start.Y + phaseTo.Start.Y) / 2),
+                    new Loc((phaseFrom.End.X + phaseTo.End.X) / 2, (phaseFrom.End.Y + phaseTo.End.Y) / 2));
+                phases.Insert(1, midpoint);
+            }
+            //early middle
+            {
+                Rect phaseFrom = phases[0];
+                Rect phaseTo = phases[1];
+                Rect midpoint = Rect.FromPoints(new Loc((phaseFrom.Start.X + phaseTo.Start.X) / 2, (phaseFrom.Start.Y + phaseTo.Start.Y) / 2),
+                    new Loc((phaseFrom.End.X + phaseTo.End.X) / 2, (phaseFrom.End.Y + phaseTo.End.Y) / 2));
+                phases.Insert(1, midpoint);
+            }
+            //late middle
+            {
+                Rect phaseFrom = phases[2];
+                Rect phaseTo = phases[3];
+                Rect midpoint = Rect.FromPoints(new Loc((phaseFrom.Start.X + phaseTo.Start.X) / 2, (phaseFrom.Start.Y + phaseTo.Start.Y) / 2),
+                    new Loc((phaseFrom.End.X + phaseTo.End.X) / 2, (phaseFrom.End.Y + phaseTo.End.Y) / 2));
+                phases.Insert(3, midpoint);
+            }
+            phases.RemoveAt(0);
+
+            int[] blockedTiles = new int[phases.Count];
+            bool containsImpassable = false;
+            for (int yy = potentialBounds.Start.Y; yy < potentialBounds.End.Y; yy++)
+            {
+                for (int xx = potentialBounds.Start.X; xx < potentialBounds.End.X; xx++)
+                {
+                    if (map.Tiles[xx][yy].TileEquivalent(map.UnbreakableTerrain))
+                    {
+                        containsImpassable = true;
+                        break;
+                    }
+                    else if (map.Tiles[xx][yy].TileEquivalent(map.WallTerrain))
+                    {
+                        for (int nn = 0; nn < phases.Count; nn++)
+                        {
+                            if (Collision.InBounds(phases[nn], new Loc(xx, yy)))
+                            {
+                                blockedTiles[nn]++;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (containsImpassable)
+                    break;
+            }
+            if (containsImpassable)
+                return;
+
+            bool lackingTiles = false;
+            int prevTiles = 1;
+            for (int nn = 0; nn < phases.Count; nn++)
+            {
+                int totalTiles = phases[nn].Area - prevTiles;
+
+                if (blockedTiles[nn] < totalTiles / 2)
+                {
+                    lackingTiles = true;
+                    break;
+                }
+
+                prevTiles = phases[nn].Area;
+            }
+
+            if (lackingTiles)
+                return;
+
+            possibleRooms.Add((originPoint, phases, blockedTiles));
+        }
+
 
         public override void Apply(T map)
         {
@@ -30,136 +155,27 @@ namespace PMDC.LevelGen
                 return;
 
             //choose a room to cram all the items in
-            List<(IRoomGen, Loc, List<Rect>, int[])> possibleRooms = new List<(IRoomGen, Loc, List<Rect>, int[])>();
+            List<(Loc center, List<Rect> phases, int[] blockedTiles)> possibleRooms = new List<(Loc, List<Rect>, int[])>();
             for (int ii = 0; ii < map.RoomPlan.HallCount; ii++)
             {
                 IRoomGen cand = map.RoomPlan.GetHall(ii);
                 if (!BaseRoomFilter.PassesAllFilters(map.RoomPlan.GetHallPlan(ii), this.Filters))
                     continue;
-                if (cand.Draw.Width < 10 && cand.Draw.Height < 10 || cand.Draw.Width < 7 || cand.Draw.Height < 7)
-                    continue;
 
-                Loc? originPoint = Grid.FindClosestConnectedTile(cand.Draw.Start + new Loc(1), cand.Draw.Size - new Loc(2),
-                    (Loc testLoc) => { return !map.TileBlocked(testLoc); },
-                    (Loc testLoc) => { return false; }, (Loc testLoc) => { return false; },
-                    cand.Draw.Center);
-
-                //verify we have a walkable hall point
-                if (originPoint == null)
-                    continue;
-
-                //verify that it is a chokepoint
-                bool chokePoint = Grid.IsChokePoint(originPoint.Value - new Loc(1), new Loc(3), originPoint.Value,
-                    map.TileBlocked, (Loc testLoc) => { return true; });
-
-                if (!chokePoint)
-                    continue;
-
-                Rect potentialBounds = new Rect(originPoint.Value - new Loc(7), new Loc(15));
-
-                //correct monsterhouse bounds within the room bounds
-                if (potentialBounds.Bottom > cand.Draw.Bottom - 1)
-                    potentialBounds.Start = new Loc(potentialBounds.Start.X, potentialBounds.Start.Y - (potentialBounds.Bottom - (cand.Draw.Bottom - 1)));
-                if (potentialBounds.Right > cand.Draw.Right - 1)
-                    potentialBounds.Start = new Loc(potentialBounds.Start.X - (potentialBounds.Right - (cand.Draw.Right - 1)), potentialBounds.Start.Y);
-
-                if (potentialBounds.Top < cand.Draw.Top + 1)
-                    potentialBounds.Start = new Loc(potentialBounds.Start.X, cand.Draw.Top + 1);
-                if (potentialBounds.Left < cand.Draw.Left + 1)
-                    potentialBounds.Start = new Loc(cand.Draw.Left + 1, potentialBounds.Start.Y);
-
-                potentialBounds.Size = new Loc(Math.Min(potentialBounds.Width, cand.Draw.Width-2), Math.Min(potentialBounds.Height, cand.Draw.Height - 2));
-
-                //check to see if every phase of the crumble will sufficiently remove enough walls
-                //also check against unbreakable tiles; if we find any, the room is invalid
-                List<Rect> phases = new List<Rect>();
-                phases.Add(new Rect(originPoint.Value, new Loc(1)));
-                phases.Add(potentialBounds);
-
-                //middle
+                for (int xx = cand.Draw.Start.X; xx < cand.Draw.End.X; xx++)
                 {
-                    Rect phaseFrom = phases[0];
-                    Rect phaseTo = phases[1];
-                    Rect midpoint = Rect.FromPoints(new Loc((phaseFrom.Start.X + phaseTo.Start.X) / 2, (phaseFrom.Start.Y + phaseTo.Start.Y) / 2),
-                        new Loc((phaseFrom.End.X + phaseTo.End.X) / 2, (phaseFrom.End.Y + phaseTo.End.Y) / 2));
-                    phases.Insert(1, midpoint);
+                    for (int yy = cand.Draw.Start.Y; yy < cand.Draw.End.Y; yy++)
+                        TryAddPossibleRoom(map, possibleRooms, cand, new Loc(xx, yy));
                 }
-                //early middle
-                {
-                    Rect phaseFrom = phases[0];
-                    Rect phaseTo = phases[1];
-                    Rect midpoint = Rect.FromPoints(new Loc((phaseFrom.Start.X + phaseTo.Start.X) / 2, (phaseFrom.Start.Y + phaseTo.Start.Y) / 2),
-                        new Loc((phaseFrom.End.X + phaseTo.End.X) / 2, (phaseFrom.End.Y + phaseTo.End.Y) / 2));
-                    phases.Insert(1, midpoint);
-                }
-                //late middle
-                {
-                    Rect phaseFrom = phases[2];
-                    Rect phaseTo = phases[3];
-                    Rect midpoint = Rect.FromPoints(new Loc((phaseFrom.Start.X + phaseTo.Start.X) / 2, (phaseFrom.Start.Y + phaseTo.Start.Y) / 2),
-                        new Loc((phaseFrom.End.X + phaseTo.End.X) / 2, (phaseFrom.End.Y + phaseTo.End.Y) / 2));
-                    phases.Insert(3, midpoint);
-                }
-                phases.RemoveAt(0);
-
-                int[] blockedTiles = new int[phases.Count];
-                bool containsImpassable = false;
-                for (int yy = potentialBounds.Start.Y; yy < potentialBounds.End.Y; yy++)
-                {
-                    for (int xx = potentialBounds.Start.X; xx < potentialBounds.End.X; xx++)
-                    {
-                        if (map.Tiles[xx][yy].TileEquivalent(map.UnbreakableTerrain))
-                        {
-                            containsImpassable = true;
-                            break;
-                        }
-                        else if (map.Tiles[xx][yy].TileEquivalent(map.WallTerrain))
-                        {
-                            for (int nn = 0; nn < phases.Count; nn++)
-                            {
-                                if (Collision.InBounds(phases[nn], new Loc(xx, yy)))
-                                {
-                                    blockedTiles[nn]++;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    if (containsImpassable)
-                        break;
-                }
-                if (containsImpassable)
-                    continue;
-
-                bool lackingTiles = false;
-                int prevTiles = 1;
-                for (int nn = 0; nn < phases.Count; nn++)
-                {
-                    int totalTiles = phases[nn].Area - prevTiles;
-
-                    if (blockedTiles[nn] < totalTiles / 2)
-                    {
-                        lackingTiles = true;
-                        break;
-                    }
-
-                    prevTiles = phases[nn].Area;
-                }
-
-                if (lackingTiles)
-                    continue;
-
-                possibleRooms.Add((cand, originPoint.Value, phases, blockedTiles));
             }
 
             if (possibleRooms.Count == 0)
                 return;
 
             int chosenIndex = map.Rand.Next(possibleRooms.Count);
-            IRoomGen room = possibleRooms[chosenIndex].Item1;
-            Loc startLoc = possibleRooms[chosenIndex].Item2;
-            List<Rect> housePhases = possibleRooms[chosenIndex].Item3;
-            int[] blockedPhaseTiles = possibleRooms[chosenIndex].Item4;
+            Loc startLoc = possibleRooms[chosenIndex].center;
+            List<Rect> housePhases = possibleRooms[chosenIndex].phases;
+            int[] blockedPhaseTiles = possibleRooms[chosenIndex].blockedTiles;
 
             //determine the number of free tiles to put items on; trim the maximum item spawn accordingly (maximum <= 1/2 of free tiles)
             //determine the number of free tiles to put mobs on; trim the maximum mob spawn accordingly (maximum <= 1/2 of free tiles)
