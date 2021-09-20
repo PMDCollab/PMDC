@@ -928,6 +928,7 @@ namespace PMDC.Dungeon
                     character.OnRemove();
                     character.HP = character.MaxHP;
                     character.Dead = false;
+                    character.DefeatAt = "";
 
                     //smoke poof
                     GameManager.Instance.BattleSE("DUN_Substitute");
@@ -991,6 +992,7 @@ namespace PMDC.Dungeon
                 character.OnRemove();
                 character.HP = character.MaxHP;
                 character.Dead = false;
+                character.DefeatAt = "";
 
                 GameManager.Instance.BattleSE("DUN_Send_Home");
                 SingleEmitter emitter = new SingleEmitter(new BeamAnimData("Column_Yellow", 3));
@@ -1139,6 +1141,7 @@ namespace PMDC.Dungeon
                 character.OnRemove();
                 character.HP = character.MaxHP;
                 character.Dead = false;
+                character.DefeatAt = "";
 
                 GameManager.Instance.BattleSE("DUN_Send_Home");
                 SingleEmitter emitter = new SingleEmitter(new BeamAnimData("Column_Yellow", 3));
@@ -3166,8 +3169,10 @@ namespace PMDC.Dungeon
             foreach (Character character in DungeonScene.Instance.ActiveTeam.IterateMainByRank())
             {
                 if (character.Dead)
+                {
                     character.Dead = false;
-
+                    character.DefeatAt = "";
+                }
                 character.FullRestore();
             }
 
