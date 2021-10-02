@@ -13653,6 +13653,7 @@ namespace PMDC.Dungeon
                         else
                             DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_RECRUIT_ANY").ToLocal(), context.Target.GetDisplayName(true)));
                         DataManager.Instance.Save.RegisterMonster(context.Target.BaseForm.Species);
+                        DataManager.Instance.Save.RogueUnlockMonster(context.Target.BaseForm.Species);
                         yield return CoroutineManager.Instance.StartCoroutine(context.Target.OnMapStart());
 
                         if (DungeonScene.Instance.ActiveTeam.Players.Count > DungeonScene.Instance.ActiveTeam.GetMaxTeam(ZoneManager.Instance.CurrentZone))

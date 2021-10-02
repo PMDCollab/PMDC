@@ -416,6 +416,7 @@ namespace PMDC.Data
             player.RefreshTraits();
 
             DataManager.Instance.Save.RegisterMonster(character.BaseForm.Species);
+            DataManager.Instance.Save.RogueUnlockMonster(character.BaseForm.Species);
         }
     }
 

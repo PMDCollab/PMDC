@@ -2784,6 +2784,7 @@ namespace PMDC.Dungeon
             yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(String.Format(new StringKey("DLG_EVO_COMPLETE").ToLocal(), oldName, entry.GetColoredName())));
 
             DataManager.Instance.Save.RegisterMonster(character.BaseForm.Species);
+            DataManager.Instance.Save.RogueUnlockMonster(character.BaseForm.Species);
             yield return CoroutineManager.Instance.StartCoroutine(character.OnMapStart());
 
             yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.CheckLevelSkills(character, 0));
