@@ -30,11 +30,11 @@ namespace PMDC.Dev
             try
             {
                 EntryDataIndex fullGuide = new EntryDataIndex();
-
+                fullGuide.Entries = new EntrySummary[max];
                 for (int ii = 0; ii < max; ii++)
                 {
                     IEntryData data = getData(ii);
-                    fullGuide.Entries.Add(data.GenerateEntrySummary());
+                    fullGuide.Entries[ii] = data.GenerateEntrySummary();
                 }
 
                 using (Stream stream = new FileStream(dataPath + "index.idx", FileMode.Create, FileAccess.Write, FileShare.None))
