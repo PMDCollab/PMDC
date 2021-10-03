@@ -285,7 +285,7 @@ namespace PMDC.Dungeon
             bool catchable = true;
 
 
-            if (entry.UsageType == ItemData.UseType.Use || entry.UsageType == ItemData.UseType.Learn || entry.UsageType == ItemData.UseType.Box || entry.UsageType == ItemData.UseType.UseOther)
+            if (entry.UsageType == ItemData.UseType.None || entry.UsageType == ItemData.UseType.Use || entry.UsageType == ItemData.UseType.Learn || entry.UsageType == ItemData.UseType.Box || entry.UsageType == ItemData.UseType.UseOther)
                 defaultDmg = true;
             else if (entry.ItemStates.Contains<RecruitState>())
                 catchable = false;
@@ -10941,7 +10941,7 @@ namespace PMDC.Dungeon
                 bool defaultDmg = false;
                 bool catchable = true;
 
-                if (entry.UsageType == ItemData.UseType.Use || entry.UsageType == ItemData.UseType.UseOther || entry.ItemStates.Contains<RecruitState>())
+                if (entry.UsageType == ItemData.UseType.None || entry.UsageType == ItemData.UseType.Use || entry.UsageType == ItemData.UseType.Learn || entry.UsageType == ItemData.UseType.Box || entry.UsageType == ItemData.UseType.UseOther || entry.ItemStates.Contains<RecruitState>())
                     defaultDmg = true;
                 else if (entry.ItemStates.Contains<EdibleState>())
                     catchable = false;
@@ -10951,7 +10951,7 @@ namespace PMDC.Dungeon
 
                 if (defaultDmg)
                 {
-                    //these just do damage(create a custom effect in stead of the item's effect)
+                    //these just do damage(create a custom effect instead of the item's effect)
                     newContext.Data = new BattleData();
                     newContext.Data.ID = item.ID;
 
