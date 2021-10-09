@@ -4753,6 +4753,22 @@ namespace PMDC.Dungeon
         }
     }
 
+    [Serializable]
+    public class CheckItemActiveEvent : BattleEvent
+    {
+        public CheckItemActiveEvent() { }
+        public override GameEvent Clone() { return new CheckItemActiveEvent(); }
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.Item.HiddenValue != 0)
+            {
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ITEM_CANT_USE_NOW").ToLocal()));
+                context.CancelState.Cancel = true;
+            }
+            yield break;
+        }
+
+    }
 
     [Serializable]
     public class PreventItemIndexEvent : BattleEvent
@@ -12997,6 +13013,138 @@ namespace PMDC.Dungeon
             }
         }
 
+    }
+
+    [Serializable]
+    public class FormChoiceEvent : BattleEvent
+    {
+        public int Species;
+
+        public FormChoiceEvent() { }
+        public FormChoiceEvent(int species) { Species = species; }
+        public FormChoiceEvent(FormChoiceEvent other) { Species = other.Species; }
+        public override GameEvent Clone() { return new FormChoiceEvent(this); }
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
+            {
+                List<int> eligibleForms = new List<int>();
+                MonsterData entry = DataManager.Instance.GetMonster(context.User.BaseForm.Species);
+                if (context.User.BaseForm.Species == Species)
+                {
+
+                    for (int ii = 0; ii < entry.Forms.Count; ii++)
+                    {
+                        if (context.User.BaseForm.Form == ii)
+                            continue;
+                        BaseMonsterForm form = entry.Forms[ii];
+                        if (!form.Released)
+                            continue;
+                        if (form.Temporary)
+                            continue;
+                        eligibleForms.Add(ii);
+                    }
+                }
+
+                if (eligibleForms.Count > 1)
+                {
+                    if (DataManager.Instance.CurrentReplay != null) // this block of code will never evaluate to true AND have UI read back -1 (cancel) at the same time
+                    {
+                        SwitchFormContext change = new SwitchFormContext();
+                        change.Form = DataManager.Instance.CurrentReplay.ReadUI();
+                        context.ContextStates.Set(change);
+                    }
+                    else
+                    {
+                        List<DialogueChoice> choices = new List<DialogueChoice>();
+                        foreach (int form in eligibleForms)
+                        {
+                            choices.Add(new DialogueChoice(entry.Forms[form].FormName.ToLocal(), () =>
+                            {
+                                SwitchFormContext change = new SwitchFormContext();
+                                change.Form = form;
+                                context.ContextStates.Set(change);
+                            }));
+                        }
+
+                        choices.Add(new DialogueChoice(Text.FormatKey("MENU_CANCEL"), () => { context.CancelState.Cancel = true; }));
+                        DialogueBox question = MenuManager.Instance.CreateMultiQuestion(String.Format(new StringKey("DLG_WHICH_FORM").ToLocal(), context.User.GetDisplayName(true)), true, choices, 0, choices.Count-1);
+
+                        yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(question));
+
+                        if (!context.CancelState.Cancel)
+                        {
+                            int formNum = -1;
+                            SwitchFormContext change = context.ContextStates.GetWithDefault<SwitchFormContext>();
+                            if (change != null)
+                                formNum = change.Form;
+                            DataManager.Instance.LogUIPlay(formNum);
+                        }
+                    }
+                }
+                else if (eligibleForms.Count == 1)
+                {
+                    SwitchFormContext change = new SwitchFormContext();
+                    change.Form = eligibleForms[0];
+                    context.ContextStates.Set(change);
+                }
+                else
+                {
+                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(String.Format(new StringKey("MSG_ITEM_NO_EFFECT").ToLocal(), context.User.GetDisplayName(true))));
+                    context.CancelState.Cancel = true;
+                }
+            }
+            else
+                context.CancelState.Cancel = true;
+        }
+
+    }
+
+    [Serializable]
+    public class DeactivateItemEvent : BattleEvent
+    {
+        public DeactivateItemEvent() { }
+        public override GameEvent Clone() { return new DeactivateItemEvent(); }
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.UsageSlot > BattleContext.EQUIP_ITEM_SLOT)//item in inventory
+            {
+                InvItem item = ((ExplorerTeam)context.User.MemberTeam).GetInv(context.UsageSlot);
+                item.HiddenValue = 1;
+            }
+            else if (context.UsageSlot == BattleContext.EQUIP_ITEM_SLOT)
+            {
+                InvItem item = context.User.EquippedItem;
+                item.HiddenValue = 1;
+            }
+            else if (context.UsageSlot == BattleContext.FLOOR_ITEM_SLOT)
+            {
+                int mapSlot = ZoneManager.Instance.CurrentMap.GetItem(context.User.CharLoc);
+                MapItem mapItem = ZoneManager.Instance.CurrentMap.Items[mapSlot];
+                mapItem.HiddenValue = 1;
+            }
+            yield break;
+        }
+    }
+
+    [Serializable]
+    public class SwitchFormEvent : BattleEvent
+    {
+        public SwitchFormEvent() { }
+        public override GameEvent Clone() { return new SwitchFormEvent(); }
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            int form = -1;
+            SwitchFormContext change = context.ContextStates.GetWithDefault<SwitchFormContext>();
+            if (change != null)
+                form = change.Form;
+            if (form > -1)
+            {
+                context.User.Promote(new MonsterID(context.User.CurrentForm.Species, form, context.User.CurrentForm.Skin, context.User.CurrentForm.Gender));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_FORM_CHANGE").ToLocal(), context.User.GetDisplayName(false)));
+            }
+            yield break;
+        }
     }
 
     [Serializable]

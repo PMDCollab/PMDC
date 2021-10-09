@@ -3097,6 +3097,27 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class ReactivateItemsEvent : SingleCharEvent
+    {
+        public ReactivateItemsEvent() { }
+        public override GameEvent Clone() { return new ReactivateItemsEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (character != null)
+                yield break;
+
+            foreach (InvItem item in DungeonScene.Instance.ActiveTeam.EnumerateInv())
+            {
+                item.Cursed = false;
+                ItemData entry = DataManager.Instance.GetItem(item.ID);
+                if (entry.MaxStack < 0 && entry.UsageType != ItemData.UseType.Box)
+                    item.HiddenValue = 0;
+            }
+        }
+    }
+
+    [Serializable]
     public class BeginBattleEvent : SingleCharEvent
     {
         [DataType(0, DataManager.DataType.MapStatus, false)]

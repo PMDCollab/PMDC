@@ -379,6 +379,18 @@ namespace PMDC.Dungeon
 
 
 
+    [Serializable]
+    public class SwitchFormContext : ContextState
+    {
+        public int Form;
+        public SwitchFormContext() { }
+        protected SwitchFormContext(SwitchFormContext other)
+        {
+            Form = other.Form;
+        }
+        public override GameplayState Clone() { return new SwitchFormContext(this); }
+    }
+
 
     [Serializable]
     public class MoveLearnContext : ContextState
