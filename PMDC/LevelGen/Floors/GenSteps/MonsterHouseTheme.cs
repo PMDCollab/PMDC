@@ -86,11 +86,8 @@ namespace PMDC.LevelGen
             {
                 if (specialItems.Count > 0 && map.Rand.Next(100) < SpecialRatio)
                     spawners.Add(specialItems.Pick(map.Rand));
-                else
-                {
-                    if (map.ItemSpawns.CanPick)
-                        spawners.Add(new MapItem(map.ItemSpawns.Pick(map.Rand)));
-                }
+                else if (map.ItemSpawns.CanPick)
+                    spawners.Add(new MapItem(map.ItemSpawns.Pick(map.Rand)));
             }
 
             return spawners;
@@ -298,7 +295,7 @@ namespace PMDC.LevelGen
             {
                 if (specialMobs.Count > 0 && map.Rand.Next(100) < SpecialRatio)
                     spawners.Add(specialMobs.Pick(map.Rand));
-                else if (map.TeamSpawns.Count > 0)
+                else if (map.TeamSpawns.CanPick)
                 {
                     List<MobSpawn> exampleList = map.TeamSpawns.Pick(map.Rand).ChooseSpawns(map.Rand);
                     if (exampleList.Count > 0)
