@@ -116,4 +116,60 @@ namespace PMDC.LevelGen
             SetRoomBorders(map);
         }
     }
+
+
+
+    [Serializable]
+    public class RoomGenEvoSmall<T> : PermissiveRoomGen<T> where T : ITiledGenContext, IPostProcGenContext, IPlaceableGenContext<EffectTile>
+    {
+        //.....
+        //..#..
+        //.---.
+        //.---.
+        //.#.#.
+        //.....
+
+        const int MAP_HEIGHT = 6;
+        const int MAP_WIDTH = 5;
+
+        public RoomGenEvoSmall() { }
+        public override RoomGen<T> Copy() { return new RoomGenEvoSmall<T>(); }
+
+        public override Loc ProposeSize(IRandom rand)
+        {
+            return new Loc(MAP_WIDTH, MAP_HEIGHT);
+        }
+
+        public override void DrawOnMap(T map)
+        {
+            if (MAP_WIDTH != Draw.Width || MAP_HEIGHT != Draw.Height)
+            {
+                DrawMapDefault(map);
+                return;
+            }
+
+            for (int x = 0; x < Draw.Width; x++)
+            {
+                for (int y = 0; y < Draw.Height; y++)
+                    map.SetTile(new Loc(Draw.X + x, Draw.Y + y), map.RoomTerrain.Copy());
+            }
+            int platWidth = 3;
+            int platHeight = 2;
+            Loc platStart = Draw.Start + new Loc(1, 2);
+            map.PlaceItem(new Loc(platStart.X + 1, platStart.Y), new EffectTile(33, true));
+            for (int x = 0; x < platWidth; x++)
+            {
+                for (int y = 0; y < platHeight; y++)
+                    map.PostProcGrid[platStart.X + x][platStart.Y + y].Status[(int)PostProcType.Panel] = true;
+            }
+            map.SetTile(new Loc(Draw.X + 2, Draw.Y + 1), map.WallTerrain.Copy());
+            map.PostProcGrid[Draw.X + 2][Draw.Y + 1].Status[(int)PostProcType.Terrain] = true;
+            map.SetTile(new Loc(Draw.X + 1, Draw.Y + 4), map.WallTerrain.Copy());
+            map.PostProcGrid[Draw.X + 1][Draw.Y + 4].Status[(int)PostProcType.Terrain] = true;
+            map.SetTile(new Loc(Draw.X + 3, Draw.Y + 4), map.WallTerrain.Copy());
+            map.PostProcGrid[Draw.X + 3][Draw.Y + 4].Status[(int)PostProcType.Terrain] = true;
+
+            SetRoomBorders(map);
+        }
+    }
 }

@@ -40,6 +40,9 @@ namespace PMDC.LevelGen
                 possibleRooms.Add(ii);
             }
 
+            if (possibleRooms.Count == 0)
+                return;
+
             IRoomGen room = map.RoomPlan.GetRoom(possibleRooms[map.Rand.Next(possibleRooms.Count)]);
 
             //determine the number of free tiles to put items on; trim the maximum item spawn accordingly (maximum <= 1/2 of free tiles)
