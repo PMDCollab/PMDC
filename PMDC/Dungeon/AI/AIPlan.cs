@@ -1359,9 +1359,9 @@ namespace PMDC.Dungeon
                             }
                             if (status.StatusStates.Contains<BadStatusState>())
                                 addedEffect *= -1;
-                            StackState stack = status.StatusStates.Get<StackState>();
-                            if (stack != null)
+                            if (status.StatusStates.Contains<StackState>())
                             {
+                                StackState stack = status.StatusStates.Get<StackState>();
                                 addedEffect *= stack.Stack;
                                 addedEffect /= 2;
                             }
