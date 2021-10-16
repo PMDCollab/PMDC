@@ -166,6 +166,8 @@ namespace PMDC.Dungeon
             Tile tile = ZoneManager.Instance.CurrentMap.Tiles[testLoc.X][testLoc.Y];
             if (tile.Effect.ID > -1)
             {
+                if (!tile.Effect.Revealed)
+                    return true;
                 TileData entry = DataManager.Instance.GetTile(tile.Effect.ID);
                 if (entry.StepType == TileData.TriggerType.Trap || entry.StepType == TileData.TriggerType.Site || entry.StepType == TileData.TriggerType.Switch)
                 {
