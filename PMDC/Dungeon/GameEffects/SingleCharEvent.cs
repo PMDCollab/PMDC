@@ -3737,6 +3737,7 @@ namespace PMDC.Dungeon
 
     }
 
+    [Serializable]
     public class LockedTile
     {
         public Loc LockedLoc;
