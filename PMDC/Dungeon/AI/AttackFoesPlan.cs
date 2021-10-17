@@ -54,13 +54,13 @@ namespace PMDC.Dungeon
 
             List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets());
 
-            bool teamPartner = (IQ & AIFlags.TeamPartner) != AIFlags.None;
-            if (teamPartner)
+            bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
+            if (playerSense)
             {
                 //check for statuses that may make them ineligible targets
                 for (int ii = seenCharacters.Count - 1; ii >= 0; ii--)
                 {
-                    if (!teamPartnerCanAttack(seenCharacters[ii]))
+                    if (!playerSensibleToAttack(seenCharacters[ii]))
                         seenCharacters.RemoveAt(ii);
                 }
             }
@@ -183,9 +183,12 @@ namespace PMDC.Dungeon
                     path.RemoveAt(0);
 
                 GameAction attack = null;
-                if (path.Count > 3)//if it takes more than 2 steps to get into position (list includes the loc for start position, for a total of 3), try a normal attack locally
+                if (path.Count > 3)//if it takes more than 2 steps to get into position (list includes the loc for start position, for a total of 3), try a local attack
                 {
-                    attack = TryAttackChoice(rand, controlledChar, AttackChoice.StandardAttack);
+                    attack = TryAttackChoice(rand, controlledChar, AttackPattern, true);
+                    if (attack.Type != GameAction.ActionType.Wait)
+                        return attack;
+                    attack = TryAttackChoice(rand, controlledChar, AttackChoice.StandardAttack, true);
                     if (attack.Type != GameAction.ActionType.Wait)
                         return attack;
                 }
@@ -194,12 +197,12 @@ namespace PMDC.Dungeon
                     return SelectChoiceFromPath(controlledChar, path);
                 //lastly, try normal attack
                 if (attack == null)
-                    attack = TryAttackChoice(rand, controlledChar, AttackChoice.StandardAttack);
+                    attack = TryAttackChoice(rand, controlledChar, AttackChoice.StandardAttack, true);
                 if (attack.Type != GameAction.ActionType.Wait)
                     return attack;
                 return new GameAction(GameAction.ActionType.Wait, Dir8.None);
             }
-            else if (!teamPartner && targetLoc.HasValue && targetLoc.Value != controlledChar.CharLoc)
+            else if (!playerSense && targetLoc.HasValue && targetLoc.Value != controlledChar.CharLoc)
             {
                 //if no enemy is located, path to the location of the last seen enemy
                 List<Loc>[] paths = GetPaths(controlledChar, new Loc[1] { targetLoc.Value }, false, !preThink);

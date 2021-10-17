@@ -9183,14 +9183,29 @@ namespace PMDC.Dungeon
                         hasState = true;
                 }
                 if (hasState)
-                    totalChange += Math.Sign(status.StatusStates.GetWithDefault<StackState>().Stack);
+                    totalChange += status.StatusStates.GetWithDefault<StackState>().Stack;
             }
 
             if (totalChange > 0)
-                yield return CoroutineManager.Instance.StartCoroutine(target.InflictDamage(Math.Max(1, target.MaxHP * totalChange / Denominator)));
+            {
+                int dmg = Math.Max(1, target.MaxHP * totalChange / Denominator);
+                dmg = Math.Min(dmg, target.MaxHP / 2);
+
+                GameManager.Instance.BattleSE("DUN_Hit_Neutral");
+                SingleEmitter endEmitter = new SingleEmitter(new AnimData("Hit_Neutral", 3));
+
+                if (!context.Target.Unidentifiable)
+                {
+                    endEmitter.SetupEmit(context.Target.MapLoc, context.User.MapLoc, context.Target.CharDir);
+                    DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+                }
+
+                yield return CoroutineManager.Instance.StartCoroutine(target.InflictDamage(dmg));
+            }
             else
             {
                 int dmg = Math.Max(1, -target.MaxHP * totalChange / Denominator);
+                dmg = Math.Min(dmg, target.MaxHP / 2);
                 yield return CoroutineManager.Instance.StartCoroutine(target.RestoreHP(dmg));
                 context.ContextStates.Set(new DamageHealedTarget(dmg));
             }
@@ -9345,20 +9360,41 @@ namespace PMDC.Dungeon
         public const int MIN_MAX_FULLNESS = 50;
         public const int MAX_MAX_FULLNESS = 150;
 
+        public List<BattleAnimEvent> BoostAnims;
+
         public int Heal;
         public bool Msg;
         public int AddMaxBelly;
         public bool NeedFullBelly;
 
-        public RestoreBellyEvent() { }
-        public RestoreBellyEvent(int heal, bool msg) { Heal = heal; Msg = msg; }
-        public RestoreBellyEvent(int heal, bool msg, int bellyPlus, bool needFull) { Heal = heal; Msg = msg; AddMaxBelly = bellyPlus; NeedFullBelly = needFull; }
+        public RestoreBellyEvent()
+        {
+            BoostAnims = new List<BattleAnimEvent>();
+        }
+        public RestoreBellyEvent(int heal, bool msg)
+        {
+            Heal = heal;
+            Msg = msg;
+            BoostAnims = new List<BattleAnimEvent>();
+        }
+        public RestoreBellyEvent(int heal, bool msg, int bellyPlus, bool needFull, params BattleAnimEvent[] boostAnims)
+        {
+            Heal = heal;
+            Msg = msg;
+            AddMaxBelly = bellyPlus;
+            NeedFullBelly = needFull;
+            BoostAnims = new List<BattleAnimEvent>();
+            BoostAnims.AddRange(boostAnims);
+        }
         protected RestoreBellyEvent(RestoreBellyEvent other)
         {
             Heal = other.Heal;
             Msg = other.Msg;
             AddMaxBelly = other.AddMaxBelly;
             NeedFullBelly = other.NeedFullBelly;
+            BoostAnims = new List<BattleAnimEvent>();
+            foreach (BattleAnimEvent anim in other.BoostAnims)
+                BoostAnims.Add((BattleAnimEvent)anim.Clone());
         }
         public override GameEvent Clone() { return new RestoreBellyEvent(this); }
 
@@ -9389,6 +9425,10 @@ namespace PMDC.Dungeon
                         DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_MAX_HUNGER_DROP").ToLocal(), context.Target.GetDisplayName(false)));
                     else
                         DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_MAX_HUNGER_BOOST").ToLocal(), context.Target.GetDisplayName(false)));
+
+
+                    foreach (BattleAnimEvent anim in BoostAnims)
+                        yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
                 }
                 context.Target.MaxFullness += AddMaxBelly;
                 if (context.Target.MaxFullness < MIN_MAX_FULLNESS)
