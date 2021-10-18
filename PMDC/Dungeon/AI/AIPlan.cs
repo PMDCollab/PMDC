@@ -389,7 +389,18 @@ namespace PMDC.Dungeon
                 {
                     bool canBetray = (IQ & AIFlags.TeamPartner) == AIFlags.None;
                     if ((DungeonScene.Instance.GetMatchup(controlledChar, seenChar, canBetray) & GetAcceptableTargets()) != Alignment.None)
-                        threats.Add(seenChar);
+                    {
+                        //just for attacking, we check to see if we can see the controlledchar's current location from the target's location
+                        //this is a hack to prevent unfair-feeling surprise attacks brought about by the non-symmetrical FOV
+                        //all while still maintaining the better aesthetic of of that FOV
+                        //If the FOV were ever to be made symmetric, this check will not be needed.
+                        //additionally, we only do this for NPC AI, not ally AI
+                        bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
+                        if (playerSense || controlledChar.CanSeeLocFromLoc(seenChar.CharLoc, controlledChar.CharLoc, controlledChar.GetCharSight()))
+                        {
+                            threats.Add(seenChar);
+                        }
+                    }
                 }
 
                 List<Loc> threatEnds = new List<Loc>();
