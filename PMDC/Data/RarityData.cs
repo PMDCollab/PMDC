@@ -41,7 +41,7 @@ namespace PMDC.Data
             //Add it to its new locations
             string dataPath = DataManager.DATA_PATH + DataManager.DataType.Item.ToString() + "/";
             string dir = PathMod.ModPath(dataPath + idx + DataManager.DATA_EXT);
-            ItemData data = (ItemData)DataManager.LoadData(dir);
+            ItemData data = DataManager.LoadData<ItemData>(dir);
             computeSummary(idx, data);
         }
 
@@ -54,7 +54,7 @@ namespace PMDC.Data
             {
                 string file = Path.GetFileNameWithoutExtension(dir);
                 int num = Convert.ToInt32(file);
-                ItemData data = (ItemData)DataManager.LoadData(dir);
+                ItemData data = DataManager.LoadData<ItemData>(dir);
                 if (data.Released)
                     computeSummary(num, data);
             }

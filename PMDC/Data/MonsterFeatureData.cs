@@ -55,7 +55,7 @@ namespace PMDC.Data
         {
             string dataPath = DataManager.DATA_PATH + DataManager.DataType.Monster.ToString() + "/";
             string dir = PathMod.ModPath(dataPath + idx + DataManager.DATA_EXT);
-            MonsterData data = (MonsterData)DataManager.LoadData(dir);
+            MonsterData data = DataManager.LoadData<MonsterData>(dir);
             Dictionary<int, FormFeatureSummary> formSummaries = computeSummary(dataPath, idx, data);
             FeatureData[idx] = formSummaries;
         }
@@ -69,7 +69,7 @@ namespace PMDC.Data
             {
                 string file = Path.GetFileNameWithoutExtension(dir);
                 int num = Convert.ToInt32(file);
-                MonsterData data = (MonsterData)DataManager.LoadData(dir);
+                MonsterData data = DataManager.LoadData<MonsterData>(dir);
                 Dictionary<int, FormFeatureSummary> formSummaries = computeSummary(dataPath, num, data);
                 FeatureData[num] = formSummaries;
             }
@@ -84,7 +84,7 @@ namespace PMDC.Data
             {
                 family = preEvo.PromoteFrom;
                 string preDir = PathMod.ModPath(dataPath + family + DataManager.DATA_EXT);
-                preEvo = (MonsterData)DataManager.LoadData(preDir);
+                preEvo = DataManager.LoadData<MonsterData>(preDir);
             }
             EvoFlag stage = EvoFlag.NoEvo;
             bool evolvedFrom = (data.PromoteFrom > -1);

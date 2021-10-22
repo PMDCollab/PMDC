@@ -37,14 +37,7 @@ namespace PMDC.Dev
                     fullGuide.Entries[ii] = data.GenerateEntrySummary();
                 }
 
-                using (Stream stream = new FileStream(dataPath + "index.idx", FileMode.Create, FileAccess.Write, FileShare.None))
-                {
-                    using (BinaryWriter writer = new BinaryWriter(stream))
-                    {
-                        IFormatter formatter = new BinaryFormatter();
-                        formatter.Serialize(stream, fullGuide);
-                    }
-                }
+                DataManager.SaveData(dataPath + "index.idx", fullGuide);
             }
             catch (Exception ex)
             {

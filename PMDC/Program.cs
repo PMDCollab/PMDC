@@ -12,6 +12,7 @@ using PMDC.Dev;
 using System.Reflection;
 using Microsoft.Xna.Framework;
 using Avalonia;
+using RogueEssence.Ground;
 using SDL2;
 #endregion
 
@@ -81,12 +82,12 @@ namespace PMDC
                         guideBook = true;
                     else if (args[ii] == "-asset")
                     {
-                        PathMod.ASSET_PATH = System.IO.Path.GetFullPath(PathMod.ExePath + args[ii + 1]);
+                        PathMod.ASSET_PATH = System.IO.Path.GetFullPath(args[ii + 1]);
                         ii++;
                     }
                     else if (args[ii] == "-raw")
                     {
-                        PathMod.DEV_PATH = System.IO.Path.GetFullPath(PathMod.ExePath + args[ii + 1]);
+                        PathMod.DEV_PATH = System.IO.Path.GetFullPath(args[ii + 1]);
                         ii++;
                     }
                     else if (args[ii] == "-mod")
@@ -206,8 +207,8 @@ namespace PMDC
                     DiagManager.Instance.LogInfo("Reserializing main data");
                     RogueEssence.Dev.DevHelper.Reserialize(reserializeIndices);
                     DiagManager.Instance.LogInfo("Reserializing map data");
-                    RogueEssence.Dev.DevHelper.ReserializeData(DataManager.DATA_PATH + "Map/", DataManager.MAP_EXT);
-                    RogueEssence.Dev.DevHelper.ReserializeData(DataManager.DATA_PATH + "Ground/", DataManager.GROUND_EXT);
+                    RogueEssence.Dev.DevHelper.ReserializeData<Map>(DataManager.DATA_PATH + "Map/", DataManager.MAP_EXT);
+                    RogueEssence.Dev.DevHelper.ReserializeData<GroundMap>(DataManager.DATA_PATH + "Ground/", DataManager.GROUND_EXT);
                     DiagManager.Instance.LogInfo("Reserializing indices");
                     RogueEssence.Dev.DevHelper.RunIndexing(reserializeIndices);
 
