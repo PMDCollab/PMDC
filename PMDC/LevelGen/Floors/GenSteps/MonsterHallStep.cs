@@ -236,21 +236,32 @@ namespace PMDC.LevelGen
             //the mobs in this class are the ones that would be available when the game wants to spawn things outside of the floor's spawn list
             //it will be queried for monsters that match the theme provided
             List<MobSpawn> chosenMobs = chosenMobTheme.GenerateMobs(map, Mobs);
-            List<List<MobSpawn>> phasedMobs = new List<List<MobSpawn>>();
             int initialCount = chosenMobs.Count;
             int currentTiles = 0;
             int currentMobs = 0;
+            List <List<MobSpawn>> phasedMobs = new List<List<MobSpawn>>();
             for (int ii = 0; ii < housePhases.Count; ii++)
             {
-                currentTiles += blockedPhaseTiles[ii];
-                int amount = Math.Min(Math.Max(initialCount * currentTiles / mobSpace - currentMobs, 3), blockedPhaseTiles[ii]);
+                //do center first, then go from outside to in
+                //this is because center usually overdrafts, so outside needs to compensate
+                int idx = ii;
+                if (idx > 0)
+                    idx = housePhases.Count - ii;
+
+                currentTiles += blockedPhaseTiles[idx];
+                int minAmt = 1;//all phases
+                if (idx == 0)//first phase is always at least 2
+                    minAmt = 2;
+                int scaledTotal = initialCount * currentTiles / mobSpace;
+                //int linearTotal = initialCount * (idx + 1) / housePhases.Count;
+                int amount = Math.Min(Math.Max(scaledTotal - currentMobs, minAmt), blockedPhaseTiles[idx]);
                 currentMobs += amount;
                 List<MobSpawn> phaseList = new List<MobSpawn>();
                 for (int kk = 0; kk < amount; kk++)
                 {
                     if (chosenMobs.Count == 0)
                         break;
-                    MobSpawn copyMob = chosenMobs[chosenMobs.Count - 1].Copy();
+                    MobSpawn copyMob = chosenMobs[chosenMobs.Count - 1];
                     chosenMobs.RemoveAt(chosenMobs.Count - 1);
                     if (map.Rand.Next(ALT_COLOR_ODDS) == 0)
                         copyMob.BaseForm.Skin = 1;
