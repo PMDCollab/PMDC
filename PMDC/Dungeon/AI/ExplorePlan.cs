@@ -8,6 +8,31 @@ using RogueEssence.Data;
 namespace PMDC.Dungeon
 {
     [Serializable]
+    public class ExploreIfUnseenPlan : ExplorePlan
+    {
+        public ExploreIfUnseenPlan(AIFlags iq) : base(iq)
+        {
+
+        }
+        protected ExploreIfUnseenPlan(ExploreIfUnseenPlan other) : base(other) { }
+        public override BasePlan CreateNew() { return new ExploreIfUnseenPlan(this); }
+
+        public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
+        {
+            foreach (Character target in ZoneManager.Instance.CurrentMap.IterateCharacters())
+            {
+                //only check for players in vicinity; don't rely on FOV.
+                if (DungeonScene.Instance.IsTargeted(controlledChar, target, Alignment.Foe, false) && controlledChar.CanSeeCharacter(target, Map.SightRange.Clear))
+                {
+                    //if a threat is in the vicinity (doesn't have to be seen), abort this plan
+                    return null;
+                }
+            }
+
+            return base.Think(controlledChar, preThink, rand);
+        }
+    }
+    [Serializable]
     public class ExplorePlan : AIPlan
     {
         private List<Loc> goalPath;
