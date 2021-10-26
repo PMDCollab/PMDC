@@ -307,6 +307,8 @@ namespace MapGenTest
 
                         //load the struct context
                         ReRandom initRand = new ReRandom(structSeed);
+                        //set datamanager
+                        DataManager.Instance.SetProgress(new MainProgress(MathUtils.Rand.NextUInt64(), Guid.NewGuid().ToString().ToUpper()));
                         ZoneGenContext zoneContext = new ZoneGenContext();
                         foreach (ZoneStep zoneStep in structure.ZoneSteps)
                         {
@@ -457,6 +459,7 @@ namespace MapGenTest
 
                             //load the struct context
                             ReRandom initRand = new ReRandom(structSeed);
+                            DataManager.Instance.SetProgress(new MainProgress(MathUtils.Rand.NextUInt64(), Guid.NewGuid().ToString().ToUpper()));
                             ZoneGenContext zoneContext = new ZoneGenContext();
                             foreach (ZoneStep zoneStep in structure.ZoneSteps)
                             {
@@ -518,6 +521,7 @@ namespace MapGenTest
 
                         //load the struct context
                         ReRandom initRand = new ReRandom(structSeed);
+                        DataManager.Instance.SetProgress(new MainProgress(MathUtils.Rand.NextUInt64(), Guid.NewGuid().ToString().ToUpper()));
                         ZoneGenContext zoneContext = new ZoneGenContext();
                         foreach (ZoneStep zoneStep in structure.ZoneSteps)
                         {
@@ -580,6 +584,7 @@ namespace MapGenTest
 
                     //load the struct context
                     ReRandom initRand = new ReRandom(structSeed);
+                    DataManager.Instance.SetProgress(new MainProgress(MathUtils.Rand.NextUInt64(), Guid.NewGuid().ToString().ToUpper()));
                     ZoneGenContext zoneContext = new ZoneGenContext();
                     foreach (ZoneStep zoneStep in structure.ZoneSteps)
                     {
@@ -655,6 +660,7 @@ namespace MapGenTest
 
                     //load the struct context
                     ReRandom initRand = new ReRandom(structSeed);
+                    DataManager.Instance.SetProgress(new MainProgress(MathUtils.Rand.NextUInt64(), Guid.NewGuid().ToString().ToUpper()));
                     ZoneGenContext zoneContext = new ZoneGenContext();
                     foreach (ZoneStep zoneStep in structure.ZoneSteps)
                     {
