@@ -25,12 +25,12 @@ namespace PMDC.Dungeon
 
         public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
         {
-            bool teamPartner = (IQ & AIFlags.TeamPartner) != AIFlags.None;
+            bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
             Character target = null;
             List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets());
             foreach (Character seenChar in seenCharacters)
             {
-                if (!teamPartner || teamPartnerCanAttack(seenChar))
+                if (!playerSense || playerSensibleToAttack(seenChar))
                     target = seenChar;
             }
 
@@ -71,12 +71,12 @@ namespace PMDC.Dungeon
             if (controlledChar.GetStatusEffect(FirstMoveStatus) != null)
                 return null;
 
-            bool teamPartner = (IQ & AIFlags.TeamPartner) != AIFlags.None;
+            bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
             Character target = null;
             List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets());
             foreach (Character seenChar in seenCharacters)
             {
-                if (!teamPartner || teamPartnerCanAttack(seenChar))
+                if (!playerSense || playerSensibleToAttack(seenChar))
                     target = seenChar;
             }
 

@@ -40,6 +40,9 @@ namespace PMDC.LevelGen
                 possibleRooms.Add(ii);
             }
 
+            if (possibleRooms.Count == 0)
+                return;
+
             IRoomGen room = map.RoomPlan.GetRoom(possibleRooms[map.Rand.Next(possibleRooms.Count)]);
 
             //determine the number of free tiles to put items on; trim the maximum item spawn accordingly (maximum <= 1/2 of free tiles)
@@ -140,13 +143,7 @@ namespace PMDC.LevelGen
                 check.Effects.Add(house);
             }
 
-            //TODO: remove this magic number
-            int intrudeStatus = 33;
-            MapStatus status = new MapStatus(intrudeStatus);
-            status.LoadFromData();
-            MapCheckState checkState = status.StatusStates.GetWithDefault<MapCheckState>();
-            checkState.CheckEvents.Add(check);
-            map.Map.Status.Add(intrudeStatus, status);
+            AddIntrudeStep(map, check);
         }
     }
 

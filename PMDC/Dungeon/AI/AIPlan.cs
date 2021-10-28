@@ -11,7 +11,10 @@ namespace PMDC.Dungeon
     public enum AIFlags
     {
         None = 0,
-        FriendlyFire = 1,
+        /// <summary>
+        /// will not attack enemyoffriend
+        /// </summary>
+        TeamPartner = 1,
         /// <summary>
         /// will attack allies if given the opportunity
         /// </summary>
@@ -42,15 +45,14 @@ namespace PMDC.Dungeon
         /// </summary>
         TrapAvoider = 128,
         /// <summary>
-        /// HAs the sensibilities of a player team's ally
+        /// Has the sensibilities of a player team's ally
         /// will not walk into silcoon/cascoon
         /// will not hit allies even if it's worth it to hit more foes
-        /// will not attack enemyoffriend
         /// will not path to the last seen location of an enemy if it finds no enemies
         /// will not attack or target certain AI
         /// will not attack or target sleepers and frozen, full stop
         /// </summary>
-        TeamPartner = 256,
+        PlayerSense = 256,
     }
 
     [Serializable]
@@ -102,7 +104,12 @@ namespace PMDC.Dungeon
                 return false;
         }
 
-        protected bool teamPartnerCanAttack(Character seenChar)
+        /// <summary>
+        /// Is it sensible for a player character to attack this way?
+        /// </summary>
+        /// <param name="seenChar"></param>
+        /// <returns></returns>
+        protected bool playerSensibleToAttack(Character seenChar)
         {
             //NOTE: specialized AI code!
             if (seenChar.GetStatusEffect(1) != null || seenChar.GetStatusEffect(3) != null)//if they're asleep or frozen, do not attack
@@ -166,6 +173,8 @@ namespace PMDC.Dungeon
             Tile tile = ZoneManager.Instance.CurrentMap.Tiles[testLoc.X][testLoc.Y];
             if (tile.Effect.ID > -1)
             {
+                if (!tile.Effect.Revealed)
+                    return true;
                 TileData entry = DataManager.Instance.GetTile(tile.Effect.ID);
                 if (entry.StepType == TileData.TriggerType.Trap || entry.StepType == TileData.TriggerType.Site || entry.StepType == TileData.TriggerType.Switch)
                 {
@@ -186,7 +195,7 @@ namespace PMDC.Dungeon
 
         protected bool BlockedByHazard(Character controlledChar, Loc testLoc)
         {
-            if ((IQ & AIFlags.TeamPartner) == AIFlags.None)
+            if ((IQ & AIFlags.PlayerSense) == AIFlags.None)
                 return false;
             //TODO: pass in the list of seen characters instead of computing them on the spot
             //this is very slow and expensive to do, and can lead to performance bottlenecks
@@ -214,7 +223,7 @@ namespace PMDC.Dungeon
         /// <param name="controlledChar"></param>
         /// <param name="end"></param>
         /// <param name="freeGoal">Determines whether the goal should be reachable even if blocked.</param>
-        /// <param name="respectPeers"></param>
+        /// <param name="respectPeers">Considers entities as blockers</param>
         /// <returns></returns>
         protected List<Loc>[] GetPaths(Character controlledChar, Loc[] ends, bool freeGoal, bool respectPeers, int limit = 1)
         {
@@ -307,6 +316,39 @@ namespace PMDC.Dungeon
             return Grid.FindAllPaths(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, ends.ToArray(), checkBlock, checkDiagBlock);
         }
 
+
+        /// <summary>
+        /// Gets all paths to all targets, only considering impassable blocks as blockers.
+        /// </summary>
+        /// <param name="controlledChar"></param>
+        /// <param name="ends"></param>
+        /// <returns></returns>
+        protected List<Loc>[] GetPathsImpassable(Character controlledChar, List<Loc> ends)
+        {
+            //requires a valid target tile
+            Grid.LocTest checkDiagBlock = (Loc testLoc) => {
+                return (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, uint.MaxValue, true));
+                //enemy/ally blockings don't matter for diagonals
+            };
+
+            Grid.LocTest checkBlock = (Loc testLoc) => {
+
+                foreach (Loc end in ends)
+                {
+                    if (testLoc == end)
+                        return false;
+                }
+
+                if (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, uint.MaxValue))
+                    return true;
+
+                return false;
+            };
+
+            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
+            return Grid.FindNPaths(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, ends.ToArray(), checkBlock, checkDiagBlock, 1, false);
+        }
+
         protected GameAction SelectChoiceFromPath(Character controlledChar, List<Loc> path)
         {
             if (path.Count <= 1)
@@ -325,31 +367,63 @@ namespace PMDC.Dungeon
                 return new GameAction(GameAction.ActionType.Move, dir, ((IQ & AIFlags.ItemGrabber) != AIFlags.None) ? 1 : 0);
         }
 
-        protected GameAction TryAttackChoice(ReRandom rand, Character controlledChar, AttackChoice attackPattern)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="rand"></param>
+        /// <param name="controlledChar"></param>
+        /// <param name="attackPattern"></param>
+        /// <param name="includeImagine">Excludes imaginary hits from causing attack fallthrough.  This will also skip threat checking.</param>
+        /// <returns></returns>
+        protected GameAction TryAttackChoice(ReRandom rand, Character controlledChar, AttackChoice attackPattern, bool excludeImagine = false)
         {
             List<Character> seenChars = controlledChar.GetSeenCharacters(Alignment.Self | Alignment.Friend | Alignment.Foe);
 
-            bool seesDanger = false;
-            int closestDiff = Int32.MaxValue;
             Character closestThreat = null;
-            foreach (Character seenChar in seenChars)
+            bool seesDanger = false;
+            if (!excludeImagine)
             {
-                bool canBetray = (IQ & AIFlags.TeamPartner) == AIFlags.None;
-                if ((DungeonScene.Instance.GetMatchup(controlledChar, seenChar, canBetray) & GetAcceptableTargets()) != Alignment.None)
+                int closestDiff = Int32.MaxValue;
+                List<Character> threats = new List<Character>();
+                foreach (Character seenChar in seenChars)
                 {
-                    seesDanger = true;
-
-                    Loc diff = seenChar.CharLoc - controlledChar.CharLoc;
-                    if (diff.Dist8() < closestDiff)
+                    bool canBetray = (IQ & AIFlags.TeamPartner) == AIFlags.None;
+                    if ((DungeonScene.Instance.GetMatchup(controlledChar, seenChar, canBetray) & GetAcceptableTargets()) != Alignment.None)
                     {
-                        closestDiff = diff.Dist8();
-                        closestThreat = seenChar;
+                        //just for attacking, we check to see if we can see the controlledchar's current location from the target's location
+                        //this is a hack to prevent unfair-feeling surprise attacks brought about by the non-symmetrical FOV
+                        //all while still maintaining the better aesthetic of of that FOV
+                        //If the FOV were ever to be made symmetric, this check will not be needed.
+                        //additionally, we only do this for NPC AI, not ally AI
+                        bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
+                        if (playerSense || controlledChar.CanSeeLocFromLoc(seenChar.CharLoc, controlledChar.CharLoc, controlledChar.GetCharSight()))
+                        {
+                            threats.Add(seenChar);
+                        }
                     }
                 }
-            }
 
-            if (!seesDanger)
-                return new GameAction(GameAction.ActionType.Wait, Dir8.None);
+                List<Loc> threatEnds = new List<Loc>();
+                foreach (Character chara in threats)
+                    threatEnds.Add(chara.CharLoc);
+                List<Loc>[] threatPaths = GetPathsImpassable(controlledChar, threatEnds);
+                for (int ii = 0; ii < threatPaths.Length; ii++)
+                {
+                    if (threatPaths[ii] != null && threatPaths[ii][0] == threats[ii].CharLoc)
+                    {
+                        seesDanger = true;
+
+                        if (threatPaths[ii].Count < closestDiff)
+                        {
+                            closestDiff = threatPaths[ii].Count;
+                            closestThreat = threats[ii];
+                        }
+                    }
+                }
+
+                if (!seesDanger)
+                    return new GameAction(GameAction.ActionType.Wait, Dir8.None);
+            }
 
             if (controlledChar.AttackOnly)
                 return TryForcedAttackChoice(rand, controlledChar, seenChars, closestThreat);
@@ -677,7 +751,7 @@ namespace PMDC.Dungeon
         /// 
         /// </summary>
         /// <param name="controlledChar"></param>
-        /// <param name="modelChar">A character that will be used to judge an imagined hit.</param>
+        /// <param name="closestThreat">A character that will be used to judge an imagined hit. Leave blank for no imagined hits.</param>
         /// <param name="seenChars"></param>
         /// <param name="moveIndex"></param>
         /// <param name="dirs"></param>
@@ -1121,7 +1195,7 @@ namespace PMDC.Dungeon
                     {
                         //the AI will refuse to use the attack in this direction if it will harm any allies,
                         //even if it may be considered "worth it" to damage more foes in the process
-                        if ((IQ & AIFlags.TeamPartner) != AIFlags.None)
+                        if ((IQ & AIFlags.PlayerSense) != AIFlags.None)
                         {
                             maxValue = -1;
                             break;
@@ -1359,9 +1433,9 @@ namespace PMDC.Dungeon
                             }
                             if (status.StatusStates.Contains<BadStatusState>())
                                 addedEffect *= -1;
-                            StackState stack = status.StatusStates.Get<StackState>();
-                            if (stack != null)
+                            if (status.StatusStates.Contains<StackState>())
                             {
+                                StackState stack = status.StatusStates.Get<StackState>();
                                 addedEffect *= stack.Stack;
                                 addedEffect /= 2;
                             }
@@ -1383,6 +1457,52 @@ namespace PMDC.Dungeon
                                 return -100;
                         }
                         return 0;
+                    }
+                    else if (effect is KnockBackEvent)
+                    {
+                        //assume always pointed at foe, and neutral to allies
+                        if (DungeonScene.Instance.GetMatchup(controlledChar, target) == Alignment.Foe)
+                            return -100;
+                        return 0;
+                    }
+                    else if (effect is TransferStatusEvent)
+                    {
+                        TransferStatusEvent transferEffect = (TransferStatusEvent)effect;
+                        int startVal = 0;
+                        if (transferEffect.GoodStatus)
+                        {
+                            //only look for non-bad status
+                            foreach (StatusEffect status in controlledChar.StatusEffects.Values)
+                            {
+                                if (!status.StatusStates.Contains<BadStatusState>())
+                                {
+                                    StackState stack;
+                                    if (status.StatusStates.TryGet(out stack))
+                                    {
+                                        int existingStack = 0;
+                                        StatusEffect existingStatus;
+                                        if (target.StatusEffects.TryGetValue(status.ID, out existingStatus))
+                                            existingStack = existingStatus.StatusStates.GetWithDefault<StackState>().Stack;
+                                        startVal += calculateStatusStackWorth(status.ID, stack.Stack, existingStack);
+                                    }
+                                    else
+                                    {
+                                        if (!target.StatusEffects.ContainsKey(status.ID))
+                                            startVal += 100;
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            //only look for bad status
+                            foreach (StatusEffect status in controlledChar.StatusEffects.Values)
+                            {
+                                if (status.StatusStates.Contains<BadStatusState>())
+                                    startVal += 100;
+                            }
+                        }
+                        return startVal;
                     }
                     else if (effect is ChangeToAbilityEvent)
                     {
@@ -1539,44 +1659,11 @@ namespace PMDC.Dungeon
                         StatusEffect existingStatus = statusTarget.GetStatusEffect(giveEffect.StatusID);
                         if (effect is StatusStackBattleEvent)
                         {
-                            addedWorth = 64;
-                            StatusData statusEntry = DataManager.Instance.GetStatus(giveEffect.StatusID);
-                            int minStack = 0;
-                            int maxStack = 0;
-                            foreach (StatusGivenEvent beforeEffect in statusEntry.BeforeStatusAdds)
-                            {
-                                if (beforeEffect is StatusStackCheck)
-                                {
-                                    minStack = ((StatusStackCheck)beforeEffect).Minimum;
-                                    maxStack = ((StatusStackCheck)beforeEffect).Maximum;
-                                }
-                            }
                             StatusStackBattleEvent stackEffect = (StatusStackBattleEvent)effect;
                             int existingStack = 0;
                             if (existingStatus != null)
                                 existingStack = existingStatus.StatusStates.GetWithDefault<StackState>().Stack;
-                            if (stackEffect.Stack > 0)
-                            {
-                                //positive stack implies a positive effect
-                                int addableStack = Math.Min(stackEffect.Stack, maxStack - existingStack);
-                                addedWorth *= addableStack;
-                                addedWorth /= stackEffect.Stack;
-
-                                for (int ii = 0; ii < existingStack; ii++)
-                                    addedWorth /= 2;
-                            }
-                            else if (stackEffect.Stack < 0)
-                            {
-                                //negative stack implies a negative effect
-                                addedWorth *= -1;
-                                int addableStack = Math.Max(stackEffect.Stack, minStack - existingStack);
-                                //addedWorth will always be multiplied and divided by a negative number, resulting in no sign change
-                                addedWorth *= addableStack;
-                                addedWorth /= stackEffect.Stack;
-
-                                for (int ii = 0; ii < -existingStack; ii++)
-                                    addedWorth /= 2;
-                            }
+                            addedWorth = calculateStatusStackWorth(giveEffect.StatusID, stackEffect.Stack, existingStack);
                         }
                         else if (existingStatus == null)
                         {
@@ -1728,6 +1815,44 @@ namespace PMDC.Dungeon
             }
         }
 
+        private int calculateStatusStackWorth(int statusID, int stack, int existingStack)
+        {
+            int addedWorth = 64;
+            StatusData statusEntry = DataManager.Instance.GetStatus(statusID);
+            int minStack = 0;
+            int maxStack = 0;
+            foreach (StatusGivenEvent beforeEffect in statusEntry.BeforeStatusAdds)
+            {
+                if (beforeEffect is StatusStackCheck)
+                {
+                    minStack = ((StatusStackCheck)beforeEffect).Minimum;
+                    maxStack = ((StatusStackCheck)beforeEffect).Maximum;
+                }
+            }
+            if (stack > 0)
+            {
+                //positive stack implies a positive effect
+                int addableStack = Math.Min(stack, maxStack - existingStack);
+                addedWorth *= addableStack;
+                addedWorth /= stack;
+
+                for (int ii = 0; ii < existingStack; ii++)
+                    addedWorth /= 2;
+            }
+            else if (stack < 0)
+            {
+                //negative stack implies a negative effect
+                addedWorth *= -1;
+                int addableStack = Math.Max(stack, minStack - existingStack);
+                //addedWorth will always be multiplied and divided by a negative number, resulting in no sign change
+                addedWorth *= addableStack;
+                addedWorth /= stack;
+
+                for (int ii = 0; ii < -existingStack; ii++)
+                    addedWorth /= 2;
+            }
+            return addedWorth;
+        }
 
         protected List<Loc> GetAreaExits(Character controlledChar)
         {

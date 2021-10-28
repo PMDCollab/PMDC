@@ -262,7 +262,7 @@ namespace PMDC.Dungeon
                 {
                     StackState stack = context.Status.StatusStates.GetWithDefault<StackState>();
                     if (stack != null)
-                        stack.Stack *= 2;
+                        stack.Stack += 1;
                 }
             }
             yield break;

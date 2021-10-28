@@ -38,6 +38,27 @@ namespace PMDC.LevelGen
             for (int ii = 0; ii < other.MobThemes.Count; ii++)
                 MobThemes.Add(other.MobThemes.GetSpawn(ii).Copy(), other.MobThemes.GetSpawnRate(ii));
         }
+
+        protected void AddIntrudeStep(T map, CheckIntrudeBoundsEvent check)
+        {
+            //TODO: remove this magic number
+            int intrudeStatus = 33;
+            MapStatus status;
+            if (map.Map.Status.TryGetValue(intrudeStatus, out status))
+            {
+                MapCheckState destChecks = status.StatusStates.GetWithDefault<MapCheckState>();
+                destChecks.CheckEvents.Add(check);
+            }
+            else
+            {
+                status = new MapStatus(intrudeStatus);
+                status.LoadFromData();
+                MapCheckState checkState = status.StatusStates.GetWithDefault<MapCheckState>();
+                checkState.CheckEvents.Add(check);
+                map.Map.Status.Add(intrudeStatus, status);
+            }
+        }
+
         public abstract MonsterHouseBaseStep<T> CreateNew();
         IMonsterHouseBaseStep IMonsterHouseBaseStep.CreateNew() { return CreateNew(); }
     }
