@@ -672,7 +672,7 @@ namespace PMDC.Dungeon
             foreach (int status in controlledChar.StatusEffects.Keys)
             {
                 StatusData entry = DataManager.Instance.GetStatus(status);
-                foreach (BattleEvent effect in entry.BeforeTryActions)
+                foreach (BattleEvent effect in entry.BeforeTryActions.EnumerateInOrder())
                 {
                     if (effect is ForceMoveEvent)
                     {
@@ -976,7 +976,7 @@ namespace PMDC.Dungeon
             //check for passives that modify range; NOTE: specialized AI code!
             foreach (PassiveContext passive in controlledChar.IteratePassives(GameEventPriority.USER_PORT_PRIORITY))
             {
-                foreach (BattleEvent effect in passive.EventData.OnActions)
+                foreach (BattleEvent effect in passive.EventData.OnActions.EnumerateInOrder())
                 {
                     AddRangeEvent addRangeEvent = getConditionalEvent<AddRangeEvent>(controlledChar, passive, effect);
                     if (addRangeEvent != null)
@@ -1016,7 +1016,7 @@ namespace PMDC.Dungeon
                 case 383: // copycat
                     {
                         int searchedStatus = -1;
-                        foreach (BattleEvent effect in entry.Data.OnHits)
+                        foreach (BattleEvent effect in entry.Data.OnHits.EnumerateInOrder())
                         {
                             MirrorMoveEvent mirror = effect as MirrorMoveEvent;
                             if (mirror != null)
@@ -1064,7 +1064,7 @@ namespace PMDC.Dungeon
                     {
                         if (controlledChar.HasElement(09))
                         {
-                            foreach (BattleEvent effect in entry.Data.OnActions)
+                            foreach (BattleEvent effect in entry.Data.OnActions.EnumerateInOrder())
                             {
                                 if (effect is ElementDifferentUseEvent)
                                 {
@@ -1298,7 +1298,7 @@ namespace PMDC.Dungeon
             if (target.GetStatusEffect(3) != null/* && entry.SkillEffect.MoveType != 07*/)
                 return 0;
 
-            foreach (BattleEvent effect in entry.Data.OnActions)
+            foreach (BattleEvent effect in entry.Data.OnActions.EnumerateInOrder())
             {
                 if (effect is StatusNeededEvent)
                 {
@@ -1307,7 +1307,7 @@ namespace PMDC.Dungeon
                 }
             }
 
-            foreach (BattleEvent effect in entry.Data.BeforeHits)
+            foreach (BattleEvent effect in entry.Data.BeforeHits.EnumerateInOrder())
             {
                 if (effect is TipOnlyEvent)
                 {
@@ -1393,7 +1393,7 @@ namespace PMDC.Dungeon
                         return 100;
                 }
 
-                foreach (BattleEvent effect in entry.Data.OnHitTiles)
+                foreach (BattleEvent effect in entry.Data.OnHitTiles.EnumerateInOrder())
                 {
                     if (effect is SetTrapEvent)
                     {
@@ -1405,7 +1405,7 @@ namespace PMDC.Dungeon
                 }
 
                 //heal checker/status removal checker/other effects
-                foreach (BattleEvent effect in entry.Data.OnHits)
+                foreach (BattleEvent effect in entry.Data.OnHits.EnumerateInOrder())
                 {
                     if (effect is IHealEvent)
                     {
@@ -1647,7 +1647,7 @@ namespace PMDC.Dungeon
                 //status checker
                 bool givesStatus = false;
                 int statusWorth = 0;
-                foreach (BattleEvent effect in entry.Data.OnHits)
+                foreach (BattleEvent effect in entry.Data.OnHits.EnumerateInOrder())
                 {
                     if (effect is StatusBattleEvent)
                     {
@@ -1767,7 +1767,7 @@ namespace PMDC.Dungeon
                 {
                     foreach (PassiveContext passive in target.IteratePassives(GameEventPriority.TARGET_PORT_PRIORITY))
                     {
-                        foreach (BattleEvent effect in passive.EventData.BeforeBeingHits)
+                        foreach (BattleEvent effect in passive.EventData.BeforeBeingHits.EnumerateInOrder())
                         {
                             if (effect is AbsorbElementEvent)
                             {
@@ -1794,7 +1794,7 @@ namespace PMDC.Dungeon
                         }
                     }
                 }
-                foreach (BattleEvent effect in entry.Data.OnHits)
+                foreach (BattleEvent effect in entry.Data.OnHits.EnumerateInOrder())
                 {
                     if (effect is OnHitEvent)
                     {
@@ -1821,7 +1821,7 @@ namespace PMDC.Dungeon
             StatusData statusEntry = DataManager.Instance.GetStatus(statusID);
             int minStack = 0;
             int maxStack = 0;
-            foreach (StatusGivenEvent beforeEffect in statusEntry.BeforeStatusAdds)
+            foreach (StatusGivenEvent beforeEffect in statusEntry.BeforeStatusAdds.EnumerateInOrder())
             {
                 if (beforeEffect is StatusStackCheck)
                 {

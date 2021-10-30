@@ -1031,7 +1031,7 @@ namespace PMDC.Dungeon
         {
             ItemData entry = DataManager.Instance.GetItem(itemId);
 
-            foreach(SingleCharEvent effect in entry.OnDeaths)
+            foreach(SingleCharEvent effect in entry.OnDeaths.EnumerateInOrder())
             {
                 if (effect is AutoReviveEvent)
                 {
@@ -1155,7 +1155,7 @@ namespace PMDC.Dungeon
                 ItemData entry = DataManager.Instance.GetItem(useIndex);
 
                 int changeTo = -1;
-                foreach (SingleCharEvent effect in entry.OnDeaths)
+                foreach (SingleCharEvent effect in entry.OnDeaths.EnumerateInOrder())
                 {
                     if (effect is AutoReviveEvent)
                     {
