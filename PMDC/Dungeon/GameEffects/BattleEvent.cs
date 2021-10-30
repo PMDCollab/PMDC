@@ -2372,7 +2372,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             bool reckless = false;
-            foreach (BattleEvent effect in context.Data.AfterActions)
+            foreach (BattleEvent effect in context.Data.AfterActions.EnumerateInOrder())
             {
                 if (effect is RecoilEvent || effect is CrashLandEvent)
                 {
@@ -2930,7 +2930,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             bool ohko = false;
-            foreach (BattleEvent effect in context.Data.OnHits)
+            foreach (BattleEvent effect in context.Data.OnHits.EnumerateInOrder())
             {
                 if (effect is OHKODamageEvent)
                 {
@@ -4342,7 +4342,7 @@ namespace PMDC.Dungeon
             if (context.ActionType == BattleActionType.Skill && context.Data.Category == BattleData.SkillCategory.Status && DungeonScene.Instance.GetMatchup(context.User, context.Target) != Alignment.Self)
             {
                 bool inflictsStatus = false;
-                foreach (BattleEvent effect in context.Data.OnHits)
+                foreach (BattleEvent effect in context.Data.OnHits.EnumerateInOrder())
                 {
                     if (effect is StatusBattleEvent)
                     {
@@ -8063,7 +8063,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             bool hasStatus = false;
-            foreach (BattleEvent effect in context.Data.OnHits)
+            foreach (BattleEvent effect in context.Data.OnHits.EnumerateInOrder())
             {
                 StatusBattleEvent statusEvent = effect as StatusBattleEvent;
                 if (statusEvent != null)
