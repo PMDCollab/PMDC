@@ -550,7 +550,7 @@ namespace PMDC.LevelGen
             for (int ii = 0; ii < map.TeamSpawns.Count; ii++)
             {
                 SpawnList<MobSpawn> mobSpawns = map.TeamSpawns.GetSpawn(ii).GetPossibleSpawns();
-                foreach (MobSpawn spawn in mobSpawns)
+                foreach (MobSpawn spawn in mobSpawns.EnumerateOutcomes())
                 {
                     MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
                     FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species][Math.Max(0, spawn.BaseForm.Form)];
