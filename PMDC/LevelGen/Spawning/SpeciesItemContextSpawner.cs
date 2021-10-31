@@ -26,9 +26,10 @@ namespace PMDC.LevelGen
 
         public override IEnumerable<int> GetPossibleSpecies(TGenContext map)
         {
-            foreach (TeamSpawner teamSpawn in map.TeamSpawns)
+            foreach (TeamSpawner teamSpawn in map.TeamSpawns.EnumerateOutcomes())
             {
-                foreach (MobSpawn mobSpawn in teamSpawn.GetPossibleSpawns())
+                SpawnList<MobSpawn> mobsAtFloor = teamSpawn.GetPossibleSpawns();
+                foreach (MobSpawn mobSpawn in mobsAtFloor.EnumerateOutcomes())
                     yield return mobSpawn.BaseForm.Species;
             }
         }

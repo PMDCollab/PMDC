@@ -2609,6 +2609,7 @@ namespace PMDC.Dungeon
     {
         public int ExceptionItem;
 
+        public AskEvoEvent() { }
         public AskEvoEvent(int exceptItem) { ExceptionItem = exceptItem; }
         public AskEvoEvent(AskEvoEvent other) { ExceptionItem = other.ExceptionItem; }
         public override GameEvent Clone() { return new AskEvoEvent(this); }
