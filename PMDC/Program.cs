@@ -14,6 +14,7 @@ using Microsoft.Xna.Framework;
 using Avalonia;
 using RogueEssence.Ground;
 using SDL2;
+using RogueElements;
 #endregion
 
 namespace PMDC
@@ -203,6 +204,7 @@ namespace PMDC
                     //TODO: remove when data is no longer hardcoded
                     LuaEngine.InitInstance();
                     DataManager.InitInstance();
+
                     RogueEssence.Dev.DevHelper.ReserializeBase();
                     DiagManager.Instance.LogInfo("Reserializing main data");
                     RogueEssence.Dev.DevHelper.Reserialize(reserializeIndices);
@@ -212,7 +214,7 @@ namespace PMDC
                     DiagManager.Instance.LogInfo("Reserializing indices");
                     RogueEssence.Dev.DevHelper.RunIndexing(reserializeIndices);
 
-                    DataManager.Instance.InitData();
+                    DataManager.Instance.UniversalData = (TypeDict<BaseData>)RogueEssence.Dev.DevHelper.LoadWithLegacySupport(PathMod.ModPath(DataManager.MISC_PATH + "Index.bin"), typeof(TypeDict<BaseData>));
                     RogueEssence.Dev.DevHelper.RunExtraIndexing(reserializeIndices);
                     return;
                 }
