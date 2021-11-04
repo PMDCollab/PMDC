@@ -231,8 +231,8 @@ namespace PMDC
                     DiagManager.Instance.LogInfo("Reserializing indices");
                     RogueEssence.Dev.DevHelper.RunIndexing(convertIndices);
 
-                    DataManager.Instance.InitData();
-                    RogueEssence.Dev.DevHelper.RunExtraIndexing(reserializeIndices);
+                    DataManager.Instance.UniversalData = (TypeDict<BaseData>)RogueEssence.Dev.DevHelper.LoadWithLegacySupport(PathMod.ModPath(DataManager.MISC_PATH + "Index.bin"), typeof(TypeDict<BaseData>));
+                    RogueEssence.Dev.DevHelper.RunExtraIndexing(convertIndices);
                     return;
                 }
 
