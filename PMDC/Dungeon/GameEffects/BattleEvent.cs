@@ -13856,8 +13856,51 @@ namespace PMDC.Dungeon
                     }
                 }
             }
+        }
+    }
 
+    [Serializable]
+    public class MakeNeutralEvent : BattleEvent
+    {
+        public BattleScriptEvent ActionScript;
 
+        public MakeNeutralEvent()
+        { }
+        public MakeNeutralEvent(BattleScriptEvent scriptEvent)
+        {
+            ActionScript = scriptEvent;
+        }
+
+        public MakeNeutralEvent(MakeNeutralEvent other)
+        {
+            ActionScript = (BattleScriptEvent)other.ActionScript.Clone();
+        }
+
+        public override GameEvent Clone() { return new MakeNeutralEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            DungeonScene.Instance.RemoveChar(context.Target);
+            ExplorerTeam neutralTeam = new ExplorerTeam();
+            context.Target.MemberTeam = neutralTeam;
+            AITactic tactic = DataManager.Instance.GetAITactic(21);
+            context.Target.Tactic = new AITactic(tactic);
+            neutralTeam.Players.Add(context.Target);
+            DungeonScene.Instance.AddTeam(Faction.Friend, neutralTeam);
+            DungeonScene.Instance.OnCharAdd(context.Target);
+
+            context.Target.RefreshTraits();
+            context.Target.Tactic.Initialize(context.Target);
+
+            int oldFullness = context.Target.Fullness;
+            context.Target.FullRestore();
+            context.Target.Fullness = oldFullness;
+
+            context.Target.ActionEvents.Clear();
+            if (ActionScript != null)
+                context.Target.ActionEvents.Add((BattleEvent)ActionScript.Clone());
+
+            yield break;
         }
     }
 
