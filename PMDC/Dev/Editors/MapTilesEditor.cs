@@ -21,8 +21,6 @@ namespace RogueEssence.Dev
 
         public override void LoadWindowControls(StackPanel control, string parent, string name, Type type, object[] attributes, ITile[][] member, Type[] subGroupStack)
         {
-            LoadLabelControl(control, name);
-
             //for strings, use an edit textbox
             TextBox txtValue = new TextBox();
             txtValue.Height = 100;
@@ -66,7 +64,6 @@ namespace RogueEssence.Dev
         public override ITile[][] SaveWindowControls(StackPanel control, string name, Type type, object[] attributes, Type[] subGroupStack)
         {
             int controlIndex = 0;
-            controlIndex++;
 
             TextBox txtValue = (TextBox)control.Children[controlIndex];
             string[] level = txtValue.Text.Split('\n');
