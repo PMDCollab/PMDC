@@ -205,6 +205,7 @@ namespace PMDC
                     LuaEngine.InitInstance();
                     DataManager.InitInstance();
 
+                    DataManager.InitDataDirs(PathMod.ModPath(""));
                     RogueEssence.Dev.DevHelper.ReserializeBase();
                     DiagManager.Instance.LogInfo("Reserializing main data");
                     RogueEssence.Dev.DevHelper.Reserialize(reserializeIndices);
@@ -229,6 +230,7 @@ namespace PMDC
                     LuaEngine.InitInstance();
                     DataManager.InitInstance();
                     DiagManager.Instance.LogInfo("Reserializing indices");
+                    DataManager.InitDataDirs(PathMod.ModPath(""));
                     RogueEssence.Dev.DevHelper.RunIndexing(convertIndices);
 
                     DataManager.Instance.UniversalData = (TypeDict<BaseData>)RogueEssence.Dev.DevHelper.LoadWithLegacySupport(PathMod.ModPath(DataManager.MISC_PATH + "Index.bin"), typeof(TypeDict<BaseData>));
