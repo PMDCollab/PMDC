@@ -1087,6 +1087,25 @@ namespace PMDC.Dungeon
                         //TODO
                     }
                     break;
+                case 255: // spit up
+                    {
+                        foreach (BattleEvent effect in entry.Data.OnActions.EnumerateInOrder())
+                        {
+                            if (effect is StatusStackDifferentEvent)
+                            {
+                                StatusStackDifferentEvent stackEffect = (StatusStackDifferentEvent)effect;
+                                StatusEffect stockStatus = controlledChar.GetStatusEffect(stackEffect.StatusID);
+                                if (stockStatus != null)
+                                {
+                                    StackState stack = stockStatus.StatusStates.Get<StackState>();
+                                    hitboxAction = stackEffect.StackPair[stack.Stack].Item1;
+                                    explosion = stackEffect.StackPair[stack.Stack].Item2;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    break;
                 case 382: // me first
                     {
                         int calledMove = -1;
@@ -1323,7 +1342,7 @@ namespace PMDC.Dungeon
                     int hpToHeal = target.MaxHP - target.HP;
                     int hpWorthHealing = Math.Max(hpToHeal - healHP / 2, 0);
                     //the healing only has worth if the target is missing at least half the HP the healing would give
-                    return hpToHeal * 200 / healHP;
+                    return hpWorthHealing * 200 / healHP;
                 }
             }
                 
@@ -1371,6 +1390,20 @@ namespace PMDC.Dungeon
                     if (target.HP * 4 / 3 > target.MaxHP)
                         return 0;
                 }
+                else if (moveIndex == 256)//swallow; use only if damaged; NOTE: specialized AI code!
+                {
+                    StatusEffect stockStatus = controlledChar.GetStatusEffect(53);
+                    if (stockStatus != null)
+                    {
+                        StackState stack = stockStatus.StatusStates.Get<StackState>();
+                        int healHP = target.MaxHP * stack.Stack / 2;
+                        int hpToHeal = target.MaxHP - target.HP;
+                        int hpWorthHealing = Math.Max(hpToHeal - healHP / 2, 0);
+                        //the healing only has worth if the target is missing at least half the HP the healing would give
+                        return hpWorthHealing * 200 / healHP;
+                    }
+                    return 0;
+                }
                 else if (moveIndex == 516)//Bestow; use only if you have an item to give; NOTE: specialized AI code!
                 {
                     if (controlledChar.EquippedItem.ID > -1)//let's assume the item is always bad
@@ -1414,7 +1447,7 @@ namespace PMDC.Dungeon
                         int hpToHeal = target.MaxHP - target.HP;
                         int hpWorthHealing = Math.Max(hpToHeal - healHP / 2, 0);
                         //the healing only has worth if the target is missing at least half the HP the healing would give
-                        return hpToHeal * 200 / healHP;
+                        return hpWorthHealing * 200 / healHP;
                     }
                     else if (effect is RemoveStateStatusBattleEvent)
                     {
