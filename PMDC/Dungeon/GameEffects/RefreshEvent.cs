@@ -75,13 +75,58 @@ namespace PMDC.Dungeon
             character.Mobility |= (1U << (int)Mobility);
         }
     }
+
     [Serializable]
-    public class ClearCharSightEvent : RefreshEvent
+    public class FactionRefreshEvent : RefreshEvent
     {
-        public override GameEvent Clone() { return new ClearCharSightEvent(); }
+        public Faction Faction;
+
+        public RefreshEvent BaseEvent;
+
+        public FactionRefreshEvent() { }
+        public FactionRefreshEvent(Faction faction, RefreshEvent baseEvent)
+        {
+            Faction = faction;
+            BaseEvent = baseEvent;
+        }
+        protected FactionRefreshEvent(FactionRefreshEvent other)
+        {
+            Faction = other.Faction;
+            BaseEvent = (RefreshEvent)other.BaseEvent.Clone();
+        }
+        public override GameEvent Clone() { return new FactionRefreshEvent(this); }
         public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            character.CharSight = Map.SightRange.Clear;
+            CharIndex charIndex = ZoneManager.Instance.CurrentMap.GetCharIndex(character);
+            if (charIndex.Faction == Faction)
+                BaseEvent.Apply(owner, ownerChar, character);
+        }
+    }
+
+    [Serializable]
+    public class SetSightEvent : RefreshEvent
+    {
+        public bool CharSight;
+        public Map.SightRange Sight;
+
+        public SetSightEvent() { }
+        public SetSightEvent(bool charSight, Map.SightRange sight)
+        {
+            CharSight = charSight;
+            Sight = sight;
+        }
+        protected SetSightEvent(SetSightEvent other)
+        {
+            CharSight = other.CharSight;
+            Sight = other.Sight;
+        }
+        public override GameEvent Clone() { return new SetSightEvent(this); }
+        public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (CharSight)
+                character.CharSight = Sight;
+            else
+                character.TileSight = Sight;
         }
     }
     [Serializable]
