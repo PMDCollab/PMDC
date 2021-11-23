@@ -13,7 +13,7 @@ namespace PMDC.Dungeon
         protected BossPlan(BossPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new BossPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
             if (controlledChar.HP * 2 < controlledChar.MaxHP)
             {

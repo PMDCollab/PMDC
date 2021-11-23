@@ -264,7 +264,7 @@ namespace PMDC.Dungeon
             return Grid.FindNPaths(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, ends, checkBlock, checkDiagBlock, limit, true);
         }
 
-        protected List<Loc> GetRandomPathPermissive(ReRandom rand, Character controlledChar, List<Loc> seenExits)
+        protected List<Loc> GetRandomPathPermissive(IRandom rand, Character controlledChar, List<Loc> seenExits)
         {
             List<Loc>[] paths = GetPathsPermissive(controlledChar, seenExits);
             List<int> idx_list = new List<int>();
@@ -375,7 +375,7 @@ namespace PMDC.Dungeon
         /// <param name="attackPattern"></param>
         /// <param name="includeImagine">Excludes imaginary hits from causing attack fallthrough.  This will also skip threat checking.</param>
         /// <returns></returns>
-        protected GameAction TryAttackChoice(ReRandom rand, Character controlledChar, AttackChoice attackPattern, bool excludeImagine = false)
+        protected GameAction TryAttackChoice(IRandom rand, Character controlledChar, AttackChoice attackPattern, bool excludeImagine = false)
         {
             List<Character> seenChars = controlledChar.GetSeenCharacters(Alignment.Self | Alignment.Friend | Alignment.Foe);
 
@@ -472,7 +472,7 @@ namespace PMDC.Dungeon
                 endHash[loc] = new RangeTarget(chara, weight);
         }
 
-        private ActionDirValue weightedActionChoice(List<ActionDirValue> moveIndices, ReRandom rand)
+        private ActionDirValue weightedActionChoice(List<ActionDirValue> moveIndices, IRandom rand)
         {
             //get a random move based on weighted chance
             int totalPoints = 0;
@@ -500,7 +500,7 @@ namespace PMDC.Dungeon
                 return new GameAction(GameAction.ActionType.Attack, actionVal.Dir);
         }
 
-        protected GameAction TryDefaultAttackChoice(ReRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
+        protected GameAction TryDefaultAttackChoice(IRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
         {
             List<ActionDirValue> backupIndices = new List<ActionDirValue>();
             //default on attacking if no moves are to be found
@@ -521,7 +521,7 @@ namespace PMDC.Dungeon
         }
 
 
-        protected GameAction TryDumbAttackChoice(ReRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
+        protected GameAction TryDumbAttackChoice(IRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
         {
             List<ActionDirValue> moveIndices = new List<ActionDirValue>();
             foreach (int ii in iterateUsableSkillIndices(controlledChar))
@@ -556,7 +556,7 @@ namespace PMDC.Dungeon
         }
 
 
-        protected GameAction TryStatusMoveChoice(ReRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
+        protected GameAction TryStatusMoveChoice(IRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
         {
             //first pass list of move candidates containing all status moves
             List<ActionDirValue> moveIndices = new List<ActionDirValue>();
@@ -583,7 +583,7 @@ namespace PMDC.Dungeon
             return new GameAction(GameAction.ActionType.Wait, Dir8.None);
         }
 
-        protected GameAction TryRandomMoveChoice(ReRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
+        protected GameAction TryRandomMoveChoice(IRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
         {
             //first pass list of move candidates containing all moves, including hypothetical
             List<ActionDirValue> moveIndices = new List<ActionDirValue>();
@@ -638,7 +638,7 @@ namespace PMDC.Dungeon
         /// <param name="defaultDir"></param>
         /// <param name="seenChars"></param>
         /// <returns></returns>
-        protected GameAction TryBestAttackChoice(ReRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
+        protected GameAction TryBestAttackChoice(IRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
         {
             List<ActionDirValue> highestIndices = new List<ActionDirValue>();
             List<ActionDirValue> highestStatusIndices = new List<ActionDirValue>();
@@ -664,7 +664,7 @@ namespace PMDC.Dungeon
             return new GameAction(GameAction.ActionType.Wait, Dir8.None);
         }
 
-        protected GameAction TryForcedAttackChoice(ReRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
+        protected GameAction TryForcedAttackChoice(IRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
         {
             //check to see if currently under a force-move status
             //if so, aim a regular attack according to that move
@@ -725,7 +725,7 @@ namespace PMDC.Dungeon
             }
         }
 
-        protected void UpdateTotalIndices(ReRandom rand, List<ActionDirValue> totalIndices, int moveIndex, HitValue[] attackDirs)
+        protected void UpdateTotalIndices(IRandom rand, List<ActionDirValue> totalIndices, int moveIndex, HitValue[] attackDirs)
         {
             HitValue highestScore = new HitValue(0, false);
             List<int> highestDirs = new List<int>();

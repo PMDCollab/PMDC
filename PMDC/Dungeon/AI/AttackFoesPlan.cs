@@ -29,7 +29,7 @@ namespace PMDC.Dungeon
         public override BasePlan CreateNew() { return new AttackFoesPlan(this); }
         public override void SwitchedIn() { targetLoc = null; base.SwitchedIn(); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
             if (controlledChar.CantWalk)
             {

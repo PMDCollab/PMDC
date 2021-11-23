@@ -23,7 +23,7 @@ namespace PMDC.Dungeon
         }
         public override BasePlan CreateNew() { return new PreparePlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
             bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
             Character target = null;
@@ -66,7 +66,7 @@ namespace PMDC.Dungeon
         }
         public override BasePlan CreateNew() { return new PreBuffPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
             if (controlledChar.GetStatusEffect(FirstMoveStatus) != null)
                 return null;
@@ -111,7 +111,7 @@ namespace PMDC.Dungeon
         }
         public override BasePlan CreateNew() { return new LeadSkillPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
             if (controlledChar.GetStatusEffect(FirstMoveStatus) != null)
                 return null;

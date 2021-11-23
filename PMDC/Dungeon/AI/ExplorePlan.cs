@@ -17,7 +17,7 @@ namespace PMDC.Dungeon
         protected ExploreIfUnseenPlan(ExploreIfUnseenPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new ExploreIfUnseenPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
             foreach (Character target in ZoneManager.Instance.CurrentMap.IterateCharacters())
             {
@@ -55,7 +55,7 @@ namespace PMDC.Dungeon
             base.SwitchedIn();
         }
 
-        public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
             if (controlledChar.CantWalk)
                 return null;

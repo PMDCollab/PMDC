@@ -14,7 +14,7 @@ namespace PMDC.Dungeon
         protected WaitPlan(WaitPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new WaitPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
             return new GameAction(GameAction.ActionType.Wait, Dir8.None);
         }

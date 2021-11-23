@@ -15,7 +15,7 @@ namespace PMDC.Dungeon
         protected FollowLeaderPlan(FollowLeaderPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new FollowLeaderPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
             if (controlledChar.CantWalk)
                 return null;

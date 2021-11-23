@@ -17,7 +17,7 @@ namespace PMDC.Dungeon
         protected WaitUntilAttackedPlan(WaitUntilAttackedPlan other) : base(other) { StatusIndex = other.StatusIndex; }
         public override BasePlan CreateNew() { return new WaitUntilAttackedPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
             if (controlledChar.GetStatusEffect(StatusIndex) == null)
                 return new GameAction(GameAction.ActionType.Wait, Dir8.None);
@@ -36,7 +36,7 @@ namespace PMDC.Dungeon
         protected WaitUntilMapStatusPlan(WaitUntilMapStatusPlan other) : base(other) { StatusIndex = other.StatusIndex; }
         public override BasePlan CreateNew() { return new WaitUntilMapStatusPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
             if (!ZoneManager.Instance.CurrentMap.Status.ContainsKey(StatusIndex))
                 return new GameAction(GameAction.ActionType.Wait, Dir8.None);

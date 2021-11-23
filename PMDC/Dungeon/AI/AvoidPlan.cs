@@ -36,7 +36,7 @@ namespace PMDC.Dungeon
         protected abstract bool RunFromFoes { get; }
         protected abstract bool AbortIfCornered { get; }
 
-        public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
             if (controlledChar.CantWalk)
                 return null;
@@ -172,7 +172,7 @@ namespace PMDC.Dungeon
             return SelectChoiceFromPath(controlledChar, goalPath);
 
         }
-        private GameAction DumbAvoid(Character controlledChar, bool preThink, List<Character> seenCharacters, CharIndex ownIndex, ReRandom rand)
+        private GameAction DumbAvoid(Character controlledChar, bool preThink, List<Character> seenCharacters, CharIndex ownIndex, IRandom rand)
         {
             StablePriorityQueue<double, Dir8> candidateDirs = new StablePriorityQueue<double, Dir8>();
 
