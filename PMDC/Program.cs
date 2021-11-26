@@ -15,6 +15,7 @@ using Avalonia;
 using RogueEssence.Ground;
 using SDL2;
 using RogueElements;
+using System.IO;
 #endregion
 
 namespace PMDC
@@ -40,8 +41,8 @@ namespace PMDC
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
 
-            string[] args = System.Environment.GetCommandLineArgs();
-            PathMod.InitExePath(System.IO.Path.GetDirectoryName(args[0]));
+            string[] args = Environment.GetCommandLineArgs();
+            PathMod.InitExePath(args[0]);
             DiagManager.InitInstance();
             DiagManager.Instance.CurSettings = DiagManager.Instance.LoadSettings();
             DiagManager.Instance.UpgradeBinder = new UpgradeBinder();
@@ -62,6 +63,8 @@ namespace PMDC
                 DataManager.DataType reserializeIndices = DataManager.DataType.None;
                 string langArgs = "";
                 bool dev = false;
+                string mod = "";
+                bool buildMod = false;
                 string playInputs = null;
                 for (int ii = 1; ii < args.Length; ii++)
                 {
@@ -83,17 +86,22 @@ namespace PMDC
                         guideBook = true;
                     else if (args[ii] == "-asset")
                     {
-                        PathMod.ASSET_PATH = System.IO.Path.GetFullPath(args[ii + 1]);
+                        PathMod.ASSET_PATH = Path.GetFullPath(args[ii + 1]);
                         ii++;
                     }
                     else if (args[ii] == "-raw")
                     {
-                        PathMod.DEV_PATH = System.IO.Path.GetFullPath(args[ii + 1]);
+                        PathMod.DEV_PATH = Path.GetFullPath(args[ii + 1]);
                         ii++;
                     }
                     else if (args[ii] == "-mod")
                     {
-                        PathMod.Mod = PathMod.MODS_FOLDER + args[ii + 1];
+                        mod = args[ii + 1];
+                        ii++;
+                    }
+                    else if (args[ii] == "-build")
+                    {
+                        buildMod = true;
                         ii++;
                     }
                     else if (args[ii] == "-convert")
@@ -164,13 +172,25 @@ namespace PMDC
                     }
                 }
 
-
                 GraphicsManager.InitParams();
 
                 DiagManager.Instance.DevMode = dev;
+
+                if (mod != "")
+                {
+                    if (Directory.Exists(Path.Combine(PathMod.MODS_PATH, mod)))
+                    {
+                        PathMod.Mod = PathMod.MODS_FOLDER + mod;
+
+                        DiagManager.Instance.LogInfo(String.Format("Loaded mod \"{0}\".", mod));
+                    }
+                    else
+                        DiagManager.Instance.LogInfo(String.Format("Cannot find mod \"{0}\" in {1}. Falling back to base game.", mod, PathMod.MODS_PATH));
+                }
+
+
                 if (playInputs != null)
                     DiagManager.Instance.LoadInputs(playInputs);
-
 
                 Text.Init();
                 if (langArgs != "" && DiagManager.Instance.CurSettings.Language == "")
@@ -185,6 +205,17 @@ namespace PMDC
                 }
                 Text.SetCultureCode(DiagManager.Instance.CurSettings.Language == "" ? "" : DiagManager.Instance.CurSettings.Language.ToString());
 
+                if (buildMod)
+                {
+                    if (PathMod.Mod == "")
+                    {
+                        DiagManager.Instance.LogInfo("No mod specified to build.");
+                        return;
+                    }
+                    RogueEssence.Dev.DevHelper.MergeMod(mod);
+
+                    return;
+                }
 
                 if (convertAssets != GraphicsManager.AssetType.None)
                 {
