@@ -10,6 +10,9 @@ using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Dev;
 using PMDC.Data;
+using NLua;
+using RogueEssence.Script;
+using System.Linq;
 
 namespace PMDC.Dungeon
 {
@@ -2576,6 +2579,26 @@ namespace PMDC.Dungeon
                     DungeonScene.Instance.PendingLeaderAction = MenuManager.Instance.ProcessMenuCoroutine(new InfoMenu(notice.Title.FormatLocal(), notice.Content.FormatLocal()));
                 yield break;
             }
+        }
+    }
+
+    [Serializable]
+    public class SingleCharStateScriptEvent : SingleCharEvent
+    {
+        public override GameEvent Clone() { return new SingleCharStateScriptEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            TileScriptState state = ((EffectTile)owner).TileStates.GetWithDefault<TileScriptState>();
+            if (state == null)
+                yield break;
+
+            LuaTable args = LuaEngine.Instance.RunString("return " + state.ArgTable).First() as LuaTable;
+            object[] parameters = new object[] { owner, ownerChar, character, args };
+            string name = "SINGLE_CHAR_SCRIPT." + state.Script;
+            LuaFunction func_iter = LuaEngine.Instance.CreateCoroutineIterator(name, parameters);
+
+            yield return CoroutineManager.Instance.StartCoroutine(ScriptEvent.ApplyFunc(name, func_iter));
         }
     }
 
