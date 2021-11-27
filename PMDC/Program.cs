@@ -329,6 +329,9 @@ namespace PMDC
         {
             DataEditor.Init();
 
+            DataEditor.AddEditor(new StatusEffectEditor());
+            DataEditor.AddEditor(new MapStatusEditor());
+
             DataEditor.AddEditor(new MoneySpawnZoneStepEditor());
 
             //DataEditor.AddConverter(new AutoTileBaseConverter());
@@ -391,6 +394,10 @@ namespace PMDC
             DataEditor.AddEditor(new FlagTypeEditor());
             DataEditor.AddEditor(new ColorEditor());
             DataEditor.AddEditor(new TypeEditor());
+
+            //TODO: there is no parameterless interface for hashset
+            //so instead we have to do the painful process of manually adding every hashset of every type we actually use.  ugh
+            DataEditor.AddEditor(new HashSetEditor<int>());
             DataEditor.AddEditor(new ArrayEditor());
             DataEditor.AddEditor(new DictionaryEditor());
             DataEditor.AddEditor(new NoDupeListEditor());
