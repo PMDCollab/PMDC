@@ -2,7 +2,7 @@
   "profiles": {
     "MapGenTest": {
       "commandName": "Project",
-      "commandLineArgs": "-asset ../../../../../../Asset/ -raw ../../../../../../RawAsset/"
+      "commandLineArgs": "-asset ../../../../../../DumpAsset/ -raw ../../../../../../RawAsset/"
     }
   }
 }
