@@ -360,6 +360,9 @@ namespace PMDC
             DataEditor.AddEditor(new RoomGenCrossEditor());
             DataEditor.AddEditor(new SizedRoomGenEditor());
 
+            DataEditor.AddEditor(new BasePowerStateEditor());
+            DataEditor.AddEditor(new AdditionalEffectStateEditor());
+
             DataEditor.AddEditor(new MonsterIDEditor());
 
             DataEditor.AddEditor(new TeamMemberSpawnEditor());
