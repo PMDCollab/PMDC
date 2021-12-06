@@ -8845,21 +8845,35 @@ namespace PMDC.Dungeon
         public int Counter;
         public StringKey MsgOverride;
 
-        public GiveMapStatusEvent() { }
+        [StringTypeConstraint(1, typeof(CharState))]
+        public List<FlagType> States;
+
+        public GiveMapStatusEvent() { States = new List<FlagType>(); }
         public GiveMapStatusEvent(int id)
         {
+            States = new List<FlagType>();
             StatusID = id;
         }
         public GiveMapStatusEvent(int id, int counter)
         {
+            States = new List<FlagType>();
             StatusID = id;
             Counter = counter;
         }
         public GiveMapStatusEvent(int id, int counter, StringKey msg)
         {
+            States = new List<FlagType>();
             StatusID = id;
             Counter = counter;
             MsgOverride = msg;
+        }
+        public GiveMapStatusEvent(int id, int counter, StringKey msg, Type state)
+        {
+            States = new List<FlagType>();
+            StatusID = id;
+            Counter = counter;
+            MsgOverride = msg;
+            States.Add(new FlagType(state));
         }
         protected GiveMapStatusEvent(GiveMapStatusEvent other)
             : this()
@@ -8867,6 +8881,7 @@ namespace PMDC.Dungeon
             StatusID = other.StatusID;
             Counter = other.Counter;
             MsgOverride = other.MsgOverride;
+            States.AddRange(other.States);
         }
         public override GameEvent Clone() { return new GiveMapStatusEvent(this); }
 
@@ -8877,6 +8892,15 @@ namespace PMDC.Dungeon
             status.LoadFromData();
             if (Counter != 0)
                 status.StatusStates.GetWithDefault<MapCountDownState>().Counter = Counter;
+
+            bool hasState = false;
+            foreach (FlagType state in States)
+            {
+                if (context.User.CharStates.Contains(state.FullType))
+                    hasState = true;
+            }
+            if (hasState)
+                status.StatusStates.GetWithDefault<MapCountDownState>().Counter = status.StatusStates.GetWithDefault<MapCountDownState>().Counter * 5;
 
             if (MsgOverride.Key == null)
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
@@ -8939,6 +8963,7 @@ namespace PMDC.Dungeon
                 //add the map status
                 MapStatus status = new MapStatus(weather);
                 status.LoadFromData();
+                status.StatusStates.GetWithDefault<MapCountDownState>().Counter = -1;
                 ElementData elementData = DataManager.Instance.GetElement(context.User.Element1);
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ELEMENT_WEATHER").ToLocal(), context.User.GetDisplayName(false), elementData.GetIconName(), ((MapStatusData)status.GetData()).GetColoredName()));
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
@@ -8948,6 +8973,7 @@ namespace PMDC.Dungeon
                 //add the map status
                 MapStatus status = new MapStatus(weather);
                 status.LoadFromData();
+                status.StatusStates.GetWithDefault<MapCountDownState>().Counter = -1;
                 ElementData elementData = DataManager.Instance.GetElement(context.User.Element2);
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ELEMENT_WEATHER").ToLocal(), context.User.GetDisplayName(false), elementData.GetIconName(), ((MapStatusData)status.GetData()).GetColoredName()));
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
@@ -8957,6 +8983,7 @@ namespace PMDC.Dungeon
                 //add the map status
                 MapStatus status = new MapStatus(0);
                 status.LoadFromData();
+                status.StatusStates.GetWithDefault<MapCountDownState>().Counter = -1;
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
             }
         }

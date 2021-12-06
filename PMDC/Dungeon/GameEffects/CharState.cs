@@ -137,6 +137,13 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class ExtendWeatherState : CharState
+    {
+        public ExtendWeatherState() { }
+        public override GameplayState Clone() { return new ExtendWeatherState(); }
+    }
+
+    [Serializable]
     public class BindState : CharState
     {
         public BindState() { }
