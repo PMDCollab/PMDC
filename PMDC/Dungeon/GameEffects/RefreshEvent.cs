@@ -141,10 +141,25 @@ namespace PMDC.Dungeon
     [Serializable]
     public class SeeItemsEvent : RefreshEvent
     {
-        public override GameEvent Clone() { return new SeeCharsEvent(); }
+        public bool WallItems;
+
+        public SeeItemsEvent()
+        { }
+        public SeeItemsEvent(bool wallItems)
+        {
+            WallItems = wallItems;
+        }
+        protected SeeItemsEvent(SeeItemsEvent other)
+        {
+            WallItems = other.WallItems;
+        }
+        public override GameEvent Clone() { return new SeeItemsEvent(this); }
         public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            character.SeeWallItems = true;
+            if (WallItems)
+                character.SeeWallItems = true;
+            else
+                character.SeeItems = true;
         }
     }
     [Serializable]
