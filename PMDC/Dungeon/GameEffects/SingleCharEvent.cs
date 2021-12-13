@@ -1280,6 +1280,7 @@ namespace PMDC.Dungeon
     public class NightmareEvent : SingleCharEvent
     {
         public int SleepID;
+        public int Denominator;
         public StringKey Msg;
         public List<AnimEvent> Anims;
 
@@ -1287,9 +1288,10 @@ namespace PMDC.Dungeon
         {
             Anims = new List<AnimEvent>();
         }
-        public NightmareEvent(int sleepID, StringKey msg, params AnimEvent[] anims)
+        public NightmareEvent(int sleepID, int denominator, StringKey msg, params AnimEvent[] anims)
         {
             SleepID = sleepID;
+            Denominator = denominator;
             Msg = msg;
             Anims = new List<AnimEvent>();
             Anims.AddRange(anims);
@@ -1297,6 +1299,7 @@ namespace PMDC.Dungeon
         protected NightmareEvent(NightmareEvent other)
         {
             SleepID = other.SleepID;
+            Denominator = other.Denominator;
             Msg = other.Msg;
             Anims = new List<AnimEvent>();
             foreach (AnimEvent anim in other.Anims)
@@ -1309,12 +1312,18 @@ namespace PMDC.Dungeon
             StatusEffect sleep = character.GetStatusEffect(SleepID);
             if (sleep != null)
             {
+                if (Denominator < 0 && character.HP >= character.MaxHP)
+                    yield break;
+
                 DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), character.GetDisplayName(false), owner.GetDisplayName(), ownerChar.GetDisplayName(false)));
 
                 foreach (AnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, character));
 
-                yield return CoroutineManager.Instance.StartCoroutine(character.InflictDamage(Math.Max(1, character.MaxHP / 8)));
+                if (Denominator < 0)
+                    yield return CoroutineManager.Instance.StartCoroutine(character.RestoreHP(Math.Max(1, character.MaxHP / -Denominator), false));
+                else
+                    yield return CoroutineManager.Instance.StartCoroutine(character.InflictDamage(Math.Max(1, character.MaxHP / Denominator)));
             }
         }
     }
@@ -1612,7 +1621,8 @@ namespace PMDC.Dungeon
 
             if (badStatuses.Count > 0)
             {
-                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), character.GetDisplayName(false), owner.GetDisplayName()));
+                if (Message.Key != null)
+                    DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), character.GetDisplayName(false), owner.GetDisplayName()));
 
                 foreach (AnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, character));

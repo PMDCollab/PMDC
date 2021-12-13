@@ -390,7 +390,7 @@ namespace PMDC.Dungeon
             if (targetChar == null)
                 yield break;
 
-            if (targetChar.HP > targetChar.MaxHP / 2)
+            if (ownerChar.HP < ownerChar.MaxHP / 2)
                 yield break;
 
             //char needs to be a friend of the target char

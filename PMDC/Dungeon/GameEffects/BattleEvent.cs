@@ -9602,18 +9602,27 @@ namespace PMDC.Dungeon
         public bool AffectTarget;
         public StringKey Msg;
 
-        public RemoveStateStatusBattleEvent() { States = new List<FlagType>(); }
-        public RemoveStateStatusBattleEvent(Type state, bool affectTarget, StringKey msg) : this()
+        public List<BattleAnimEvent> Anims;
+
+        public RemoveStateStatusBattleEvent()
+        {
+            States = new List<FlagType>();
+            Anims = new List<BattleAnimEvent>();
+        }
+        public RemoveStateStatusBattleEvent(Type state, bool affectTarget, StringKey msg, params BattleAnimEvent[] anims) : this()
         {
             States.Add(new FlagType(state));
             AffectTarget = affectTarget;
             Msg = msg;
+            Anims.AddRange(anims);
         }
         protected RemoveStateStatusBattleEvent(RemoveStateStatusBattleEvent other) : this()
         {
             States.AddRange(other.States);
             AffectTarget = other.AffectTarget;
             Msg = other.Msg;
+            foreach (BattleAnimEvent anim in other.Anims)
+                Anims.Add((BattleAnimEvent)anim.Clone());
         }
         public override GameEvent Clone() { return new RemoveStateStatusBattleEvent(this); }
 
@@ -9636,9 +9645,13 @@ namespace PMDC.Dungeon
                     statuses.Add(status.ID);
             }
 
-            if (statuses.Count > 0 && Msg.Key != null)
+            if (statuses.Count > 0)
             {
-                DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), target.GetDisplayName(false)));
+                if (Msg.Key != null)
+                    DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), target.GetDisplayName(false), owner.GetDisplayName()));
+
+                foreach (BattleAnimEvent anim in Anims)
+                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
             }
 
             foreach (int statusID in statuses)
