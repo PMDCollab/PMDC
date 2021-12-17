@@ -25,12 +25,12 @@ namespace PMDC.LevelGen
 
         public override void Apply(ZoneGenContext zoneContext, IGenContext context, StablePriorityQueue<Priority, IGenStep> queue)
         {
-            GameProgress Progress = DataManager.Instance.Save;
-            if (Progress != null && Progress.Rescue != null && Progress.Rescue.Rescuing)
+            GameProgress progress = DataManager.Instance.Save;
+            if (progress != null && progress.Rescue != null && progress.Rescue.Rescuing)
             {
-                if (Progress.Rescue.SOS.Goal.ID == zoneContext.CurrentZone
-                    && Progress.Rescue.SOS.Goal.StructID.Segment == zoneContext.CurrentSegment
-                    && Progress.Rescue.SOS.Goal.StructID.ID == zoneContext.CurrentID)
+                if (progress.Rescue.SOS.Goal.ID == zoneContext.CurrentZone
+                    && progress.Rescue.SOS.Goal.StructID.Segment == zoneContext.CurrentSegment
+                    && progress.Rescue.SOS.Goal.StructID.ID == zoneContext.CurrentID)
                 {
                     queue.Enqueue(Priority, new RescueSpawner<BaseMapGenContext>());
                 }

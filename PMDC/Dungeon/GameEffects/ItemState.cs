@@ -206,4 +206,5 @@ namespace PMDC.Dungeon
     {
         public override GameplayState Clone() { return new RecruitState(); }
     }
+
 }

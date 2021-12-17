@@ -156,4 +156,41 @@ namespace PMDC.Dungeon
         public GemBoostState() { }
         public override GameplayState Clone() { return new GemBoostState(); }
     }
+
+
+    [Serializable]
+    public class CoinModGenState : ModGenState
+    {
+        public CoinModGenState() { }
+        public CoinModGenState(int mod) : base(mod) { }
+        protected CoinModGenState(CoinModGenState other) : base(other) { }
+        public override GameplayState Clone() { return new CoinModGenState(this); }
+    }
+
+    [Serializable]
+    public class StairsModGenState : ModGenState
+    {
+        public StairsModGenState() { }
+        public StairsModGenState(int mod) : base(mod) { }
+        protected StairsModGenState(StairsModGenState other) : base(other) { }
+        public override GameplayState Clone() { return new StairsModGenState(this); }
+    }
+
+    [Serializable]
+    public class ChestModGenState : ModGenState
+    {
+        public ChestModGenState() { }
+        public ChestModGenState(int mod) : base(mod) { }
+        protected ChestModGenState(ChestModGenState other) : base(other) { }
+        public override GameplayState Clone() { return new ChestModGenState(this); }
+    }
+
+    [Serializable]
+    public class ShopModGenState : ModGenState
+    {
+        public ShopModGenState() { }
+        public ShopModGenState(int mod) : base(mod) { }
+        protected ShopModGenState(ShopModGenState other) : base(other) { }
+        public override GameplayState Clone() { return new ShopModGenState(this); }
+    }
 }
