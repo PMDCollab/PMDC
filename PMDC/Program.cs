@@ -363,6 +363,8 @@ namespace PMDC
             DataEditor.AddEditor(new BasePowerStateEditor());
             DataEditor.AddEditor(new AdditionalEffectStateEditor());
 
+            DataEditor.AddEditor(new PromoteBranchEditor());
+
             DataEditor.AddEditor(new MonsterIDEditor());
 
             DataEditor.AddEditor(new TeamMemberSpawnEditor());
