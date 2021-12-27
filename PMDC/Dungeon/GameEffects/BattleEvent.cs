@@ -13835,8 +13835,7 @@ namespace PMDC.Dungeon
                         context.Target.OriginalUUID = DataManager.Instance.Save.UUID;
                         context.Target.OriginalTeam = DataManager.Instance.Save.ActiveTeam.Name;
                         context.Target.MetAt = ZoneManager.Instance.CurrentMap.GetColoredName();
-                        //context.Target.MetDungeon = ZoneManager.Instance.CurrentZoneID;
-                        //context.Target.MetFloor = ZoneManager.Instance.CurrentMapID;
+                        context.Target.MetLoc = new ZoneLoc(ZoneManager.Instance.CurrentZoneID, ZoneManager.Instance.CurrentMapID);
                         context.Target.ActionEvents.Clear();
                         if (ActionScript != null)
                             context.Target.ActionEvents.Add((BattleEvent)ActionScript.Clone());

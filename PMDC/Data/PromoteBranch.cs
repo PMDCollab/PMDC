@@ -390,6 +390,7 @@ namespace PMDC.Data
 
             newChar.Discriminator = character.Discriminator;
             newChar.MetAt = character.MetAt;
+            newChar.MetLoc = character.MetLoc;
             foreach (BattleEvent effect in character.ActionEvents)
                 newChar.ActionEvents.Add((BattleEvent)effect.Clone());
 
