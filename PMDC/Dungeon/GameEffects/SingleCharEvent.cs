@@ -3737,7 +3737,7 @@ namespace PMDC.Dungeon
                 freeTiles.RemoveAt(randIndex);
                 //start the animations
 
-                ItemAnim itemAnim = new ItemAnim(baseLoc, item.TileLoc, item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, Math.Max(0, waitTime));
+                ItemAnim itemAnim = new ItemAnim(baseLoc * GraphicsManager.TileSize, item.MapLoc, item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, Math.Max(0, waitTime));
                 DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
             }
             //they can be thematic, or use whatever's on the floor

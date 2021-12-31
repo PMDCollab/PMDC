@@ -11344,8 +11344,8 @@ namespace PMDC.Dungeon
                     //item steal animation
                     if (!target.Unidentifiable && !origin.Unidentifiable)
                     {
-                        int MaxDistance = (int)Math.Sqrt(((target.CharLoc - origin.CharLoc) * GraphicsManager.TileSize).DistSquared());
-                        ItemAnim itemAnim = new ItemAnim(target.CharLoc, origin.CharLoc, DataManager.Instance.GetItem(item.ID).Sprite, MaxDistance / 2, 0);
+                        int MaxDistance = (int)Math.Sqrt((target.MapLoc - origin.MapLoc).DistSquared());
+                        ItemAnim itemAnim = new ItemAnim(target.MapLoc, origin.MapLoc, DataManager.Instance.GetItem(item.ID).Sprite, MaxDistance / 2, 0);
                         DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
                         yield return new WaitForFrames(ItemAnim.ITEM_ACTION_TIME);
                     }
@@ -11453,8 +11453,8 @@ namespace PMDC.Dungeon
                     //item steal animation
                     if (!target.Unidentifiable && !origin.Unidentifiable)
                     {
-                        int MaxDistance = (int)Math.Sqrt(((target.CharLoc - origin.CharLoc) * GraphicsManager.TileSize).DistSquared());
-                        ItemAnim itemAnim = new ItemAnim(target.CharLoc, origin.CharLoc, DataManager.Instance.GetItem(item.ID).Sprite, MaxDistance / 2, 0);
+                        int MaxDistance = (int)Math.Sqrt((target.MapLoc - origin.MapLoc).DistSquared());
+                        ItemAnim itemAnim = new ItemAnim(target.MapLoc, origin.MapLoc, DataManager.Instance.GetItem(item.ID).Sprite, MaxDistance / 2, 0);
                         DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
                         yield return new WaitForFrames(ItemAnim.ITEM_ACTION_TIME);
                     }
@@ -12645,7 +12645,7 @@ namespace PMDC.Dungeon
                 if (chosenItems[ii])
                 {
                     MapItem item = ZoneManager.Instance.CurrentMap.Items[ii];
-                    ItemAnim itemAnim = new ItemAnim(unclaimed_startings[unclaimed_index], item.TileLoc, item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, 1);
+                    ItemAnim itemAnim = new ItemAnim(unclaimed_startings[unclaimed_index] * GraphicsManager.TileSize, item.MapLoc, item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, 1);
                     DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
                     unclaimed_items.Add(item);
                     ZoneManager.Instance.CurrentMap.Items.RemoveAt(ii);
