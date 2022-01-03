@@ -1940,7 +1940,18 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (character.EquippedItem.ID == -1 && ZoneManager.Instance.CurrentMap.MapTurns == 0 && ZoneManager.Instance.CurrentMap.ItemSpawns.Spawns.CanPick)
+            //do not activate if already holding an item
+            if (character.EquippedItem.ID != -1)
+                yield break;
+
+            //do not activate if inv is full
+            if (character.MemberTeam is ExplorerTeam)
+            {
+                if (((ExplorerTeam)character.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone) >= character.MemberTeam.GetInvCount())
+                    yield break;
+            }
+
+            if (ZoneManager.Instance.CurrentMap.MapTurns == 0 && ZoneManager.Instance.CurrentMap.ItemSpawns.Spawns.CanPick)
             {
                 InvItem item = ZoneManager.Instance.CurrentMap.ItemSpawns.Pick(DataManager.Instance.Save.Rand);
 
@@ -1956,7 +1967,7 @@ namespace PMDC.Dungeon
                     character.EquipItem(item);
                 }
             }
-            yield break;
+            
         }
     }
 
