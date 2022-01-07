@@ -4,8 +4,8 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>PMDC</RootNamespace>
     <AssemblyName>PMDC</AssemblyName>
-    <AssemblyVersion>0.5.4.0</AssemblyVersion>
-    <AssemblyCopyright>Audino 2021</AssemblyCopyright>
+    <AssemblyVersion>0.5.5.0</AssemblyVersion>
+    <AssemblyCopyright>Audino 2022</AssemblyCopyright>
     <TargetFramework>net5.0</TargetFramework>
     <Deterministic>true</Deterministic>
     <RuntimeIdentifiers>win-x64;osx-x64;linux-x64</RuntimeIdentifiers>
