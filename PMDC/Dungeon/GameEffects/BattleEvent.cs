@@ -4043,8 +4043,8 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             int diff = (context.StrikeStartTile - context.Target.CharLoc).Dist8();
-            if (diff > 0)
-                context.AddContextStateMult<DmgMult>(false, 1, diff);
+            for(int ii = 0; ii < diff; ii++)
+                context.AddContextStateMult<DmgMult>(false, 1, 2);
             yield break;
         }
     }
@@ -7379,8 +7379,10 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new PsywaveDamageEvent(); }
         protected override int CalculateFixedDamage(GameEventOwner owner, BattleContext context)
         {
+            // 1 2 1 0 1 2 1 0
+            // sine wave function
             int locDiff = (context.StrikeStartTile - context.Target.CharLoc).Dist8();
-            int diff = (locDiff + 1) % 4;
+            int diff = locDiff % 4;
             int power = (diff > 2) ? 1 : diff;
             return Math.Max(1, context.GetContextStateInt<UserLevel>(0) * power / 2);
         }

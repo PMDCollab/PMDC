@@ -1498,6 +1498,11 @@ namespace PMDC.Dungeon
                             return -100;
                         return 0;
                     }
+                    else if (effect is TransformEvent)
+                    {
+                        if (controlledChar.CurrentForm.Species == target.CurrentForm.Species)
+                            return 0;
+                    }
                     else if (effect is TransferStatusEvent)
                     {
                         TransferStatusEvent transferEffect = (TransferStatusEvent)effect;
