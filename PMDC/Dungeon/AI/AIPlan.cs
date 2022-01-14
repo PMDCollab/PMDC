@@ -1840,6 +1840,16 @@ namespace PMDC.Dungeon
                         {
                             if (baseEffect is GiveContinuousDamageEvent)
                                 power *= 3;
+                            if (baseEffect is StatusBattleEvent)
+                            {
+                                //note: specialized code mainly for trapping attacks!
+                                //this part is usually only hit for trapping attacks!
+                                StatusBattleEvent giveEffect = (StatusBattleEvent)baseEffect;
+                                Character statusTarget = giveEffect.AffectTarget ? target : controlledChar;
+                                StatusEffect existingStatus = statusTarget.GetStatusEffect(giveEffect.StatusID);
+                                if (existingStatus == null)
+                                    power += 100;
+                            }
                         }
                     }
                 }
