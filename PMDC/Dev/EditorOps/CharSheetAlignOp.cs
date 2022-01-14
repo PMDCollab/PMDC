@@ -45,7 +45,7 @@ namespace PMDC.Dev
                     sheet.AnimData[anim].Sequences[ii].Frames[jj] = newFrame;
                 }
             }
-            sheet.Collapse(false);
+            sheet.Collapse(false, true);
         }
     }
 
