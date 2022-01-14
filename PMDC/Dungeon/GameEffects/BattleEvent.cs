@@ -360,6 +360,7 @@ namespace PMDC.Dungeon
                 action.Range = 8;
                 action.StopAtHit = true;
                 action.StopAtWall = true;
+                action.HitTiles = true;
                 context.HitboxAction = action;
                 context.Explosion = new ExplosionData(entry.Explosion);
                 context.Explosion.TargetAlignments = Alignment.Friend | Alignment.Foe | Alignment.Self;
@@ -12732,14 +12733,19 @@ namespace PMDC.Dungeon
                 TileData entry = DataManager.Instance.GetTile(tile.Effect.GetID());
                 if (entry.StepType == TileData.TriggerType.Trap)
                 {
-                    if (context.ActionType == BattleActionType.Skill && context.Data.ID == 0)
+                    if (context.ActionType == BattleActionType.Skill && context.Data.ID == 0 && !tile.Effect.Revealed)
                         tile.Effect.Revealed = true;
-                    else if (ZoneManager.Instance.CurrentMap.GetTileOwner(context.Target) != tile.Effect.Owner)
+                    else if (tile.Effect.Owner != EffectTile.TileOwner.None && ZoneManager.Instance.CurrentMap.GetTileOwner(context.Target) == tile.Effect.Owner)
                     {
                         //sort of a hack, meant to prevent the following scenario:
                         //character A sets a trap underfoot and owns it, expecting the trap to not hurt it
                         //character B attacks character A, hitting the tile with the owner on it
                         //character A takes the effect of the trap
+                        
+                        //this is a fall-through case
+                    }
+                    else
+                    {
                         yield return CoroutineManager.Instance.StartCoroutine(tile.Effect.InteractWithTile(context.User));
                     }
                 }
