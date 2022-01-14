@@ -379,6 +379,7 @@ namespace PMDC.Dungeon
         {
             List<Character> seenChars = controlledChar.GetSeenCharacters(Alignment.Self | Alignment.Friend | Alignment.Foe);
 
+            bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
             Character closestThreat = null;
             bool seesDanger = false;
             if (!excludeImagine)
@@ -395,7 +396,6 @@ namespace PMDC.Dungeon
                         //all while still maintaining the better aesthetic of of that FOV
                         //If the FOV were ever to be made symmetric, this check will not be needed.
                         //additionally, we only do this for NPC AI, not ally AI
-                        bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
                         if (playerSense || controlledChar.CanSeeLocFromLoc(seenChar.CharLoc, controlledChar.CharLoc, controlledChar.GetCharSight()))
                         {
                             threats.Add(seenChar);
@@ -427,6 +427,15 @@ namespace PMDC.Dungeon
 
             if (controlledChar.AttackOnly)
                 return TryForcedAttackChoice(rand, controlledChar, seenChars, closestThreat);
+
+            if (!playerSense)
+            {
+                //for dumb NPCs, if they have a status where they can't attack, treat it as a regular attack pattern so that they walk up to the player
+                //only cringe does this right now...
+                StatusEffect flinchStatus = controlledChar.GetStatusEffect(8); //NOTE: specialized AI code!
+                if (flinchStatus != null)
+                    attackPattern = AttackChoice.StandardAttack;
+            }
 
             if (attackPattern == AttackChoice.StandardAttack)
                 return TryDefaultAttackChoice(rand, controlledChar, seenChars, closestThreat);

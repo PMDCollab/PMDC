@@ -7921,20 +7921,8 @@ namespace PMDC.Dungeon
         {
             if (context.UsageSlot == BattleContext.FORCED_SLOT)
                 yield break;
-            if (context.ActionType == BattleActionType.Item)
-            {
-                ItemData itemData = (ItemData)context.Item.GetData();
-                if (itemData.ItemStates.Contains<EdibleState>())
-                    yield break;
-                if (itemData.ItemStates.Contains<UtilityState>())
-                    yield break;
-                if (itemData.ItemStates.Contains<MachineState>())
-                    yield break;
-                if (itemData.UsageType == ItemData.UseType.Learn)
-                    yield break;
-
+            if (context.ActionType != BattleActionType.Skill)
                 yield break;
-            }
             foreach (BattleEvent battleEffect in BaseEvents)
                 yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
         }
@@ -8405,7 +8393,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.ActionType == BattleActionType.Trap)
+            if (context.ActionType != BattleActionType.Skill)
                 yield break;
 
             if ((DungeonScene.Instance.GetMatchup(context.Target, context.User) & Targets) != Alignment.None
@@ -10149,7 +10137,18 @@ namespace PMDC.Dungeon
     [Serializable]
     public class PounceEvent : BattleEvent
     {
-        public override GameEvent Clone() { return new PounceEvent(); }
+        public int AllyRadius;
+        public PounceEvent()
+        { }
+        public PounceEvent(int allyRadius)
+        {
+            AllyRadius = allyRadius;
+        }
+        public PounceEvent(PounceEvent other)
+        {
+            AllyRadius = other.AllyRadius;
+        }
+        public override GameEvent Clone() { return new PounceEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
@@ -10157,7 +10156,28 @@ namespace PMDC.Dungeon
             if (target == null || target.Dead)
                 yield break;
 
+            List<Character> allies = new List<Character>();
+            //take count of allies
+            if (AllyRadius > 0)
+            {
+                foreach (Character character in ZoneManager.Instance.CurrentMap.IterateCharacters())
+                {
+                    if (!character.Dead && DungeonScene.Instance.GetMatchup(character, target) == Alignment.Friend && (character.CharLoc - context.User.CharLoc).Dist8() <= AllyRadius)
+                        allies.Add(character);
+                }
+            }
+
+
             yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.Pounce(target, context.User.CharDir, context.StrikeStartTile, (context.StrikeStartTile - context.TargetTile).Dist8()));
+
+            //place the allies
+            foreach (Character ally in allies)
+            {
+                if (ally.CharStates.Contains<AnchorState>())
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), ally.GetDisplayName(false)));
+                else
+                    yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.WarpNear(ally, context.User.CharLoc));
+            }
         }
     }
 
