@@ -9432,10 +9432,23 @@ namespace PMDC.Dungeon
         {
             bool fullBelly = (context.Target.Fullness == context.Target.MaxFullness);
 
+
+            context.Target.Fullness += Heal;
+
             if (Heal < 0)
             {
                 if (Msg)
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HUNGER_DROP").ToLocal(), context.Target.GetDisplayName(false)));
+                {
+                    if (context.Target.Fullness <= 0)
+                    {
+                        if (context.Target.MemberTeam == DungeonScene.Instance.ActiveTeam)
+                            DungeonScene.Instance.LogMsg(Text.FormatKey("MSG_HUNGER_EMPTY", context.Target.GetDisplayName(true)));
+                        else
+                            DungeonScene.Instance.LogMsg(Text.FormatKey("MSG_HUNGER_EMPTY_FOE", context.Target.GetDisplayName(true)));
+                    }
+                    else
+                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HUNGER_DROP").ToLocal(), context.Target.GetDisplayName(false)));
+                }
                 GameManager.Instance.BattleSE("DUN_Hunger");
             }
             else
@@ -9443,8 +9456,6 @@ namespace PMDC.Dungeon
                 if (Msg)
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_HUNGER_FILL").ToLocal(), context.Target.GetDisplayName(false)));
             }
-
-            context.Target.Fullness += Heal;
 
             if (AddMaxBelly != 0 && (fullBelly || !NeedFullBelly))
             {

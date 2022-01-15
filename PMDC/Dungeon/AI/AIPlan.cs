@@ -364,7 +364,14 @@ namespace PMDC.Dungeon
             if (invisibleChar != null && DungeonScene.Instance.GetMatchup(controlledChar, invisibleChar, false) == Alignment.Foe)
                 return new GameAction(GameAction.ActionType.Attack, dir);
             else
+            {
+                if (controlledChar.Fullness <= 0)
+                {
+                    if ((IQ & AIFlags.PlayerSense) == AIFlags.None)
+                        return new GameAction(GameAction.ActionType.Wait, Dir8.None);
+                }
                 return new GameAction(GameAction.ActionType.Move, dir, ((IQ & AIFlags.ItemGrabber) != AIFlags.None) ? 1 : 0);
+            }
         }
 
         /// <summary>
@@ -434,6 +441,9 @@ namespace PMDC.Dungeon
                 //only cringe does this right now...
                 StatusEffect flinchStatus = controlledChar.GetStatusEffect(8); //NOTE: specialized AI code!
                 if (flinchStatus != null)
+                    attackPattern = AttackChoice.StandardAttack;
+
+                if (controlledChar.Fullness <= 0)
                     attackPattern = AttackChoice.StandardAttack;
             }
 
