@@ -10673,7 +10673,7 @@ namespace PMDC.Dungeon
                 if (target.CharStates.Contains<AnchorState>())
                     yield break;
                 
-                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.WarpNear(target, context.TargetTile));
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.WarpNear(target, context.TargetTile, false));
                 totalWarp++;
             }
             if (totalWarp == 0)
@@ -12757,7 +12757,8 @@ namespace PMDC.Dungeon
                     }
                     else
                     {
-                        yield return CoroutineManager.Instance.StartCoroutine(tile.Effect.InteractWithTile(context.User));
+                        DungeonScene.Instance.QueueTrap(context.TargetTile);
+                        //yield return CoroutineManager.Instance.StartCoroutine(tile.Effect.InteractWithTile(context.User));
                     }
                 }
                 else

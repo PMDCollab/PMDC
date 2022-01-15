@@ -3292,7 +3292,11 @@ namespace PMDC.Dungeon
         {
             Tile tile = ZoneManager.Instance.CurrentMap.Tiles[character.CharLoc.X][character.CharLoc.Y];
             if (tile.Effect.ID > -1)
-                yield return CoroutineManager.Instance.StartCoroutine(tile.Effect.InteractWithTile(character));
+            {
+                DungeonScene.Instance.QueueTrap(character.CharLoc);
+                //yield return CoroutineManager.Instance.StartCoroutine(tile.Effect.InteractWithTile(character));
+            }
+            yield break;
         }
     }
 
