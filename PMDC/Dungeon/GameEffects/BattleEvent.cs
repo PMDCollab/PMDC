@@ -92,8 +92,19 @@ namespace PMDC.Dungeon
 
                 if (hit)
                 {
-                    if (context.ActionType == BattleActionType.Skill && context.Data.ID > 0 && context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
-                        context.Target.EXPMarked = true;
+                    if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
+                    {
+                        if (context.ActionType == BattleActionType.Skill && context.Data.ID > 0)
+                            context.Target.EXPMarked = true;
+                        else if (context.ActionType == BattleActionType.Item)
+                            context.Target.EXPMarked = true;
+                        else if (context.ActionType == BattleActionType.Throw)
+                        {
+                            ItemData entry = DataManager.Instance.GetItem(context.Item.ID);
+                            if (!entry.ItemStates.Contains<RecruitState>())
+                                context.Target.EXPMarked = true;
+                        }
+                    }
                     //play the hit animation here
                     yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.ProcessEndAnim(context.User, context.Target, context.Data));
 
@@ -12733,7 +12744,7 @@ namespace PMDC.Dungeon
                 TileData entry = DataManager.Instance.GetTile(tile.Effect.GetID());
                 if (entry.StepType == TileData.TriggerType.Trap)
                 {
-                    if (context.ActionType == BattleActionType.Skill && context.Data.ID == 0 && !tile.Effect.Revealed)
+                    if (context.ActionType == BattleActionType.Skill && context.Data.ID == 0)
                         tile.Effect.Revealed = true;
                     else if (tile.Effect.Owner != EffectTile.TileOwner.None && ZoneManager.Instance.CurrentMap.GetTileOwner(context.Target) == tile.Effect.Owner)
                     {

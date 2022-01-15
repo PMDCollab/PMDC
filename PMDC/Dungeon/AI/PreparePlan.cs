@@ -49,6 +49,65 @@ namespace PMDC.Dungeon
         }
     }
 
+    [Serializable]
+    public class PrepareWithLeaderPlan : AIPlan
+    {
+        public AttackChoice AttackPattern;
+
+        public PrepareWithLeaderPlan() { }
+        public PrepareWithLeaderPlan(AIFlags iq, AttackChoice attackPattern) : base(iq)
+        {
+            AttackPattern = attackPattern;
+        }
+        public PrepareWithLeaderPlan(PrepareWithLeaderPlan other) : base(other)
+        {
+            AttackPattern = other.AttackPattern;
+        }
+        public override BasePlan CreateNew() { return new PrepareWithLeaderPlan(this); }
+
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        {
+            //check to see if close to highest leader
+            foreach (Character testChar in controlledChar.MemberTeam.IterateByRank())
+            {
+                //no leader found?  don't be preparing.
+                if (testChar == controlledChar)
+                    return null;
+                else if (controlledChar.IsInSightBounds(testChar.CharLoc))
+                {
+                    //only check the first leader that is within sight
+                    //leader found; check if nearby
+                    if ((testChar.CharLoc - controlledChar.CharLoc).Dist8() <= 1)
+                        break;
+                    else
+                        return null;
+                }
+            }
+
+            bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
+            Character target = null;
+            List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets());
+            foreach (Character seenChar in seenCharacters)
+            {
+                if (!playerSense || playerSensibleToAttack(seenChar))
+                    target = seenChar;
+            }
+
+            //need attack action check
+            if (target != null)
+            {
+                GameAction attackCommand = TryAttackChoice(rand, controlledChar, AttackPattern);
+                if (attackCommand.Type != GameAction.ActionType.Wait)
+                    return attackCommand;
+                attackCommand = TryAttackChoice(rand, controlledChar, AttackChoice.StandardAttack);
+                if (attackCommand.Type != GameAction.ActionType.Wait)
+                    return attackCommand;
+            }
+
+            return null;
+        }
+    }
+
 
     [Serializable]
     public class PreBuffPlan : AIPlan
