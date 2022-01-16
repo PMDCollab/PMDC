@@ -3459,12 +3459,15 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (DungeonScene.Instance.GetMatchup(context.User, context.Target) == Alignment.Foe)
+            if (context.ActionType == BattleActionType.Skill && context.Data.ID > 0)
             {
-                int diff = (context.StrikeStartTile - context.Target.CharLoc).Dist8();
-                if (diff > 1)
+                if (DungeonScene.Instance.GetMatchup(context.User, context.Target) == Alignment.Foe)
                 {
-                    context.AddContextStateMult<AccMult>(false, 4, 3 + diff);
+                    int diff = (context.StrikeStartTile - context.Target.CharLoc).Dist8();
+                    if (diff > 1)
+                    {
+                        context.AddContextStateMult<AccMult>(false, 4, 3 + diff);
+                    }
                 }
             }
             yield break;
@@ -3479,12 +3482,15 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (DungeonScene.Instance.GetMatchup(context.User, context.Target) == Alignment.Foe)
+            if (context.ActionType == BattleActionType.Skill && context.Data.ID > 0)
             {
-                int diff = (context.StrikeStartTile - context.Target.CharLoc).Dist8();
-                if (diff <= 1)
+                if (DungeonScene.Instance.GetMatchup(context.User, context.Target) == Alignment.Foe)
                 {
-                    context.AddContextStateMult<AccMult>(false, 1, 2);
+                    int diff = (context.StrikeStartTile - context.Target.CharLoc).Dist8();
+                    if (diff <= 1)
+                    {
+                        context.AddContextStateMult<AccMult>(false, 1, 2);
+                    }
                 }
             }
             yield break;
@@ -3510,13 +3516,16 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.Target.GetStatusEffect(StatusID) != null && DungeonScene.Instance.GetMatchup(context.User, context.Target) == Alignment.Foe)
+            if (context.ActionType == BattleActionType.Skill && context.Data.ID > 0)
             {
-                int diff = (context.StrikeStartTile - context.Target.CharLoc).Dist8();
-                if (diff > 1)
+                if (context.Target.GetStatusEffect(StatusID) != null && DungeonScene.Instance.GetMatchup(context.User, context.Target) == Alignment.Foe)
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_AVOID").ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName()));
-                    context.AddContextStateMult<AccMult>(false, -1, 1);
+                    int diff = (context.StrikeStartTile - context.Target.CharLoc).Dist8();
+                    if (diff > 1)
+                    {
+                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_AVOID").ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName()));
+                        context.AddContextStateMult<AccMult>(false, -1, 1);
+                    }
                 }
             }
             yield break;
@@ -3670,10 +3679,13 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if ((context.StrikeStartTile - context.Target.CharLoc).Dist8() > 1)
+            if (context.ActionType == BattleActionType.Skill && context.Data.ID > 0)
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_AVOID").ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName()));
-                context.AddContextStateMult<AccMult>(false, -1, 1);
+                if ((context.StrikeStartTile - context.Target.CharLoc).Dist8() > 1)
+                {
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_AVOID").ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName()));
+                    context.AddContextStateMult<AccMult>(false, -1, 1);
+                }
             }
             yield break;
         }
@@ -12997,19 +13009,23 @@ namespace PMDC.Dungeon
                     DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
                 }
 
+                //destroy the wall
                 tile.Data = new TerrainTile(0);
                 for (int ii = 0; ii < DirExt.DIR4_COUNT; ii++)
                 {
                     Loc moveLoc = context.TargetTile + ((Dir4)ii).GetLoc();
                     if (Collision.InBounds(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height, moveLoc))
-                        ZoneManager.Instance.CurrentMap.Tiles[moveLoc.X][moveLoc.Y].Data = new TerrainTile(0);
+                    {
+                        Tile sideTile = ZoneManager.Instance.CurrentMap.Tiles[moveLoc.X][moveLoc.Y];
+                        if (TileTypes.Contains(sideTile.Data.ID))
+                            sideTile.Data = new TerrainTile(0);
+                    }
                 }
 
                 int distance = 0;
                 Loc startLoc = context.TargetTile - new Loc(distance + 3);
                 Loc sizeLoc = new Loc((distance + 3) * 2 + 1);
                 ZoneManager.Instance.CurrentMap.MapModified(startLoc, sizeLoc);
-
             }
         }
     }
