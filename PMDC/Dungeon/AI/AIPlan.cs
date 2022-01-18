@@ -1818,6 +1818,12 @@ namespace PMDC.Dungeon
                 }
                 else if (moveIndex == 283)//endeavor; NOTE: specialized AI code!
                     power = 200 * Math.Max(0, target.HP - controlledChar.HP) / target.MaxHP;
+                else if (moveIndex == 222)//magnitude; NOTE: specialized AI code!
+                {
+                    int diff = (target.CharLoc - controlledChar.CharLoc).Dist8();
+                    for (int nn = 0; nn < diff; nn++)
+                        power /= 2;
+                }
 
                 //check against move-neutralizing abilities; NOTE: specialized AI code!
                 if ((IQ & AIFlags.KnowsMatchups) != AIFlags.None)
