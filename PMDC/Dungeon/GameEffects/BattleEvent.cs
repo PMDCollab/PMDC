@@ -101,7 +101,15 @@ namespace PMDC.Dungeon
                         else if (context.ActionType == BattleActionType.Throw)
                         {
                             ItemData entry = DataManager.Instance.GetItem(context.Item.ID);
-                            if (!entry.ItemStates.Contains<RecruitState>())
+                            if (entry.ItemStates.Contains<RecruitState>())
+                            {
+                                //failed recruitment items dont count
+                            }
+                            else if (context.ContextStates.Contains<ItemCaught>())
+                            {
+                                //items that were caught don't count
+                            }
+                            else
                                 context.Target.EXPMarked = true;
                         }
                     }
@@ -1426,6 +1434,7 @@ namespace PMDC.Dungeon
                     yield break;
             }
 
+            context.ContextStates.Set(new ItemCaught());
             int id = context.Data.ID;
             context.Data = new BattleData(NewData);
             context.Data.ID = id;
@@ -11124,6 +11133,7 @@ namespace PMDC.Dungeon
                     catchData.OnHits.Add(0, new CatchItemEvent());
                     catchData.HitFX.Sound = "DUN_Equip";
 
+                    newContext.Data.BeforeExplosions.Add(-5, new CatchItemSplashEvent());
                     newContext.Data.BeforeHits.Add(-5, new CatchableEvent(catchData));
                 }
                 newContext.Data.AfterActions.Add(-1, new LandItemEvent());
@@ -13738,7 +13748,8 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            context.AddContextStateInt<RecruitBoost>(GetRecruitRate(owner, ownerChar, context));
+            if (context.Target != null)
+                context.AddContextStateInt<RecruitBoost>(GetRecruitRate(owner, ownerChar, context));
             yield break;
         }
     }

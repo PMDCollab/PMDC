@@ -154,6 +154,13 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class ItemCaught : ContextState
+    {
+        public ItemCaught() { }
+        public override GameplayState Clone() { return new ItemCaught(); }
+    }
+
+    [Serializable]
     public class ItemDestroyed : ContextState
     {
         public ItemDestroyed() { }
