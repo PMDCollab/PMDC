@@ -114,14 +114,19 @@ namespace PMDC.Dungeon
             //NOTE: specialized AI code!
             if (seenChar.GetStatusEffect(1) != null || seenChar.GetStatusEffect(3) != null)//if they're asleep or frozen, do not attack
                 return false;
-            else if (seenChar.GetStatusEffect(25) == null)//last targeted by someone; NOTE: specialized AI code!
+            
+            if (seenChar.GetStatusEffect(25) == null)//last targeted by someone; NOTE: specialized AI code!
             {
                 //don't attack certain kinds of foes that won't attack first
                 if (seenChar.Tactic.ID == 10)//weird tree; NOTE: specialized AI code!
                     return false;
                 else if (seenChar.Tactic.ID == 8)//wait attack; NOTE: specialized AI code!
                     return false;
-                else if (seenChar.Tactic.ID == 18)//tit for tat; NOTE: specialized AI code!
+            }
+            
+            if (seenChar.GetStatusEffect(31) == null)
+            {
+                if (seenChar.Tactic.ID == 18)//tit for tat; NOTE: specialized AI code!
                     return false;
             }
             return true;
