@@ -16,6 +16,7 @@ using RogueEssence.Ground;
 using SDL2;
 using RogueElements;
 using System.IO;
+using System.Collections.Generic;
 #endregion
 
 namespace PMDC
@@ -63,8 +64,9 @@ namespace PMDC
                 DataManager.DataType reserializeIndices = DataManager.DataType.None;
                 string langArgs = "";
                 bool dev = false;
-                string mod = "";
-                bool buildMod = false;
+                string quest = "";
+                List<string> mod = new List<string>();
+                bool buildQuest = false;
                 string playInputs = null;
                 for (int ii = 1; ii < args.Length; ii++)
                 {
@@ -94,14 +96,27 @@ namespace PMDC
                         PathMod.DEV_PATH = Path.GetFullPath(args[ii + 1]);
                         ii++;
                     }
+                    else if (args[ii] == "-quest")
+                    {
+                        quest = args[ii + 1];
+                        ii++;
+                    }
                     else if (args[ii] == "-mod")
                     {
-                        mod = args[ii + 1];
-                        ii++;
+                        int jj = 1;
+                        while (args.Length > ii + jj)
+                        {
+                            if (args[ii + jj].StartsWith("-"))
+                                break;
+                            else
+                                mod.Add(args[ii + jj]);
+                            jj++;
+                        }
+                        ii += jj - 1;
                     }
                     else if (args[ii] == "-build")
                     {
-                        buildMod = true;
+                        buildQuest = true;
                         ii++;
                     }
                     else if (args[ii] == "-convert")
@@ -176,17 +191,37 @@ namespace PMDC
                 GraphicsManager.InitParams();
 
                 DiagManager.Instance.DevMode = dev;
-
-                if (mod != "")
+                
+                if (quest != "")
                 {
-                    if (Directory.Exists(Path.Combine(PathMod.MODS_PATH, mod)))
+                    if (Directory.Exists(Path.Combine(PathMod.MODS_PATH, quest)))
                     {
-                        PathMod.Mod = PathMod.MODS_FOLDER + mod;
+                        PathMod.Quest = PathMod.MODS_FOLDER + quest;
 
-                        DiagManager.Instance.LogInfo(String.Format("Loaded mod \"{0}\".", mod));
+                        DiagManager.Instance.LogInfo(String.Format("Loaded quest \"{0}\".", quest));
                     }
                     else
-                        DiagManager.Instance.LogInfo(String.Format("Cannot find mod \"{0}\" in {1}. Falling back to base game.", mod, PathMod.MODS_PATH));
+                        DiagManager.Instance.LogInfo(String.Format("Cannot find quest \"{0}\" in {1}. Falling back to base game.", quest, PathMod.MODS_PATH));
+                }
+
+                if (mod.Count > 0)
+                {
+                    List<string> workingMods = new List<string>();
+                    for (int ii = 0; ii < mod.Count; ii++)
+                    {
+                        if (Directory.Exists(Path.Combine(PathMod.MODS_PATH, mod[ii])))
+                        {
+                            workingMods.Add(PathMod.MODS_FOLDER + mod[ii]);
+                            DiagManager.Instance.LogInfo(String.Format("Loaded mod \"{0}\".", String.Join(", ", mod[ii])));
+                        }
+                        else
+                        {
+                            DiagManager.Instance.LogInfo(String.Format("Cannot find mod \"{0}\" in {1}. It will be ignored.", mod, PathMod.MODS_PATH));
+                            mod.RemoveAt(ii);
+                            ii--;
+                        }
+                    }
+                    PathMod.Mod = workingMods.ToArray();
                 }
 
 
@@ -206,14 +241,14 @@ namespace PMDC
                 }
                 Text.SetCultureCode(DiagManager.Instance.CurSettings.Language == "" ? "" : DiagManager.Instance.CurSettings.Language.ToString());
 
-                if (buildMod)
+                if (buildQuest)
                 {
-                    if (PathMod.Mod == "")
+                    if (PathMod.Quest != "")
                     {
-                        DiagManager.Instance.LogInfo("No mod specified to build.");
+                        DiagManager.Instance.LogInfo("No quest specified to build.");
                         return;
                     }
-                    RogueEssence.Dev.DevHelper.MergeMod(mod);
+                    RogueEssence.Dev.DevHelper.MergeQuest(quest);
 
                     return;
                 }
