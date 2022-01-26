@@ -46,6 +46,7 @@ namespace PMDC
             PathMod.InitExePath(args[0]);
             DiagManager.InitInstance();
             DiagManager.Instance.CurSettings = DiagManager.Instance.LoadSettings();
+            DiagManager.Instance.LoadModSettings();
             DiagManager.Instance.UpgradeBinder = new UpgradeBinder();
 
             try
@@ -221,7 +222,7 @@ namespace PMDC
                             ii--;
                         }
                     }
-                    PathMod.Mod = workingMods.ToArray();
+                    PathMod.Mods = workingMods.ToArray();
                 }
 
 
