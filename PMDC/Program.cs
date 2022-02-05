@@ -268,6 +268,13 @@ namespace PMDC
                 if (reserializeIndices != DataManager.DataType.None)
                 {
                     DiagManager.Instance.LogInfo("Beginning Reserialization");
+
+                    using (GameBase game = new GameBase())
+                    {
+                        GraphicsManager.InitSystem(game.GraphicsDevice);
+                        GraphicsManager.RebuildIndices(GraphicsManager.AssetType.All);
+                    }
+
                     //we need the datamanager for this, but only while data is hardcoded
                     //TODO: remove when data is no longer hardcoded
                     LuaEngine.InitInstance();
