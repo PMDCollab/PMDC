@@ -195,9 +195,10 @@ namespace PMDC
                 
                 if (quest != "")
                 {
-                    if (Directory.Exists(Path.Combine(PathMod.MODS_PATH, quest)))
+                    ModHeader header = PathMod.GetModDetails(Path.Combine(PathMod.MODS_PATH, quest));
+                    if (header.IsValid())
                     {
-                        PathMod.Quest = PathMod.MODS_FOLDER + quest;
+                        PathMod.Quest = header;
 
                         DiagManager.Instance.LogInfo(String.Format("Loaded quest \"{0}\".", quest));
                     }
@@ -207,12 +208,13 @@ namespace PMDC
 
                 if (mod.Count > 0)
                 {
-                    List<string> workingMods = new List<string>();
+                    List<ModHeader> workingMods = new List<ModHeader>();
                     for (int ii = 0; ii < mod.Count; ii++)
                     {
-                        if (Directory.Exists(Path.Combine(PathMod.MODS_PATH, mod[ii])))
+                        ModHeader header = PathMod.GetModDetails(Path.Combine(PathMod.MODS_PATH, mod[ii]));
+                        if (header.IsValid())
                         {
-                            workingMods.Add(PathMod.MODS_FOLDER + mod[ii]);
+                            workingMods.Add(header);
                             DiagManager.Instance.LogInfo(String.Format("Loaded mod \"{0}\".", String.Join(", ", mod[ii])));
                         }
                         else
@@ -244,7 +246,7 @@ namespace PMDC
 
                 if (buildQuest)
                 {
-                    if (PathMod.Quest != "")
+                    if (PathMod.Quest.IsValid())
                     {
                         DiagManager.Instance.LogInfo("No quest specified to build.");
                         return;
