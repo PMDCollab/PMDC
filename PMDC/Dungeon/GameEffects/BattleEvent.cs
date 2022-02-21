@@ -61,7 +61,6 @@ namespace PMDC.Dungeon
         {
             //see if it hits
             int accMod = context.GetContextStateMult<AccMult>().Multiply(0);
-            int acc = context.GetContextStateMult<AccMult>().Multiply(context.Data.HitRate);
             bool hit = false;
             if (accMod == -1) //don't hit, don't say anything
             {
@@ -70,12 +69,13 @@ namespace PMDC.Dungeon
             }
             else
             {
-                if (context.GetContextStateMult<AccMult>().IsNeutralized())
-                    hit = false;
-                else if (acc == -1)
+                if (context.Data.HitRate == -1)
                     hit = true;
+                else if (context.GetContextStateMult<AccMult>().IsNeutralized())
+                    hit = false;
                 else
                 {
+                    int acc = context.Data.HitRate;
                     HitRateLevelTableState table = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<HitRateLevelTableState>();
                     acc = table.ApplyAccuracyMod(acc, context.GetContextStateInt<UserAccuracyBoost>(0));
                     acc /= table.AccuracyLevels[-table.MinAccuracy];
@@ -83,6 +83,7 @@ namespace PMDC.Dungeon
                     acc /= table.EvasionLevels[-table.MinEvasion];
                     acc *= context.User.Speed;
                     acc /= context.Target.Speed;
+                    acc = context.GetContextStateMult<AccMult>().Multiply(acc);
 
                     //MustHitNext is to ensure that no single character can miss twice in a row
                     if (context.User.MustHitNext || DataManager.Instance.Save.Rand.Next(0, 100) < acc)
@@ -3530,7 +3531,7 @@ namespace PMDC.Dungeon
                 if (context.Target.GetStatusEffect(StatusID) != null && DungeonScene.Instance.GetMatchup(context.User, context.Target) == Alignment.Foe)
                 {
                     int diff = (context.StrikeStartTile - context.Target.CharLoc).Dist8();
-                    if (diff > 1)
+                    if (diff > 1 && context.Data.HitRate > -1)
                     {
                         DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_AVOID").ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName()));
                         context.AddContextStateMult<AccMult>(false, -1, 1);
@@ -3575,7 +3576,7 @@ namespace PMDC.Dungeon
                     }
                 }
 
-                if (context.UsageSlot == recordSlot)
+                if (context.UsageSlot == recordSlot && context.Data.HitRate > -1)
                 {
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_AVOID").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
                     context.AddContextStateMult<AccMult>(false, -1, 1);
@@ -3624,7 +3625,7 @@ namespace PMDC.Dungeon
                     }
                 }
 
-                if (context.UsageSlot == recordSlot)
+                if (context.UsageSlot == recordSlot && context.Data.HitRate > -1)
                 {
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_AVOID").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
                     context.AddContextStateMult<AccMult>(false, -1, 1);
@@ -3690,7 +3691,7 @@ namespace PMDC.Dungeon
         {
             if (context.ActionType == BattleActionType.Skill && context.Data.ID > 0)
             {
-                if ((context.StrikeStartTile - context.Target.CharLoc).Dist8() > 1)
+                if ((context.StrikeStartTile - context.Target.CharLoc).Dist8() > 1 && context.Data.HitRate > -1)
                 {
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_AVOID").ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName()));
                     context.AddContextStateMult<AccMult>(false, -1, 1);
