@@ -13045,14 +13045,30 @@ namespace PMDC.Dungeon
     [Serializable]
     public class RemoveItemEvent : BattleEvent
     {
-        public override GameEvent Clone() { return new RemoveItemEvent(); }
+        public bool BlockedByTerrain;
+
+        public RemoveItemEvent()
+        { }
+        public RemoveItemEvent(bool blockable)
+        {
+            BlockedByTerrain = blockable;
+        }
+        protected RemoveItemEvent(RemoveItemEvent other)
+        {
+            BlockedByTerrain = other.BlockedByTerrain;
+        }
+        public override GameEvent Clone() { return new RemoveItemEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            for(int ii = ZoneManager.Instance.CurrentMap.Items.Count - 1; ii >= 0; ii--)
+            Tile tile = ZoneManager.Instance.CurrentMap.Tiles[context.TargetTile.X][context.TargetTile.Y];
+            if (!BlockedByTerrain || tile.Data.ID == 0)
             {
-                if (ZoneManager.Instance.CurrentMap.Items[ii].TileLoc == context.TargetTile)
-                    ZoneManager.Instance.CurrentMap.Items.RemoveAt(ii);
+                for (int ii = ZoneManager.Instance.CurrentMap.Items.Count - 1; ii >= 0; ii--)
+                {
+                    if (ZoneManager.Instance.CurrentMap.Items[ii].TileLoc == context.TargetTile)
+                        ZoneManager.Instance.CurrentMap.Items.RemoveAt(ii);
+                }
             }
             yield break;
         }
