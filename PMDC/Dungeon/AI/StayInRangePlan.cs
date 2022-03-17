@@ -13,7 +13,7 @@ namespace PMDC.Dungeon
         const int MAX_RANGE = 5;
 
         private Loc targetLoc;
-        public StayInRangePlan(AIFlags iq, AttackChoice attackPattern) : base(iq, attackPattern)
+        public StayInRangePlan(AIFlags iq) : base(iq)
         {
             targetLoc = new Loc(-1);
         }
@@ -26,7 +26,7 @@ namespace PMDC.Dungeon
             base.Initialize(controlledChar);
         }
 
-        public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
             if (controlledChar.CantWalk)
                 return null;
@@ -61,7 +61,7 @@ namespace PMDC.Dungeon
                                     if (BlockedByHazard(controlledChar, testLoc))
                                         return true;
 
-                                    if (!preThink && BlockedByChar(testLoc))
+                                    if (!preThink && BlockedByChar(testLoc, Alignment.Self | Alignment.Foe))
                                         return true;
 
                                     return false;

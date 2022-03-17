@@ -32,7 +32,6 @@ namespace PMDC.LevelGen
 
         public override void Apply(T map)
         {
-            
             Grid.LocTest checkBlock = (Loc testLoc) =>
             {
                 return (!map.Tiles[testLoc.X][testLoc.Y].TileEquivalent(map.RoomTerrain) || map.HasTileEffect(testLoc));
@@ -43,121 +42,78 @@ namespace PMDC.LevelGen
             List<int> possibleRooms = new List<int>();
             for (int ii = 0; ii < map.RoomPlan.RoomCount; ii++)
             {
-                if (!BaseRoomFilter.PassesAllFilters(map.RoomPlan.GetRoomPlan(ii), this.Filters))
-                    continue;
+                FloorRoomPlan testPlan = map.RoomPlan.GetRoomPlan(ii);
                 //if (map.RoomPlan.IsChokePoint(new RoomHallIndex(ii, false)))
                 //    continue;
-                IRoomGen testRoom = map.RoomPlan.GetRoom(ii);
-                bool hasInterferingTile = false;
-                bool hasOpenTile = false;
-                for (int x = testRoom.Draw.X; x < testRoom.Draw.X + testRoom.Draw.Size.X; x++)
-                {
-                    for (int y = testRoom.Draw.Y; y < testRoom.Draw.Y + testRoom.Draw.Size.Y; y++)
-                    {
-                        //also do not choose a room that contains the end stairs (search for the non-secret stairs)
-                        if (((Tile)map.Tiles[x][y]).Effect.ID == 1 || ((Tile)map.Tiles[x][y]).Effect.ID == 2)
-                        {
-                            hasInterferingTile = true;
-                            break;
-                        }
-                        Loc testLoc = new Loc(x, y);
-                        if (!hasOpenTile && !map.TileBlocked(testLoc) && !map.TileBlocked(new Loc(x, y + 1)))
-                        {
-                            if (Grid.GetForkDirs(testLoc, checkBlock, checkBlock).Count < 2)
-                            {
-                                if (!map.HasTileEffect(testLoc) && !map.HasTileEffect(new Loc(x, y+1)) &&
-                                    !map.PostProcGrid[x][y].Status[(int)PostProcType.Panel] && !map.PostProcGrid[x][y].Status[(int)PostProcType.Item])
-                                {
-                                    bool hasItem = false;
-                                    bool hasMob = false;
-                                    foreach (MapItem item in map.Items)
-                                    {
-                                        if (item.TileLoc == testLoc)
-                                        {
-                                            hasItem = true;
-                                            break;
-                                        }
-                                    }
-                                    foreach (Team team in map.AllyTeams)
-                                    {
-                                        foreach (Character testChar in team.EnumerateChars())
-                                        {
-                                            if (testChar.CharLoc == testLoc)
-                                            {
-                                                hasMob = true;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    foreach (Team team in map.MapTeams)
-                                    {
-                                        foreach (Character testChar in team.EnumerateChars())
-                                        {
-                                            if (testChar.CharLoc == testLoc)
-                                            {
-                                                hasMob = true;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    if (!hasItem && !hasMob)
-                                        hasOpenTile = true;
-                                }
-                            }
-                        }
-                    }
-                    if (hasInterferingTile)
-                        break;
-                }
-                if (hasInterferingTile || !hasOpenTile)
+                if (!BaseRoomFilter.PassesAllFilters(testPlan, this.Filters))
                     continue;
+
+                //also do not choose a room that contains the end stairs
+                IViewPlaceableGenContext<MapGenExit> exitMap = (IViewPlaceableGenContext<MapGenExit>)map;
+                if (Collision.InBounds(testPlan.RoomGen.Draw, exitMap.GetLoc(0)))
+                    continue;
+
                 possibleRooms.Add(ii);
             }
 
             if (possibleRooms.Count == 0)
                 return;
 
-            IRoomGen room = map.RoomPlan.GetRoom(possibleRooms[map.Rand.Next(possibleRooms.Count)]);
-                        
-            //get all places that the chest is eligible
-            List<Loc> freeTiles = Grid.FindTilesInBox(room.Draw.Start, room.Draw.Size, (Loc testLoc) =>
+            List<Loc> freeTiles = new List<Loc>();
+            IRoomGen room = null;
+
+            while (possibleRooms.Count > 0)
             {
-                if (map.Tiles[testLoc.X][testLoc.Y].TileEquivalent(map.RoomTerrain) && !map.HasTileEffect(testLoc) &&
-                    map.Tiles[testLoc.X][testLoc.Y + 1].TileEquivalent(map.RoomTerrain) && !map.HasTileEffect(new Loc(testLoc.X, testLoc.Y + 1)) &&
-                    !map.PostProcGrid[testLoc.X][testLoc.Y].Status[(int)PostProcType.Panel] &&
-                    !map.PostProcGrid[testLoc.X][testLoc.Y].Status[(int)PostProcType.Item])
+                int chosenRoom = map.Rand.Next(possibleRooms.Count);
+                room = map.RoomPlan.GetRoom(possibleRooms[chosenRoom]);
+
+                //get all places that the chest is eligible
+                freeTiles = Grid.FindTilesInBox(room.Draw.Start, room.Draw.Size, (Loc testLoc) =>
                 {
-                    if (Grid.GetForkDirs(testLoc, checkBlock, checkBlock).Count < 2)
+                    if (map.Tiles[testLoc.X][testLoc.Y].TileEquivalent(map.RoomTerrain) && !map.HasTileEffect(testLoc) &&
+                        map.Tiles[testLoc.X][testLoc.Y + 1].TileEquivalent(map.RoomTerrain) && !map.HasTileEffect(new Loc(testLoc.X, testLoc.Y + 1)) &&
+                        !map.PostProcGrid[testLoc.X][testLoc.Y].Status[(int)PostProcType.Panel] &&
+                        !map.PostProcGrid[testLoc.X][testLoc.Y].Status[(int)PostProcType.Item])
                     {
-                        foreach (MapItem item in map.Items)
+                        if (Grid.GetForkDirs(testLoc, checkBlock, checkBlock).Count < 2)
                         {
-                            if (item.TileLoc == testLoc)
-                                return false;
-                        }
-                        foreach (Team team in map.AllyTeams)
-                        {
-                            foreach (Character testChar in team.EnumerateChars())
+                            foreach (MapItem item in map.Items)
                             {
-                                if (testChar.CharLoc == testLoc)
+                                if (item.TileLoc == testLoc)
                                     return false;
                             }
-                        }
-                        foreach (Team team in map.MapTeams)
-                        {
-                            foreach (Character testChar in team.EnumerateChars())
+                            foreach (Team team in map.AllyTeams)
                             {
-                                if (testChar.CharLoc == testLoc)
-                                    return false;
+                                foreach (Character testChar in team.EnumerateChars())
+                                {
+                                    if (testChar.CharLoc == testLoc)
+                                        return false;
+                                }
                             }
+                            foreach (Team team in map.MapTeams)
+                            {
+                                foreach (Character testChar in team.EnumerateChars())
+                                {
+                                    if (testChar.CharLoc == testLoc)
+                                        return false;
+                                }
+                            }
+                            return true;
                         }
-                        return true;
                     }
-                }
-                return false;
-            });
-            freeTiles.AddRange(freeTiles);
+                    return false;
+                });
+                if (freeTiles.Count > 0)
+                    break;
+                possibleRooms.RemoveAt(chosenRoom);
+            }
 
+            //can't find any free tile in any room, return
+            if (freeTiles.Count == 0)
+                return;
 
+            if (!ItemThemes.CanPick)
+                return;
             //choose which item theme to work with
             ItemTheme chosenItemTheme = ItemThemes.Pick(map.Rand);
 
@@ -174,8 +130,9 @@ namespace PMDC.LevelGen
 
             EffectTile spawnedChest = new EffectTile(37, true);
 
-            if (Ambush)
+            if (Ambush && MobThemes.CanPick)
             {
+
                 spawnedChest.Danger = true;
                 //the mob theme will be selected randomly
                 MobTheme chosenMobTheme = MobThemes.Pick(map.Rand);
@@ -204,6 +161,8 @@ namespace PMDC.LevelGen
             spawnedChest.TileStates.Set(new BoundsState(wallBounds));
 
             ((IPlaceableGenContext<EffectTile>)map).PlaceItem(loc, spawnedChest);
+            map.PostProcGrid[loc.X][loc.Y].Status[(int)PostProcType.Panel] = true;
+            map.PostProcGrid[loc.X][loc.Y].Status[(int)PostProcType.Item] = true;
 
             GenContextDebug.DebugProgress("Placed Chest");
         }

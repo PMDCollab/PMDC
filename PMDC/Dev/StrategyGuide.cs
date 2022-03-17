@@ -180,12 +180,12 @@ namespace PMDC.Dev
         public static void PrintItemGuide()
         {
             List<string[]> stats = new List<string[]>();
-            stats.Add(new string[4] { "Name", "Type", "Price", "Description" });
+            stats.Add(new string[5] { "###", "Name", "Type", "Price", "Description" });
             for (int ii = 0; ii < DataManager.Instance.DataIndices[DataManager.DataType.Item].Count; ii++)
             {
                 ItemData entry = DataManager.Instance.GetItem(ii);
                 if (entry.Released)
-                    stats.Add(new string[4] { entry.Name.ToLocal(), entry.UsageType.ToString(), entry.Price.ToString(), entry.Desc.ToLocal() });
+                    stats.Add(new string[5] { ii.ToString("D4"), entry.Name.ToLocal(), entry.UsageType.ToString(), entry.Price.ToString(), entry.Desc.ToLocal() });
             }
             writeHTMLGuide("Items", stats);
         }
@@ -193,7 +193,7 @@ namespace PMDC.Dev
         public static void PrintMoveGuide()
         {
             List<string[]> stats = new List<string[]>();
-            stats.Add(new string[8] { "Name", "Type", "Category", "Power", "Accuracy", "PP", "Range", "Description" });
+            stats.Add(new string[9] { "###", "Name", "Type", "Category", "Power", "Accuracy", "PP", "Range", "Description" });
             for (int ii = 0; ii < DataManager.Instance.DataIndices[DataManager.DataType.Skill].Count; ii++)
             {
                 SkillData entry = DataManager.Instance.GetSkill(ii);
@@ -201,7 +201,7 @@ namespace PMDC.Dev
                 {
                     ElementData elementEntry = DataManager.Instance.GetElement(entry.Data.Element);
                     BasePowerState powerState = entry.Data.SkillStates.GetWithDefault<BasePowerState>();
-                    stats.Add(new string[8] { entry.Name.ToLocal(),
+                    stats.Add(new string[9] { ii.ToString("D3"), entry.Name.ToLocal(),
                         elementEntry.Name.ToLocal(),
                         entry.Data.Category.ToLocal(),
                         powerState != null ? powerState.Power.ToString() : "---",
@@ -211,7 +211,7 @@ namespace PMDC.Dev
                         entry.Desc.ToLocal()});
                 }
                 else
-                    stats.Add(new string[8] { entry.Name.ToLocal(), "???", "None", "---", "---", "N/A", "No One", "NO DATA" });
+                    stats.Add(new string[9] { ii.ToString("D3"), entry.Name.ToLocal(), "???", "None", "---", "---", "N/A", "No One", "NO DATA" });
                 //effect chance
                 //additional flags
             }
@@ -221,14 +221,14 @@ namespace PMDC.Dev
         public static void PrintAbilityGuide()
         {
             List<string[]> stats = new List<string[]>();
-            stats.Add(new string[2] { "Name", "Description" });
+            stats.Add(new string[3] { "###", "Name", "Description" });
             for (int ii = 0; ii < DataManager.Instance.DataIndices[DataManager.DataType.Intrinsic].Count; ii++)
             {
                 IntrinsicData entry = DataManager.Instance.GetIntrinsic(ii);
                 if (entry.Released)
-                    stats.Add(new string[2] { entry.Name.ToLocal(), entry.Desc.ToLocal() });
+                    stats.Add(new string[3] { ii.ToString("D3"), entry.Name.ToLocal(), entry.Desc.ToLocal() });
                 else
-                    stats.Add(new string[2] { entry.Name.ToLocal(), "NO DATA" });
+                    stats.Add(new string[3] { ii.ToString("D3"), entry.Name.ToLocal(), "NO DATA" });
             }
             writeHTMLGuide("Abilities", stats);
         }
@@ -273,8 +273,8 @@ namespace PMDC.Dev
         {
             Dictionary<int, HashSet<(string, ZoneLoc)>> foundSpecies = DevHelper.GetAllAppearingMonsters(true);
 
-            foreach (int startchar in DataManager.Instance.StartChars)
-                DevHelper.AddEvoFamily(foundSpecies, startchar, "STARTER", ZoneLoc.Invalid);
+            foreach ((MonsterID mon, string name) startchar in DataManager.Instance.StartChars)
+                DevHelper.AddEvoFamily(foundSpecies, startchar.mon.Species, "STARTER", ZoneLoc.Invalid);
 
             List<string[]> stats = new List<string[]>();
             stats.Add(new string[4] { "###", "Name", "Join %", "Found In" });
@@ -330,14 +330,14 @@ namespace PMDC.Dev
                             for (int zz = 0; zz < DataManager.Instance.DataIndices[DataManager.DataType.Zone].Count; zz++)
                             {
                                 ZoneData mainZone = DataManager.Instance.GetZone(zz);
-                                for (int yy = 0; yy < mainZone.Structures.Count; yy++)
+                                for (int yy = 0; yy < mainZone.Segments.Count; yy++)
                                 {
                                     if (specialDict.ContainsKey(zz) && specialDict[zz].Contains(yy))
                                     {
                                         string locString = String.Format("{0} {1}S", mainZone.Name.ToLocal(), yy + 1);
-                                        foreach (var step in mainZone.Structures[yy].PostProcessingSteps)
+                                        foreach (var step in mainZone.Segments[yy].ZoneSteps)
                                         {
-                                            var startStep = step as FloorNameIDPostProc;
+                                            var startStep = step as FloorNameIDZoneStep;
                                             if (startStep != null)
                                             {
                                                 locString = LocalText.FormatLocalText(startStep.Name, "?").ToLocal().Replace('\n', ' ');
@@ -354,9 +354,9 @@ namespace PMDC.Dev
                                         List<string> ranges = combineFloorRanges(floorDict[zz][yy]);
                                         string rangeString = String.Join(",", ranges.ToArray());
                                         string locString = String.Format("{0} {1}S {2}F", mainZone.Name.ToLocal(), yy + 1, rangeString);
-                                        foreach (var step in mainZone.Structures[yy].PostProcessingSteps)
+                                        foreach (var step in mainZone.Segments[yy].ZoneSteps)
                                         {
-                                            var startStep = step as FloorNameIDPostProc;
+                                            var startStep = step as FloorNameIDZoneStep;
                                             if (startStep != null)
                                             {
                                                 locString = LocalText.FormatLocalText(startStep.Name, rangeString).ToLocal().Replace('\n', ' ');

@@ -12,7 +12,11 @@ using PMDC.Dev;
 using System.Reflection;
 using Microsoft.Xna.Framework;
 using Avalonia;
+using RogueEssence.Ground;
 using SDL2;
+using RogueElements;
+using System.IO;
+using System.Collections.Generic;
 #endregion
 
 namespace PMDC
@@ -38,9 +42,11 @@ namespace PMDC
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
 
-            string[] args = System.Environment.GetCommandLineArgs();
-            PathMod.InitExePath(System.IO.Path.GetDirectoryName(args[0]));
+            string[] args = Environment.GetCommandLineArgs();
+            PathMod.InitExePath(args[0]);
             DiagManager.InitInstance();
+            DiagManager.Instance.CurSettings = DiagManager.Instance.LoadSettings();
+            DiagManager.Instance.LoadModSettings();
             DiagManager.Instance.UpgradeBinder = new UpgradeBinder();
 
             try
@@ -59,6 +65,9 @@ namespace PMDC
                 DataManager.DataType reserializeIndices = DataManager.DataType.None;
                 string langArgs = "";
                 bool dev = false;
+                string quest = "";
+                List<string> mod = new List<string>();
+                bool buildQuest = false;
                 string playInputs = null;
                 for (int ii = 1; ii < args.Length; ii++)
                 {
@@ -80,17 +89,35 @@ namespace PMDC
                         guideBook = true;
                     else if (args[ii] == "-asset")
                     {
-                        PathMod.ASSET_PATH = System.IO.Path.GetFullPath(PathMod.ExePath + args[ii + 1]);
+                        PathMod.ASSET_PATH = Path.GetFullPath(args[ii + 1]);
                         ii++;
                     }
                     else if (args[ii] == "-raw")
                     {
-                        PathMod.DEV_PATH = System.IO.Path.GetFullPath(PathMod.ExePath + args[ii + 1]);
+                        PathMod.DEV_PATH = Path.GetFullPath(args[ii + 1]);
+                        ii++;
+                    }
+                    else if (args[ii] == "-quest")
+                    {
+                        quest = args[ii + 1];
                         ii++;
                     }
                     else if (args[ii] == "-mod")
                     {
-                        PathMod.Mod = PathMod.MODS_FOLDER + args[ii + 1];
+                        int jj = 1;
+                        while (args.Length > ii + jj)
+                        {
+                            if (args[ii + jj].StartsWith("-"))
+                                break;
+                            else
+                                mod.Add(args[ii + jj]);
+                            jj++;
+                        }
+                        ii += jj - 1;
+                    }
+                    else if (args[ii] == "-build")
+                    {
+                        buildQuest = true;
                         ii++;
                     }
                     else if (args[ii] == "-convert")
@@ -161,13 +188,48 @@ namespace PMDC
                     }
                 }
 
-
+                DiagManager.Instance.SetupGamepad();
                 GraphicsManager.InitParams();
 
                 DiagManager.Instance.DevMode = true;
+                
+                if (quest != "")
+                {
+                    ModHeader header = PathMod.GetModDetails(Path.Combine(PathMod.MODS_PATH, quest));
+                    if (header.IsValid())
+                    {
+                        PathMod.Quest = header;
+
+                        DiagManager.Instance.LogInfo(String.Format("Loaded quest \"{0}\".", quest));
+                    }
+                    else
+                        DiagManager.Instance.LogInfo(String.Format("Cannot find quest \"{0}\" in {1}. Falling back to base game.", quest, PathMod.MODS_PATH));
+                }
+
+                if (mod.Count > 0)
+                {
+                    List<ModHeader> workingMods = new List<ModHeader>();
+                    for (int ii = 0; ii < mod.Count; ii++)
+                    {
+                        ModHeader header = PathMod.GetModDetails(Path.Combine(PathMod.MODS_PATH, mod[ii]));
+                        if (header.IsValid())
+                        {
+                            workingMods.Add(header);
+                            DiagManager.Instance.LogInfo(String.Format("Loaded mod \"{0}\".", String.Join(", ", mod[ii])));
+                        }
+                        else
+                        {
+                            DiagManager.Instance.LogInfo(String.Format("Cannot find mod \"{0}\" in {1}. It will be ignored.", mod, PathMod.MODS_PATH));
+                            mod.RemoveAt(ii);
+                            ii--;
+                        }
+                    }
+                    PathMod.Mods = workingMods.ToArray();
+                }
+
+
                 if (playInputs != null)
                     DiagManager.Instance.LoadInputs(playInputs);
-
 
                 Text.Init();
                 langArgs = "en";
@@ -183,6 +245,17 @@ namespace PMDC
                 }
                 Text.SetCultureCode(DiagManager.Instance.CurSettings.Language == "" ? "" : DiagManager.Instance.CurSettings.Language.ToString());
 
+                if (buildQuest)
+                {
+                    if (PathMod.Quest.IsValid())
+                    {
+                        DiagManager.Instance.LogInfo("No quest specified to build.");
+                        return;
+                    }
+                    RogueEssence.Dev.DevHelper.MergeQuest(quest);
+
+                    return;
+                }
 
                 if (convertAssets != GraphicsManager.AssetType.None)
                 {
@@ -198,18 +271,33 @@ namespace PMDC
                 if (reserializeIndices != DataManager.DataType.None)
                 {
                     DiagManager.Instance.LogInfo("Beginning Reserialization");
+
+                    using (GameBase game = new GameBase())
+                    {
+                        GraphicsManager.InitSystem(game.GraphicsDevice);
+                        GraphicsManager.RebuildIndices(GraphicsManager.AssetType.All);
+                    }
+
                     //we need the datamanager for this, but only while data is hardcoded
                     //TODO: remove when data is no longer hardcoded
                     LuaEngine.InitInstance();
                     DataManager.InitInstance();
+
+                    DataManager.InitDataDirs(PathMod.ModPath(""));
                     RogueEssence.Dev.DevHelper.ReserializeBase();
                     DiagManager.Instance.LogInfo("Reserializing main data");
                     RogueEssence.Dev.DevHelper.Reserialize(reserializeIndices);
                     DiagManager.Instance.LogInfo("Reserializing map data");
-                    RogueEssence.Dev.DevHelper.ReserializeData(DataManager.DATA_PATH + "Map/", DataManager.MAP_EXT);
-                    RogueEssence.Dev.DevHelper.ReserializeData(DataManager.DATA_PATH + "Ground/", DataManager.GROUND_EXT);
+                    if ((reserializeIndices & DataManager.DataType.Zone) != DataManager.DataType.None)
+                    {
+                        RogueEssence.Dev.DevHelper.ReserializeData<Map>(DataManager.DATA_PATH + "Map/", DataManager.MAP_EXT);
+                        RogueEssence.Dev.DevHelper.ReserializeData<GroundMap>(DataManager.DATA_PATH + "Ground/", DataManager.GROUND_EXT);
+                    }
                     DiagManager.Instance.LogInfo("Reserializing indices");
                     RogueEssence.Dev.DevHelper.RunIndexing(reserializeIndices);
+
+                    DataManager.Instance.UniversalData = (TypeDict<BaseData>)RogueEssence.Dev.DevHelper.LoadWithLegacySupport(PathMod.ModPath(DataManager.MISC_PATH + "Index.bin"), typeof(TypeDict<BaseData>));
+                    RogueEssence.Dev.DevHelper.RunExtraIndexing(reserializeIndices);
                     return;
                 }
 
@@ -219,7 +307,12 @@ namespace PMDC
                     //TODO: remove when data is no longer hardcoded
                     LuaEngine.InitInstance();
                     DataManager.InitInstance();
+                    DiagManager.Instance.LogInfo("Reserializing indices");
+                    DataManager.InitDataDirs(PathMod.ModPath(""));
                     RogueEssence.Dev.DevHelper.RunIndexing(convertIndices);
+
+                    DataManager.Instance.UniversalData = (TypeDict<BaseData>)RogueEssence.Dev.DevHelper.LoadWithLegacySupport(PathMod.ModPath(DataManager.MISC_PATH + "Index.bin"), typeof(TypeDict<BaseData>));
+                    RogueEssence.Dev.DevHelper.RunExtraIndexing(convertIndices);
                     return;
                 }
 
@@ -268,13 +361,13 @@ namespace PMDC
             }
         }
 
-        // TheSpyDog's branch on resolving dllmap for DotNetCore
-        // https://github.com/FNA-XNA/FNA/pull/315
+        // We used to have to map dlls manually, but FNA has a provisional solution now.
+        // Keep these comments for clarity
         public static void InitDllMap()
         {
-            CoreDllMap.Init();
-            Assembly fnaAssembly = Assembly.GetAssembly(typeof(Game));
-            CoreDllMap.Register(fnaAssembly);
+            //CoreDllMap.Init();
+            //Assembly fnaAssembly = Assembly.GetAssembly(typeof(Game));
+            //CoreDllMap.Register(fnaAssembly);
             //load SDL first before FNA3D to sidestep multiple dylibs problem
             SDL.SDL_GetPlatform();
         }
@@ -282,16 +375,51 @@ namespace PMDC
         public static void InitDataEditor()
         {
             DataEditor.Init();
+
+            DataEditor.AddEditor(new StatusEffectEditor());
+            DataEditor.AddEditor(new MapStatusEditor());
+
+            DataEditor.AddEditor(new MoneySpawnZoneStepEditor());
+
             //DataEditor.AddConverter(new AutoTileBaseConverter());
+            DataEditor.AddEditor(new DataFolderEditor());
             DataEditor.AddEditor(new AnimDataEditor());
             DataEditor.AddEditor(new SoundEditor());
             DataEditor.AddEditor(new MusicEditor());
             DataEditor.AddEditor(new EntryDataEditor());
             DataEditor.AddEditor(new FrameTypeEditor());
+            DataEditor.AddEditor(new MapItemEditor());
+            
+            DataEditor.AddEditor(new MultiStepSpawnerEditor());
+            DataEditor.AddEditor(new PickerSpawnerEditor());
+            DataEditor.AddEditor(new ContextSpawnerEditor());
+            DataEditor.AddEditor(new TeamStepSpawnerEditor());
+            DataEditor.AddEditor(new StepSpawnerEditor());
 
+            DataEditor.AddEditor(new GridPathCircleEditor());
+            DataEditor.AddEditor(new GridPathBranchEditor());
+
+            DataEditor.AddEditor(new AddConnectedRoomsStepEditor());
+            DataEditor.AddEditor(new AddDisconnectedRoomsStepEditor());
+            DataEditor.AddEditor(new ConnectRoomStepEditor());
+            DataEditor.AddEditor(new FloorPathBranchEditor());
+
+            DataEditor.AddEditor(new RoomGenCrossEditor());
+            DataEditor.AddEditor(new SizedRoomGenEditor());
+
+            DataEditor.AddEditor(new BasePowerStateEditor());
+            DataEditor.AddEditor(new AdditionalEffectStateEditor());
+
+            DataEditor.AddEditor(new PromoteBranchEditor());
+
+            DataEditor.AddEditor(new MonsterIDEditor());
+
+            DataEditor.AddEditor(new TeamMemberSpawnEditor());
+            DataEditor.AddEditor(new MobSpawnEditor());
 
             DataEditor.AddEditor(new MapTilesEditor());
             DataEditor.AddEditor(new BaseEmitterEditor());
+            DataEditor.AddEditor(new ZoneDataEditor());
             DataEditor.AddEditor(new BattleDataEditor());
             DataEditor.AddEditor(new BattleFXEditor());
             DataEditor.AddEditor(new CircleSquareEmitterEditor());
@@ -304,18 +432,27 @@ namespace PMDC
             DataEditor.AddEditor(new ColumnAnimEditor());
             DataEditor.AddEditor(new StaticAnimEditor());
             DataEditor.AddEditor(new TypeDictEditor());
+            DataEditor.AddEditor(new RangeDictEditor(false, true));
             DataEditor.AddEditor(new SpawnListEditor());
-            DataEditor.AddEditor(new SpawnRangeListEditor());
+            DataEditor.AddEditor(new SpawnRangeListEditor(false, true));
             DataEditor.AddEditor(new PriorityListEditor());
             DataEditor.AddEditor(new PriorityEditor());
             DataEditor.AddEditor(new SegLocEditor());
             DataEditor.AddEditor(new LocEditor());
-            DataEditor.AddEditor(new IntRangeEditor());
+            DataEditor.AddEditor(new RandRangeEditor(false, true));
+            DataEditor.AddEditor(new RandPickerEditor());
+            DataEditor.AddEditor(new MultiRandPickerEditor());
+            DataEditor.AddEditor(new IntRangeEditor(false, true));
             DataEditor.AddEditor(new FlagTypeEditor());
             DataEditor.AddEditor(new ColorEditor());
             DataEditor.AddEditor(new TypeEditor());
+
+            //TODO: there is no parameterless interface for hashset
+            //so instead we have to do the painful process of manually adding every hashset of every type we actually use.  ugh
+            DataEditor.AddEditor(new HashSetEditor<int>());
             DataEditor.AddEditor(new ArrayEditor());
             DataEditor.AddEditor(new DictionaryEditor());
+            DataEditor.AddEditor(new NoDupeListEditor());
             DataEditor.AddEditor(new ListEditor());
             DataEditor.AddEditor(new EnumEditor());
             DataEditor.AddEditor(new StringEditor());
@@ -325,8 +462,6 @@ namespace PMDC
             DataEditor.AddEditor(new IntEditor());
             DataEditor.AddEditor(new ByteEditor());
             DataEditor.AddEditor(new ObjectEditor());
-
-            DataEditor.AddConverter(new MapItemConv());
         }
     }
 }

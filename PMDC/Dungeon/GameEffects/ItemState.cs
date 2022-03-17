@@ -1,6 +1,8 @@
 ﻿using System;
 using RogueEssence.Data;
 using RogueEssence.Dungeon;
+using System.Collections.Generic;
+using RogueEssence.Dev;
 
 namespace PMDC.Dungeon
 {
@@ -101,6 +103,23 @@ namespace PMDC.Dungeon
         public override GameplayState Clone() { return new ExclusiveState(this); }
     }
 
+    [Serializable]
+    public class FamilyState : ItemState
+    {
+        [DataType(1, DataManager.DataType.Monster, false)]
+        public List<int> Members;
+        public FamilyState() { Members = new List<int>(); }
+        public FamilyState(int[] dexNums) : this()
+        {
+            Members.AddRange(dexNums);
+        }
+        protected FamilyState(FamilyState other) : this()
+        {
+            Members.AddRange(other.Members);
+        }
+        public override GameplayState Clone() { return new FamilyState(this); }
+    }
+
 
     [Serializable]
     public class EdibleState : ItemState
@@ -187,4 +206,5 @@ namespace PMDC.Dungeon
     {
         public override GameplayState Clone() { return new RecruitState(); }
     }
+
 }

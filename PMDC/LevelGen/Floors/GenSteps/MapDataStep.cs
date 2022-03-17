@@ -5,12 +5,15 @@ using RogueElements;
 using RogueEssence.Data;
 using RogueEssence.LevelGen;
 using System.Text;
+using RogueEssence.Dev;
+using PMDC.Dungeon;
 
 namespace PMDC.LevelGen
 {
     [Serializable]
     public class MapDataStep<T> : GenStep<T> where T : BaseMapGenContext
     {
+        [Music(0)]
         public string Music;
         public int TimeLimit;
         public Map.SightRange TileSight;
@@ -54,30 +57,31 @@ namespace PMDC.LevelGen
     }
 
     [Serializable]
-    public class MapStatusStep<T> : GenStep<T> where T : BaseMapGenContext
+    public class DefaultMapStatusStep<T> : GenStep<T> where T : BaseMapGenContext
     {
+        [DataType(0, DataManager.DataType.MapStatus, false)]
+        public int SetterID;
+        [DataType(1, DataManager.DataType.MapStatus, false)]
         public int[] DefaultMapStatus;
 
-        public MapStatusStep()
+        public DefaultMapStatusStep()
         {
             DefaultMapStatus = new int[1] { 0 };
         }
-        public MapStatusStep(params int[] defaultStatus)
+        public DefaultMapStatusStep(int statusSetter, params int[] defaultStatus)
         {
+            SetterID = statusSetter;
             DefaultMapStatus = defaultStatus;
         }
 
         public override void Apply(T map)
         {
             int chosenStatus = DefaultMapStatus[map.Rand.Next(DefaultMapStatus.Length)];
-            MapStatus status = new MapStatus(chosenStatus);
-            status.LoadFromData();
-            int setterID = status.StatusStates.Contains<MapWeatherState>() ? 24 : 25;
-            MapStatus statusSetter = new MapStatus(setterID);
+            MapStatus statusSetter = new MapStatus(SetterID);
             statusSetter.LoadFromData();
             MapIndexState indexState = statusSetter.StatusStates.GetWithDefault<MapIndexState>();
             indexState.Index = chosenStatus;
-            map.Map.Status.Add(setterID, statusSetter);
+            map.Map.Status.Add(SetterID, statusSetter);
         }
 
 
@@ -87,6 +91,34 @@ namespace PMDC.LevelGen
             if (status.Length == 1)
                 status = DataManager.Instance.DataIndices[DataManager.DataType.MapStatus].Entries[status[0]].Name.ToLocal();
             return String.Format("{0}: {1}", this.GetType().Name, status);
+        }
+    }
+
+
+
+    [Serializable]
+    public class StateMapStatusStep<T> : GenStep<T> where T : BaseMapGenContext
+    {
+        public int MapStatus;
+        public StateCollection<MapStatusState> States;
+
+        public StateMapStatusStep()
+        {
+            States = new StateCollection<MapStatusState>();
+        }
+        public StateMapStatusStep(int mapStatus, MapStatusState state) : this()
+        {
+            MapStatus = mapStatus;
+            States.Set(state);
+        }
+
+        public override void Apply(T map)
+        {
+            MapStatus status = new MapStatus(MapStatus);
+            status.LoadFromData();
+            foreach(MapStatusState state in States)
+                status.StatusStates.Set((MapStatusState)state.Clone());
+            map.Map.Status.Add(MapStatus, status);
         }
     }
 }

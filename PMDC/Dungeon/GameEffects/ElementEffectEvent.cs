@@ -11,38 +11,15 @@ namespace PMDC.Dungeon
     public class PreTypeEvent : ElementEffectEvent
     {
 
-        public static int N_E = 0;
-        public static int NVE = 3;
-        public static int NRM = 4;
-        public static int S_E = 5;
-
-
-        static readonly int[,] TypeMatchup = {{NRM,NRM,NRM,NRM,NRM,NRM,NRM,NRM,NRM,NRM,NRM,NRM,NRM,NRM,NRM,NRM,NRM,NRM,NRM},
-                                        {NRM,NRM,S_E,NRM,NRM,NVE,NVE,NVE,NVE,NVE,S_E,NRM,NRM,NRM,NVE,S_E,NRM,NVE,NRM},
-                                        {NRM,NRM,NVE,NRM,NRM,NVE,NVE,NRM,NRM,S_E,NRM,NRM,NRM,NRM,NRM,S_E,NRM,NRM,NRM},
-                                        {NRM,NRM,NRM,S_E,NRM,N_E,NRM,NRM,NRM,NRM,NRM,NRM,NRM,NRM,NRM,NRM,NRM,NVE,NRM},
-                                        {NRM,NRM,NRM,NVE,NVE,NRM,NRM,NRM,S_E,NRM,NVE,N_E,NRM,NRM,NRM,NRM,NRM,NRM,S_E},
-                                        {NRM,NRM,S_E,S_E,NRM,NRM,S_E,NVE,NRM,NRM,NRM,NRM,NRM,NRM,NVE,NRM,NRM,NVE,NRM},
-                                        {NRM,NVE,S_E,NRM,NRM,NVE,NRM,NRM,NVE,N_E,NRM,NRM,S_E,S_E,NVE,NVE,S_E,S_E,NRM},
-                                        {NRM,S_E,NRM,NVE,NRM,NRM,NRM,NVE,NRM,NRM,S_E,NRM,S_E,NRM,NRM,NRM,NVE,S_E,NVE},
-                                        {NRM,S_E,NRM,NRM,NVE,NRM,S_E,NRM,NRM,NRM,S_E,NRM,NRM,NRM,NRM,NRM,NVE,NVE,NRM},
-                                        {NRM,NRM,NVE,NRM,NRM,NRM,NRM,NRM,NRM,S_E,NRM,NRM,NRM,N_E,NRM,S_E,NRM,NRM,NRM},
-                                        {NRM,NVE,NRM,NVE,NRM,NRM,NRM,NVE,NVE,NRM,NVE,S_E,NRM,NRM,NVE,NRM,S_E,NVE,S_E},
-                                        {NRM,NVE,NRM,NRM,S_E,NRM,NRM,S_E,N_E,NRM,NVE,NRM,NRM,NRM,S_E,NRM,S_E,S_E,NRM},
-                                        {NRM,NRM,NRM,S_E,NRM,NRM,NRM,NVE,S_E,NRM,S_E,S_E,NVE,NRM,NRM,NRM,NRM,NVE,NVE},
-                                        {NRM,NRM,NRM,NRM,NRM,NRM,NRM,NRM,NRM,N_E,NRM,NRM,NRM,NRM,NRM,NRM,NVE,NVE,NRM},
-                                        {NRM,NRM,NRM,NRM,NRM,S_E,NRM,NRM,NRM,NVE,S_E,NVE,NRM,NRM,NVE,NRM,NVE,N_E,NRM},
-                                        {NRM,NRM,N_E,NRM,NRM,NRM,S_E,NRM,NRM,NRM,NRM,NRM,NRM,NRM,S_E,NVE,NRM,NVE,NRM},
-                                        {NRM,S_E,NRM,NRM,NRM,NRM,NVE,S_E,S_E,NRM,NRM,NVE,S_E,NRM,NRM,NRM,NRM,NVE,NRM},
-                                        {NRM,NRM,NRM,NRM,NVE,S_E,NRM,NVE,NRM,NRM,NRM,NRM,S_E,NRM,NRM,NRM,S_E,NVE,NVE},
-                                        {NRM,NRM,NRM,NVE,NRM,NRM,NRM,S_E,NRM,NRM,NVE,S_E,NRM,NRM,NRM,NRM,S_E,NRM,NVE}};
+        public const int N_E = 0;
+        public const int NVE = 3;
+        public const int NRM = 4;
+        public const int S_E = 5;
 
         public const int N_E_2 = 5;
         public const int NVE_2 = 7;
         public const int NRM_2 = 8;
         public const int S_E_2 = 9;
-
-        public static readonly int[] Effectiveness = new int[11] { 0, 0, 0, 0, 0, 0, 1, 2, 4, 6, 8 };
 
         public static string EffectivenessToPhrase(int effectiveness)
         {
@@ -62,9 +39,15 @@ namespace PMDC.Dungeon
 
         public static int CalculateTypeMatchup(int attackerType, int targetType)
         {
-            return TypeMatchup[attackerType, targetType];
+            ElementTableState table = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<ElementTableState>();
+            return table.TypeMatchup[attackerType][targetType];
         }
 
+        public static int GetEffectivenessMult(int effectiveness)
+        {
+            ElementTableState table = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<ElementTableState>();
+            return table.Effectiveness[effectiveness];
+        }
 
         public static int GetDualEffectiveness(Character attacker, Character target, int targetElement)
         {
@@ -88,27 +71,25 @@ namespace PMDC.Dungeon
     [Serializable]
     public class FamilyMatchupEvent : ElementEffectEvent
     {
-        [DataType(1, DataManager.DataType.Monster, false)]
-        public List<int> Members;
-
         public ElementEffectEvent BaseEvent;
 
-        public FamilyMatchupEvent() { Members = new List<int>(); }
-        public FamilyMatchupEvent(List<int> members, ElementEffectEvent baseEvent) { Members = members; BaseEvent = baseEvent; }
+        public FamilyMatchupEvent() { }
+        public FamilyMatchupEvent(ElementEffectEvent baseEvent) { BaseEvent = baseEvent; }
         protected FamilyMatchupEvent(FamilyMatchupEvent other)
         {
-            Members = new List<int>();
-            Members.AddRange(other.Members);
             BaseEvent = (FamilyMatchupEvent)other.BaseEvent.Clone();
         }
         public override GameEvent Clone() { return new FamilyMatchupEvent(this); }
 
         public override void Apply(GameEventOwner owner, Character ownerChar, int moveType, int targetType, ref int effectiveness)
         {
-            if (Members.Contains(ownerChar.BaseForm.Species))
-            {
+            ItemData entry = DataManager.Instance.GetItem(owner.GetID());
+            FamilyState family;
+            if (!entry.ItemStates.TryGet<FamilyState>(out family))
+                return;
+
+            if (family.Members.Contains(ownerChar.BaseForm.Species))
                 BaseEvent.Apply(owner, ownerChar, moveType, targetType, ref effectiveness);
-            }
         }
     }
 

@@ -15,6 +15,7 @@ namespace PMDC.LevelGen
 
         public override void Apply(T map)
         {
+            //TODO: move magic numbers out of here
             EffectTile spawnedChest = new EffectTile(44, true);
 
             List<Loc> freeTiles = ((IPlaceableGenContext<EffectTile>)map).GetAllFreeTiles();
@@ -67,7 +68,13 @@ namespace PMDC.LevelGen
                         house.Mobs.Add(mob.Copy());
                     check.Effects.Add(house);
                 }
-                map.CheckEvents.Add(check);
+
+                int intrudeStatus = 33;
+                MapStatus status = new MapStatus(intrudeStatus);
+                status.LoadFromData();
+                MapCheckState checkState = status.StatusStates.GetWithDefault<MapCheckState>();
+                checkState.CheckEvents.Add(check);
+                map.Map.Status.Add(intrudeStatus, status);
             }
         }
 

@@ -6,6 +6,7 @@ using RogueEssence.Dev;
 using RogueEssence;
 using RogueEssence.LevelGen;
 using RogueEssence.Data;
+using PMDC.Data;
 
 namespace PMDC.LevelGen
 {
@@ -59,6 +60,7 @@ namespace PMDC.LevelGen
         }
     }
 
+
     [Serializable]
     public class ItemThemeNone : ItemTheme
     {
@@ -84,11 +86,8 @@ namespace PMDC.LevelGen
             {
                 if (specialItems.Count > 0 && map.Rand.Next(100) < SpecialRatio)
                     spawners.Add(specialItems.Pick(map.Rand));
-                else
-                {
-                    if (map.ItemSpawns.CanPick)
-                        spawners.Add(new MapItem(map.ItemSpawns.Pick(map.Rand)));
-                }
+                else if (map.ItemSpawns.CanPick)
+                    spawners.Add(new MapItem(map.ItemSpawns.Pick(map.Rand)));
             }
 
             return spawners;
@@ -99,15 +98,21 @@ namespace PMDC.LevelGen
     public class ItemThemeType : ItemTheme
     {
         public ItemData.UseType UseType;
+        public bool UseMapItems;
+        public bool UseSpecialItems;
 
         public ItemThemeType() { }
-        public ItemThemeType(ItemData.UseType useType, RandRange amount) : base(amount)
+        public ItemThemeType(ItemData.UseType useType, bool mapItems, bool specialItems, RandRange amount) : base(amount)
         {
             UseType = useType;
+            UseMapItems = mapItems;
+            UseSpecialItems = specialItems;
         }
         protected ItemThemeType(ItemThemeType other) : base(other)
         {
             UseType = other.UseType;
+            UseMapItems = other.UseMapItems;
+            UseSpecialItems = other.UseSpecialItems;
         }
         public override ItemTheme Copy() { return new ItemThemeType(this); }
 
@@ -117,32 +122,34 @@ namespace PMDC.LevelGen
             List<MapItem> spawners = new List<MapItem>();
 
             SpawnList<MapItem> subList = new SpawnList<MapItem>();
-            for (int ii = 0; ii < specialItems.Count; ii++)
+            if (UseSpecialItems)
             {
-                MapItem spawn = specialItems.GetSpawn(ii);
-                if (!spawn.IsMoney)
+                for (int ii = 0; ii < specialItems.Count; ii++)
                 {
-                    //TODO: retrieving items from disk is an expensive operation
-                    //especially when hundreds of items may be in the spawn pool
-                    //we should make an index in the DataManager that keeps track of item types
-                    //(you can also do this for item states)
-                    //when the game begins, those indices will be loaded and this code can just reference those indices
-                    ItemData data = DataManager.Instance.GetItem(spawn.Value);
-                    if (data.UsageType == UseType)
-                        subList.Add(spawn, specialItems.GetSpawnRate(ii));
+                    MapItem spawn = specialItems.GetSpawn(ii);
+                    if (!spawn.IsMoney)
+                    {
+                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.Value] as ItemEntrySummary;
+
+                        if (itemEntry.UsageType == UseType)
+                            subList.Add(spawn, specialItems.GetSpawnRate(ii));
+                    }
                 }
             }
 
-            foreach(string key in map.ItemSpawns.Spawns.GetKeys())
+            if (UseMapItems)
             {
-                SpawnList<InvItem> spawns = map.ItemSpawns.Spawns.GetSpawn(key);
-                for (int ii = 0; ii < spawns.Count; ii++)
+                foreach (string key in map.ItemSpawns.Spawns.GetKeys())
                 {
-                    //TODO: spawn rate is somewhat distorted here
-                    InvItem spawn = spawns.GetSpawn(ii);
-                    ItemData data = DataManager.Instance.GetItem(spawn.ID);
-                    if (data.UsageType == UseType)
-                        subList.Add(new MapItem(spawn), spawns.GetSpawnRate(ii));
+                    SpawnList<InvItem> spawns = map.ItemSpawns.Spawns.GetSpawn(key);
+                    for (int ii = 0; ii < spawns.Count; ii++)
+                    {
+                        //TODO: spawn rate is somewhat distorted here
+                        InvItem spawn = spawns.GetSpawn(ii);
+                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.ID] as ItemEntrySummary;
+                        if (itemEntry.UsageType == UseType)
+                            subList.Add(new MapItem(spawn), spawns.GetSpawnRate(ii));
+                    }
                 }
             }
 
@@ -161,15 +168,21 @@ namespace PMDC.LevelGen
     {
         [StringTypeConstraint(0, typeof(ItemState))]
         public FlagType UseType;
+        public bool UseMapItems;
+        public bool UseSpecialItems;
 
         public ItemStateType() { }
-        public ItemStateType(FlagType useType, RandRange amount) : base(amount)
+        public ItemStateType(FlagType useType, bool mapItems, bool specialItems, RandRange amount) : base(amount)
         {
             UseType = useType;
+            UseMapItems = mapItems;
+            UseSpecialItems = specialItems;
         }
         protected ItemStateType(ItemStateType other) : base(other)
         {
             UseType = other.UseType;
+            UseMapItems = other.UseMapItems;
+            UseSpecialItems = other.UseSpecialItems;
         }
         public override ItemTheme Copy() { return new ItemStateType(this); }
 
@@ -179,27 +192,33 @@ namespace PMDC.LevelGen
             List<MapItem> spawners = new List<MapItem>();
 
             SpawnList<MapItem> subList = new SpawnList<MapItem>();
-            for (int ii = 0; ii < specialItems.Count; ii++)
+            if (UseSpecialItems)
             {
-                MapItem spawn = specialItems.GetSpawn(ii);
-                if (!spawn.IsMoney)
+                for (int ii = 0; ii < specialItems.Count; ii++)
                 {
-                    ItemData data = DataManager.Instance.GetItem(spawn.Value);
-                    if (data.ItemStates.Contains(UseType.FullType))
-                        subList.Add(spawn, specialItems.GetSpawnRate(ii));
+                    MapItem spawn = specialItems.GetSpawn(ii);
+                    if (!spawn.IsMoney)
+                    {
+                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.Value] as ItemEntrySummary;
+                        if (itemEntry.ContainsState(UseType.FullType))
+                            subList.Add(spawn, specialItems.GetSpawnRate(ii));
+                    }
                 }
             }
 
-            foreach (string key in map.ItemSpawns.Spawns.GetKeys())
+            if (UseMapItems)
             {
-                SpawnList<InvItem> spawns = map.ItemSpawns.Spawns.GetSpawn(key);
-                for (int ii = 0; ii < spawns.Count; ii++)
+                foreach (string key in map.ItemSpawns.Spawns.GetKeys())
                 {
-                    //TODO: spawn rate is somewhat distorted here
-                    InvItem spawn = spawns.GetSpawn(ii);
-                    ItemData data = DataManager.Instance.GetItem(spawn.ID);
-                    if (data.ItemStates.Contains(UseType.FullType))
-                        subList.Add(new MapItem(spawn), spawns.GetSpawnRate(ii));
+                    SpawnList<InvItem> spawns = map.ItemSpawns.Spawns.GetSpawn(key);
+                    for (int ii = 0; ii < spawns.Count; ii++)
+                    {
+                        //TODO: spawn rate is somewhat distorted here
+                        InvItem spawn = spawns.GetSpawn(ii);
+                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.ID] as ItemEntrySummary;
+                        if (itemEntry.ContainsState(UseType.FullType))
+                            subList.Add(new MapItem(spawn), spawns.GetSpawnRate(ii));
+                    }
                 }
             }
 
@@ -276,7 +295,7 @@ namespace PMDC.LevelGen
             {
                 if (specialMobs.Count > 0 && map.Rand.Next(100) < SpecialRatio)
                     spawners.Add(specialMobs.Pick(map.Rand));
-                else if (map.TeamSpawns.Count > 0)
+                else if (map.TeamSpawns.CanPick)
                 {
                     List<MobSpawn> exampleList = map.TeamSpawns.Pick(map.Rand).ChooseSpawns(map.Rand);
                     if (exampleList.Count > 0)
@@ -294,15 +313,21 @@ namespace PMDC.LevelGen
     public class ItemThemeRange : ItemTheme
     {
         public IntRange Range;
+        public bool UseMapItems;
+        public bool UseSpecialItems;
 
         public ItemThemeRange() { }
-        public ItemThemeRange(IntRange range, RandRange amount) : base(amount)
+        public ItemThemeRange(IntRange range, bool mapItems, bool specialItems, RandRange amount) : base(amount)
         {
             Range = range;
+            UseMapItems = mapItems;
+            UseSpecialItems = specialItems;
         }
         protected ItemThemeRange(ItemThemeRange other) : base(other)
         {
             Range = other.Range;
+            UseMapItems = other.UseMapItems;
+            UseSpecialItems = other.UseSpecialItems;
         }
         public override ItemTheme Copy() { return new ItemThemeRange(this); }
 
@@ -312,26 +337,32 @@ namespace PMDC.LevelGen
             List<MapItem> spawners = new List<MapItem>();
 
             SpawnList<MapItem> subList = new SpawnList<MapItem>();
-            for (int ii = 0; ii < specialItems.Count; ii++)
+            if (UseSpecialItems)
             {
-                MapItem spawn = specialItems.GetSpawn(ii);
-                if (!spawn.IsMoney)
+                for (int ii = 0; ii < specialItems.Count; ii++)
                 {
-                    if (Range.Min <= spawn.Value && spawn.Value < Range.Max)
-                        subList.Add(spawn, specialItems.GetSpawnRate(ii));
+                    MapItem spawn = specialItems.GetSpawn(ii);
+                    if (!spawn.IsMoney)
+                    {
+                        if (Range.Min <= spawn.Value && spawn.Value < Range.Max)
+                            subList.Add(spawn, specialItems.GetSpawnRate(ii));
+                    }
                 }
             }
 
-            foreach (string key in map.ItemSpawns.Spawns.GetKeys())
+            if (UseMapItems)
             {
-                SpawnList<InvItem> spawns = map.ItemSpawns.Spawns.GetSpawn(key);
-                for (int ii = 0; ii < spawns.Count; ii++)
+                foreach (string key in map.ItemSpawns.Spawns.GetKeys())
                 {
-                    //TODO: spawn rate is somewhat distorted here
-                    InvItem spawn = spawns.GetSpawn(ii);
-                    ItemData data = DataManager.Instance.GetItem(spawn.ID);
-                    if (Range.Min <= spawn.ID && spawn.ID < Range.Max)
-                        subList.Add(new MapItem(spawn), spawns.GetSpawnRate(ii));
+                    SpawnList<InvItem> spawns = map.ItemSpawns.Spawns.GetSpawn(key);
+                    for (int ii = 0; ii < spawns.Count; ii++)
+                    {
+                        //TODO: spawn rate is somewhat distorted here
+                        InvItem spawn = spawns.GetSpawn(ii);
+                        //ItemData data = DataManager.Instance.GetItem(spawn.ID);
+                        if (Range.Min <= spawn.ID && spawn.ID < Range.Max)
+                            subList.Add(new MapItem(spawn), spawns.GetSpawnRate(ii));
+                    }
                 }
             }
 
@@ -390,13 +421,9 @@ namespace PMDC.LevelGen
             {
                 int earliestBaseStage = baseMob.BaseForm.Species;
 
-                MonsterData baseData = DataManager.Instance.GetMonster(earliestBaseStage);
-                while (baseData.PromoteFrom > -1)
-                {
-                    earliestBaseStage = baseData.PromoteFrom;
-                    baseData = DataManager.Instance.GetMonster(earliestBaseStage);
-                }
-                yield return earliestBaseStage;
+                MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
+                FormFeatureSummary baseData = featureIndex.FeatureData[earliestBaseStage][0];
+                yield return baseData.Family;
             }
         }
     }
@@ -467,18 +494,12 @@ namespace PMDC.LevelGen
 
         protected bool CheckIfAllowed(BaseMapGenContext map, MobSpawn spawn, IEnumerable<int> species)
         {
-            int earliestStage = spawn.BaseForm.Species;
-
-            MonsterData data = DataManager.Instance.GetMonster(earliestStage);
-            while (data.PromoteFrom > -1)
-            {
-                earliestStage = data.PromoteFrom;
-                data = DataManager.Instance.GetMonster(earliestStage);
-            }
+            MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
+            FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species][0];
 
             foreach (int baseStage in species)
             {
-                if (baseStage == earliestStage)
+                if (baseStage == baseData.Family)
                     return true;
             }
 
@@ -529,14 +550,14 @@ namespace PMDC.LevelGen
             for (int ii = 0; ii < map.TeamSpawns.Count; ii++)
             {
                 SpawnList<MobSpawn> mobSpawns = map.TeamSpawns.GetSpawn(ii).GetPossibleSpawns();
-                foreach (MobSpawn spawn in mobSpawns)
+                foreach (MobSpawn spawn in mobSpawns.EnumerateOutcomes())
                 {
-                    MonsterData data = DataManager.Instance.GetMonster(spawn.BaseForm.Species);
-                    BaseMonsterForm form = data.Forms[Math.Max(0, spawn.BaseForm.Form)];
-                    if (form.Element1 != 00)
-                        MathUtils.AddToDictionary(elementFrequency, form.Element1, 1);
-                    if (form.Element2 != 00)
-                        MathUtils.AddToDictionary(elementFrequency, form.Element2, 1);
+                    MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
+                    FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species][Math.Max(0, spawn.BaseForm.Form)];
+                    if (baseData.Element1 != 00)
+                        MathUtils.AddToDictionary(elementFrequency, baseData.Element1, 1);
+                    if (baseData.Element2 != 00)
+                        MathUtils.AddToDictionary(elementFrequency, baseData.Element2, 1);
                 }
             }
 
@@ -545,12 +566,12 @@ namespace PMDC.LevelGen
                 for (int ii = 0; ii < specialMobs.Count; ii++)
                 {
                     MobSpawn spawn = specialMobs.GetSpawn(ii);
-                    MonsterData data = DataManager.Instance.GetMonster(spawn.BaseForm.Species);
-                    BaseMonsterForm form = data.Forms[Math.Max(0, spawn.BaseForm.Form)];
-                    if (form.Element1 != 00)
-                        MathUtils.AddToDictionary(elementFrequency, form.Element1, 1);
-                    if (form.Element2 != 00)
-                        MathUtils.AddToDictionary(elementFrequency, form.Element2, 1);
+                    MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
+                    FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species][Math.Max(0, spawn.BaseForm.Form)];
+                    if (baseData.Element1 != 00)
+                        MathUtils.AddToDictionary(elementFrequency, baseData.Element1, 1);
+                    if (baseData.Element2 != 00)
+                        MathUtils.AddToDictionary(elementFrequency, baseData.Element2, 1);
                 }
             }
 
@@ -620,12 +641,12 @@ namespace PMDC.LevelGen
 
         protected bool CheckIfAllowed(BaseMapGenContext map, MobSpawn spawn, List<int> types)
         {
-            MonsterData data = DataManager.Instance.GetMonster(spawn.BaseForm.Species);
-            BaseMonsterForm form = data.Forms[Math.Max(0, spawn.BaseForm.Form)];
+            MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
+            FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species][Math.Max(0, spawn.BaseForm.Form)];
             bool matchesType = false;
             foreach (int type in types)
             {
-                if (form.Element1 == type || form.Element2 == type)
+                if (baseData.Element1 == type || baseData.Element2 == type)
                 {
                     matchesType = true;
                     break;
@@ -634,7 +655,7 @@ namespace PMDC.LevelGen
 
             if (matchesType)
             {
-                if (CheckIfAllowed(data))
+                if (CheckIfAllowed(baseData))
                     return true;
             }
             return false;
@@ -694,22 +715,14 @@ namespace PMDC.LevelGen
 
         protected bool CheckIfAllowed(MobSpawn spawn)
         {
-            MonsterData data = DataManager.Instance.GetMonster(spawn.BaseForm.Species);
-            BaseMonsterForm form = data.Forms[Math.Max(0, spawn.BaseForm.Form)];
+            MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
+            FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species][Math.Max(0, spawn.BaseForm.Form)];
 
-            bool passesStat = true;
-            int chosenStat = form.GetBaseStat(ChosenStat);
-            for (int ii = 0; ii < (int)Stat.HitRate; ii++)
+            Stat spawnStat = Weakness ? baseData.WorstStat : baseData.BestStat;
+
+            if (spawnStat == ChosenStat)
             {
-                if ((form.GetBaseStat((Stat)ii) - chosenStat) * (Weakness ? -1 : 1) > 0)
-                {
-                    passesStat = false;
-                    break;
-                }
-            }
-            if (passesStat)
-            {
-                if (CheckIfAllowed(data))
+                if (CheckIfAllowed(baseData))
                     return true;
             }
             return false;
@@ -720,16 +733,6 @@ namespace PMDC.LevelGen
     [Serializable]
     public abstract class MobThemeEvoRestricted : MobTheme
     {
-        [Flags]
-        public enum EvoFlag
-        {
-            None = 0,
-            NoEvo = 1,//^0
-            FirstEvo = 2,//^1
-            FinalEvo = 4,//^2
-            MidEvo = 8,//^3
-            All = 15
-        }
         public EvoFlag EvoAllowance;
 
         public MobThemeEvoRestricted() { }
@@ -739,15 +742,9 @@ namespace PMDC.LevelGen
             EvoAllowance = other.EvoAllowance;
         }
 
-        protected virtual bool CheckIfAllowed(MonsterData data)
+        protected virtual bool CheckIfAllowed(FormFeatureSummary baseData)
         {
-            int prevo = (data.PromoteFrom > -1) ? 2 : 0;
-            int evo = (data.Promotions.Count > 0) ? 1 : 0;
-
-            if (((int)Math.Pow(2, prevo + evo) & (int)EvoAllowance) > 0)
-                return true;
-
-            return false;
+            return ((baseData.Stage & EvoAllowance) != EvoFlag.None);
         }
     }
 

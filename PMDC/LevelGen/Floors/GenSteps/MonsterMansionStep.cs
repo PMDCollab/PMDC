@@ -17,6 +17,12 @@ namespace PMDC.LevelGen
 
         public override void Apply(T map)
         {
+            if (!ItemThemes.CanPick)
+                return;
+
+            if (!MobThemes.CanPick)
+                return;
+
             Rect bounds = new Rect(0, 0, map.Width, map.Height);
 
             //determine the number of free tiles to put items on; trim the maximum item spawn accordingly (maximum <= 1/2 of free tiles)
@@ -108,8 +114,8 @@ namespace PMDC.LevelGen
                 RevealAllEvent reveal = new RevealAllEvent();
                 check.Effects.Add(reveal);
 
-                GiveMapStatusSingleEvent status = new GiveMapStatusSingleEvent(30, 0);
-                check.Effects.Add(status);
+                GiveMapStatusSingleEvent statusEvent = new GiveMapStatusSingleEvent(30, 0);
+                check.Effects.Add(statusEvent);
 
                 MonsterHouseMapEvent house = new MonsterHouseMapEvent();
                 house.Bounds = bounds;
@@ -123,7 +129,8 @@ namespace PMDC.LevelGen
                 }
                 check.Effects.Add(house);
             }
-            map.CheckEvents.Add(check);
+
+            AddIntrudeStep(map, check);
         }
     }
 

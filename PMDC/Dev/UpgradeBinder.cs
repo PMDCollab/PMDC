@@ -18,8 +18,8 @@ namespace PMDC.Dev
 
             if (typeToDeserialize == null)
             {
-                typeName = typeName.Replace("PMDO", "PMDC");
-                assemblyName = assemblyName.Replace("PMDO", "PMDC");
+                typeName = typeName.Replace("StepSpawner", "MultiStepSpawner");
+                //assemblyName = assemblyName.Replace("From", "To");
                 //then the type moved to a new namespace
                 typeToDeserialize = Type.GetType(String.Format("{0}, {1}", typeName, assemblyName));
             }

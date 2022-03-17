@@ -10,104 +10,248 @@ namespace PMDC.Dungeon
     [Serializable]
     public class AttackFoesPlan : AIPlan
     {
+        public AttackChoice AttackPattern;
+        public PositionChoice PositionPattern;
         //continue to the last place the enemy was found (if no other enemies can be found) before losing aggro
-        private Loc? prevLoc;
+        private Loc? targetLoc;
 
         public AttackFoesPlan() { }
-        public AttackFoesPlan(AIFlags iq, AttackChoice attackPattern) : base(iq, attackPattern) { }
-        protected AttackFoesPlan(AttackFoesPlan other) : base(other) { }
+        public AttackFoesPlan(AIFlags iq, AttackChoice attackPattern, PositionChoice positionPattern) : base(iq)
+        {
+            AttackPattern = attackPattern;
+            PositionPattern = positionPattern;
+        }
+        protected AttackFoesPlan(AttackFoesPlan other) : base(other)
+        {
+            AttackPattern = other.AttackPattern;
+            PositionPattern = other.PositionPattern;
+        }
         public override BasePlan CreateNew() { return new AttackFoesPlan(this); }
-        public override void SwitchedIn() { prevLoc = null; base.SwitchedIn(); }
+        public override void SwitchedIn() { targetLoc = null; base.SwitchedIn(); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
             if (controlledChar.CantWalk)
             {
-                GameAction attack = TryAttackChoice(rand, controlledChar, null);
+                GameAction attack = TryAttackChoice(rand, controlledChar, AttackPattern);
                 if (attack.Type != GameAction.ActionType.Wait)
                     return attack;
-
                 return null;
             }
 
-            //path to the closest enemy
+            //if we have another move we can make, take this turn to reposition
+            int extraTurns = controlledChar.MovementSpeed - controlledChar.TiersUsed;
+
+            if (extraTurns <= 0)
+            {
+                //attempt to use a move
+                GameAction attack = TryAttackChoice(rand, controlledChar, AttackPattern);
+                if (attack.Type != GameAction.ActionType.Wait)
+                    return attack;
+            }
+
+            //past this point, using moves won't work, so try to find a path
+
             List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets());
 
-            bool teamPartner = (IQ & AIFlags.TeamPartner) != AIFlags.None;
-            if (teamPartner)
+            bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
+            if (playerSense)
             {
                 //check for statuses that may make them ineligible targets
                 for (int ii = seenCharacters.Count - 1; ii >= 0; ii--)
                 {
-                    //NOTE: specialized AI code!
-                    if (seenCharacters[ii].GetStatusEffect(1) != null || seenCharacters[ii].GetStatusEffect(3) != null)//if they're asleep or frozen, do not attack
+                    if (!playerSensibleToAttack(seenCharacters[ii]))
                         seenCharacters.RemoveAt(ii);
-                    else if (seenCharacters[ii].GetStatusEffect(25) == null)//last targeted by someone; NOTE: specialized AI code!
-                    {
-                        //don't attack certain kinds of foes that won't attack first
-                        if (seenCharacters[ii].Tactic.ID == 10)//weird tree; NOTE: specialized AI code!
-                            seenCharacters.RemoveAt(ii);
-                        else if (seenCharacters[ii].Tactic.ID == 8)//wait attack; NOTE: specialized AI code!
-                            seenCharacters.RemoveAt(ii);
-                        else if (seenCharacters[ii].Tactic.ID == 18)//tit for tat; NOTE: specialized AI code!
-                            seenCharacters.RemoveAt(ii);
-                    }
                 }
             }
 
-            Character closestChar = null;
-            List<Loc> closestPath = null;
-            //iterate in increasing character indices
-            foreach (Character seenChar in seenCharacters)
+
+            //path to the closest enemy
+            List<Loc> path = null;
+            Character targetChar = null;
+            Dictionary<Loc, RangeTarget> endHash = new Dictionary<Loc, RangeTarget>();
+            Loc[] ends = null;
+            bool hasSelfEnd = false;//the controlledChar's destination is included among ends
+            bool aimForDistance = false; // determines if we are pathing directly to the target or to a tile we can hit the target from
+
+            PositionChoice positioning = PositionPattern;
+            if (extraTurns > 0)
+                positioning = PositionChoice.Avoid;
+
+            if (controlledChar.AttackOnly)
+                positioning = PositionChoice.Approach;
+
+            if (!playerSense)
             {
-                //try to path to each
-                List<Loc> path = GetPath(controlledChar, seenChar.CharLoc, !preThink);
-                //if a path can be found, check against closest character
-                bool newGoal = (path[0] == seenChar.CharLoc);
-                if (!teamPartner && closestChar == null || newGoal)
+                //for dumb NPCs, if they have a status where they can't attack, treat it as a regular attack pattern so that they walk up to the player
+                //only cringe does this right now...
+                StatusEffect flinchStatus = controlledChar.GetStatusEffect(8); //NOTE: specialized AI code!
+                if (flinchStatus != null)
+                    positioning = PositionChoice.Approach;
+            }
+
+            // If the Positionchoice is Avoid, take attack ranges into consideration
+            // the end points should be all locations where one can attack the target
+            // for projectiles, it should be the farthest point where they can attack:
+            if (positioning != PositionChoice.Approach)
+            {
+                //get all move ranges and use all their ranges to denote destination tiles.
+                FillRangeTargets(controlledChar, seenCharacters, endHash, positioning != PositionChoice.Avoid);
+                List<Loc> endList = new List<Loc>();
+                foreach (Loc endLoc in endHash.Keys)
                 {
-                    closestChar = seenChar;
-                    closestPath = path;
+                    bool addLoc = false;
+                    if (aimForDistance)
+                    {
+                        if (endHash[endLoc].Weight > 0)
+                            addLoc = true;
+                    }
+                    else
+                    {
+                        if (endHash[endLoc].Weight > 0)
+                        {
+                            aimForDistance = true;
+                            endList.Clear();
+                        }
+                        addLoc = true;
+                    }
+                    if (addLoc)
+                    {
+                        if (endLoc != controlledChar.CharLoc)//destination cannot be the current location (unless we have turns to spare)
+                            endList.Add(endLoc);
+                        else
+                        {
+                            if (extraTurns > 0)
+                            {
+                                endList.Add(endLoc);
+                                hasSelfEnd = true;
+                            }
+                        }
+                    }
                 }
-                else if (closestPath != null)
+                ends = endList.ToArray();
+            }
+            else
+            {
+                ends = new Loc[seenCharacters.Count];
+                for (int ii = 0; ii < seenCharacters.Count; ii++)
                 {
-                    bool oldGoal = (closestPath[0] == closestChar.CharLoc);
-                    if (!oldGoal && newGoal)
-                    {
-                        //between characters of which exist a path, and characters that don't, the ones that do win out.
-                        closestChar = seenChar;
-                        closestPath = path;
-                    }
-                    else if ((oldGoal == newGoal) && path.Count < closestPath.Count)
-                    {
-                        //of all characters which exist a path, the closest one wins
-                        closestChar = seenChar;
-                        closestPath = path;
-                    }
+                    endHash[seenCharacters[ii].CharLoc] = new RangeTarget(seenCharacters[ii], 0);
+                    ends[ii] = seenCharacters[ii].CharLoc;
                 }
             }
 
-            if (closestChar != null)
+            //now actually decide the path to get there
+            if (ends.Length > 0)
             {
-                GameAction attack = TryAttackChoice(rand, controlledChar, closestChar);
+                List<Loc>[] closestPaths = GetPaths(controlledChar, ends, !aimForDistance, !preThink, hasSelfEnd ? 2 : 1);
+                int closestIdx = -1;
+                for (int ii = 0; ii < ends.Length; ii++)
+                {
+                    if (closestPaths[ii] == null)//no path was found
+                        continue;
+                    if (closestPaths[ii][0] != ends[ii])//an incomplete path was found
+                    {
+                        if (endHash[ends[ii]].Origin.CharLoc != ends[ii]) // but only for pathing that goes to a tile to hit the target from
+                            continue;
+                    }
+
+                    if (closestIdx == -1)
+                        closestIdx = ii;
+                    else
+                    {
+                        int cmp = comparePathValues(positioning, endHash[ends[ii]], endHash[ends[closestIdx]]);
+                        if (cmp > 0)
+                            closestIdx = ii;
+                        else if (cmp == 0)
+                        {
+                            // among ties, the tile closest to the target wins
+                            int curDiff = (ends[closestIdx] - endHash[ends[closestIdx]].Origin.CharLoc).DistSquared();
+                            int newDiff = (ends[ii] - endHash[ends[ii]].Origin.CharLoc).DistSquared();
+                            if (newDiff < curDiff)
+                                closestIdx = ii;
+                        }
+                    }
+                }
+
+                if (closestIdx > -1)
+                {
+                    path = closestPaths[closestIdx];
+                    targetChar = endHash[ends[closestIdx]].Origin;
+                }
+            }
+
+            //update last-seen target location if we have a target, otherwise leave it alone
+            if (targetChar != null)
+                targetLoc = targetChar.CharLoc;
+
+            if (path != null)
+            {
+                //pursue the enemy if one is located
+                if (path[0] == targetChar.CharLoc)
+                    path.RemoveAt(0);
+
+                GameAction attack = null;
+                if (path.Count > 3)//if it takes more than 2 steps to get into position (list includes the loc for start position, for a total of 3), try a local attack
+                {
+                    Loc diff = targetChar.CharLoc - controlledChar.CharLoc;
+                    if (diff.Dist8() == 1)
+                    {
+                        attack = TryAttackChoice(rand, controlledChar, AttackPattern, true);
+                        if (attack.Type != GameAction.ActionType.Wait)
+                            return attack;
+                    }
+                    attack = TryAttackChoice(rand, controlledChar, AttackChoice.StandardAttack, true);
+                    if (attack.Type != GameAction.ActionType.Wait)
+                        return attack;
+                }
+                //move if the destination can be reached
+                if (path.Count > 1)
+                    return SelectChoiceFromPath(controlledChar, path);
+                //lastly, try normal attack
+                if (attack == null)
+                    attack = TryAttackChoice(rand, controlledChar, AttackChoice.StandardAttack, true);
                 if (attack.Type != GameAction.ActionType.Wait)
                     return attack;
-
-                //pursue the enemy if one is located
-                prevLoc = closestChar.CharLoc;
-                return SelectChoiceFromPath(controlledChar, closestPath, closestPath[0] == closestChar.CharLoc);
+                return new GameAction(GameAction.ActionType.Wait, Dir8.None);
             }
-            else if (!teamPartner && prevLoc.HasValue && prevLoc.Value != controlledChar.CharLoc)
+            else if (!playerSense && targetLoc.HasValue && targetLoc.Value != controlledChar.CharLoc)
             {
                 //if no enemy is located, path to the location of the last seen enemy
-                List<Loc> path = GetPath(controlledChar, prevLoc.Value, !preThink);
-                if (path[path.Count - 1] == prevLoc.Value)
-                    return SelectChoiceFromPath(controlledChar, path, false);
+                List<Loc>[] paths = GetPaths(controlledChar, new Loc[1] { targetLoc.Value }, false, !preThink);
+                path = paths[0];
+                if (path.Count > 1)
+                    return SelectChoiceFromPath(controlledChar, path);
                 else
-                    prevLoc = null;
+                    targetLoc = null;
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// 1 = better, -1 worse, 0 = equal 
+        /// </summary>
+        /// <param name="newVal"></param>
+        /// <param name="curBest"></param>
+        /// <returns></returns>
+        private int comparePathValues(PositionChoice positioning, RangeTarget newVal, RangeTarget curBest)
+        {
+            if (newVal.Weight == curBest.Weight)
+                return 0;
+
+            switch (positioning)
+            {
+                case PositionChoice.Avoid:
+                    if (newVal.Weight > curBest.Weight)
+                        return 1;
+                    break;
+                case PositionChoice.Close:
+                    if (newVal.Weight < curBest.Weight)
+                        return 1;
+                    break;
+            }
+            return -1;
         }
     }
 }

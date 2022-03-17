@@ -13,7 +13,7 @@ namespace PMDC.Dungeon
         private List<Loc> goalPath;
         private List<Loc> locHistory;
 
-        public AvoidPlan(AIFlags iq, AttackChoice attackPattern) : base(iq, attackPattern)
+        public AvoidPlan(AIFlags iq) : base(iq)
         {
             goalPath = new List<Loc>();
             locHistory = new List<Loc>();
@@ -36,7 +36,7 @@ namespace PMDC.Dungeon
         protected abstract bool RunFromFoes { get; }
         protected abstract bool AbortIfCornered { get; }
 
-        public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
             if (controlledChar.CantWalk)
                 return null;
@@ -124,7 +124,7 @@ namespace PMDC.Dungeon
             //later, rate the exits based on how far they are from the tail point of the lochistory
             //add them to a sorted list
 
-            int selectedIndex = -1;
+            List<Loc> forwardFacingLocs = new List<Loc>();
             if (locHistory.Count > 0)
             {
                 List<int> forwardFacingIndices = new List<int>();
@@ -132,19 +132,12 @@ namespace PMDC.Dungeon
                 for (int ii = 0; ii < seenExits.Count; ii++)
                 {
                     if (Loc.Dot(pastDir, (seenExits[ii] - controlledChar.CharLoc)) <= 0)
-                        forwardFacingIndices.Add(ii);
+                    {
+                        forwardFacingLocs.Add(seenExits[ii]);
+                        seenExits.RemoveAt(ii);
+                    }
                 }
-                if (forwardFacingIndices.Count > 0)
-                    selectedIndex = forwardFacingIndices[rand.Next(forwardFacingIndices.Count)];
             }
-            //consolation exit
-            if (selectedIndex == -1)
-                selectedIndex = rand.Next(seenExits.Count);
-
-            //the selected node will be index 0
-            Loc temp = seenExits[0];
-            seenExits[0] = seenExits[selectedIndex];
-            seenExits[selectedIndex] = temp;
 
             //if any of the tiles are reached in the search, they will be automatically chosen
 
@@ -155,7 +148,16 @@ namespace PMDC.Dungeon
             //if there's many exits, and they're all impossible, the speed is faster - #2 fastest case
             //if there's many exits, and only the backtrack is possible, the speed is faster - #2 fastest case
 
-            goalPath = GetPathPermissive(controlledChar, seenExits);
+            if (forwardFacingLocs.Count > 0)
+                goalPath = GetRandomPathPermissive(rand, controlledChar, forwardFacingLocs);
+
+            //then attempt remaining locations
+            if (goalPath.Count == 0)
+                goalPath = GetRandomPathPermissive(rand, controlledChar, seenExits);
+
+            if (goalPath.Count == 0)
+                return null;
+
             if (locHistory.Count == 0 || locHistory[locHistory.Count - 1] != controlledChar.CharLoc)
                 locHistory.Add(controlledChar.CharLoc);
 
@@ -167,10 +169,10 @@ namespace PMDC.Dungeon
                 if (destChar != null && ZoneManager.Instance.CurrentMap.TerrainBlocked(controlledChar.CharLoc, destChar.Mobility))
                     return new GameAction(GameAction.ActionType.Wait, Dir8.None);
             }
-            return SelectChoiceFromPath(controlledChar, goalPath, false);
+            return SelectChoiceFromPath(controlledChar, goalPath);
 
         }
-        private GameAction DumbAvoid(Character controlledChar, bool preThink, List<Character> seenCharacters, CharIndex ownIndex, ReRandom rand)
+        private GameAction DumbAvoid(Character controlledChar, bool preThink, List<Character> seenCharacters, CharIndex ownIndex, IRandom rand)
         {
             StablePriorityQueue<double, Dir8> candidateDirs = new StablePriorityQueue<double, Dir8>();
 
@@ -227,7 +229,7 @@ namespace PMDC.Dungeon
                     }
                 }
 
-                if (respectPeers && BlockedByChar(testLoc))
+                if (respectPeers && BlockedByChar(testLoc, Alignment.Self | Alignment.Foe))
                     return true;
 
                 return false;

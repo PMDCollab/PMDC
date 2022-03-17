@@ -32,27 +32,25 @@ namespace PMDC.Dungeon
     [Serializable]
     public class FamilyRefreshEvent : RefreshEvent
     {
-        [DataType(1, DataManager.DataType.Monster, false)]
-        public List<int> Members;
-
         public RefreshEvent BaseEvent;
 
-        public FamilyRefreshEvent() { Members = new List<int>(); }
-        public FamilyRefreshEvent(List<int> members, RefreshEvent baseEvent) { Members = members; BaseEvent = baseEvent; }
+        public FamilyRefreshEvent() { }
+        public FamilyRefreshEvent(RefreshEvent baseEvent) { BaseEvent = baseEvent; }
         protected FamilyRefreshEvent(FamilyRefreshEvent other)
         {
-            Members = new List<int>();
-            Members.AddRange(other.Members);
             BaseEvent = (RefreshEvent)other.BaseEvent.Clone();
         }
         public override GameEvent Clone() { return new FamilyRefreshEvent(this); }
 
         public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (Members.Contains(ownerChar.BaseForm.Species))
-            {
+            ItemData entry = DataManager.Instance.GetItem(owner.GetID());
+            FamilyState family;
+            if (!entry.ItemStates.TryGet<FamilyState>(out family))
+                return;
+
+            if (family.Members.Contains(ownerChar.BaseForm.Species))
                 BaseEvent.Apply(owner, ownerChar, character);
-            }
         }
     }
 
@@ -77,13 +75,58 @@ namespace PMDC.Dungeon
             character.Mobility |= (1U << (int)Mobility);
         }
     }
+
     [Serializable]
-    public class ClearCharSightEvent : RefreshEvent
+    public class FactionRefreshEvent : RefreshEvent
     {
-        public override GameEvent Clone() { return new ClearCharSightEvent(); }
+        public Faction Faction;
+
+        public RefreshEvent BaseEvent;
+
+        public FactionRefreshEvent() { }
+        public FactionRefreshEvent(Faction faction, RefreshEvent baseEvent)
+        {
+            Faction = faction;
+            BaseEvent = baseEvent;
+        }
+        protected FactionRefreshEvent(FactionRefreshEvent other)
+        {
+            Faction = other.Faction;
+            BaseEvent = (RefreshEvent)other.BaseEvent.Clone();
+        }
+        public override GameEvent Clone() { return new FactionRefreshEvent(this); }
         public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            character.CharSight = Map.SightRange.Clear;
+            CharIndex charIndex = ZoneManager.Instance.CurrentMap.GetCharIndex(character);
+            if (charIndex.Faction == Faction)
+                BaseEvent.Apply(owner, ownerChar, character);
+        }
+    }
+
+    [Serializable]
+    public class SetSightEvent : RefreshEvent
+    {
+        public bool CharSight;
+        public Map.SightRange Sight;
+
+        public SetSightEvent() { }
+        public SetSightEvent(bool charSight, Map.SightRange sight)
+        {
+            CharSight = charSight;
+            Sight = sight;
+        }
+        protected SetSightEvent(SetSightEvent other)
+        {
+            CharSight = other.CharSight;
+            Sight = other.Sight;
+        }
+        public override GameEvent Clone() { return new SetSightEvent(this); }
+        public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (CharSight)
+                character.CharSight = Sight;
+            else
+                character.TileSight = Sight;
         }
     }
     [Serializable]
@@ -98,10 +141,25 @@ namespace PMDC.Dungeon
     [Serializable]
     public class SeeItemsEvent : RefreshEvent
     {
-        public override GameEvent Clone() { return new SeeCharsEvent(); }
+        public bool WallItems;
+
+        public SeeItemsEvent()
+        { }
+        public SeeItemsEvent(bool wallItems)
+        {
+            WallItems = wallItems;
+        }
+        protected SeeItemsEvent(SeeItemsEvent other)
+        {
+            WallItems = other.WallItems;
+        }
+        public override GameEvent Clone() { return new SeeItemsEvent(this); }
         public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            character.SeeWallItems = true;
+            if (WallItems)
+                character.SeeWallItems = true;
+            else
+                character.SeeItems = true;
         }
     }
     [Serializable]
@@ -120,7 +178,8 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new VanishEvent(); }
         public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            character.Invis = true;
+            character.Unidentifiable = true;
+            character.Unlocatable = true;
         }
     }
     [Serializable]
@@ -129,8 +188,9 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new IllusionEvent(); }
         public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            character.ProxySprite.Species = ((StatusEffect)owner).StatusStates.GetWithDefault<IndexState>().Index;
-            MonsterData dex = DataManager.Instance.GetMonster(character.Appearance.Species);
+            MonsterID proxy = ((StatusEffect)owner).StatusStates.GetWithDefault<MonsterIDState>().MonID;
+            character.ProxySprite = proxy;
+            character.ProxyName = Character.GetFullFormName(character.Appearance);
         }
     }
     [Serializable]
@@ -312,6 +372,7 @@ namespace PMDC.Dungeon
             character.AttackOnly = true;
         }
     }
+
     [Serializable]
     public class ParaPauseEvent : RefreshEvent
     {
@@ -526,6 +587,27 @@ namespace PMDC.Dungeon
         public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
             character.CharStates.Set(Effect.Clone<CharState>());
+        }
+    }
+
+
+    [Serializable]
+    public class MapNoSwitchEvent : RefreshEvent
+    {
+        public override GameEvent Clone() { return new MapNoSwitchEvent(); }
+        public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            ZoneManager.Instance.CurrentMap.NoSwitching = true;
+        }
+    }
+
+    [Serializable]
+    public class MapNoRescueEvent : RefreshEvent
+    {
+        public override GameEvent Clone() { return new MapNoRescueEvent(); }
+        public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            ZoneManager.Instance.CurrentMap.NoRescue = true;
         }
     }
 }

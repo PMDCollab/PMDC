@@ -10,7 +10,7 @@ namespace PMDC.Dungeon
     public class AvoidAlliesPlan : AvoidPlan
     {
 
-        public AvoidAlliesPlan(AIFlags iq, AttackChoice attackPattern) : base(iq, attackPattern) { }
+        public AvoidAlliesPlan(AIFlags iq) : base(iq) { }
         protected AvoidAlliesPlan(AvoidAlliesPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new AvoidAlliesPlan(this); }
 

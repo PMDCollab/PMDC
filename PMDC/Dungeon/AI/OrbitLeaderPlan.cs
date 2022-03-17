@@ -16,7 +16,7 @@ namespace PMDC.Dungeon
         protected OrbitLeaderPlan(OrbitLeaderPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new OrbitLeaderPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
             if (controlledChar.CantWalk)
                 return null;
@@ -65,7 +65,7 @@ namespace PMDC.Dungeon
                                     if (BlockedByHazard(controlledChar, testLoc))
                                         return true;
 
-                                    if (!preThink && BlockedByChar(testLoc))
+                                    if (!preThink && BlockedByChar(testLoc, Alignment.Self | Alignment.Foe))
                                         return true;
 
                                     return false;

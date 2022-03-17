@@ -26,6 +26,7 @@
     <ProjectReference Include="..\RogueEssence\RogueEssence\RogueEssence.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\.editorconfig" Link=".editorconfig" />
     <None Include="app.config" />
   </ItemGroup>
 </Project>

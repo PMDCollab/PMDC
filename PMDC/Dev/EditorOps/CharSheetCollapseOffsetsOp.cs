@@ -17,7 +17,7 @@ namespace PMDC.Dev
         public override string Name { get { return "Collapse Offsets"; } }
         public override void Apply(CharSheet sheet, int anim)
         {
-            sheet.Collapse(true);
+            sheet.Collapse(true, true);
         }
     }
 

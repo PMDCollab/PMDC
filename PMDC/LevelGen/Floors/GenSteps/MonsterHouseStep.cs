@@ -24,7 +24,12 @@ namespace PMDC.LevelGen
 
         public override void Apply(T map)
         {
-            
+            if (!ItemThemes.CanPick)
+                return;
+
+            if (!MobThemes.CanPick)
+                return;
+
 
             //choose a room to cram all the items in
             List<int> possibleRooms = new List<int>();
@@ -34,6 +39,9 @@ namespace PMDC.LevelGen
                     continue;
                 possibleRooms.Add(ii);
             }
+
+            if (possibleRooms.Count == 0)
+                return;
 
             IRoomGen room = map.RoomPlan.GetRoom(possibleRooms[map.Rand.Next(possibleRooms.Count)]);
 
@@ -134,7 +142,8 @@ namespace PMDC.LevelGen
                 }
                 check.Effects.Add(house);
             }
-            map.CheckEvents.Add(check);
+
+            AddIntrudeStep(map, check);
         }
     }
 

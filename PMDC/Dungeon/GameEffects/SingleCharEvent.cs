@@ -9,6 +9,10 @@ using RogueEssence.Ground;
 using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Dev;
+using PMDC.Data;
+using NLua;
+using RogueEssence.Script;
+using System.Linq;
 
 namespace PMDC.Dungeon
 {
@@ -44,34 +48,29 @@ namespace PMDC.Dungeon
     [Serializable]
     public class FamilySingleEvent : SingleCharEvent
     {
-        [DataType(1, DataManager.DataType.Monster, false)]
-        public List<int> Members;
-
         public SingleCharEvent BaseEvent;
 
         public FamilySingleEvent()
+        { }
+        public FamilySingleEvent(SingleCharEvent baseEvent)
         {
-            Members = new List<int>();
-        }
-        public FamilySingleEvent(List<int> members, SingleCharEvent baseEvent)
-        {
-            Members = members;
             BaseEvent = baseEvent;
         }
         protected FamilySingleEvent(FamilySingleEvent other)
         {
-            Members = new List<int>();
-            Members.AddRange(other.Members);
             BaseEvent = (SingleCharEvent)other.BaseEvent.Clone();
         }
         public override GameEvent Clone() { return new FamilySingleEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (Members.Contains(ownerChar.BaseForm.Species))
-            {
+            ItemData entry = DataManager.Instance.GetItem(owner.GetID());
+            FamilyState family;
+            if (!entry.ItemStates.TryGet<FamilyState>(out family))
+                yield break;
+
+            if (family.Members.Contains(ownerChar.BaseForm.Species))
                 yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, character));
-            }
         }
     }
 
@@ -275,7 +274,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), character.Name));
+            DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), character.GetDisplayName(false)));
             yield break;
         }
     }
@@ -297,7 +296,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), character.Name, owner.GetName()));
+            DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), character.GetDisplayName(false), owner.GetDisplayName()));
             yield break;
         }
     }
@@ -334,10 +333,12 @@ namespace PMDC.Dungeon
         {
             GameManager.Instance.BattleSE(Sound);
 
-            FiniteEmitter endEmitter = (FiniteEmitter)Emitter.Clone();
-            endEmitter.SetupEmit(character.MapLoc, character.MapLoc, character.CharDir);
-            DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
-
+            if (!character.Unidentifiable)
+            {
+                FiniteEmitter endEmitter = (FiniteEmitter)Emitter.Clone();
+                endEmitter.SetupEmit(character.MapLoc, character.MapLoc, character.CharDir);
+                DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+            }
             yield return new WaitForFrames(Delay);
         }
     }
@@ -364,7 +365,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
             if (Message != null)
-                DungeonScene.Instance.LogMsg(String.Format(Message, character.Name));
+                DungeonScene.Instance.LogMsg(String.Format(Message, character.GetDisplayName(false)));
             yield return CoroutineManager.Instance.StartCoroutine(character.InflictDamage(Math.Max(1, character.MaxHP / HPFraction)));
         }
     }
@@ -393,7 +394,7 @@ namespace PMDC.Dungeon
             if (character.HP < character.MaxHP)
             {
                 if (Message.Key != null)
-                    DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), character.Name, owner.GetName()));
+                    DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), character.GetDisplayName(false), owner.GetDisplayName()));
                 yield return CoroutineManager.Instance.StartCoroutine(character.RestoreHP(Math.Max(1, character.MaxHP / HPFraction), false));
             }
         }
@@ -456,6 +457,44 @@ namespace PMDC.Dungeon
         }
     }
 
+    [Serializable]
+    public class SingleMapStatusExceptEvent : SingleCharEvent
+    {
+        [DataType(1, DataManager.DataType.MapStatus, false)]
+        public List<int> States;
+
+        public SingleCharEvent BaseEvent;
+
+
+        public SingleMapStatusExceptEvent() { States = new List<int>(); }
+        public SingleMapStatusExceptEvent(int mapStatus, SingleCharEvent baseEvent) : this()
+        {
+            States.Add(mapStatus);
+            BaseEvent = baseEvent;
+        }
+        public SingleMapStatusExceptEvent(SingleMapStatusExceptEvent other) : this()
+        {
+            States.AddRange(other.States);
+            BaseEvent = (SingleCharEvent)other.BaseEvent.Clone();
+        }
+
+        public override GameEvent Clone() { return new SingleMapStatusExceptEvent(this); }
+
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            //check if the attacker has the right charstate
+            bool hasState = false;
+            foreach (int state in States)
+            {
+                if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(state))
+                    hasState = true;
+            }
+            if (!hasState)
+                yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, character));
+        }
+
+    }
 
     [Serializable]
     public class SingleExceptEvent : SingleCharEvent
@@ -560,20 +599,26 @@ namespace PMDC.Dungeon
                 yield return CoroutineManager.Instance.StartCoroutine(character.AddStatusEffect(null, status, null, !SilentCheck, true));
             else
             {
+                StatusCheckContext statusContext = new StatusCheckContext(null, character, status, false);
 
-                StatusCheckContext context = new StatusCheckContext(null, character, status, false);
-                yield return CoroutineManager.Instance.StartCoroutine(character.BeforeStatusCheck(context));
-                if (!context.CancelState.Cancel)
+                yield return CoroutineManager.Instance.StartCoroutine(character.BeforeStatusCheck(statusContext));
+                if (statusContext.CancelState.Cancel)
+                    yield break;
+
+                if (TriggerMsg.Key != null)
+                    DungeonScene.Instance.LogMsg(String.Format(TriggerMsg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
+                statusContext.msg = true;
+
+                GameManager.Instance.BattleSE(TriggerSound);
+
+                if (!character.Unidentifiable)
                 {
-                    GameManager.Instance.BattleSE(TriggerSound);
                     FiniteEmitter endEmitter = (FiniteEmitter)TriggerEmitter.Clone();
                     endEmitter.SetupEmit(character.MapLoc, character.MapLoc, character.CharDir);
                     DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
-
-                    if (TriggerMsg.Key != null)
-                        DungeonScene.Instance.LogMsg(String.Format(TriggerMsg.ToLocal(), ownerChar.Name, owner.GetName()));
-                    yield return CoroutineManager.Instance.StartCoroutine(character.AddStatusEffect(null, status, null, !SilentCheck, true));
                 }
+
+                yield return CoroutineManager.Instance.StartCoroutine(character.ExecuteAddStatus(statusContext));
             }
         }
     }
@@ -647,8 +692,8 @@ namespace PMDC.Dungeon
             newContext.Strikes = 1;
             newContext.Item = new InvItem();
 
-            TileData entry = DataManager.Instance.GetTile(owner.GetID());
-            newContext.actionMsg = String.Format(Msg.ToLocal(), newContext.User.Name);
+            if (Msg.Key != null)
+                newContext.SetActionMsg(String.Format(Msg.ToLocal(), newContext.User.GetDisplayName(false)));
 
             //process the attack
             yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.PreProcessAction(newContext));
@@ -657,9 +702,8 @@ namespace PMDC.Dungeon
             yield return CoroutineManager.Instance.StartCoroutine(newContext.User.BeforeAction(newContext));
             if (newContext.CancelState.Cancel) { yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.CancelWait(newContext.User.CharLoc)); yield break; }
 
-            if (!String.IsNullOrEmpty(newContext.actionMsg))
-                DungeonScene.Instance.LogMsg(newContext.actionMsg);
-            
+            newContext.PrintActionMsg();
+
             yield return CoroutineManager.Instance.StartCoroutine(LocalExecuteAction(newContext));
             if (newContext.CancelState.Cancel) { yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.CancelWait(newContext.User.CharLoc)); yield break; }
             yield return CoroutineManager.Instance.StartCoroutine(TrapRepeatActions(newContext));
@@ -743,6 +787,126 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    [Serializable]
+    public abstract class HandoutExpEvent : SingleCharEvent
+    {
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (!character.Dead)
+                yield break;
+
+
+            if (character.MemberTeam == DungeonScene.Instance.ActiveTeam)
+                yield return new WaitForFrames(60);
+            else
+            {
+                if (character.EXPMarked)
+                {
+                    if (character.MemberTeam is ExplorerTeam)
+                    {
+                        //TODO: hand out EXP only when the final member is defeated
+                    }
+                    else
+                    {
+                        for (int ii = 0; ii < DungeonScene.Instance.ActiveTeam.Players.Count; ii++)
+                        {
+                            if (ii >= DungeonScene.Instance.GainedEXP.Count)
+                                DungeonScene.Instance.GainedEXP.Add(0);
+
+                            int exp = GetExp(owner, ownerChar, character, ii);
+                            DungeonScene.Instance.GainedEXP[ii] += exp;
+                        }
+                    }
+                }
+                DataManager.Instance.Save.SeenMonster(character.BaseForm.Species);
+            }
+        }
+
+        protected abstract int GetExp(GameEventOwner owner, Character ownerChar, Character character, int idx);
+    }
+
+    [Serializable]
+    public class HandoutScaledExpEvent : HandoutExpEvent
+    {
+        public int Numerator;
+        public int Denominator;
+        public HandoutScaledExpEvent() { }
+        public HandoutScaledExpEvent(int numerator, int denominator, int levelBuffer) { Numerator = numerator; Denominator = denominator; }
+        protected HandoutScaledExpEvent(HandoutScaledExpEvent other)
+        {
+            this.Numerator = other.Numerator;
+            this.Denominator = other.Denominator;
+        }
+        public override GameEvent Clone() { return new HandoutScaledExpEvent(this); }
+
+        protected override int GetExp(GameEventOwner owner, Character ownerChar, Character character, int idx)
+        {
+            MonsterData monsterData = DataManager.Instance.GetMonster(character.BaseForm.Species);
+            MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[character.BaseForm.Form];
+            return expFormula(monsterForm.ExpYield, character.Level);
+        }
+
+        private int expFormula(int expYield, int level)
+        {
+            return (int)((ulong)expYield * (ulong)Numerator * (ulong)level / (ulong)Denominator) + 1;
+        }
+    }
+
+
+    [Serializable]
+    public class HandoutConstantExpEvent : HandoutExpEvent
+    {
+        public HandoutConstantExpEvent() { }
+        public override GameEvent Clone() { return new HandoutConstantExpEvent(); }
+
+        protected override int GetExp(GameEventOwner owner, Character ownerChar, Character character, int idx)
+        {
+            MonsterData monsterData = DataManager.Instance.GetMonster(character.BaseForm.Species);
+            MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[character.BaseForm.Form];
+            return monsterForm.ExpYield;
+        }
+    }
+
+    [Serializable]
+    public class HandoutRelativeExpEvent : HandoutExpEvent
+    {
+        public int Numerator;
+        public int Denominator;
+        public int LevelBuffer;
+        public HandoutRelativeExpEvent() { }
+        public HandoutRelativeExpEvent(int numerator, int denominator, int levelBuffer) { Numerator = numerator; Denominator = denominator; LevelBuffer = levelBuffer; }
+        protected HandoutRelativeExpEvent(HandoutRelativeExpEvent other)
+        {
+            this.Numerator = other.Numerator;
+            this.Denominator = other.Denominator;
+            this.LevelBuffer = other.LevelBuffer;
+        }
+        public override GameEvent Clone() { return new HandoutRelativeExpEvent(this); }
+
+        protected override int GetExp(GameEventOwner owner, Character ownerChar, Character character, int idx)
+        {
+            int levelDiff = 0;
+            Character player = DungeonScene.Instance.ActiveTeam.Players[idx];
+            int growth = DataManager.Instance.GetMonster(player.BaseForm.Species).EXPTable;
+            GrowthData growthData = DataManager.Instance.GetGrowth(growth);
+            while (player.Level + levelDiff < DataManager.Instance.MaxLevel && player.EXP + DungeonScene.Instance.GainedEXP[idx] >= growthData.GetExpTo(player.Level, player.Level + levelDiff + 1))
+                levelDiff++;
+
+            MonsterData monsterData = DataManager.Instance.GetMonster(character.BaseForm.Species);
+            MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[character.BaseForm.Form];
+            return expFormula(monsterForm.ExpYield, character.Level, player.Level + levelDiff);
+        }
+
+        private int expFormula(int expYield, int level, int recipientLv)
+        {
+            int multNum = 2 * level + LevelBuffer;
+            int multDen = recipientLv + level + LevelBuffer;
+            return (int)((ulong)expYield * (ulong)Numerator * (ulong)level * (ulong)multNum * (ulong)multNum * (ulong)multNum / (ulong)multDen / (ulong)multDen / (ulong)multDen / (ulong)Denominator) + 1;
+        }
+    }
+
+
     [Serializable]
     public class ImpostorReviveEvent : SingleCharEvent
     {
@@ -767,6 +931,7 @@ namespace PMDC.Dungeon
                     character.OnRemove();
                     character.HP = character.MaxHP;
                     character.Dead = false;
+                    character.DefeatAt = "";
 
                     //smoke poof
                     GameManager.Instance.BattleSE("DUN_Substitute");
@@ -774,17 +939,13 @@ namespace PMDC.Dungeon
                     emitter.SetupEmit(character.MapLoc, character.MapLoc, character.CharDir);
                     DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
 
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_IMPOSTER").ToLocal(), character.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_IMPOSTER").ToLocal(), character.GetDisplayName(false)));
 
                     yield break;
                 }
             }
         }
     }
-
-
-
-
 
     [Serializable]
     public class MercyReviveEvent : SingleCharEvent
@@ -823,7 +984,7 @@ namespace PMDC.Dungeon
                     choseRevive = DataManager.Instance.CurrentReplay.ReadUI();
                 else
                 {
-                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(MenuManager.Instance.CreateQuestion(String.Format(new StringKey("DLG_ASK_FREE_REVIVE").ToLocal(), character.Name), true, () => { choseRevive = 1; }, () => { choseRevive = 0; })));
+                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(MenuManager.Instance.CreateQuestion(String.Format(new StringKey("DLG_ASK_FREE_REVIVE").ToLocal(), character.GetDisplayName(false)), true, () => { choseRevive = 1; }, () => { choseRevive = 0; })));
 
                     DataManager.Instance.LogUIPlay(choseRevive);
                 }
@@ -834,6 +995,7 @@ namespace PMDC.Dungeon
                 character.OnRemove();
                 character.HP = character.MaxHP;
                 character.Dead = false;
+                character.DefeatAt = "";
 
                 GameManager.Instance.BattleSE("DUN_Send_Home");
                 SingleEmitter emitter = new SingleEmitter(new BeamAnimData("Column_Yellow", 3));
@@ -841,7 +1003,7 @@ namespace PMDC.Dungeon
                 emitter.SetupEmit(character.MapLoc, character.MapLoc, character.CharDir);
                 DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
 
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_REVIVE").ToLocal(), character.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_REVIVE").ToLocal(), character.GetDisplayName(false)));
 
             }
         }
@@ -872,7 +1034,7 @@ namespace PMDC.Dungeon
         {
             ItemData entry = DataManager.Instance.GetItem(itemId);
 
-            foreach(SingleCharEvent effect in entry.OnDeaths)
+            foreach(SingleCharEvent effect in entry.OnDeaths.EnumerateInOrder())
             {
                 if (effect is AutoReviveEvent)
                 {
@@ -928,7 +1090,7 @@ namespace PMDC.Dungeon
                             foreach (int itemId in candidateItems.Keys)
                             {
                                 ItemData entry = DataManager.Instance.GetItem(itemId);
-                                choices.Add(new DialogueChoice(entry.Name.ToLocal(), () =>
+                                choices.Add(new DialogueChoice(entry.GetIconName(), () =>
                                 {
                                     useIndex = itemId;
                                     useSlot = candidateItems[itemId];
@@ -948,22 +1110,31 @@ namespace PMDC.Dungeon
                 }
                 else
                 {
-                    foreach (int itemId in candidateItems.Keys)
+                    //use the reviver if the monster is an item master, or if the reviver doesn't ask to use
+                    AIPlan plan = (AIPlan)character.Tactic.Plans[0];
+                    if (!AskToUse || (plan.IQ & AIFlags.ItemMaster) != AIFlags.None)
                     {
-                        useIndex = itemId;
-                        useSlot = candidateItems[itemId];
-                        break;
+                        foreach (int itemId in candidateItems.Keys)
+                        {
+                            useIndex = itemId;
+                            useSlot = candidateItems[itemId];
+                            break;
+                        }
                     }
                 }
             }
             else
             {
-                if (character.EquippedItem.ID > -1 && !character.EquippedItem.Cursed)
+                AIPlan plan = (AIPlan)character.Tactic.Plans[0];
+                if (!AskToUse || (plan.IQ & AIFlags.ItemMaster) != AIFlags.None)
                 {
-                    if (isAutoReviveItem(character.EquippedItem.ID))
+                    if (character.EquippedItem.ID > -1 && !character.EquippedItem.Cursed)
                     {
-                        useIndex = character.EquippedItem.ID;
-                        useSlot = BattleContext.EQUIP_ITEM_SLOT;
+                        if (isAutoReviveItem(character.EquippedItem.ID))
+                        {
+                            useIndex = character.EquippedItem.ID;
+                            useSlot = BattleContext.EQUIP_ITEM_SLOT;
+                        }
                     }
                 }
             }
@@ -973,6 +1144,7 @@ namespace PMDC.Dungeon
                 character.OnRemove();
                 character.HP = character.MaxHP;
                 character.Dead = false;
+                character.DefeatAt = "";
 
                 GameManager.Instance.BattleSE("DUN_Send_Home");
                 SingleEmitter emitter = new SingleEmitter(new BeamAnimData("Column_Yellow", 3));
@@ -980,13 +1152,13 @@ namespace PMDC.Dungeon
                 emitter.SetupEmit(character.MapLoc, character.MapLoc, character.CharDir);
                 DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
 
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_REVIVE").ToLocal(), character.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_REVIVE").ToLocal(), character.GetDisplayName(false)));
 
 
                 ItemData entry = DataManager.Instance.GetItem(useIndex);
 
                 int changeTo = -1;
-                foreach (SingleCharEvent effect in entry.OnDeaths)
+                foreach (SingleCharEvent effect in entry.OnDeaths.EnumerateInOrder())
                 {
                     if (effect is AutoReviveEvent)
                     {
@@ -1028,25 +1200,30 @@ namespace PMDC.Dungeon
     [Serializable]
     public class PerishEvent : SingleCharEvent
     {
-        public int Counter;
+        public int Mult;
 
         public PerishEvent() { }
-        public PerishEvent(int counter)
+        public PerishEvent(int mult)
         {
-            Counter = counter;
+            Mult = mult;
         }
         protected PerishEvent(PerishEvent other)
         {
-            Counter = other.Counter;
+            Mult = other.Mult;
         }
         public override GameEvent Clone() { return new PerishEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            Counter--;
-            if (Counter % 10 == 0)
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PERISH_COUNT").ToLocal(), character.Name, Counter / 10));
-            if (Counter <= 0)
+            CountDownState counter = ((StatusEffect)owner).StatusStates.GetWithDefault<CountDownState>();
+            if (counter.Counter < 0)
+                yield break;
+
+            counter.Counter--;
+
+            if (counter.Counter % Mult == 0)
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PERISH_COUNT").ToLocal(), character.GetDisplayName(false), counter.Counter / Mult));
+            if (counter.Counter <= 0)
             {
                 yield return CoroutineManager.Instance.StartCoroutine(character.RemoveStatusEffect(((StatusEffect)owner).ID, false));
                 GameManager.Instance.BattleSE("DUN_Hit_Super_Effective");
@@ -1086,12 +1263,14 @@ namespace PMDC.Dungeon
                 yield break;
             
             if (Message.Key != null)
-                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), character.Name, owner.GetName()));
+                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), character.GetDisplayName(false), owner.GetDisplayName()));
 
             foreach (AnimEvent anim in Anims)
                 yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, character));
 
-            int trapdmg = Math.Max(1, character.MaxHP * ((StatusEffect)owner).StatusStates.GetWithDefault<StackState>().Stack / 16);
+            int stack = 1;
+            stack += ((StatusEffect)owner).StatusStates.GetWithDefault<StackState>().Stack;
+            int trapdmg = Math.Max(1, character.MaxHP * stack / 16);
             yield return CoroutineManager.Instance.StartCoroutine(character.InflictDamage(trapdmg));
             
         }
@@ -1101,6 +1280,7 @@ namespace PMDC.Dungeon
     public class NightmareEvent : SingleCharEvent
     {
         public int SleepID;
+        public int Denominator;
         public StringKey Msg;
         public List<AnimEvent> Anims;
 
@@ -1108,9 +1288,10 @@ namespace PMDC.Dungeon
         {
             Anims = new List<AnimEvent>();
         }
-        public NightmareEvent(int sleepID, StringKey msg, params AnimEvent[] anims)
+        public NightmareEvent(int sleepID, int denominator, StringKey msg, params AnimEvent[] anims)
         {
             SleepID = sleepID;
+            Denominator = denominator;
             Msg = msg;
             Anims = new List<AnimEvent>();
             Anims.AddRange(anims);
@@ -1118,6 +1299,7 @@ namespace PMDC.Dungeon
         protected NightmareEvent(NightmareEvent other)
         {
             SleepID = other.SleepID;
+            Denominator = other.Denominator;
             Msg = other.Msg;
             Anims = new List<AnimEvent>();
             foreach (AnimEvent anim in other.Anims)
@@ -1130,12 +1312,18 @@ namespace PMDC.Dungeon
             StatusEffect sleep = character.GetStatusEffect(SleepID);
             if (sleep != null)
             {
-                DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), character.Name, owner.GetName(), ownerChar.Name));
+                if (Denominator < 0 && character.HP >= character.MaxHP)
+                    yield break;
+
+                DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), character.GetDisplayName(false), owner.GetDisplayName(), ownerChar.GetDisplayName(false)));
 
                 foreach (AnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, character));
 
-                yield return CoroutineManager.Instance.StartCoroutine(character.InflictDamage(Math.Max(1, character.MaxHP / 8)));
+                if (Denominator < 0)
+                    yield return CoroutineManager.Instance.StartCoroutine(character.RestoreHP(Math.Max(1, character.MaxHP / -Denominator), false));
+                else
+                    yield return CoroutineManager.Instance.StartCoroutine(character.InflictDamage(Math.Max(1, character.MaxHP / Denominator)));
             }
         }
     }
@@ -1171,16 +1359,28 @@ namespace PMDC.Dungeon
             {
                 int seeddmg = Math.Max(1, character.MaxHP / 12);
 
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LEECH_SEED").ToLocal(), character.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LEECH_SEED").ToLocal(), character.GetDisplayName(false)));
+                
+                GameManager.Instance.BattleSE("DUN_Hit_Neutral");
+                if (!character.Unidentifiable)
+                {
+                    SingleEmitter endEmitter = new SingleEmitter(new AnimData("Hit_Neutral", 3));
+                    endEmitter.SetupEmit(character.MapLoc, character.MapLoc, character.CharDir);
+                    DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+                }
+
                 yield return CoroutineManager.Instance.StartCoroutine(character.InflictDamage(seeddmg, false));
 
                 if (character.CharStates.Contains<DrainDamageState>())
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LIQUID_OOZE").ToLocal(), target.Name));
-                    yield return CoroutineManager.Instance.StartCoroutine(target.InflictDamage(seeddmg*4, false));
+                    GameManager.Instance.BattleSE("DUN_Toxic");
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LIQUID_OOZE").ToLocal(), target.GetDisplayName(false)));
+                    yield return CoroutineManager.Instance.StartCoroutine(target.InflictDamage(seeddmg * 4, false));
                 }
                 else if (target.HP < target.MaxHP)
+                {
                     yield return CoroutineManager.Instance.StartCoroutine(target.RestoreHP(seeddmg, false));
+                }
             }
         }
     }
@@ -1196,7 +1396,7 @@ namespace PMDC.Dungeon
             if (chaser != null && (character.CharLoc - chaser.CharLoc).Dist8() > 1)
             {
                 if (chaser.CharStates.Contains<AnchorState>())
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CHASE_ANCHOR").ToLocal(), chaser.Name, character.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CHASE_ANCHOR").ToLocal(), chaser.GetDisplayName(false), character.GetDisplayName(false)));
                 else
                 {
                     for (int ii = 0; ii < DirRemap.FOCUSED_DIR8.Length; ii++)
@@ -1206,7 +1406,7 @@ namespace PMDC.Dungeon
                         {
                             Loc targetLoc = character.CharLoc + dir.GetLoc();
                             yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.PointWarp(chaser, targetLoc, false));
-                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CHASE").ToLocal(), chaser.Name, character.Name));
+                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CHASE").ToLocal(), chaser.GetDisplayName(false), character.GetDisplayName(false)));
                             break;
                         }
                     }
@@ -1421,7 +1621,8 @@ namespace PMDC.Dungeon
 
             if (badStatuses.Count > 0)
             {
-                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), character.Name, owner.GetName()));
+                if (Message.Key != null)
+                    DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), character.GetDisplayName(false), owner.GetDisplayName()));
 
                 foreach (AnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, character));
@@ -1463,7 +1664,7 @@ namespace PMDC.Dungeon
                     emitter.SetupEmit(member.MapLoc, member.MapLoc, member.CharDir);
                     DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
 
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_REVIVE").ToLocal(), member.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_REVIVE").ToLocal(), member.GetDisplayName(false)));
 
                     yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(20));
 
@@ -1526,7 +1727,7 @@ namespace PMDC.Dungeon
 
                 if (loc != null && loc != character.CharLoc)
                 {
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STAIR_SENSOR").ToLocal(), ownerChar.Name, owner.GetName()));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STAIR_SENSOR").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
 
                     Dir8 stairsDir = DirExt.ApproximateDir8(loc.Value - character.CharLoc);
 
@@ -1573,7 +1774,7 @@ namespace PMDC.Dungeon
         {
             if (!ZoneManager.Instance.CurrentMap.Status.ContainsKey(SniffedStatusID))
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ACUTE_SNIFFER").ToLocal(), ownerChar.Name, owner.GetName(), ZoneManager.Instance.CurrentMap.Items.Count));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ACUTE_SNIFFER").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName(), ZoneManager.Instance.CurrentMap.Items.Count));
 
                 foreach (AnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, character));
@@ -1633,7 +1834,7 @@ namespace PMDC.Dungeon
                 }
 
 
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_MAP_SURVEYOR").ToLocal(), ownerChar.Name, owner.GetName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_MAP_SURVEYOR").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
             }
         }
     }
@@ -1708,7 +1909,7 @@ namespace PMDC.Dungeon
                 //message only if the status isn't already there
                 MapStatus statusToCheck;
                 if (!ZoneManager.Instance.CurrentMap.Status.TryGetValue(status.ID, out statusToCheck))
-                    DungeonScene.Instance.LogMsg(String.Format(MsgOverride.ToLocal(), ownerChar.Name));
+                    DungeonScene.Instance.LogMsg(String.Format(MsgOverride.ToLocal(), ownerChar.GetDisplayName(false)));
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status, false));
             }
         }
@@ -1739,7 +1940,18 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (character.EquippedItem.ID == -1 && ZoneManager.Instance.CurrentMap.MapTurns == 0 && ZoneManager.Instance.CurrentMap.ItemSpawns.Spawns.CanPick)
+            //do not activate if already holding an item
+            if (character.EquippedItem.ID != -1)
+                yield break;
+
+            //do not activate if inv is full
+            if (character.MemberTeam is ExplorerTeam)
+            {
+                if (((ExplorerTeam)character.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone) >= character.MemberTeam.GetInvCount())
+                    yield break;
+            }
+
+            if (ZoneManager.Instance.CurrentMap.MapTurns == 0 && ZoneManager.Instance.CurrentMap.ItemSpawns.Spawns.CanPick)
             {
                 InvItem item = ZoneManager.Instance.CurrentMap.ItemSpawns.Pick(DataManager.Instance.Save.Rand);
 
@@ -1747,7 +1959,7 @@ namespace PMDC.Dungeon
                 if (!entry.Cursed)
                 {
                     item.Cursed = false;
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PICKUP").ToLocal(), character.Name, item.GetName()));
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PICKUP").ToLocal(), character.GetDisplayName(false), item.GetDisplayName()));
 
                     foreach (AnimEvent anim in Anims)
                         yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, character));
@@ -1755,7 +1967,7 @@ namespace PMDC.Dungeon
                     character.EquipItem(item);
                 }
             }
-            yield break;
+            
         }
     }
 
@@ -1780,7 +1992,7 @@ namespace PMDC.Dungeon
             if (character.EquippedItem.ID == -1)
             {
                 InvItem invItem = new InvItem(GatherItem);
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PICKUP").ToLocal(), character.Name, invItem.GetName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PICKUP").ToLocal(), character.GetDisplayName(false), invItem.GetDisplayName()));
                 character.EquipItem(invItem);
             }
             yield break;
@@ -1889,17 +2101,17 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            List<int> candidateSpecies = new List<int>();
+            List<MonsterID> candidateSpecies = new List<MonsterID>();
             foreach (Character target in ZoneManager.Instance.CurrentMap.IterateCharacters())
             {
                 if (!character.Dead && character.CurrentForm.Species != target.CurrentForm.Species)
-                    candidateSpecies.Add(target.CurrentForm.Species);
+                    candidateSpecies.Add(target.CurrentForm);
             }
             if (candidateSpecies.Count > 0)
             {
                 StatusEffect status = new StatusEffect(IllusionID);
                 status.LoadFromData();
-                status.StatusStates.Set(new IndexState(candidateSpecies[DataManager.Instance.Save.Rand.Next(candidateSpecies.Count)]));
+                status.StatusStates.Set(new MonsterIDState(candidateSpecies[DataManager.Instance.Save.Rand.Next(candidateSpecies.Count)]));
                 yield return CoroutineManager.Instance.StartCoroutine(character.AddStatusEffect(status));
             }
         }
@@ -1929,7 +2141,7 @@ namespace PMDC.Dungeon
                     yield break;
 
                 MapStatus status = ZoneManager.Instance.CurrentMap.Status[BadWeatherID];
-                if (status.StatusStates.GetWithDefault<MapCountDownState>().Counter % 5 == 0)
+                if (status.StatusStates.GetWithDefault<MapTickState>().Counter % 5 == 0)
                     yield return CoroutineManager.Instance.StartCoroutine(character.InflictDamage(hp, false));
             }
             else if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(GoodWeatherID))
@@ -1937,7 +2149,7 @@ namespace PMDC.Dungeon
                 if (character.HP < character.MaxHP)
                 {
                     MapStatus status = ZoneManager.Instance.CurrentMap.Status[GoodWeatherID];
-                    if (status.StatusStates.GetWithDefault<MapCountDownState>().Counter % 5 == 0)
+                    if (status.StatusStates.GetWithDefault<MapTickState>().Counter % 5 == 0)
                         yield return CoroutineManager.Instance.StartCoroutine(character.RestoreHP(hp, false));
                 }
             }
@@ -1977,7 +2189,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (character != null && ((MapStatus)owner).StatusStates.GetWithDefault<MapCountDownState>().Counter % 5 == 0)
+            if (character != null && ((MapStatus)owner).StatusStates.GetWithDefault<MapTickState>().Counter % 5 == 0)
             {
                 foreach (FlagType state in States)
                 {
@@ -2020,7 +2232,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (character != null && ((MapStatus)owner).StatusStates.GetWithDefault<MapCountDownState>().Counter % 5 == 0)
+            if (character != null && ((MapStatus)owner).StatusStates.GetWithDefault<MapTickState>().Counter % 5 == 0)
             {
                 foreach (int element in ExceptionElements)
                 {
@@ -2144,7 +2356,24 @@ namespace PMDC.Dungeon
             }
         }
     }
-    
+
+    [Serializable]
+    public class MapTickEvent : SingleCharEvent
+    {
+        public MapTickEvent() { }
+        public override GameEvent Clone() { return new MapTickEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (character == null)
+            {
+                MapTickState countdown = ((MapStatus)owner).StatusStates.GetWithDefault<MapTickState>();
+                countdown.Counter = (countdown.Counter + 1) % 10;
+            }
+            yield break;
+        }
+    }
+
     [Serializable]
     public class TimeLimitEvent : SingleCharEvent
     {
@@ -2341,7 +2570,7 @@ namespace PMDC.Dungeon
             }
         }
 
-        private QuestionDialog askItemUseQuestion(int itemSlot)
+        private DialogueBox askItemUseQuestion(int itemSlot)
         {
             return MenuManager.Instance.CreateQuestion(String.Format(new StringKey("DLG_LOCK_KEY").ToLocal()),
                 () => { MenuManager.Instance.EndAction = DungeonScene.Instance.ProcessPlayerInput(new GameAction(GameAction.ActionType.UseItem, Dir8.None, itemSlot, -1)); },
@@ -2375,6 +2604,26 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class SingleCharStateScriptEvent : SingleCharEvent
+    {
+        public override GameEvent Clone() { return new SingleCharStateScriptEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            TileScriptState state = ((EffectTile)owner).TileStates.GetWithDefault<TileScriptState>();
+            if (state == null)
+                yield break;
+
+            LuaTable args = LuaEngine.Instance.RunString("return " + state.ArgTable).First() as LuaTable;
+            object[] parameters = new object[] { owner, ownerChar, character, args };
+            string name = "SINGLE_CHAR_SCRIPT." + state.Script;
+            LuaFunction func_iter = LuaEngine.Instance.CreateCoroutineIterator(name, parameters);
+
+            yield return CoroutineManager.Instance.StartCoroutine(ScriptEvent.ApplyFunc(name, func_iter));
+        }
+    }
+
+    [Serializable]
     public class AskLeaderEvent : SingleCharEvent
     {
         public AskLeaderEvent() { }
@@ -2404,6 +2653,7 @@ namespace PMDC.Dungeon
     {
         public int ExceptionItem;
 
+        public AskEvoEvent() { }
         public AskEvoEvent(int exceptItem) { ExceptionItem = exceptItem; }
         public AskEvoEvent(AskEvoEvent other) { ExceptionItem = other.ExceptionItem; }
         public override GameEvent Clone() { return new AskEvoEvent(this); }
@@ -2452,7 +2702,7 @@ namespace PMDC.Dungeon
             }
         }
 
-        private QuestionDialog createEvoQuestion(Character character, VertChoiceMenu.OnChooseSlot action)
+        private DialogueBox createEvoQuestion(Character character, VertChoiceMenu.OnChooseSlot action)
         {
             return MenuManager.Instance.CreateQuestion(String.Format(new StringKey("DLG_EVO_ASK").ToLocal()), () =>
             {
@@ -2490,9 +2740,9 @@ namespace PMDC.Dungeon
                 if (validEvos.Count == 0)
                 {
                     if (hasReq)
-                        MenuManager.Instance.AddMenu(MenuManager.Instance.CreateDialogue(String.Format(new StringKey("DLG_EVO_NONE_NOW").ToLocal(), character.BaseName)), false);
+                        MenuManager.Instance.AddMenu(MenuManager.Instance.CreateDialogue(String.Format(new StringKey("DLG_EVO_NONE_NOW").ToLocal(), character.GetDisplayName(true))), false);
                     else
-                        MenuManager.Instance.AddMenu(MenuManager.Instance.CreateDialogue(String.Format(new StringKey("DLG_EVO_NONE").ToLocal(), character.BaseName)), false);
+                        MenuManager.Instance.AddMenu(MenuManager.Instance.CreateDialogue(String.Format(new StringKey("DLG_EVO_NONE").ToLocal(), character.GetDisplayName(true))), false);
                 }
                 else if (validEvos.Count == 1)
                     MenuManager.Instance.AddMenu(createTryEvoQuestion(character, action, validEvos[0]), false);
@@ -2501,16 +2751,16 @@ namespace PMDC.Dungeon
                     List<DialogueChoice> choices = new List<DialogueChoice>();
                     foreach (int validEvo in validEvos)
                     {
-                        choices.Add(new DialogueChoice(DataManager.Instance.GetMonster(entry.Promotions[validEvo].Result).Name.ToLocal(),
+                        choices.Add(new DialogueChoice(DataManager.Instance.GetMonster(entry.Promotions[validEvo].Result).GetColoredName(),
                             () => { MenuManager.Instance.AddMenu(createTryEvoQuestion(character, action, validEvo), false); }));
                     }
                     choices.Add(new DialogueChoice(Text.FormatKey("MENU_CANCEL"), () => { }));
-                    MenuManager.Instance.AddMenu(MenuManager.Instance.CreateMultiQuestion(String.Format(new StringKey("DLG_EVO_CHOICE").ToLocal(), character.BaseName), true, choices, 0, choices.Count - 1), false);
+                    MenuManager.Instance.AddMenu(MenuManager.Instance.CreateMultiQuestion(String.Format(new StringKey("DLG_EVO_CHOICE").ToLocal(), character.GetDisplayName(true)), true, choices, 0, choices.Count - 1), false);
                 }
             }, () => { });
         }
 
-        private QuestionDialog createTryEvoQuestion(Character character, VertChoiceMenu.OnChooseSlot action, int branchIndex)
+        private DialogueBox createTryEvoQuestion(Character character, VertChoiceMenu.OnChooseSlot action, int branchIndex)
         {
             MonsterData entry = DataManager.Instance.GetMonster(character.BaseForm.Species);
             PromoteBranch branch = entry.Promotions[branchIndex];
@@ -2527,7 +2777,7 @@ namespace PMDC.Dungeon
             //factor in exception item to this question
             if (bypass)
                 evoItem = ExceptionItem;
-            string question = (evoItem > -1) ? String.Format(new StringKey("DLG_EVO_CONFIRM_ITEM").ToLocal(), character.BaseName, DataManager.Instance.GetItem(evoItem).Name.ToLocal(), DataManager.Instance.GetMonster(branch.Result).Name.ToLocal()) : String.Format(new StringKey("DLG_EVO_CONFIRM").ToLocal(), character.BaseName, DataManager.Instance.GetMonster(branch.Result).Name.ToLocal());
+            string question = (evoItem > -1) ? String.Format(new StringKey("DLG_EVO_CONFIRM_ITEM").ToLocal(), character.GetDisplayName(true), DataManager.Instance.GetItem(evoItem).GetIconName(), DataManager.Instance.GetMonster(branch.Result).GetColoredName()) : String.Format(new StringKey("DLG_EVO_CONFIRM").ToLocal(), character.GetDisplayName(true), DataManager.Instance.GetMonster(branch.Result).GetColoredName());
             return MenuManager.Instance.CreateQuestion(question, () => { action(branchIndex); }, () => { });
         }
 
@@ -2543,7 +2793,7 @@ namespace PMDC.Dungeon
             //fade
             GameManager.Instance.BattleSE("EVT_Evolution_Start");
             yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeOut(true));
-            string oldName = character.BaseName;
+            string oldName = character.GetDisplayName(true);
             //evolve
             MonsterData entry = DataManager.Instance.GetMonster(branch.Result);
             MonsterID newData = character.BaseForm;
@@ -2551,7 +2801,7 @@ namespace PMDC.Dungeon
             if (newData.Form >= entry.Forms.Count)
                 newData.Form = 0;
             character.Promote(newData);
-            branch.OnPromote(character, true);
+            branch.OnPromote(character, true, bypass);
             if (bypass)
                 character.DequipItem();
 
@@ -2577,17 +2827,16 @@ namespace PMDC.Dungeon
             //evolution chime
             GameManager.Instance.Fanfare("Fanfare/Promotion");
             //proclamation
-            if (DataManager.Instance.CurrentReplay == null)
-                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(false, String.Format(new StringKey("DLG_EVO_COMPLETE").ToLocal(), oldName, entry.Name.ToLocal())));
-            else
-            {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("DLG_EVO_COMPLETE").ToLocal(), oldName, entry.Name.ToLocal()));
-                yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
-            }
+
+            yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(String.Format(new StringKey("DLG_EVO_COMPLETE").ToLocal(), oldName, entry.GetColoredName())));
+
             DataManager.Instance.Save.RegisterMonster(character.BaseForm.Species);
+            DataManager.Instance.Save.RogueUnlockMonster(character.BaseForm.Species);
             yield return CoroutineManager.Instance.StartCoroutine(character.OnMapStart());
 
-            yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.CheckLevelSkills(character, character.Level - 1));
+            yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.CheckLevelSkills(character, 0));
+            if (character.Level > 1)
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.CheckLevelSkills(character, character.Level - 1));
         }
     }
 
@@ -2656,7 +2905,7 @@ namespace PMDC.Dungeon
             //however, only the leader of a team can choose to advance
             if (character == DungeonScene.Instance.ActiveTeam.Leader)
             {
-                ZoneSegmentBase structure = ZoneManager.Instance.CurrentZone.Structures[ZoneManager.Instance.CurrentMapID.Segment];
+                ZoneSegmentBase structure = ZoneManager.Instance.CurrentZone.Segments[ZoneManager.Instance.CurrentMapID.Segment];
                 GameManager.Instance.BattleSE("DUN_Stairs_Down");
                 yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Rescue));
             }
@@ -2681,15 +2930,20 @@ namespace PMDC.Dungeon
             //however, only the leader of a team can choose to advance
             if (character == DungeonScene.Instance.ActiveTeam.Leader)
             {
-                ZoneSegmentBase structure = ZoneManager.Instance.CurrentZone.Structures[ZoneManager.Instance.CurrentMapID.Segment];
-                GameManager.Instance.BattleSE("DUN_Stairs_Down");
-                if (ZoneManager.Instance.CurrentMapID.ID + 1 < structure.FloorCount)
-                {
-                    yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeOut(false));
-                    GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, new SegLoc(ZoneManager.Instance.CurrentMapID.Segment, ZoneManager.Instance.CurrentMapID.ID + 1)));
-                }
+                if (ZoneManager.Instance.InDevZone) //editor considerations
+                    GameManager.Instance.SceneOutcome = GameManager.Instance.ReturnToEditor();
                 else
-                    yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
+                {
+                    ZoneSegmentBase structure = ZoneManager.Instance.CurrentZone.Segments[ZoneManager.Instance.CurrentMapID.Segment];
+                    GameManager.Instance.BattleSE("DUN_Stairs_Down");
+                    if (ZoneManager.Instance.CurrentMapID.ID + 1 < structure.FloorCount)
+                    {
+                        yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeOut(false));
+                        GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, new SegLoc(ZoneManager.Instance.CurrentMapID.Segment, ZoneManager.Instance.CurrentMapID.ID + 1)));
+                    }
+                    else
+                        yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
+                }
             }
             else if (character.MemberTeam == DungeonScene.Instance.ActiveTeam)
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LEADER_ONLY_TILE").ToLocal()));
@@ -2713,24 +2967,30 @@ namespace PMDC.Dungeon
             if (character == DungeonScene.Instance.ActiveTeam.Leader)
             {
                 GameManager.Instance.BattleSE("DUN_Stairs_Down");
-                if (destState.Relative)
+
+                if (ZoneManager.Instance.InDevZone) //editor considerations
+                    GameManager.Instance.SceneOutcome = GameManager.Instance.ReturnToEditor();
+                else
                 {
-                    yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeOut(false));
+                    if (destState.Relative)
+                    {
+                        yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeOut(false));
 
-                    int endStructure = ZoneManager.Instance.CurrentMapID.Segment + destState.Dest.Segment;
-                    int endFloor = ZoneManager.Instance.CurrentMapID.ID + destState.Dest.ID;
+                        int endSegment = ZoneManager.Instance.CurrentMapID.Segment + destState.Dest.Segment;
+                        int endFloor = ZoneManager.Instance.CurrentMapID.ID + destState.Dest.ID;
 
-                    if (endStructure >= 0 && endFloor >= 0 && endStructure < ZoneManager.Instance.CurrentZone.Structures.Count && endFloor < ZoneManager.Instance.CurrentZone.Structures[endStructure].FloorCount)
-                        GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, new SegLoc(endStructure, endFloor)));
-                    else
+                        if (endSegment >= 0 && endFloor >= 0 && endSegment < ZoneManager.Instance.CurrentZone.Segments.Count && endFloor < ZoneManager.Instance.CurrentZone.Segments[endSegment].FloorCount)
+                            GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, new SegLoc(endSegment, endFloor)));
+                        else
+                            yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
+                    }
+                    else if (!destState.Dest.IsValid())
                         yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
-                }
-                else if (!destState.Dest.IsValid())
-                    yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
-                else//go to a designated dungeon structure
-                {
-                    yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeOut(false));
-                    GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, destState.Dest));
+                    else//go to a designated dungeon structure
+                    {
+                        yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeOut(false));
+                        GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, destState.Dest));
+                    }
                 }
             }
             else if (character.MemberTeam == DungeonScene.Instance.ActiveTeam)
@@ -2854,26 +3114,80 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
-    public class BeginBattleEvent : SingleCharEvent
+    public class FadeInEvent : SingleCharEvent
     {
-        public BeginBattleEvent() { }
-        public override GameEvent Clone() { return new BeginBattleEvent(); }
+        public FadeInEvent() { }
+        public override GameEvent Clone() { return new FadeInEvent(); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (character.MemberTeam == DungeonScene.Instance.ActiveTeam)
+            if (character != null)
+                yield break;
+            yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeIn());
+        }
+    }
+
+    [Serializable]
+    public class SpecialIntroEvent : SingleCharEvent
+    {
+        public SpecialIntroEvent() { }
+        public override GameEvent Clone() { return new SpecialIntroEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (character != null)
+                yield break;
+            foreach (Character member in DungeonScene.Instance.ActiveTeam.EnumerateChars())
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.SpecialIntro(member));
+
+        }
+    }
+
+    [Serializable]
+    public class ReactivateItemsEvent : SingleCharEvent
+    {
+        public ReactivateItemsEvent() { }
+        public override GameEvent Clone() { return new ReactivateItemsEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (character != null)
+                yield break;
+
+            foreach (InvItem item in DungeonScene.Instance.ActiveTeam.EnumerateInv())
             {
-                //instant fight whoosh, turn on the music
-                MapStatus status = new MapStatus(21);
-                status.LoadFromData();
-                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
-
-                if (DungeonScene.Instance.CanUseTeamMode())
-                    DungeonScene.Instance.SetTeamMode(true);
-
-                //for scanning when all enemies have been defeated
-                ZoneManager.Instance.CurrentMap.CheckEvents.Add(new CheckBossClearEvent());
+                ItemData entry = DataManager.Instance.GetItem(item.ID);
+                if (entry.MaxStack < 0 && entry.UsageType != ItemData.UseType.Box)
+                    item.HiddenValue = 0;
             }
+        }
+    }
+
+    [Serializable]
+    public class BeginBattleEvent : SingleCharEvent
+    {
+        [DataType(0, DataManager.DataType.MapStatus, false)]
+        public int CheckClearStatus;
+
+        public BeginBattleEvent() { }
+        public BeginBattleEvent(int checkClear) { CheckClearStatus = checkClear; }
+        public BeginBattleEvent(BeginBattleEvent other)
+        {
+            CheckClearStatus = other.CheckClearStatus;
+        }
+        public override GameEvent Clone() { return new BeginBattleEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (DungeonScene.Instance.CanUseTeamMode())
+                DungeonScene.Instance.SetTeamMode(true);
+
+            //for scanning when all enemies have been defeated
+            MapStatus status = new MapStatus(CheckClearStatus);
+            status.LoadFromData();
+            MapCheckState check = status.StatusStates.GetWithDefault<MapCheckState>();
+            check.CheckEvents.Add(new CheckBossClearEvent());
+            yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
         }
     }
 
@@ -2885,15 +3199,23 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (ZoneManager.Instance.CurrentMap.MapTeams.Count == 0)
+            //fail if someone is still alive
+            foreach (Team team in ZoneManager.Instance.CurrentMap.MapTeams)
             {
-                ZoneManager.Instance.CurrentMap.CheckEvents.Remove(this);
-                if (DataManager.Instance.CurrentReplay == null)
-                    yield return CoroutineManager.Instance.StartCoroutine(endSequence());
-                else
-                    yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
+                foreach (Character chara in team.IterateMainByRank())
+                {
+                    if (!chara.Dead)
+                        yield break;
+                }
             }
-            yield break;
+
+            //all dead, clear the game
+            MapCheckState checks = ((MapStatus)owner).StatusStates.GetWithDefault<MapCheckState>();
+            checks.CheckEvents.Remove(this);
+            if (DataManager.Instance.CurrentReplay == null)
+                yield return CoroutineManager.Instance.StartCoroutine(endSequence());
+            else
+                yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
         }
 
         private IEnumerator<YieldInstruction> endSequence()
@@ -2915,8 +3237,10 @@ namespace PMDC.Dungeon
             foreach (Character character in DungeonScene.Instance.ActiveTeam.IterateMainByRank())
             {
                 if (character.Dead)
+                {
                     character.Dead = false;
-
+                    character.DefeatAt = "";
+                }
                 character.FullRestore();
             }
 
@@ -2944,10 +3268,13 @@ namespace PMDC.Dungeon
                 {
                     tile.Effect.Revealed = true;
 
-                    SingleEmitter emitter = new SingleEmitter(new AnimData("Emote_Exclaim", 1));
-                    emitter.LocHeight = 24;
-                    emitter.SetupEmit(character.MapLoc + character.CharDir.GetLoc() * GraphicsManager.TileSize / 2, character.MapLoc + character.CharDir.GetLoc() * GraphicsManager.TileSize / 2, character.CharDir);
-                    DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
+                    if (!character.Unidentifiable)
+                    {
+                        SingleEmitter emitter = new SingleEmitter(new AnimData("Emote_Exclaim", 1));
+                        emitter.LocHeight = 24;
+                        emitter.SetupEmit(character.MapLoc + character.CharDir.GetLoc() * GraphicsManager.TileSize / 2, character.MapLoc + character.CharDir.GetLoc() * GraphicsManager.TileSize / 2, character.CharDir);
+                        DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
+                    }
 
                     yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(20)+20);
                 }
@@ -2965,7 +3292,11 @@ namespace PMDC.Dungeon
         {
             Tile tile = ZoneManager.Instance.CurrentMap.Tiles[character.CharLoc.X][character.CharLoc.Y];
             if (tile.Effect.ID > -1)
-                yield return CoroutineManager.Instance.StartCoroutine(tile.Effect.InteractWithTile(character));
+            {
+                DungeonScene.Instance.QueueTrap(character.CharLoc);
+                //yield return CoroutineManager.Instance.StartCoroutine(tile.Effect.InteractWithTile(character));
+            }
+            yield break;
         }
     }
 
@@ -3037,15 +3368,14 @@ namespace PMDC.Dungeon
             newContext.Item = new InvItem();
 
             TileData entry = DataManager.Instance.GetTile(owner.GetID());
-            newContext.actionMsg = String.Format(new StringKey("MSG_TILE_CHECK").ToLocal(), newContext.User.Name, entry.Name.ToLocal());
+            newContext.SetActionMsg(String.Format(new StringKey("MSG_TILE_CHECK").ToLocal(), newContext.User.GetDisplayName(false), entry.Name.ToLocal()));
 
             //process the attack
             
             yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.PreProcessAction(newContext));
 
             //Handle Use
-            if (!String.IsNullOrEmpty(newContext.actionMsg))
-                DungeonScene.Instance.LogMsg(newContext.actionMsg);
+            newContext.PrintActionMsg();
 
             yield return CoroutineManager.Instance.StartCoroutine(TrapExecuteAction(newContext));
             if (newContext.CancelState.Cancel) { yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.CancelWait(effectTile.TileLoc)); yield break; }
@@ -3098,10 +3428,6 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            CharAnimation standAnim = new CharAnimIdle(character.CharLoc, character.CharDir);
-            standAnim.MajorAnim = true;
-            yield return CoroutineManager.Instance.StartCoroutine(character.StartAnim(standAnim));
-
             //invoke the unlock sound and animation
             GameManager.Instance.BattleSE("DUN_Open_Chamber");
 
@@ -3363,6 +3689,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
+            //TODO: remove hardcoded everything in this block...
             EffectTile effectTile = (EffectTile)owner;
 
             CharAnimation standAnim = new CharAnimIdle(character.CharLoc, character.CharDir);
@@ -3384,7 +3711,7 @@ namespace PMDC.Dungeon
             //change the chest to open
             Tile tile = ZoneManager.Instance.CurrentMap.Tiles[baseLoc.X][baseLoc.Y];
             if (tile.Effect == owner)
-                tile.Effect = new EffectTile(36, true, tile.Effect.TileLoc);
+                tile.Effect = new EffectTile(36, true, tile.Effect.TileLoc);// magic number
 
             //spawn the items
             Rect bounds = ((EffectTile)owner).TileStates.GetWithDefault<BoundsState>().Bounds;
@@ -3425,7 +3752,7 @@ namespace PMDC.Dungeon
                 freeTiles.RemoveAt(randIndex);
                 //start the animations
 
-                ItemAnim itemAnim = new ItemAnim(baseLoc, item.TileLoc, item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, Math.Max(0, waitTime));
+                ItemAnim itemAnim = new ItemAnim(baseLoc * GraphicsManager.TileSize, item.MapLoc, item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, Math.Max(0, waitTime));
                 DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
             }
             //they can be thematic, or use whatever's on the floor
@@ -3451,7 +3778,7 @@ namespace PMDC.Dungeon
 
             if (((EffectTile)owner).Danger)
             {
-                LockdownTileEvent lockdown = new LockdownTileEvent();
+                LockdownTileEvent lockdown = new LockdownTileEvent(34);// magic number
                 MonsterHouseTileEvent monsterHouse = new MonsterHouseTileEvent();
                 yield return CoroutineManager.Instance.StartCoroutine(lockdown.Apply(owner, ownerChar, character));
                 yield return CoroutineManager.Instance.StartCoroutine(monsterHouse.Apply(owner, ownerChar, character));
@@ -3460,6 +3787,7 @@ namespace PMDC.Dungeon
 
     }
 
+    [Serializable]
     public class LockedTile
     {
         public Loc LockedLoc;
@@ -3475,6 +3803,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public abstract class LockdownEvent : SingleCharEvent
     {
+        [DataType(0, DataManager.DataType.MapStatus, false)]
+        public int CheckClearStatus;
+
+        public LockdownEvent() { }
+        public LockdownEvent(int checkClearStatus) { CheckClearStatus = checkClearStatus; }
+        public LockdownEvent(LockdownEvent other) { CheckClearStatus = other.CheckClearStatus; }
 
         protected abstract Rect GetBounds(GameEventOwner owner, Character ownerChar, Character character);
 
@@ -3514,12 +3848,17 @@ namespace PMDC.Dungeon
                 yield return CoroutineManager.Instance.StartCoroutine(shoveTo(moveChar, moveChar.CharLoc, ZoneManager.Instance.CurrentMap.EntryPoints[0].Loc));
             }
 
-            //add a singlechareffect to map.CheckEffects for counting the enemies and allies in the box each time, with a tab kept on what tiles to unlock when finished
-            foreach (SingleCharEvent charEvent in ZoneManager.Instance.CurrentMap.CheckEvents)
+            MapStatus checkStatus;
+            if (ZoneManager.Instance.CurrentMap.Status.TryGetValue(CheckClearStatus, out checkStatus))
             {
-                CheckHouseClearEvent checkEvent = charEvent as CheckHouseClearEvent;
-                if (checkEvent != null)
-                    bounds = Rect.Intersect(bounds, checkEvent.Bounds);
+                MapCheckState check = checkStatus.StatusStates.GetWithDefault<MapCheckState>();
+                //add a singlechareffect to map.CheckEffects for counting the enemies and allies in the box each time, with a tab kept on what tiles to unlock when finished
+                foreach (SingleCharEvent charEvent in check.CheckEvents)
+                {
+                    CheckHouseClearEvent checkEvent = charEvent as CheckHouseClearEvent;
+                    if (checkEvent != null)
+                        bounds = Rect.Intersect(bounds, checkEvent.Bounds);
+                }
             }
 
             List<SingleCharEvent> resultEvents = GetResultEvents(owner, ownerChar, character);
@@ -3527,7 +3866,14 @@ namespace PMDC.Dungeon
             checkEnd.LockedLocs = blockedLocs;
             foreach (SingleCharEvent result in resultEvents)
                 checkEnd.ResultEvents.Add((SingleCharEvent)result.Clone());
-            ZoneManager.Instance.CurrentMap.CheckEvents.Add(checkEnd);
+
+            {
+                MapStatus status = new MapStatus(CheckClearStatus);
+                status.LoadFromData();
+                MapCheckState check = status.StatusStates.GetWithDefault<MapCheckState>();
+                check.CheckEvents.Add(checkEnd);
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
+            }
 
             //various members of the team emote
             EmoteData emoteData = DataManager.Instance.GetEmote(5);
@@ -3619,7 +3965,8 @@ namespace PMDC.Dungeon
     {
         //activate by tiles; use the tile state variables
         public LockdownTileEvent() { }
-        protected LockdownTileEvent(LockdownTileEvent other)
+        public LockdownTileEvent(int checkClear) : base(checkClear) { }
+        protected LockdownTileEvent(LockdownTileEvent other) : base(other)
         { }
         public override GameEvent Clone() { return new LockdownTileEvent(this); }
 
@@ -3648,7 +3995,8 @@ namespace PMDC.Dungeon
 
         public List<SingleCharEvent> ResultEvents;
         public LockdownMapEvent() { }
-        protected LockdownMapEvent(LockdownMapEvent other)
+        public LockdownMapEvent(int checkClear) : base(checkClear) { }
+        protected LockdownMapEvent(LockdownMapEvent other) : base(other)
         {
             Bounds = other.Bounds;
             ResultEvents = new List<SingleCharEvent>();
@@ -3768,7 +4116,7 @@ namespace PMDC.Dungeon
 
             //force everyone to skip their turn for this entire session
             if (NeedTurnEnd)
-                ZoneManager.Instance.CurrentMap.CurrentTurnMap.CurrentOrder.SkipAll = true;
+                ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
         }
     }
 
@@ -3969,7 +4317,8 @@ namespace PMDC.Dungeon
                     house.Mobs.Add(Mobs[ii]);
                 check.Effects.Add(house);
 
-                ZoneManager.Instance.CurrentMap.CheckEvents.Add(check);
+                MapCheckState checks = ((MapStatus)owner).StatusStates.GetWithDefault<MapCheckState>();
+                checks.CheckEvents.Add(check);
             }
         }
     }
@@ -4113,7 +4462,7 @@ namespace PMDC.Dungeon
             }
 
             //force everyone to skip their turn for this entire session
-            ZoneManager.Instance.CurrentMap.CurrentTurnMap.CurrentOrder.SkipAll = true;
+            ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
         }
 
 
@@ -4158,7 +4507,8 @@ namespace PMDC.Dungeon
                     if (!player.Dead && Collision.InBounds(Bounds, player.CharLoc))
                     {
                         //remove this from the map
-                        ZoneManager.Instance.CurrentMap.CheckEvents.Remove(this);
+                        MapCheckState checks = ((MapStatus)owner).StatusStates.GetWithDefault<MapCheckState>();
+                        checks.CheckEvents.Remove(this);
                         //activate the single char effects
                         for (int ii = 0; ii < Effects.Count; ii++)
                             yield return CoroutineManager.Instance.StartCoroutine(Effects[ii].Apply(owner, ownerChar, character));
@@ -4195,7 +4545,8 @@ namespace PMDC.Dungeon
                 if (DataManager.Instance.Save.TotalTurns >= TurnTotal)
                 {
                     //remove this from the map
-                    ZoneManager.Instance.CurrentMap.CheckEvents.Remove(this);
+                    MapCheckState checks = ((MapStatus)owner).StatusStates.GetWithDefault<MapCheckState>();
+                    checks.CheckEvents.Remove(this);
                     //activate the single char effects
                     for (int ii = 0; ii < Effects.Count; ii++)
                         yield return CoroutineManager.Instance.StartCoroutine(Effects[ii].Apply(owner, ownerChar, character));
@@ -4252,10 +4603,11 @@ namespace PMDC.Dungeon
             //when either runs out, resume normal music, and the singlechareffect must be removed from the checklist
             if (noPlayers || noFoes)
             {
-                ZoneManager.Instance.CurrentMap.CheckEvents.Remove(this);
+                MapCheckState checks = ((MapStatus)owner).StatusStates.GetWithDefault<MapCheckState>();
+                checks.CheckEvents.Remove(this);
                 bool returnMusic = true;
                 //check to make sure no other check event is also active
-                foreach (SingleCharEvent charEvent in ZoneManager.Instance.CurrentMap.CheckEvents)
+                foreach (SingleCharEvent charEvent in checks.CheckEvents)
                 {
                     CheckHouseClearEvent checkEvent = charEvent as CheckHouseClearEvent;
                     if (checkEvent != null)
@@ -4295,4 +4647,211 @@ namespace PMDC.Dungeon
         }
     }
 
+    [Serializable]
+    public class CheckTriggersEvent : SingleCharEvent
+    {
+        public CheckTriggersEvent() { }
+        public override GameEvent Clone() { return new CheckTriggersEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            MapCheckState checks = ((MapStatus)owner).StatusStates.GetWithDefault<MapCheckState>();
+            for (int ii = checks.CheckEvents.Count - 1; ii >= 0; ii--)
+            {
+                SingleCharEvent effect = checks.CheckEvents[ii];
+                yield return CoroutineManager.Instance.StartCoroutine(effect.Apply(owner, ownerChar, character));
+            }
+        }
+    }
+
+
+    [Serializable]
+    public class PeriodicSpawnEntranceGuards : SingleCharEvent
+    {
+        public int Period;
+        public int Maximum;
+        public int GuardStatus;
+
+        public PeriodicSpawnEntranceGuards() { }
+        public PeriodicSpawnEntranceGuards(int period, int maximum, int guardStatus) { Period = period; Maximum = maximum; GuardStatus = guardStatus; }
+        public PeriodicSpawnEntranceGuards(PeriodicSpawnEntranceGuards other) { this.Period = other.Period; Maximum = other.Maximum; GuardStatus = other.GuardStatus; }
+        public override GameEvent Clone() { return new PeriodicSpawnEntranceGuards(this); }
+
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (character != null)
+                yield break;
+
+            if (ZoneManager.Instance.CurrentMap.MapTurns % Period != 0)
+                yield break;
+
+            if (ZoneManager.Instance.CurrentMap.MapTeams.Count >= Maximum)
+                yield break;
+
+            MapStatus status = (MapStatus)owner;
+            // spawn a guard at the entrance
+            ShopSecurityState securityState = status.StatusStates.Get<ShopSecurityState>();
+
+            List<Loc> exitLocs = WarpToEndEvent.FindExits();
+            //spawn once specifically on the stairs
+            foreach (Loc exitLoc in exitLocs)
+            {
+                Loc? dest = ZoneManager.Instance.CurrentMap.GetClosestTileForChar(null, exitLoc);
+                if (!dest.HasValue)
+                    continue;
+
+                MobSpawn spawn = securityState.Security.Pick(DataManager.Instance.Save.Rand);
+                yield return CoroutineManager.Instance.StartCoroutine(PlaceGuard(spawn, dest.Value, GuardStatus));
+            }
+
+            // if they're not there, spawn in a random location
+            if (exitLocs.Count == 0)
+            {
+                List<Loc> randLocs = ZoneManager.Instance.CurrentMap.GetFreeToSpawnTiles();
+
+                if (randLocs.Count == 0)
+                    yield break;
+
+                Loc dest = randLocs[DataManager.Instance.Save.Rand.Next(randLocs.Count)];
+                MobSpawn spawn = securityState.Security.Pick(DataManager.Instance.Save.Rand);
+                yield return CoroutineManager.Instance.StartCoroutine(PlaceGuard(spawn, dest, GuardStatus));
+            }
+        }
+
+
+        public static IEnumerator<YieldInstruction> PlaceGuard(MobSpawn spawn, Loc dest, int guardStatusId)
+        {
+            ExplorerTeam team = new ExplorerTeam();
+            team.SetRank(1);
+            Character mob = spawn.Spawn(team, ZoneManager.Instance.CurrentMap);
+
+            //add guard status
+            StatusEffect guardStatus = new StatusEffect(guardStatusId);
+            guardStatus.LoadFromData();
+            mob.StatusEffects.Add(guardStatus.ID, guardStatus);
+
+            mob.CharLoc = dest;
+            ZoneManager.Instance.CurrentMap.MapTeams.Add(team);
+            mob.RefreshTraits();
+
+            CharAnimDrop dropAnim = new CharAnimDrop();
+            dropAnim.CharLoc = mob.CharLoc;
+            dropAnim.CharDir = mob.CharDir;
+            yield return CoroutineManager.Instance.StartCoroutine(mob.StartAnim(dropAnim));
+            mob.Tactic.Initialize(mob);
+
+            yield return CoroutineManager.Instance.StartCoroutine(mob.OnMapStart());
+            ZoneManager.Instance.CurrentMap.UpdateExploration(mob);
+        }
+    }
+
+    [Serializable]
+    public class InitShopPriceEvent : SingleCharEvent
+    {
+        [DataType(0, DataManager.DataType.Tile, false)]
+        public int ShopTile;
+
+        public InitShopPriceEvent() { }
+        public InitShopPriceEvent(int shopTile) { ShopTile = shopTile; }
+        public InitShopPriceEvent(InitShopPriceEvent other) { ShopTile = other.ShopTile; }
+        public override GameEvent Clone() { return new InitShopPriceEvent(this); }
+
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (character != null)
+                yield break;
+
+            int price = 0;
+            // iterate all items
+            foreach (MapItem item in ZoneManager.Instance.CurrentMap.Items)
+            {
+                Tile tile = ZoneManager.Instance.CurrentMap.Tiles[item.TileLoc.X][item.TileLoc.Y];
+                if (tile.Effect.ID == ShopTile)
+                    price += item.Price;
+            }
+
+            // all items that have a price and are on top of a mat are counted.
+            MapStatus status = (MapStatus)owner;
+            ShopPriceState priceState = status.StatusStates.Get<ShopPriceState>();
+            priceState.Amount = price;
+        }
+    }
+
+    [Serializable]
+    public class EndShopEvent : SingleCharEvent
+    {
+        [DataType(0, DataManager.DataType.Tile, false)]
+        public int ShopTile;
+
+        public EndShopEvent() { }
+        public EndShopEvent(int shopTile) { ShopTile = shopTile; }
+        public EndShopEvent(EndShopEvent other) { this.ShopTile = other.ShopTile; }
+        public override GameEvent Clone() { return new EndShopEvent(this); }
+
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            Loc baseLoc = DungeonScene.Instance.ActiveTeam.Leader.CharLoc;
+            Tile tile = ZoneManager.Instance.CurrentMap.Tiles[baseLoc.X][baseLoc.Y];
+
+            if (tile.Effect.ID != ShopTile)
+            {
+                GameManager.Instance.BGM(ZoneManager.Instance.CurrentMap.Music, true);
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus((owner.GetID())));
+            }
+        }
+    }
+
+
+    [Serializable]
+    public class NullCharEvent : SingleCharEvent
+    {
+        public SingleCharEvent BaseEvent;
+
+        public NullCharEvent()
+        { }
+        public NullCharEvent(SingleCharEvent baseEvent)
+        {
+            BaseEvent = baseEvent;
+        }
+        protected NullCharEvent(NullCharEvent other)
+        {
+            BaseEvent = (SingleCharEvent)other.BaseEvent.Clone();
+        }
+        public override GameEvent Clone() { return new NullCharEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (character == null)
+                yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, character));
+        }
+    }
+
+
+
+    [Serializable]
+    public class LeaderCharEvent : SingleCharEvent
+    {
+        public SingleCharEvent BaseEvent;
+
+        public LeaderCharEvent()
+        { }
+        public LeaderCharEvent(SingleCharEvent baseEvent)
+        {
+            BaseEvent = baseEvent;
+        }
+        protected LeaderCharEvent(LeaderCharEvent other)
+        {
+            BaseEvent = (SingleCharEvent)other.BaseEvent.Clone();
+        }
+        public override GameEvent Clone() { return new LeaderCharEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (character == DungeonScene.Instance.ActiveTeam.Leader)
+                yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, character));
+        }
+    }
 }

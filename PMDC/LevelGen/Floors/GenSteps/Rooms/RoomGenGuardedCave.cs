@@ -8,7 +8,7 @@ using RogueEssence.LevelGen;
 namespace PMDC.LevelGen
 {
     [Serializable]
-    public class RoomGenGuardedCave<T> : RoomGen<T> where T : IUnbreakableGenContext, IPlaceableGenContext<MapItem>, IPlaceableGenContext<EffectTile>, IGroupPlaceableGenContext<Team>, IMobSpawnMap
+    public class RoomGenGuardedCave<T> : RoomGen<T> where T : IUnbreakableGenContext, IPlaceableGenContext<MapItem>, IPlaceableGenContext<EffectTile>, IGroupPlaceableGenContext<TeamSpawn>, IMobSpawnMap
     {
         //ex. 2x2
         //?XXXX?
@@ -144,7 +144,7 @@ namespace PMDC.LevelGen
             //place monsters and items
             MonsterTeam team = new MonsterTeam();
             Character newChar = GuardTypes.Pick(((IGenContext)map).Rand).Spawn(team, map);
-            map.PlaceItems(team, new Loc[1] { tunnel });
+            map.PlaceItems(new TeamSpawn(team, false), new Loc[1] { tunnel });
 
 
             //dig tunnels within this room to hook up to the incoming demands

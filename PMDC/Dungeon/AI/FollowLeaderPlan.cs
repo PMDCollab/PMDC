@@ -11,11 +11,11 @@ namespace PMDC.Dungeon
     public class FollowLeaderPlan : AIPlan
     {
         public FollowLeaderPlan() { }
-        public FollowLeaderPlan(AIFlags iq, AttackChoice attackPattern) : base(iq, attackPattern) { }
+        public FollowLeaderPlan(AIFlags iq) : base(iq) { }
         protected FollowLeaderPlan(FollowLeaderPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new FollowLeaderPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
             if (controlledChar.CantWalk)
                 return null;
@@ -51,7 +51,8 @@ namespace PMDC.Dungeon
             {
                 //get the direction to that character
                 //use A* to get this first direction?  check only walls?
-                List<Loc> path = GetPath(controlledChar, targetChar.CharLoc, false);
+                List<Loc>[] paths = GetPaths(controlledChar, new Loc[1] { targetChar.CharLoc }, true, false);
+                List<Loc> path = paths[0];
                 Dir8 dirToChar = DirExt.GetDir(controlledChar.CharLoc, targetChar.CharLoc);
                 if (path.Count > 1)
                     dirToChar = DirExt.GetDir(path[path.Count - 1], path[path.Count - 2]);                    
@@ -119,7 +120,7 @@ namespace PMDC.Dungeon
                     if (BlockedByHazard(controlledChar, testLoc))
                         return true;
 
-                    if (testLoc != targetChar.CharLoc && respectPeers && BlockedByChar(testLoc))
+                    if (testLoc != targetChar.CharLoc && respectPeers && BlockedByChar(testLoc, Alignment.Self | Alignment.Foe))
                         return true;
 
                     return false;

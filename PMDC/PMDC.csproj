@@ -4,8 +4,9 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>PMDC</RootNamespace>
     <AssemblyName>PMDC</AssemblyName>
+    <AssemblyVersion>0.5.8.0</AssemblyVersion>
+    <AssemblyCopyright>Audino 2022</AssemblyCopyright>
     <TargetFramework>net5.0</TargetFramework>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <Deterministic>true</Deterministic>
     <RuntimeIdentifiers>win-x64;osx-x64;linux-x64</RuntimeIdentifiers>
     <Platforms>AnyCPU;x64;x86</Platforms>
@@ -31,7 +32,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\Asset\**\*">
+    <None Include="..\..\DumpAsset\**\*" Exclude="..\..\DumpAsset\.git;..\..\DumpAsset\.gitignore">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </None>

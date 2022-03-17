@@ -18,8 +18,7 @@ namespace PMDC.Dungeon
         //for thieves and switcheroo thieves
         
         private int origItem;
-        public ThiefPlan(AIFlags iq, AttackChoice attackPattern)
-            : base(iq, attackPattern)
+        public ThiefPlan(AIFlags iq) : base(iq)
         {
             origItem = -1;
         }
@@ -36,7 +35,7 @@ namespace PMDC.Dungeon
             base.Initialize(controlledChar);
         }
 
-        public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
             if (controlledChar.EquippedItem.ID != origItem && controlledChar.EquippedItem.ID > -1)//we have a held item that is different now
                 return base.Think(controlledChar, preThink, rand);

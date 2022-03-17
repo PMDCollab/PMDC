@@ -30,21 +30,14 @@ namespace PMDC.Dev
             try
             {
                 EntryDataIndex fullGuide = new EntryDataIndex();
-
+                fullGuide.Entries = new EntrySummary[max];
                 for (int ii = 0; ii < max; ii++)
                 {
                     IEntryData data = getData(ii);
-                    fullGuide.Entries.Add(data.GenerateEntrySummary());
+                    fullGuide.Entries[ii] = data.GenerateEntrySummary();
                 }
 
-                using (Stream stream = new FileStream(dataPath + "index.idx", FileMode.Create, FileAccess.Write, FileShare.None))
-                {
-                    using (BinaryWriter writer = new BinaryWriter(stream))
-                    {
-                        IFormatter formatter = new BinaryFormatter();
-                        formatter.Serialize(stream, fullGuide);
-                    }
-                }
+                DataManager.SaveData(dataPath + "index.idx", fullGuide);
             }
             catch (Exception ex)
             {
@@ -110,11 +103,11 @@ namespace PMDC.Dev
                     foreach (object val in array)
                         extractMobSpawnFromObject(foundSpecies, val, recruitableOnly, tag, encounter);
                 }
-                else if (type == typeof(SpreadVaultPostProc))
+                else if (type == typeof(SpreadVaultZoneStep))
                 {
                     extractMobSpawnsFromClass(foundSpecies, member, recruitableOnly, "VAULT", encounter);
                 }
-                else if (type == typeof(SpreadHousePostProc))
+                else if (type == typeof(SpreadHouseZoneStep))
                 {
                     extractMobSpawnsFromClass(foundSpecies, member, recruitableOnly, "HOUSE", encounter);
                 }
@@ -193,18 +186,18 @@ namespace PMDC.Dev
                     continue;
                 ZoneData mainZone = DataManager.Instance.GetZone(zz);
 
-                for (int ii = 0; ii < mainZone.Structures.Count; ii++)
+                for (int ii = 0; ii < mainZone.Segments.Count; ii++)
                 {
-                    LayeredSegment structure = mainZone.Structures[ii] as LayeredSegment;
+                    LayeredSegment structure = mainZone.Segments[ii] as LayeredSegment;
                     //check the postprocs for spawn-related classes
                     if (structure != null)
                     {
-                        extractMobSpawnFromObject(foundSpecies, structure.PostProcessingSteps, recruitableOnly, "", new ZoneLoc(zz, new SegLoc(ii, -1)));
+                        extractMobSpawnFromObject(foundSpecies, structure.ZoneSteps, recruitableOnly, "", new ZoneLoc(zz, new SegLoc(ii, -1)));
                         for (int jj = 0; jj < structure.Floors.Count; jj++)
                             extractMobSpawnFromObject(foundSpecies, structure.Floors[jj], recruitableOnly, "", new ZoneLoc(zz, new SegLoc(ii, jj)));
                     }
                     else
-                        extractMobSpawnFromObject(foundSpecies, mainZone.Structures[ii], recruitableOnly, "", new ZoneLoc(zz, new SegLoc(ii, -1)));
+                        extractMobSpawnFromObject(foundSpecies, mainZone.Segments[ii], recruitableOnly, "", new ZoneLoc(zz, new SegLoc(ii, -1)));
                 }
             }
             return foundSpecies;

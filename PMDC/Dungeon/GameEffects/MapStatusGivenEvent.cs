@@ -4,6 +4,8 @@ using RogueEssence.Data;
 using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Dev;
+using RogueEssence.LevelGen;
+using RogueElements;
 
 namespace PMDC.Dungeon
 {
@@ -82,7 +84,7 @@ namespace PMDC.Dungeon
             {
                 //transform it
                 character.Transform(new MonsterID(character.CurrentForm.Species, forme, character.CurrentForm.Skin, character.CurrentForm.Gender));
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_FORM_CHANGE").ToLocal(), character.Name));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_FORM_CHANGE").ToLocal(), character.GetDisplayName(false)));
             }
 
             yield break;
@@ -194,7 +196,7 @@ namespace PMDC.Dungeon
             if (msg)
             {
                 SkillData entry = DataManager.Instance.GetSkill(status.StatusStates.GetWithDefault<MapIndexState>().Index);
-                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), entry.Name.ToLocal()));
+                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), entry.GetIconName()));
                 yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(10));
             }
         }
@@ -245,7 +247,111 @@ namespace PMDC.Dungeon
         }
     }
 
+    [Serializable]
+    public class MapStatusSpawnStartGuardsEvent : MapStatusGivenEvent
+    {
+        public int GuardStatus;
+        public MapStatusSpawnStartGuardsEvent() { }
+        public MapStatusSpawnStartGuardsEvent(int guardStatus) { GuardStatus = guardStatus; }
+        public MapStatusSpawnStartGuardsEvent(MapStatusSpawnStartGuardsEvent other) { GuardStatus = other.GuardStatus; }
+        public override GameEvent Clone() { return new MapStatusSpawnStartGuardsEvent(); }
 
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character, MapStatus status, bool msg)
+        {
+            if (status != owner || character != null)
+                yield break;
+
+            ////remove existing spawns
+            //ZoneManager.Instance.CurrentMap.TeamSpawns.Clear();
+
+            ShopSecurityState securityState = status.StatusStates.Get<ShopSecurityState>();
+
+            ////add guard spawns
+            //for (int ii = 0; ii < securityState.Security.Count; ii++)
+            //{
+            //    SpecificTeamSpawner post_team = new SpecificTeamSpawner(securityState.Security.GetSpawn(ii).Copy());
+            //    ZoneManager.Instance.CurrentMap.TeamSpawns.Add(post_team, securityState.Security.GetSpawnRate(ii));
+            //}
+
+            //set spawn rate
+            ZoneManager.Instance.CurrentMap.RespawnTime = 0;
+
+            //set spawn max
+            ZoneManager.Instance.CurrentMap.MaxFoes = 0;
+
+            //spawn 10 times
+            List<Loc> randLocs = ZoneManager.Instance.CurrentMap.GetFreeToSpawnTiles();
+            for (int ii = 0; ii < 10; ii++)
+            {
+                if (randLocs.Count == 0)
+                    break;
+
+                int randIndex = DataManager.Instance.Save.Rand.Next(randLocs.Count);
+                Loc dest = randLocs[randIndex];
+                MobSpawn spawn = securityState.Security.Pick(DataManager.Instance.Save.Rand);
+                yield return CoroutineManager.Instance.StartCoroutine(PeriodicSpawnEntranceGuards.PlaceGuard(spawn, dest, GuardStatus));
+                randLocs.RemoveAt(randIndex);
+            }
+
+            List<Loc> exitLocs = WarpToEndEvent.FindExits();
+            //spawn once specifically on the stairs
+            foreach(Loc exitLoc in exitLocs)
+            {
+                Loc? dest = ZoneManager.Instance.CurrentMap.GetClosestTileForChar(null, exitLoc);
+                if (!dest.HasValue)
+                    continue;
+
+                MobSpawn spawn = securityState.Security.Pick(DataManager.Instance.Save.Rand);
+                yield return CoroutineManager.Instance.StartCoroutine(PeriodicSpawnEntranceGuards.PlaceGuard(spawn, dest.Value, GuardStatus));
+            }
+        }
+    }
+
+
+    [Serializable]
+    public class MapStatusBGMEvent : MapStatusGivenEvent
+    {
+        [Music(0)]
+        public string BGM;
+
+        public MapStatusBGMEvent() { }
+        public MapStatusBGMEvent(string bgm)
+        {
+            BGM = bgm;
+        }
+        protected MapStatusBGMEvent(MapStatusBGMEvent other)
+        {
+            BGM = other.BGM;
+        }
+        public override GameEvent Clone() { return new MapStatusBGMEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character, MapStatus status, bool msg)
+        {
+            if (status != owner || character != null)
+                yield break;
+
+            GameManager.Instance.BGM(BGM, true);
+            yield break;
+        }
+    }
+
+    [Serializable]
+    public class MapStatusCombineCheckEvent : MapStatusGivenEvent
+    {
+        public MapStatusCombineCheckEvent() { }
+        public override GameEvent Clone() { return new MapStatusCombineCheckEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character, MapStatus status, bool msg)
+        {
+            if (character != null)
+                yield break;
+
+            MapCheckState destChecks = ((MapStatus)owner).StatusStates.GetWithDefault<MapCheckState>();
+            MapCheckState srcChecks = status.StatusStates.GetWithDefault<MapCheckState>();
+            foreach (SingleCharEvent effect in srcChecks.CheckEvents)
+                destChecks.CheckEvents.Add(effect);
+        }
+    }
 
 
     [Serializable]
@@ -259,7 +365,7 @@ namespace PMDC.Dungeon
             if (character != null)
                 yield break;
 
-            if (((MapStatus)owner).StatusStates.GetWithDefault<MapCountDownState>().Counter > -1 && 
+            if (((MapStatus)owner).StatusStates.GetWithDefault<MapCountDownState>().Counter > -1 &&
                 ((MapStatus)owner).StatusStates.GetWithDefault<MapCountDownState>().Counter < status.StatusStates.GetWithDefault<MapCountDownState>().Counter)
                 ((MapStatus)owner).StatusStates.GetWithDefault<MapCountDownState>().Counter = status.StatusStates.GetWithDefault<MapCountDownState>().Counter;
         }
@@ -297,4 +403,16 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    [Serializable]
+    public class MapStatusIgnoreEvent : MapStatusGivenEvent
+    {
+        public MapStatusIgnoreEvent() { }
+        public override GameEvent Clone() { return new MapStatusIgnoreEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character, MapStatus status, bool msg)
+        {
+            yield break;
+        }
+    }
 }

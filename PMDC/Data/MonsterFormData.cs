@@ -5,6 +5,8 @@ using System.Drawing;
 using RogueEssence;
 using RogueEssence.Data;
 using RogueEssence.Dungeon;
+using RogueEssence.Dev;
+using PMDC.Dungeon;
 
 namespace PMDC.Data
 {
@@ -13,17 +15,69 @@ namespace PMDC.Data
     public class MonsterFormData : BaseMonsterForm
     {
         public const int MAX_STAT_BOOST = 128;
-        public const int ALT_COLOR_ODDS = 512;
 
         public int Generation;
+
         public int Ratio;
+
+        public int BaseHP;
+
+        public int BaseAtk;
+
+        [SharedRow]
+        public int BaseDef;
+
+        public int BaseMAtk;
+
+        [SharedRow]
+        public int BaseMDef;
+
+        public int BaseSpeed;
+
+        public int ExpYield;
+
+        public double Height;
+
+        [SharedRow]
+        public double Weight;
+
         public List<byte> Personalities;
+
+        public List<LearnableSkill> TeachSkills;
+
+        public List<LearnableSkill> SharedSkills;
+
+        public List<LearnableSkill> SecretSkills;
 
         public MonsterFormData()
         {
             Personalities = new List<byte>();
+
+            TeachSkills = new List<LearnableSkill>();
+            SharedSkills = new List<LearnableSkill>();
+            SecretSkills = new List<LearnableSkill>();
         }
 
+        public int GetBaseStat(Stat stat)
+        {
+            switch (stat)
+            {
+                case Stat.HP:
+                    return BaseHP;
+                case Stat.Speed:
+                    return BaseSpeed;
+                case Stat.Attack:
+                    return BaseAtk;
+                case Stat.Defense:
+                    return BaseDef;
+                case Stat.MAtk:
+                    return BaseMAtk;
+                case Stat.MDef:
+                    return BaseMDef;
+                default:
+                    return 0;
+            }
+        }
         public override int GetStat(int level, Stat stat, int bonus)
         {
             int curStat = getMinStat(level, stat);
@@ -36,7 +90,10 @@ namespace PMDC.Data
 
         public override int RollSkin(IRandom rand)
         {
-            return (rand.Next(ALT_COLOR_ODDS) == 0) ? 1 : 0;
+            SkinTableState table = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<SkinTableState>();
+            if (table.AltColorOdds == 0)
+                return 0;
+            return (rand.Next(table.AltColorOdds) == 0) ? 1 : 0;
         }
 
         public override int GetPersonalityType(int discriminator)
@@ -205,13 +262,19 @@ namespace PMDC.Data
                 return 21;
         }
 
-        public override int GetExp(int level, int recipientLv)
-        {
-            int multNum = 2 * level + 10;
-            int multDen = recipientLv + level + 10;
-            return (int)((ulong)ExpYield * (ulong)level * (ulong)multNum * (ulong)multNum * (ulong)multNum / (ulong)multDen / (ulong)multDen / (ulong)multDen / 5) + 1;
-        }
 
+        public override bool CanLearnSkill(int skill)
+        {
+            if (LevelSkills.FindIndex(a => a.Skill == skill) > -1)
+                return true;
+            if (TeachSkills.FindIndex(a => a.Skill == skill) > -1)
+                return true;
+            if (SharedSkills.FindIndex(a => a.Skill == skill) > -1)
+                return true;
+            if (SecretSkills.FindIndex(a => a.Skill == skill) > -1)
+                return true;
+            return false;
+        }
     }
 
 

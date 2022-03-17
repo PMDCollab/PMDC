@@ -99,4 +99,13 @@ namespace PMDC.Dungeon
         protected ElementState(ElementState other) { Element = other.Element; }
         public override GameplayState Clone() { return new ElementState(this); }
     }
+    [Serializable]
+    public class MonsterIDState : StatusState
+    {
+        public MonsterID MonID;
+        public MonsterIDState() { }
+        public MonsterIDState(MonsterID id) { MonID = id; }
+        protected MonsterIDState(MonsterIDState other) { MonID = other.MonID; }
+        public override GameplayState Clone() { return new MonsterIDState(this); }
+    }
 }

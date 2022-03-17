@@ -9,11 +9,11 @@ namespace PMDC.Dungeon
     [Serializable]
     public class BossPlan : AttackFoesPlan
     {
-        public BossPlan(AIFlags iq, AIPlan.AttackChoice attackPattern) : base(iq, attackPattern) { }
+        public BossPlan(AIFlags iq, AIPlan.AttackChoice attackPattern, PositionChoice positionPattern) : base(iq, attackPattern, positionPattern) { }
         protected BossPlan(BossPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new BossPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, ReRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
             if (controlledChar.HP * 2 < controlledChar.MaxHP)
             {
