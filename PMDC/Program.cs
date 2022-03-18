@@ -60,6 +60,7 @@ namespace PMDC
 
                 bool logInput = true;
                 bool guideBook = false;
+                bool guideCsv = false;
                 GraphicsManager.AssetType convertAssets = GraphicsManager.AssetType.None;
                 DataManager.DataType convertIndices = DataManager.DataType.None;
                 DataManager.DataType reserializeIndices = DataManager.DataType.None;
@@ -87,6 +88,8 @@ namespace PMDC
                         logInput = false;
                     else if (args[ii] == "-guide")
                         guideBook = true;
+                    else if (args[ii] == "-csv")
+                        guideCsv = true;
                     else if (args[ii] == "-asset")
                     {
                         PathMod.ASSET_PATH = Path.GetFullPath(args[ii + 1]);
@@ -316,7 +319,7 @@ namespace PMDC
                 }
 
 
-                if (guideBook)
+                if (guideBook || guideCsv)
                 {
                     //print the guidebook in the chosen language
                     //we need the datamanager for this
@@ -324,10 +327,10 @@ namespace PMDC
                     DataManager.InitInstance();
                     DataManager.Instance.InitData();
                     //just print a guidebook and exit
-                    StrategyGuide.PrintMoveGuide();
-                    StrategyGuide.PrintItemGuide();
-                    StrategyGuide.PrintAbilityGuide();
-                    StrategyGuide.PrintEncounterGuide();
+                    StrategyGuide.PrintMoveGuide(guideCsv);
+                    StrategyGuide.PrintItemGuide(guideCsv);
+                    StrategyGuide.PrintAbilityGuide(guideCsv);
+                    StrategyGuide.PrintEncounterGuide(guideCsv);
                     return;
                 }
 

@@ -12,7 +12,20 @@ namespace PMDC.Dev
 {
     public static class StrategyGuide
     {
+        private static void writeCSVGuide(string name, List<string[]> stats)
+        {
 
+            if (!Directory.Exists(PathMod.ExePath + "GUIDE/"))
+                Directory.CreateDirectory(PathMod.ExePath + "GUIDE/");
+
+            using (StreamWriter file = new StreamWriter(PathMod.ExePath + "GUIDE/" + name + ".csv"))
+            {
+                foreach (string[] stat in stats)
+                    file.WriteLine(String.Join("\t", stat));
+            }
+
+            DiagManager.Instance.LogInfo("Printed " + name);
+        }
 
         private static void writeHTMLGuide(string name, List<string[]> stats)
         {
@@ -177,7 +190,7 @@ namespace PMDC.Dev
             return name == title ? "class=\"current\"" : "";
         }
 
-        public static void PrintItemGuide()
+        public static void PrintItemGuide(bool csv)
         {
             List<string[]> stats = new List<string[]>();
             stats.Add(new string[5] { "###", "Name", "Type", "Price", "Description" });
@@ -187,10 +200,14 @@ namespace PMDC.Dev
                 if (entry.Released)
                     stats.Add(new string[5] { ii.ToString("D4"), entry.Name.ToLocal(), entry.UsageType.ToString(), entry.Price.ToString(), entry.Desc.ToLocal() });
             }
-            writeHTMLGuide("Items", stats);
+
+            if (csv)
+                writeCSVGuide("Items", stats);
+            else
+                writeHTMLGuide("Items", stats);
         }
 
-        public static void PrintMoveGuide()
+        public static void PrintMoveGuide(bool csv)
         {
             List<string[]> stats = new List<string[]>();
             stats.Add(new string[9] { "###", "Name", "Type", "Category", "Power", "Accuracy", "PP", "Range", "Description" });
@@ -215,10 +232,13 @@ namespace PMDC.Dev
                 //effect chance
                 //additional flags
             }
-            writeHTMLGuide("Moves", stats);
+            if (csv)
+                writeCSVGuide("Moves", stats);
+            else
+                writeHTMLGuide("Moves", stats);
         }
 
-        public static void PrintAbilityGuide()
+        public static void PrintAbilityGuide(bool csv)
         {
             List<string[]> stats = new List<string[]>();
             stats.Add(new string[3] { "###", "Name", "Description" });
@@ -230,7 +250,11 @@ namespace PMDC.Dev
                 else
                     stats.Add(new string[3] { ii.ToString("D3"), entry.Name.ToLocal(), "NO DATA" });
             }
-            writeHTMLGuide("Abilities", stats);
+
+            if (csv)
+                writeCSVGuide("Abilities", stats);
+            else
+                writeHTMLGuide("Abilities", stats);
         }
 
         private static List<string> combineFloorRanges(HashSet<int> floors)
@@ -269,7 +293,7 @@ namespace PMDC.Dev
             return rangeStrings;
         }
 
-        public static void PrintEncounterGuide()
+        public static void PrintEncounterGuide(bool csv)
         {
             Dictionary<int, HashSet<(string, ZoneLoc)>> foundSpecies = DevHelper.GetAllAppearingMonsters(true);
 
@@ -384,7 +408,10 @@ namespace PMDC.Dev
                 else
                     stats.Add(new string[4] { ii.ToString("D3"), data.Name.ToLocal(), "--%", "NO DATA" });
             }
-            writeHTMLGuide("Encounters", stats);
+            if (csv)
+                writeCSVGuide("Encounters", stats);
+            else
+                writeHTMLGuide("Encounters", stats);
         }
     }
 }
