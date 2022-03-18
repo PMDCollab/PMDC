@@ -274,7 +274,10 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), character.GetDisplayName(false)));
+            if (character != null)
+                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), character.GetDisplayName(false)));
+            else
+                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal()));
             yield break;
         }
     }
