@@ -448,6 +448,7 @@ namespace PMDC
             DataEditor.AddEditor(new FlagTypeEditor());
             DataEditor.AddEditor(new ColorEditor());
             DataEditor.AddEditor(new TypeEditor());
+            DataEditor.AddEditor(new AliasDataEditor());
 
             //TODO: there is no parameterless interface for hashset
             //so instead we have to do the painful process of manually adding every hashset of every type we actually use.  ugh
