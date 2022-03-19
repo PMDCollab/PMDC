@@ -9853,18 +9853,56 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
-    public class RecoilEvent : BattleEvent
+    public class DamageRecoilEvent : RecoilEvent
     {
-        public int DamageFraction;
+        public int Fraction;
 
-        public RecoilEvent() { }
-        public RecoilEvent(int damageFraction) { DamageFraction = damageFraction; }
-        protected RecoilEvent(RecoilEvent other)
+        public DamageRecoilEvent() { }
+        public DamageRecoilEvent(int damageFraction) { Fraction = damageFraction; }
+        protected DamageRecoilEvent(DamageRecoilEvent other)
         {
-            DamageFraction = other.DamageFraction;
+            Fraction = other.Fraction;
         }
-        public override GameEvent Clone() { return new RecoilEvent(this); }
+        public override GameEvent Clone() { return new DamageRecoilEvent(this); }
 
+        protected override int GetRecoilDamage(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            int damageDone = context.GetContextStateInt<TotalDamageDealt>(true, 0);
+            return Math.Max(1, damageDone / Fraction);
+        }
+    }
+
+    [Serializable]
+    public class HPRecoilEvent : RecoilEvent
+    {
+        public int Fraction;
+        public bool MaxHP;
+
+        public HPRecoilEvent() { }
+        public HPRecoilEvent(int fraction, bool maxHP) { Fraction = fraction; MaxHP = maxHP; }
+        protected HPRecoilEvent(HPRecoilEvent other)
+        {
+            Fraction = other.Fraction;
+            MaxHP = other.MaxHP;
+        }
+        public override GameEvent Clone() { return new HPRecoilEvent(this); }
+
+        protected override int GetRecoilDamage(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (MaxHP)
+                return Math.Max(1, context.User.MaxHP / Fraction);
+            else
+                return Math.Max(1, context.User.HP / Fraction);
+        }
+    }
+
+
+    [Serializable]
+    public abstract class RecoilEvent : BattleEvent
+    {
+        public RecoilEvent() { }
+
+        protected abstract int GetRecoilDamage(GameEventOwner owner, Character ownerChar, BattleContext context);
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
@@ -9883,7 +9921,7 @@ namespace PMDC.Dungeon
                         DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
                     }
 
-                    int recoil = Math.Max(1, damageDone / DamageFraction);
+                    int recoil = GetRecoilDamage(owner, ownerChar, context);
                     yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(recoil));
                 }
             }
