@@ -2600,7 +2600,7 @@ namespace PMDC.Dungeon
                 if (notice.Title.Key.Key == "")
                     DungeonScene.Instance.PendingLeaderAction = MenuManager.Instance.SetSign(notice.Content.FormatLocal());
                 else
-                    DungeonScene.Instance.PendingLeaderAction = MenuManager.Instance.ProcessMenuCoroutine(new InfoMenu(notice.Title.FormatLocal(), notice.Content.FormatLocal()));
+                    DungeonScene.Instance.PendingLeaderAction = MenuManager.Instance.ProcessMenuCoroutine(MenuManager.Instance.CreateNotice(notice.Title.FormatLocal(), () => { }, notice.Content.FormatLocal()));
                 yield break;
             }
         }
