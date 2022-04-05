@@ -5776,13 +5776,15 @@ namespace PMDC.Dungeon
         {
             if (context.UsageSlot == BattleContext.FORCED_SLOT)
                 yield break;
-            
+
             if (context.Data.Element == 07)
+            {
                 yield return CoroutineManager.Instance.StartCoroutine(context.User.RemoveStatusEffect(((StatusEffect)owner).ID));
-            else
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_FROZEN").ToLocal(), context.User.GetDisplayName(false)));
+                yield break;
+            }
+            
+            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_FROZEN").ToLocal(), context.User.GetDisplayName(false)));
             context.CancelState.Cancel = true;
-            yield break;
         }
     }
     [Serializable]
