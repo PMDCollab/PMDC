@@ -91,7 +91,7 @@ namespace PMDC.Data
             int maxStat = GetMaxStat(stat);
             int statDiff = maxStat - minStat;
 
-            return curStat + bonus * statDiff / MonsterFormData.MAX_STAT_BOOST;
+            return Math.Max(1, curStat + bonus * statDiff / MonsterFormData.MAX_STAT_BOOST);
         }
 
         public override int RollSkin(IRandom rand)
