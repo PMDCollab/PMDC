@@ -15,31 +15,5 @@ using PMDC.Data;
 
 namespace PMDC.Dev
 {
-    //TODO: Created v0.5.10, delete on v1.0.0
-    public class MonsterFormDataConverter : JsonConverter<MonsterFormData>
-    {
-        public override void WriteJson(JsonWriter writer, MonsterFormData value, JsonSerializer serializer)
-        {
-            throw new NotImplementedException("We shouldn't be here.");
-        }
 
-        public override MonsterFormData ReadJson(JsonReader reader, Type objectType, MonsterFormData existingValue, bool hasExistingValue, JsonSerializer serializer)
-        {
-            JObject jObject = JObject.Load(reader);
-            MonsterFormData container = new MonsterFormData();
-            serializer.Populate(jObject.CreateReader(), container);
-
-            return container;
-        }
-
-
-        public override bool CanWrite
-        {
-            get
-            {
-                return false;
-            }
-        }
-
-    }
 }

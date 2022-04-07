@@ -9,18 +9,19 @@ using RogueEssence.Dev;
 using PMDC.Dungeon;
 using Newtonsoft.Json;
 using PMDC.Dev;
+using System.Runtime.Serialization;
 
 namespace PMDC.Data
 {
 
     [Serializable]
-    [JsonConverter(typeof(MonsterFormDataConverter))]
     public class MonsterFormData : BaseMonsterForm
     {
         public const int MAX_STAT_BOOST = 128;
 
         public int Generation;
 
+        public int Ratio;
         public int GenderlessWeight;
         public int MaleWeight;
         public int FemaleWeight;
@@ -278,6 +279,30 @@ namespace PMDC.Data
                 return true;
             return false;
         }
+
+
+
+        //TODO: Created v0.5.10, delete on v0.6.1
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            if (Serializer.OldVersion <= new Version(0, 5, 9, 0))
+            {
+                if (Ratio == -1)
+                {
+                    GenderlessWeight = 1;
+                    MaleWeight = 0;
+                    FemaleWeight = 0;
+                }
+                else
+                {
+                    GenderlessWeight = 0;
+                    MaleWeight = 8 - Ratio;
+                    FemaleWeight = Ratio;
+                }
+            }
+        }
+
     }
 
 
