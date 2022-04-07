@@ -7,18 +7,23 @@ using RogueEssence.Data;
 using RogueEssence.Dungeon;
 using RogueEssence.Dev;
 using PMDC.Dungeon;
+using Newtonsoft.Json;
+using PMDC.Dev;
 
 namespace PMDC.Data
 {
 
     [Serializable]
+    [JsonConverter(typeof(MonsterFormDataConverter))]
     public class MonsterFormData : BaseMonsterForm
     {
         public const int MAX_STAT_BOOST = 128;
 
         public int Generation;
 
-        public int Ratio;
+        public int GenderlessWeight;
+        public int MaleWeight;
+        public int FemaleWeight;
 
         public int BaseHP;
 
@@ -103,10 +108,15 @@ namespace PMDC.Data
 
         public override Gender RollGender(IRandom rand)
         {
-            if (Ratio == -1)
-                return Gender.Genderless;
-            else
-                return (rand.Next(0, 8) >= Ratio) ? Gender.Male : Gender.Female;
+            int totalWeight = FemaleWeight + MaleWeight + GenderlessWeight;
+            int roll = rand.Next(0, totalWeight);
+            if (roll < FemaleWeight)
+                return Gender.Female;
+            roll -= FemaleWeight;
+            if (roll < MaleWeight)
+                return Gender.Male;
+            
+            return Gender.Genderless;
         }
 
         public override int RollIntrinsic(IRandom rand, int bounds)
@@ -127,19 +137,12 @@ namespace PMDC.Data
         {
             List<Gender> genders = new List<Gender>();
 
-            if (Ratio == -1)//neuter only = give only "genderless" as a choice (force)
+            if (MaleWeight > 0)
+                genders.Add(Gender.Male);
+            if (FemaleWeight > 0)
+                genders.Add(Gender.Female);
+            if (GenderlessWeight > 0 || genders.Count == 0)
                 genders.Add(Gender.Genderless);
-            else if (Ratio == 8)//female only = give only "female" as a choice (force)
-                genders.Add(Gender.Female);
-            else if (Ratio == 0)//male only   = give only "male" as a choice (force)
-                genders.Add(Gender.Male);
-            else
-            {
-                //m/f choice  = give male, female, unknown(neuter), as a choice
-                genders.Add(Gender.Male);
-                genders.Add(Gender.Female);
-            }
-
             return genders;
         }
 
