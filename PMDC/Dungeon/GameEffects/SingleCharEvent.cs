@@ -2937,6 +2937,12 @@ namespace PMDC.Dungeon
                     GameManager.Instance.SceneOutcome = GameManager.Instance.ReturnToEditor();
                 else
                 {
+                    for (int ii = DungeonScene.Instance.ActiveTeam.GetInvCount() - 1; ii >= 0; ii--)
+                    {
+                        if (DungeonScene.Instance.ActiveTeam.GetInv(ii).Price > 0)
+                            DungeonScene.Instance.ActiveTeam.RemoveFromInv(ii);
+                    }
+
                     ZoneSegmentBase structure = ZoneManager.Instance.CurrentZone.Segments[ZoneManager.Instance.CurrentMapID.Segment];
                     GameManager.Instance.BattleSE("DUN_Stairs_Down");
                     if (ZoneManager.Instance.CurrentMapID.ID + 1 < structure.FloorCount)
@@ -2975,6 +2981,12 @@ namespace PMDC.Dungeon
                     GameManager.Instance.SceneOutcome = GameManager.Instance.ReturnToEditor();
                 else
                 {
+                    for (int ii = DungeonScene.Instance.ActiveTeam.GetInvCount() - 1; ii >= 0; ii--)
+                    {
+                        if (DungeonScene.Instance.ActiveTeam.GetInv(ii).Price > 0)
+                            DungeonScene.Instance.ActiveTeam.RemoveFromInv(ii);
+                    }
+
                     if (destState.Relative)
                     {
                         yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeOut(false));
@@ -3009,6 +3021,12 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
+            for (int ii = DungeonScene.Instance.ActiveTeam.GetInvCount() - 1; ii >= 0; ii--)
+            {
+                if (DungeonScene.Instance.ActiveTeam.GetInv(ii).Price > 0)
+                    DungeonScene.Instance.ActiveTeam.RemoveFromInv(ii);
+            }
+
             GameManager.Instance.BattleSE("DUN_Stairs_Down");
             yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
         }

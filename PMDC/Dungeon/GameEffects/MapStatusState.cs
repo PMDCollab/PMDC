@@ -21,9 +21,10 @@ namespace PMDC.Dungeon
     public class ShopPriceState : MapStatusState
     {
         public int Amount;
+        public int Cart;
         public ShopPriceState() { }
         public ShopPriceState(int amt) { Amount = amt; }
-        protected ShopPriceState(ShopPriceState other) { Amount = other.Amount; }
+        protected ShopPriceState(ShopPriceState other) { Amount = other.Amount; Cart = other.Cart; }
         public override GameplayState Clone() { return new ShopPriceState(this); }
     }
 
