@@ -249,7 +249,7 @@ namespace PMDC
 
                 if (buildQuest)
                 {
-                    if (PathMod.Quest.IsValid())
+                    if (!PathMod.Quest.IsValid())
                     {
                         DiagManager.Instance.LogInfo("No quest specified to build.");
                         return;
