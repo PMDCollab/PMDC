@@ -48,16 +48,6 @@ namespace PMDC.Dungeon
         public override GameplayState Clone() { return new NoticeState(this); }
     }
     [Serializable]
-    public class TileScriptState : TileState
-    {
-        public string Script;
-        public string ArgTable;
-        public TileScriptState() { Script = ""; ArgTable = "{}"; }
-        public TileScriptState(string script, string argTable) { Script = script; ArgTable = argTable; }
-        protected TileScriptState(TileScriptState other) { Script = other.Script; ArgTable = other.ArgTable; }
-        public override GameplayState Clone() { return new TileScriptState(this); }
-    }
-    [Serializable]
     public class TileListState : TileState
     {
         public List<Loc> Tiles;
@@ -117,5 +107,16 @@ namespace PMDC.Dungeon
         public BoundsState(Rect bounds) { Bounds = bounds; }
         protected BoundsState(BoundsState other) { Bounds = other.Bounds; }
         public override GameplayState Clone() { return new BoundsState(this); }
+    }
+
+    [Serializable]
+    public class TileScriptState : TileState
+    {
+        public string Script;
+        public string ArgTable;
+        public TileScriptState() { Script = ""; ArgTable = "{}"; }
+        public TileScriptState(string script, string argTable) { Script = script; ArgTable = argTable; }
+        protected TileScriptState(TileScriptState other) { Script = other.Script; ArgTable = other.ArgTable; }
+        public override GameplayState Clone() { return new TileScriptState(this); }
     }
 }
