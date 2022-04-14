@@ -139,6 +139,15 @@ namespace PMDC.Dungeon
         }
     }
     [Serializable]
+    public class SeeTrapsEvent : RefreshEvent
+    {
+        public override GameEvent Clone() { return new SeeTrapsEvent(); }
+        public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            character.SeeTraps = true;
+        }
+    }
+    [Serializable]
     public class SeeItemsEvent : RefreshEvent
     {
         public bool WallItems;
