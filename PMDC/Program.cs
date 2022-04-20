@@ -383,7 +383,7 @@ namespace PMDC
 
             DataEditor.AddEditor(new MoneySpawnZoneStepEditor());
 
-            //DataEditor.AddConverter(new AutoTileBaseConverter());
+            DataEditor.AddEditor(new AutoTileBaseEditor());
             DataEditor.AddEditor(new DataFolderEditor());
             DataEditor.AddEditor(new AnimDataEditor());
             DataEditor.AddEditor(new SoundEditor());
