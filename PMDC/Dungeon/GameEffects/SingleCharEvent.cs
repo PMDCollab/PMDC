@@ -2855,9 +2855,9 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
             foreach(Character player in DungeonScene.Instance.ActiveTeam.EnumerateChars())
-                GameProgress.RestrictCharLevel(player, Level, false);
+                DataManager.Instance.Save.RestrictCharLevel(player, Level, false);
             foreach (Character player in DungeonScene.Instance.ActiveTeam.Assembly)
-                GameProgress.RestrictCharLevel(player, Level, false);
+                DataManager.Instance.Save.RestrictCharLevel(player, Level, false);
             yield break;
         }
     }

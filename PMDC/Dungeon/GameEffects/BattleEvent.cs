@@ -9116,7 +9116,7 @@ namespace PMDC.Dungeon
                 }
             }
             if (learn)
-                context.User.ReplaceSkill(moveIndex, moveSlot, (entry.Data.Category == BattleData.SkillCategory.Physical || entry.Data.Category == BattleData.SkillCategory.Magical));
+                context.User.ReplaceSkill(moveIndex, moveSlot, DataManager.Instance.Save.GetDefaultEnable(moveIndex));
             else
                 context.User.ChangeSkill(moveSlot, moveIndex);
             if (!group)
@@ -13967,6 +13967,10 @@ namespace PMDC.Dungeon
                         //    foreach (int statusID in statuses)
                         //        yield return CoroutineManager.Instance.StartCoroutine(context.Target.RemoveStatusEffect(statusID, false));
                         //}
+
+                        foreach (BackReference<Skill> skill in context.Target.Skills)
+                            skill.Element.Enabled = DataManager.Instance.Save.GetDefaultEnable(skill.Element.SkillNum);
+
 
                         context.Target.OriginalUUID = DataManager.Instance.Save.UUID;
                         context.Target.OriginalTeam = DataManager.Instance.Save.ActiveTeam.Name;
