@@ -1311,7 +1311,7 @@ namespace PMDC.Dungeon
             newContext.Strikes = 1;
             newContext.Item = new InvItem();
 
-            if (Msg.Key != null)
+            if (Msg.IsValid())
                 DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
 
             return newContext;
@@ -4705,7 +4705,7 @@ namespace PMDC.Dungeon
             if (context.UsageSlot == BattleContext.FORCED_SLOT)
                 yield break;
 
-            if (Message.Key != null)
+            if (Message.IsValid())
                 DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false)));
             context.CancelState.Cancel = true;
         }
@@ -4731,7 +4731,7 @@ namespace PMDC.Dungeon
         {
             if (context.ActionType == BattleActionType.Item || context.ActionType == BattleActionType.Throw)
             {
-                if (Message.Key != null)
+                if (Message.IsValid())
                     DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false)));
                 context.CancelState.Cancel = true;
             }
@@ -4779,7 +4779,7 @@ namespace PMDC.Dungeon
 
                 if (canceled)
                 {
-                    if (Message.Key != null)
+                    if (Message.IsValid())
                         DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false)));
                     context.CancelState.Cancel = true;
                 }
@@ -4833,7 +4833,7 @@ namespace PMDC.Dungeon
             {
                 if (UseTypes.Contains(context.Item.ID))
                 {
-                    if (Message.Key != null)
+                    if (Message.IsValid())
                         DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false)));
                     context.CancelState.Cancel = true;
                 }
@@ -5664,7 +5664,7 @@ namespace PMDC.Dungeon
             {
                 if ((((StatusEffect)owner).TargetChar == context.Target) != Invert)
                 {
-                    if (Message.Key != null)
+                    if (Message.IsValid())
                         DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false), ((StatusEffect)owner).TargetChar.GetDisplayName(false)));
                     context.AddContextStateMult<AccMult>(false, -1, 1);
                 }
@@ -5730,7 +5730,7 @@ namespace PMDC.Dungeon
 
             if (!context.ContextStates.Contains<BoundAttack>())
             {
-                if (Message.Key != null)
+                if (Message.IsValid())
                     DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false)));
                 context.CancelState.Cancel = true;
             }
@@ -6992,7 +6992,7 @@ namespace PMDC.Dungeon
 
             Character target = (AffectTarget ? context.Target : context.User);
 
-            if (Message.Key != null)
+            if (Message.IsValid())
                 DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), ownerChar.GetDisplayName(false), target.GetDisplayName(false)));
 
             foreach (BattleAnimEvent anim in Anims)
@@ -8549,7 +8549,7 @@ namespace PMDC.Dungeon
             if (!ModStatus(owner, context, target, origin, status))
                 yield break;
 
-            if (TriggerMsg.Key == null)
+            if (!TriggerMsg.IsValid())
             {
                 foreach (BattleAnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
@@ -8929,7 +8929,7 @@ namespace PMDC.Dungeon
             if (hasState)
                 status.StatusStates.GetWithDefault<MapCountDownState>().Counter = status.StatusStates.GetWithDefault<MapCountDownState>().Counter * 5;
 
-            if (MsgOverride.Key == null)
+            if (!MsgOverride.IsValid())
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
             else
             {
@@ -9625,7 +9625,7 @@ namespace PMDC.Dungeon
                     affected = true;
                 }
             }
-            if (affected && Msg.Key != null)
+            if (affected && Msg.IsValid())
                 DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), target.GetDisplayName(false)));
         }
 
@@ -9685,7 +9685,7 @@ namespace PMDC.Dungeon
 
             if (statuses.Count > 0)
             {
-                if (Msg.Key != null)
+                if (Msg.IsValid())
                     DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), target.GetDisplayName(false), owner.GetDisplayName()));
 
                 foreach (BattleAnimEvent anim in Anims)
@@ -9982,7 +9982,7 @@ namespace PMDC.Dungeon
         {
             if (!context.User.CharStates.Contains<MagicGuardState>())
             {
-                if (Msg.Key != null)
+                if (Msg.IsValid())
                     DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), context.User.GetDisplayName(false), owner.GetDisplayName(), ownerChar.GetDisplayName(false)));
                 if (VFX)
                 {
@@ -10114,7 +10114,7 @@ namespace PMDC.Dungeon
             StatusEffect status = (StatusEffect)owner;
             if (!targetChar.CharStates.Contains<MagicGuardState>())
             {
-                if (Message.Key != null)
+                if (Message.IsValid())
                     DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false)));
 
                 CharAnimAction chargeAnim = new CharAnimAction(context.User.CharLoc, context.User.CharDir, CharAnim);
@@ -10497,12 +10497,12 @@ namespace PMDC.Dungeon
             //warp within the space
             if (target.CharStates.Contains<AnchorState>())
             {
-                if (TriggerMsg.Key == null)
+                if (!TriggerMsg.IsValid())
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), target.GetDisplayName(false)));
             }
             else
             {
-                if (TriggerMsg.Key != null)
+                if (TriggerMsg.IsValid())
                     DungeonScene.Instance.LogMsg(String.Format(TriggerMsg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
 
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RandomWarp(target, Distance));
@@ -10624,7 +10624,7 @@ namespace PMDC.Dungeon
                 yield break;
 
 
-            if (Msg.Key != null)
+            if (Msg.IsValid())
             {
                 DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), origin.GetDisplayName(false), target.GetDisplayName(false)));
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.WarpNear(target, origin.CharLoc, false));
@@ -11039,7 +11039,7 @@ namespace PMDC.Dungeon
             int itemIndex = SelectItemTarget(context.Target);
             if (itemIndex > -2)
             {
-                if (Message.Key != null)
+                if (Message.IsValid())
                     DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
 
 
@@ -11092,7 +11092,7 @@ namespace PMDC.Dungeon
             int itemIndex = SelectItemTarget(context.Target);
             if (itemIndex > -2)
             {
-                if (Message.Key != null)
+                if (Message.IsValid())
                     DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
                 InvItem item = (itemIndex > -1 ? ((ExplorerTeam)context.Target.MemberTeam).GetInv(itemIndex) : context.Target.EquippedItem);
                 //remove the item, and make it bounce in the attacker's direction
@@ -12258,7 +12258,7 @@ namespace PMDC.Dungeon
             Character target = (AffectTarget ? context.Target : context.User);
             Character origin = (AffectTarget ? context.User : context.Target);
 
-            if (Msg.Key != null)
+            if (Msg.IsValid())
                 DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), origin.GetDisplayName(false), target.GetDisplayName(false)));
 
             //reflect ability (target to attacker, or vice versa)

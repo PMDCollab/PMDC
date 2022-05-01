@@ -396,7 +396,7 @@ namespace PMDC.Dungeon
         {
             if (character.HP < character.MaxHP)
             {
-                if (Message.Key != null)
+                if (Message.IsValid())
                     DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), character.GetDisplayName(false), owner.GetDisplayName()));
                 yield return CoroutineManager.Instance.StartCoroutine(character.RestoreHP(Math.Max(1, character.MaxHP / HPFraction), false));
             }
@@ -598,7 +598,7 @@ namespace PMDC.Dungeon
             foreach (StatusState state in States)
                 status.StatusStates.Set(state.Clone<StatusState>());
 
-            if (TriggerMsg.Key == null && TriggerSound == "")
+            if (!TriggerMsg.IsValid() && TriggerSound == "")
                 yield return CoroutineManager.Instance.StartCoroutine(character.AddStatusEffect(null, status, null, !SilentCheck, true));
             else
             {
@@ -608,7 +608,7 @@ namespace PMDC.Dungeon
                 if (statusContext.CancelState.Cancel)
                     yield break;
 
-                if (TriggerMsg.Key != null)
+                if (TriggerMsg.IsValid())
                     DungeonScene.Instance.LogMsg(String.Format(TriggerMsg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
                 statusContext.msg = true;
 
@@ -695,7 +695,7 @@ namespace PMDC.Dungeon
             newContext.Strikes = 1;
             newContext.Item = new InvItem();
 
-            if (Msg.Key != null)
+            if (Msg.IsValid())
                 newContext.SetActionMsg(String.Format(Msg.ToLocal(), newContext.User.GetDisplayName(false)));
 
             //process the attack
@@ -1265,7 +1265,7 @@ namespace PMDC.Dungeon
             if (character.CharStates.Contains<MagicGuardState>())
                 yield break;
             
-            if (Message.Key != null)
+            if (Message.IsValid())
                 DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), character.GetDisplayName(false), owner.GetDisplayName()));
 
             foreach (AnimEvent anim in Anims)
@@ -1624,7 +1624,7 @@ namespace PMDC.Dungeon
 
             if (badStatuses.Count > 0)
             {
-                if (Message.Key != null)
+                if (Message.IsValid())
                     DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), character.GetDisplayName(false), owner.GetDisplayName()));
 
                 foreach (AnimEvent anim in Anims)
@@ -1905,7 +1905,7 @@ namespace PMDC.Dungeon
             if (Counter != 0)
                 status.StatusStates.GetWithDefault<MapCountDownState>().Counter = Counter;
 
-            if (MsgOverride.Key == null)
+            if (!MsgOverride.IsValid())
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
             else
             {
@@ -2597,7 +2597,7 @@ namespace PMDC.Dungeon
                 if (notice == null)
                     yield break;
                 GameManager.Instance.SE("Menu/Confirm");
-                if (notice.Title.Key.Key == "")
+                if (!notice.Title.Key.IsValid())
                     DungeonScene.Instance.PendingLeaderAction = MenuManager.Instance.SetSign(notice.Content.FormatLocal());
                 else
                     DungeonScene.Instance.PendingLeaderAction = MenuManager.Instance.ProcessMenuCoroutine(MenuManager.Instance.CreateNotice(notice.Title.FormatLocal(), () => { }, notice.Content.FormatLocal()));

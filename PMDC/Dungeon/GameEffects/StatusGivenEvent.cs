@@ -413,7 +413,7 @@ namespace PMDC.Dungeon
             {
                 if (context.Status.ID == ((StatusEffect)owner).ID)
                 {
-                    if (context.msg && Message.Key != null)
+                    if (context.msg && Message.IsValid())
                         DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName()));
                     context.CancelState.Cancel = true;
                 }
@@ -443,7 +443,7 @@ namespace PMDC.Dungeon
             {
                 if (context.Status.ID == ((StatusEffect)owner).ID)
                 {
-                    if (context.msg && Message.Key != null && ((StatusEffect)owner).TargetChar != null)
+                    if (context.msg && Message.IsValid() && ((StatusEffect)owner).TargetChar != null)
                         DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.Target.GetDisplayName(false), ((StatusEffect)owner).TargetChar.GetDisplayName(false)));
                     context.CancelState.Cancel = true;
                 }
@@ -475,7 +475,7 @@ namespace PMDC.Dungeon
                 {
                     if (status.StatusStates.Contains<MajorStatusState>())
                     {
-                        if (context.msg && Message.Key != null)
+                        if (context.msg && Message.IsValid())
                             DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.Target.GetDisplayName(false)));
                         context.CancelState.Cancel = true;
                         yield break;
@@ -507,7 +507,7 @@ namespace PMDC.Dungeon
                 int slot = context.Status.StatusStates.GetWithDefault<SlotState>().Slot;
                 if (context.Target.Skills[slot].Element.SkillNum == -1)
                 {
-                    if (context.msg && Message.Key != null)
+                    if (context.msg && Message.IsValid())
                         DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.Target.GetDisplayName(false)));
                     context.CancelState.Cancel = true;
                     yield break;
@@ -537,7 +537,7 @@ namespace PMDC.Dungeon
             {
                 if ((context.Target.CurrentForm.Gender == Gender.Genderless) != (context.Target.CurrentForm.Gender == context.User.CurrentForm.Gender))
                 {
-                    if (context.msg && Message.Key != null)
+                    if (context.msg && Message.IsValid())
                         DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.Target.GetDisplayName(false), context.User.GetDisplayName(false)));
                     context.CancelState.Cancel = true;
                 }
@@ -572,7 +572,7 @@ namespace PMDC.Dungeon
             {
                 if (context.Target.HasElement(Element))
                 {
-                    if (context.msg && Message.Key != null)
+                    if (context.msg && Message.IsValid())
                         DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.Target.GetDisplayName(false)));
                     context.CancelState.Cancel = true;
                 }
@@ -685,7 +685,7 @@ namespace PMDC.Dungeon
                 }
                 if (hasState)
                 {
-                    if (context.msg && Message.Key != null)
+                    if (context.msg && Message.IsValid())
                     {
                         DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName()));
 
@@ -772,7 +772,7 @@ namespace PMDC.Dungeon
                     }
                     if (block)
                     {
-                        if (context.msg && Message.Key != null)
+                        if (context.msg && Message.IsValid())
                         {
                             DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName(), statChange.ChangeStat.ToLocal()));
 
@@ -888,7 +888,7 @@ namespace PMDC.Dungeon
             Infiltrator state = context.ContextStates.GetWithDefault<Infiltrator>();
             if (state == null)
                 yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, context));
-            else if (ExceptionMsg && state.Msg.Key != null)
+            else if (ExceptionMsg && state.Msg.IsValid())
                 DungeonScene.Instance.LogMsg(String.Format(state.Msg.ToLocal(), context.User.GetDisplayName(false), owner.GetDisplayName()));
         }
     }
