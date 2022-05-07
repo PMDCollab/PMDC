@@ -18,9 +18,3 @@ Building Game
 Building Server
 * Run `dotnet publish -c Release -r win-x64 RogueEssence/WaypointServer/WaypointServer.csproj` to publish to Windows.
 * Run `dotnet publish -c Release -r linux-x64 RogueEssence/WaypointServer/WaypointServer.csproj` to publish to Linux.
-
-Building Updater
-* Run `dotnet publish -c Release -r win-x64 Updater/Updater.csproj` to publish to Windows.
-* Run `dotnet publish -c Release -r linux-x64 Updater/Updater.csproj` to publish to Linux.
-* Run `dotnet publish -c Release -r osx-x64 Updater/Updater.csproj` to publish to Linux.
-* Files will appear in the `publish` folder.
