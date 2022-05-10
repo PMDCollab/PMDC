@@ -364,6 +364,8 @@ namespace PMDC.Dungeon
 
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PASS_ATTACK").ToLocal(), ownerChar.GetDisplayName(false), newTarget.GetDisplayName(false)));
                     context.ExplosionTile = newTarget.CharLoc;
+                    context.Explosion.TargetAlignments |= Alignment.Foe;
+                    context.Explosion.TargetAlignments |= Alignment.Friend;
                     context.ContextStates.Set(new Redirected());
                     yield break;
                 }
