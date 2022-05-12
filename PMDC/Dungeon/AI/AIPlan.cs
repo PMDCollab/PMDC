@@ -1414,6 +1414,26 @@ namespace PMDC.Dungeon
                     if (target.HP * 4 / 3 > target.MaxHP)
                         return 0;
                 }
+                else if (moveIndex == 68 && (IQ & AIFlags.KnowsMatchups) == AIFlags.None)//counter; do not use if mirror coat status exists and has more than 1 turn left; NOTE: specialized AI code!
+                {
+                    StatusEffect mutexStatus = controlledChar.GetStatusEffect(66);
+                    if (mutexStatus != null)
+                    {
+                        CountDownState state = mutexStatus.StatusStates.Get<CountDownState>();
+                        if (state.Counter > 1)
+                            return 0;
+                    }
+                }
+                else if (moveIndex == 243 && (IQ & AIFlags.KnowsMatchups) == AIFlags.None)//Mirror coat; do not use if counter status exists and has more than 1 turn left; NOTE: specialized AI code!
+                {
+                    StatusEffect mutexStatus = controlledChar.GetStatusEffect(67);
+                    if (mutexStatus != null)
+                    {
+                        CountDownState state = mutexStatus.StatusStates.Get<CountDownState>();
+                        if (state.Counter > 1)
+                            return 0;
+                    }
+                }
                 else if (moveIndex == 256)//swallow; use only if damaged; NOTE: specialized AI code!
                 {
                     StatusEffect stockStatus = controlledChar.GetStatusEffect(53);
