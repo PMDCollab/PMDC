@@ -1958,17 +1958,18 @@ namespace PMDC.Dungeon
             {
                 InvItem item = ZoneManager.Instance.CurrentMap.ItemSpawns.Pick(DataManager.Instance.Save.Rand);
 
-                ItemData entry = DataManager.Instance.GetItem(item.ID);
-                if (!entry.Cursed)
-                {
-                    item.Cursed = false;
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PICKUP").ToLocal(), character.GetDisplayName(false), item.GetDisplayName()));
+                //Actually, we'll just let you pickup an autocurse item and get stuck
+                //ItemData entry = DataManager.Instance.GetItem(item.ID);
+                //if (!entry.Cursed)
+                //{
+                //item.Cursed = false;
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PICKUP").ToLocal(), character.GetDisplayName(false), item.GetDisplayName()));
 
-                    foreach (AnimEvent anim in Anims)
-                        yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, character));
+                foreach (AnimEvent anim in Anims)
+                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, character));
 
-                    character.EquipItem(item);
-                }
+                character.EquipItem(item);
+                //}
             }
             
         }
@@ -2600,7 +2601,7 @@ namespace PMDC.Dungeon
                 if (!notice.Title.Key.IsValid())
                     DungeonScene.Instance.PendingLeaderAction = MenuManager.Instance.SetSign(notice.Content.FormatLocal());
                 else
-                    DungeonScene.Instance.PendingLeaderAction = MenuManager.Instance.ProcessMenuCoroutine(MenuManager.Instance.CreateNotice(notice.Title.FormatLocal(), () => { }, notice.Content.FormatLocal()));
+                    DungeonScene.Instance.PendingLeaderAction = MenuManager.Instance.ProcessMenuCoroutine(MenuManager.Instance.CreateNotice(notice.Title.FormatLocal(), notice.Content.FormatLocal()));
                 yield break;
             }
         }

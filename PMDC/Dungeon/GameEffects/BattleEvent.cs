@@ -6288,11 +6288,11 @@ namespace PMDC.Dungeon
             {
                 ExplorerTeam team = (ExplorerTeam)context.Target.MemberTeam;
                 int moneyLost = team.Money - team.Money * (Multiplier - 1) / Multiplier;
-                team.Money -= moneyLost;
 
                 if (moneyLost > 0)
                 {
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_KNOCK_MONEY").ToLocal(), context.Target.GetDisplayName(false), Text.FormatKey("MONEY_AMOUNT", moneyLost.ToString())));
+                    team.LoseMoney(context.Target, moneyLost);
                     Loc endLoc = context.Target.CharLoc + context.User.CharDir.GetLoc() * 2;
                     yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropMoney(moneyLost, endLoc, context.Target.CharLoc));
                 }
@@ -11470,7 +11470,7 @@ namespace PMDC.Dungeon
                             {
                                 InvItem attackerItem = origin.EquippedItem;
                                 origin.DequipItem();
-                                ((ExplorerTeam)origin.MemberTeam).AddToInv(attackerItem);
+                                origin.MemberTeam.AddToInv(attackerItem);
                             }
                             origin.EquipItem(item);
                         }
@@ -11579,7 +11579,7 @@ namespace PMDC.Dungeon
                                 {
                                     InvItem attackerItem = origin.EquippedItem;
                                     origin.DequipItem();
-                                    ((ExplorerTeam)origin.MemberTeam).AddToInv(attackerItem);
+                                    origin.MemberTeam.AddToInv(attackerItem);
                                 }
                                 origin.EquipItem(item);
                             }
@@ -11643,16 +11643,16 @@ namespace PMDC.Dungeon
             int targetIndex = SelectItemTarget(context.Target);
             if (attackerIndex > -2 && targetIndex > -2)
             {
-                InvItem attackerItem = (attackerIndex > -1 ? ((ExplorerTeam)context.User.MemberTeam).GetInv(attackerIndex) : context.User.EquippedItem);
-                InvItem targetItem = (targetIndex > -1 ? ((ExplorerTeam)context.Target.MemberTeam).GetInv(targetIndex) : context.Target.EquippedItem);
+                InvItem attackerItem = (attackerIndex > -1 ? context.User.MemberTeam.GetInv(attackerIndex) : context.User.EquippedItem);
+                InvItem targetItem = (targetIndex > -1 ? context.Target.MemberTeam.GetInv(targetIndex) : context.Target.EquippedItem);
 
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_EXCHANGE_ITEM").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false),
                     attackerItem.GetDisplayName(), targetItem.GetDisplayName()));
 
                 if (targetIndex > -1)
                 {
-                    ((ExplorerTeam)context.Target.MemberTeam).RemoveFromInv(targetIndex);
-                    ((ExplorerTeam)context.Target.MemberTeam).AddToInv(attackerItem);
+                    context.Target.MemberTeam.RemoveFromInv(targetIndex);
+                    context.Target.MemberTeam.AddToInv(attackerItem);
                 }
                 else
                 {
@@ -11662,8 +11662,8 @@ namespace PMDC.Dungeon
 
                 if (attackerIndex > -1)
                 {
-                    ((ExplorerTeam)context.User.MemberTeam).RemoveFromInv(attackerIndex);
-                    ((ExplorerTeam)context.User.MemberTeam).AddToInv(targetItem);
+                    context.User.MemberTeam.RemoveFromInv(attackerIndex);
+                    context.User.MemberTeam.AddToInv(targetItem);
                 }
                 else
                 {
