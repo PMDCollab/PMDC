@@ -305,9 +305,10 @@ namespace PMDC.Dev
 
             for (int ii = 1; ii < DataManager.Instance.DataIndices[DataManager.DataType.Monster].Count; ii++)
             {
-                MonsterData data = DataManager.Instance.GetMonster(ii);
                 if (DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[ii].Released)
                 {
+                    MonsterData data = DataManager.Instance.GetMonster(ii);
+
                     string encounterStr = "UNKNOWN";
                     if (foundSpecies.ContainsKey(ii))
                     {
@@ -403,10 +404,10 @@ namespace PMDC.Dev
                         if (encounterMsg.Count > 0)
                             encounterStr = String.Join(", ", encounterMsg.ToArray());
                     }
-                    stats.Add(new string[4] { ii.ToString("D3"), data.Name.ToLocal(), data.JoinRate.ToString() + "%", encounterStr });
+                    stats.Add(new string[4] { ii.ToString("D3"), DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[ii].Name.ToLocal(), data.JoinRate.ToString() + "%", encounterStr });
                 }
                 else
-                    stats.Add(new string[4] { ii.ToString("D3"), data.Name.ToLocal(), "--%", "NO DATA" });
+                    stats.Add(new string[4] { ii.ToString("D3"), DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[ii].Name.ToLocal(), "--%", "NO DATA" });
             }
             if (csv)
                 writeCSVGuide("Encounters", stats);

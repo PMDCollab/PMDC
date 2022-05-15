@@ -13854,9 +13854,9 @@ namespace PMDC.Dungeon
             MonsterID formData = context.Target.BaseForm;
             BaseMonsterForm form = DataManager.Instance.GetMonster(formData.Species).Forms[formData.Form];
             if (Elements.Contains(form.Element1) || Elements.Contains(form.Element2))
-                return 30;
+                return 35;
             else
-                return -2000;
+                return -50;
         }
     }
 

@@ -1374,7 +1374,7 @@ namespace PMDC.Dungeon
 
             if (entry.Data.Category == BattleData.SkillCategory.Status)
             {
-                if (moveIndex == 275)//Ingrain; use it only if damaged, or if enemies are close; NOTE: specialized AI code!
+                if (moveIndex == 275)//Ingrain; use it only if damaged, AND if enemies are close; NOTE: specialized AI code!
                 {
                     bool nearEnemy = false;
                     foreach (Character character in seenChars)
@@ -1464,10 +1464,24 @@ namespace PMDC.Dungeon
                 }
                 else if (moveIndex == 100)//teleport; never use here if we attack to escape; handle it elsewhere; NOTE: specialized AI code!
                 {
-                    if ((IQ & AIFlags.AttackToEscape) == AIFlags.None)
-                        return 0;
-                    else//always use on self; considered good on self
-                        return 100;
+                    if ((IQ & AIFlags.AttackToEscape) != AIFlags.None)
+                    {
+                        if (target.HP < target.MaxHP)// only have a chance if damaged, or enemies close
+                            return 100;//always use on self; considered good on self
+
+                        bool nearEnemy = false;
+                        foreach (Character character in seenChars)
+                        {
+                            if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Foe && (character.CharLoc - controlledChar.CharLoc).Dist8() <= 3)
+                            {
+                                nearEnemy = true;
+                                break;
+                            }
+                        }
+                        if (nearEnemy)
+                            return 100;
+                    }
+                    return 0;
                 }
 
                 foreach (BattleEvent effect in entry.Data.OnHitTiles.EnumerateInOrder())
