@@ -1691,6 +1691,22 @@ namespace PMDC.Dungeon
                             return -100;
                         return 0;
                     }
+                    else if (effect is SwitcherEvent)
+                    {
+                        //assume always pointed at foe, always detrimental
+                        return -100;
+                    }
+                    else if (effect is SwitchHeldItemEvent)
+                    {
+                        //assume always pointed at foe, always detrimental
+                        //if both parties aren't holding an item, cancel
+                        if (target.EquippedItem.ID == -1 && controlledChar.EquippedItem.ID == -1)
+                            return 0;
+                        //don't trade an uncursed item for a cursed one
+                        if (target.EquippedItem.Cursed && !controlledChar.EquippedItem.Cursed)
+                            return 0;
+                        return -100;
+                    }
                     else if (effect is AddElementEvent)
                     {
                         //assume always pointed at foe, always detrimental
@@ -1729,7 +1745,7 @@ namespace PMDC.Dungeon
                         GiveMapStatusEvent giveEffect = (GiveMapStatusEvent)effect;
                         if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(giveEffect.StatusID))
                             return 0;
-                        else//assume always pointed at self, always beneficial
+                        else
                         {
                             //beneficial for self, detrimental to foe
                             if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
