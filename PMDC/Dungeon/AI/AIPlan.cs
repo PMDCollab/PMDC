@@ -1125,6 +1125,12 @@ namespace PMDC.Dungeon
                                     hitboxAction = stackEffect.StackPair[stack.Stack].Item1;
                                     explosion = stackEffect.StackPair[stack.Stack].Item2;
                                 }
+                                else
+                                {
+                                    entry = null;
+                                    hitboxAction = null;
+                                    explosion = null;
+                                }
                                 break;
                             }
                         }
@@ -1195,8 +1201,23 @@ namespace PMDC.Dungeon
         protected HitValue GetActionDirValue(int skillIndex, SkillData entry, Character controlledChar, List<Character> seenChars, Dir8 dir)
         {
 
-            //Dig/Fly/Dive/Phantom Force/Focus Punch; NOTE: specialized AI code!
-            if (skillIndex == 91 || skillIndex == 19 || skillIndex == 291 || skillIndex == 566 || skillIndex == 264)//Focus Punch;
+            //Dig/Fly/Dive/Phantom Force; NOTE: specialized AI code!
+            if (skillIndex == 91 || skillIndex == 19 || skillIndex == 291 || skillIndex == 566)
+            {
+                if (!controlledChar.AttackOnly)
+                {
+                    foreach (Character target in seenChars)
+                    {
+                        if (DungeonScene.Instance.IsTargeted(controlledChar, target, Alignment.Foe) && (target.CharLoc - controlledChar.CharLoc).Dist8() <= 3)
+                        {
+                            int newVal = GetAttackValue(controlledChar, skillIndex, entry, seenChars, target, 0);
+                            if (newVal > 0)
+                                return new HitValue(100, true);
+                        }
+                    }
+                }
+            }
+            else if (skillIndex == 264)//Focus Punch;
             {
                 //always activate if not already forced to attack
                 if (!controlledChar.AttackOnly)
@@ -1434,7 +1455,7 @@ namespace PMDC.Dungeon
                             return 0;
                     }
                 }
-                else if (moveIndex == 256)//swallow; use only if damaged; NOTE: specialized AI code!
+                else if (moveIndex == 256)//swallow; use only if stockpiled and damaged; NOTE: specialized AI code!
                 {
                     StatusEffect stockStatus = controlledChar.GetStatusEffect(53);
                     if (stockStatus != null)
@@ -1747,6 +1768,21 @@ namespace PMDC.Dungeon
                             return 0;
                         else
                         {
+                            //less chance to change the weather if it's currently a weather that you can change to
+                            foreach (int ii in iterateUsableSkillIndices(controlledChar))
+                            {
+                                SkillData otherEntry = DataManager.Instance.GetSkill(controlledChar.Skills[ii].Element.SkillNum);
+                                foreach (BattleEvent otherEffect in otherEntry.Data.OnHits.EnumerateInOrder())
+                                {
+                                    if (otherEffect is GiveMapStatusEvent)
+                                    {
+                                        GiveMapStatusEvent otherGiveEffect = (GiveMapStatusEvent)otherEffect;
+                                        if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(otherGiveEffect.StatusID))
+                                            return 30;
+                                    }
+                                }
+                            }
+
                             //beneficial for self, detrimental to foe
                             if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
                                 return 100;
