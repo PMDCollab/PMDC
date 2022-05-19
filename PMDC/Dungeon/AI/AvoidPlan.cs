@@ -25,11 +25,11 @@ namespace PMDC.Dungeon
             //create a pathfinding map?
         }
 
-        public override void SwitchedIn()
+        public override void SwitchedIn(BasePlan currentPlan)
         {
             goalPath = new List<Loc>();
             locHistory = new List<Loc>();
-            base.SwitchedIn();
+            base.SwitchedIn(currentPlan);
         }
 
         protected abstract bool RunFromAllies { get; }

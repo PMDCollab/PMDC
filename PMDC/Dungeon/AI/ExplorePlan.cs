@@ -36,11 +36,11 @@ namespace PMDC.Dungeon
     public class ExplorePlan : AIPlan
     {
         private List<Loc> goalPath;
-        private List<Loc> locHistory;
+        public List<Loc> LocHistory;
         public ExplorePlan(AIFlags iq) : base(iq)
         {
             goalPath = new List<Loc>();
-            locHistory = new List<Loc>();
+            LocHistory = new List<Loc>();
         }
         protected ExplorePlan(ExplorePlan other) : base(other) { }
         public override BasePlan CreateNew() { return new ExplorePlan(this); }
@@ -48,11 +48,13 @@ namespace PMDC.Dungeon
         {
             //create a pathfinding map?
         }
-        public override void SwitchedIn()
+        public override void SwitchedIn(BasePlan currentPlan)
         {
             goalPath = new List<Loc>();
-            locHistory = new List<Loc>();
-            base.SwitchedIn();
+            LocHistory = new List<Loc>();
+            if (currentPlan is AttackFoesPlan)
+                LocHistory.AddRange(((AttackFoesPlan)currentPlan).LocHistory);
+            base.SwitchedIn(currentPlan);
         }
 
         public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
@@ -62,12 +64,12 @@ namespace PMDC.Dungeon
 
             //remove all locs from the locHistory that are no longer on screen
             Loc seen = Character.GetSightDims();
-            for (int ii = locHistory.Count - 1; ii >= 0; ii--)
+            for (int ii = LocHistory.Count - 1; ii >= 0; ii--)
             {
-                Loc diff = locHistory[ii] - controlledChar.CharLoc;
+                Loc diff = LocHistory[ii] - controlledChar.CharLoc;
                 if (Math.Abs(diff.X) > seen.X || Math.Abs(diff.Y) > seen.Y || ii > 15)
                 {
-                    locHistory.RemoveRange(0, ii);
+                    LocHistory.RemoveRange(0, ii);
                     break;
                 }
             }
@@ -87,8 +89,8 @@ namespace PMDC.Dungeon
                         !BlockedByHazard(controlledChar, goalPath[goalPath.Count - 2]))//check to make sure the next step didn't suddely become blocked
                     {
                         //update current traversals
-                        if (locHistory.Count == 0 || locHistory[locHistory.Count - 1] != controlledChar.CharLoc)
-                            locHistory.Add(controlledChar.CharLoc);
+                        if (LocHistory.Count == 0 || LocHistory[LocHistory.Count - 1] != controlledChar.CharLoc)
+                            LocHistory.Add(controlledChar.CharLoc);
                         if (!preThink)
                         {
                             Character destChar = ZoneManager.Instance.CurrentMap.GetCharAtLoc(goalPath[goalPath.Count - 2]);
@@ -115,9 +117,9 @@ namespace PMDC.Dungeon
             //add them to a sorted list
 
             List<Loc> forwardFacingLocs = new List<Loc>();
-            if (locHistory.Count > 0)
+            if (LocHistory.Count > 0)
             {
-                Loc pastDir = locHistory[0] - controlledChar.CharLoc;
+                Loc pastDir = LocHistory[0] - controlledChar.CharLoc;
                 for (int ii = seenExits.Count - 1; ii >= 0; ii--)
                 {
                     if (Loc.Dot(pastDir, (seenExits[ii] - controlledChar.CharLoc)) <= 0)
@@ -148,8 +150,8 @@ namespace PMDC.Dungeon
             if (goalPath.Count == 0)
                 return null;
 
-            if (locHistory.Count == 0 || locHistory[locHistory.Count - 1] != controlledChar.CharLoc)
-                locHistory.Add(controlledChar.CharLoc);
+            if (LocHistory.Count == 0 || LocHistory[LocHistory.Count - 1] != controlledChar.CharLoc)
+                LocHistory.Add(controlledChar.CharLoc);
 
             //TODO: we seldom ever run into other characters who obstruct our path, but if they do, try to wait courteously for them if they are earlier on the team list than us
             //check to make sure we aren't force-warping anyone from their position

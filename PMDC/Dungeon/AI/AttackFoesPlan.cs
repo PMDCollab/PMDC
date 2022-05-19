@@ -14,6 +14,8 @@ namespace PMDC.Dungeon
         public PositionChoice PositionPattern;
         //continue to the last place the enemy was found (if no other enemies can be found) before losing aggro
         private Loc? targetLoc;
+        public List<Loc> LocHistory;
+        private List<Character> prevSeenChars;
 
         public AttackFoesPlan() { }
         public AttackFoesPlan(AIFlags iq, AttackChoice attackPattern, PositionChoice positionPattern) : base(iq)
@@ -27,7 +29,13 @@ namespace PMDC.Dungeon
             PositionPattern = other.PositionPattern;
         }
         public override BasePlan CreateNew() { return new AttackFoesPlan(this); }
-        public override void SwitchedIn() { targetLoc = null; base.SwitchedIn(); }
+        public override void SwitchedIn(BasePlan currentPlan)
+        {
+            prevSeenChars = new List<Character>();
+            LocHistory = new List<Loc>();
+            targetLoc = null;
+            base.SwitchedIn(currentPlan);
+        }
 
         public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
@@ -63,6 +71,13 @@ namespace PMDC.Dungeon
                     if (!playerSensibleToAttack(seenCharacters[ii]))
                         seenCharacters.RemoveAt(ii);
                 }
+            }
+
+            //we are allowed to continue perceiving a previously seen character for one more turn
+            foreach (Character prevChar in prevSeenChars)
+            {
+                if (!prevChar.Dead && !seenCharacters.Contains(prevChar))
+                    seenCharacters.Add(prevChar);
             }
 
 
@@ -184,6 +199,12 @@ namespace PMDC.Dungeon
             //update last-seen target location if we have a target, otherwise leave it alone
             if (targetChar != null)
                 targetLoc = targetChar.CharLoc;
+
+            //update lochistory for potential movement in exploration
+            if (LocHistory.Count == 0 || LocHistory[LocHistory.Count - 1] != controlledChar.CharLoc)
+                LocHistory.Add(controlledChar.CharLoc);
+            if (LocHistory.Count > 10)
+                LocHistory.RemoveAt(0);
 
             if (path != null)
             {
