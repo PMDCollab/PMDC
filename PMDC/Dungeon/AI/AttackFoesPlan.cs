@@ -15,7 +15,7 @@ namespace PMDC.Dungeon
         //continue to the last place the enemy was found (if no other enemies can be found) before losing aggro
         private Loc? targetLoc;
         public List<Loc> LocHistory;
-        private List<Character> prevSeenChars;
+        private Character lastSeenChar;
 
         public AttackFoesPlan() { }
         public AttackFoesPlan(AIFlags iq, AttackChoice attackPattern, PositionChoice positionPattern) : base(iq)
@@ -31,7 +31,7 @@ namespace PMDC.Dungeon
         public override BasePlan CreateNew() { return new AttackFoesPlan(this); }
         public override void SwitchedIn(BasePlan currentPlan)
         {
-            prevSeenChars = new List<Character>();
+            lastSeenChar = null;
             LocHistory = new List<Loc>();
             targetLoc = null;
             base.SwitchedIn(currentPlan);
@@ -47,19 +47,8 @@ namespace PMDC.Dungeon
                 return null;
             }
 
-            //if we have another move we can make, take this turn to reposition
-            int extraTurns = controlledChar.MovementSpeed - controlledChar.TiersUsed;
-
-            if (extraTurns <= 0)
-            {
-                //attempt to use a move
-                GameAction attack = TryAttackChoice(rand, controlledChar, AttackPattern);
-                if (attack.Type != GameAction.ActionType.Wait)
-                    return attack;
-            }
 
             //past this point, using moves won't work, so try to find a path
-
             List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets());
 
             bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
@@ -73,11 +62,37 @@ namespace PMDC.Dungeon
                 }
             }
 
-            //we are allowed to continue perceiving a previously seen character for one more turn
-            foreach (Character prevChar in prevSeenChars)
+            Character closestChar = null;
+            Loc closestDiff = Loc.Zero;
+            for (int ii = 0; ii < seenCharacters.Count; ii++)
             {
-                if (!prevChar.Dead && !seenCharacters.Contains(prevChar))
-                    seenCharacters.Add(prevChar);
+                if (closestChar == null)
+                {
+                    closestChar = seenCharacters[ii];
+                    closestDiff = controlledChar.CharLoc - closestChar.CharLoc;
+                }
+                else
+                {
+                    Loc newDiff = controlledChar.CharLoc - seenCharacters[ii].CharLoc;
+                    if (newDiff.DistSquared() < closestDiff.DistSquared())
+                        closestChar = seenCharacters[ii];
+                }
+            }
+            if (closestChar != null)
+            {
+                lastSeenChar = closestChar;
+                targetLoc = closestChar.CharLoc;
+            }
+
+            //if we have another move we can make, take this turn to reposition
+            int extraTurns = controlledChar.MovementSpeed - controlledChar.TiersUsed;
+
+            if (extraTurns <= 0)
+            {
+                //attempt to use a move
+                GameAction attack = TryAttackChoice(rand, controlledChar, AttackPattern);
+                if (attack.Type != GameAction.ActionType.Wait)
+                    return attack;
             }
 
 
@@ -198,7 +213,21 @@ namespace PMDC.Dungeon
 
             //update last-seen target location if we have a target, otherwise leave it alone
             if (targetChar != null)
+            {
                 targetLoc = targetChar.CharLoc;
+                lastSeenChar = targetChar;
+            }
+            else if (targetLoc != null) // follow up on a previous targeted loc
+            {
+                if (preThink)
+                {
+                    // no currently seen target, check if the target loc is in sight to determine if we should keep last seen char
+                    if (!controlledChar.CanSeeLoc(targetLoc.Value, controlledChar.GetCharSight()))
+                        lastSeenChar = null;
+                    if (lastSeenChar != null)
+                        targetLoc = lastSeenChar.CharLoc;
+                }
+            }
 
             //update lochistory for potential movement in exploration
             if (LocHistory.Count == 0 || LocHistory[LocHistory.Count - 1] != controlledChar.CharLoc)
