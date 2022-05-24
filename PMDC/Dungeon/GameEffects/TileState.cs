@@ -37,6 +37,16 @@ namespace PMDC.Dungeon
         public override GameplayState Clone() { return new SongState(this); }
     }
     [Serializable]
+    public class UnlockState : TileState
+    {
+        [DataType(0, RogueEssence.Data.DataManager.DataType.Item, false)]
+        public int UnlockItem;
+        public UnlockState() { }
+        public UnlockState(int unlockItem) { UnlockItem = unlockItem; }
+        protected UnlockState(UnlockState other) { UnlockItem = other.UnlockItem; }
+        public override GameplayState Clone() { return new UnlockState(this); }
+    }
+    [Serializable]
     public class NoticeState : TileState
     {
         public LocalFormat Title;

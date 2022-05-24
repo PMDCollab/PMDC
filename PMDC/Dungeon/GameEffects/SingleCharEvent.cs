@@ -2538,27 +2538,27 @@ namespace PMDC.Dungeon
     [Serializable]
     public class AskUnlockEvent : SingleCharEvent
     {
-        public int KeyIndex;
-
         public AskUnlockEvent() { }
-        public AskUnlockEvent(int keyIndex) { KeyIndex = keyIndex; }
-        protected AskUnlockEvent(AskUnlockEvent other) { KeyIndex = other.KeyIndex; }
-        public override GameEvent Clone() { return new AskUnlockEvent(this); }
+        public override GameEvent Clone() { return new AskUnlockEvent(); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
             if (character == DungeonScene.Instance.ActiveTeam.Leader)
             {
+                UnlockState unlock = ((EffectTile)owner).TileStates.GetWithDefault<UnlockState>();
+                if (unlock == null)
+                    yield break;
+
                 int itemSlot = -2;
 
-                if (character.EquippedItem.ID == KeyIndex && !character.EquippedItem.Cursed)
+                if (character.EquippedItem.ID == unlock.UnlockItem && !character.EquippedItem.Cursed)
                     itemSlot = BattleContext.EQUIP_ITEM_SLOT;
                 else if (character.MemberTeam is ExplorerTeam)
                 {
                     for (int ii = 0; ii < ((ExplorerTeam)character.MemberTeam).GetInvCount(); ii++)
                     {
                         InvItem item = ((ExplorerTeam)character.MemberTeam).GetInv(ii);
-                        if (item.ID == KeyIndex && !item.Cursed)
+                        if (item.ID == unlock.UnlockItem && !item.Cursed)
                         {
                             itemSlot = ii;
                             break;
@@ -2570,7 +2570,7 @@ namespace PMDC.Dungeon
                     DungeonScene.Instance.PendingLeaderAction = MenuManager.Instance.ProcessMenuCoroutine(askItemUseQuestion(itemSlot));
                 else
                     DungeonScene.Instance.PendingLeaderAction = MenuManager.Instance.SetSign(String.Format(new StringKey("DLG_LOCK").ToLocal()));
-                yield break;
+
             }
         }
 

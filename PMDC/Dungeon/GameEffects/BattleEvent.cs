@@ -13142,7 +13142,11 @@ namespace PMDC.Dungeon
                         {
                             TileData tileData = DataManager.Instance.GetTile(tile.Effect.ID);
                             if (tileData.StepType == TileData.TriggerType.Unlockable)
-                                unlockable = true;
+                            {
+                                UnlockState unlock = tile.Effect.TileStates.GetWithDefault<UnlockState>();
+                                if (unlock != null && unlock.UnlockItem == context.Item.ID)
+                                    unlockable = true;
+                            }
                         }
                     }
                     if (!unlockable)
@@ -13172,7 +13176,11 @@ namespace PMDC.Dungeon
             {
                 TileData entry = DataManager.Instance.GetTile(tile.Effect.GetID());
                 if (entry.StepType == TileData.TriggerType.Unlockable)
-                    yield return CoroutineManager.Instance.StartCoroutine(tile.Effect.InteractWithTile(context.User));
+                {
+                    UnlockState unlock = tile.Effect.TileStates.GetWithDefault<UnlockState>();
+                    if (unlock != null && unlock.UnlockItem == context.Item.ID)
+                        yield return CoroutineManager.Instance.StartCoroutine(tile.Effect.InteractWithTile(context.User));
+                }
             }
         }
     }

@@ -13,15 +13,17 @@ namespace PMDC.LevelGen
     {
         public int LockedTile;
         public int KeyTile;
+        public int KeyItem;
 
         public KeySealStep()
         {
         }
 
-        public KeySealStep(int sealedTile, int keyTile) : base()
+        public KeySealStep(int sealedTile, int keyTile, int keyItem) : base()
         {
             LockedTile = sealedTile;
             KeyTile = keyTile;
+            KeyItem = keyItem;
         }
 
         protected override void PlaceBorders(T map, Dictionary<Loc, SealType> sealList)
@@ -70,6 +72,7 @@ namespace PMDC.LevelGen
                 TileListState state = new TileListState();
                 state.Tiles = lockList;
                 newEffect.TileStates.Set(state);
+                newEffect.TileStates.Set(new UnlockState(KeyItem));
                 ((IPlaceableGenContext<EffectTile>)map).PlaceItem(keyLoc, newEffect);
             }
         }
