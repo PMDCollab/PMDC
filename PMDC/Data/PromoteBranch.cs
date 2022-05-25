@@ -394,7 +394,7 @@ namespace PMDC.Data
             foreach (BattleEvent effect in character.ActionEvents)
                 newChar.ActionEvents.Add((BattleEvent)effect.Clone());
 
-            Character player = new Character(newChar, character.MemberTeam);
+            Character player = new Character(newChar);
             foreach (BackReference<Skill> move in player.Skills)
             {
                 if (move.Element.SkillNum > -1)
