@@ -97,8 +97,8 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new FactionRefreshEvent(this); }
         public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            CharIndex charIndex = ZoneManager.Instance.CurrentMap.GetCharIndex(character);
-            if (charIndex.Faction == Faction)
+            Faction charFaction = ZoneManager.Instance.CurrentMap.GetCharFaction(character);
+            if (charFaction == Faction)
                 BaseEvent.Apply(owner, ownerChar, character);
         }
     }
