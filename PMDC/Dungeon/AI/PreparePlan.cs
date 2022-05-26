@@ -31,7 +31,10 @@ namespace PMDC.Dungeon
             foreach (Character seenChar in seenCharacters)
             {
                 if (!playerSense || playerSensibleToAttack(seenChar))
+                {
                     target = seenChar;
+                    break;
+                }
             }
 
             //need attack action check
@@ -90,7 +93,10 @@ namespace PMDC.Dungeon
             foreach (Character seenChar in seenCharacters)
             {
                 if (!playerSense || playerSensibleToAttack(seenChar))
+                {
                     target = seenChar;
+                    break;
+                }
             }
 
             //need attack action check
@@ -136,7 +142,10 @@ namespace PMDC.Dungeon
             foreach (Character seenChar in seenCharacters)
             {
                 if (!playerSense || playerSensibleToAttack(seenChar))
+                {
                     target = seenChar;
+                    break;
+                }
             }
 
             //need attack action check

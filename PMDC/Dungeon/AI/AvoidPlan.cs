@@ -52,13 +52,6 @@ namespace PMDC.Dungeon
                 return null;
 
             CharIndex ownIndex = ZoneManager.Instance.CurrentMap.GetCharIndex(controlledChar);
-            if (RunFromAllies && !RunFromFoes)
-            {
-                //when running from allies and not enemies, run from only the ones that are higher ranking than this one
-                CharIndex seenIndex = ZoneManager.Instance.CurrentMap.GetCharIndex(seenCharacters[0]);
-                if (seenIndex.Team > ownIndex.Team || seenIndex.Team == ownIndex.Team && seenIndex.Char > ownIndex.Char) //the lowest index is higher than this, therefore there's no one to run away from
-                    return null;
-            }
 
             return DumbAvoid(controlledChar, preThink, seenCharacters, ownIndex, rand);
         }
@@ -174,6 +167,24 @@ namespace PMDC.Dungeon
         }
         private GameAction DumbAvoid(Character controlledChar, bool preThink, List<Character> seenCharacters, CharIndex ownIndex, IRandom rand)
         {
+            //pre-filter the seen characters
+            //iterated in increasing character indices
+            if (RunFromAllies && !RunFromFoes)
+            {
+                for(int ii = seenCharacters.Count - 1; ii >= 0; ii--) 
+                {
+                    //only avoid if the seen character's index index is lower than this one, aka higher ranking member
+                    CharIndex seenIndex = ZoneManager.Instance.CurrentMap.GetCharIndex(seenCharacters[ii]);
+                    if (seenIndex.Team > ownIndex.Team)
+                        seenCharacters.RemoveAt(ii);
+                    else if (seenIndex.Team == ownIndex.Team)
+                    {
+                        if (seenIndex.Char > ownIndex.Char && seenCharacters[ii].MemberTeam.LeaderIndex != seenIndex.Char)
+                            seenCharacters.RemoveAt(ii);
+                    }
+                }
+            }
+
             StablePriorityQueue<double, Dir8> candidateDirs = new StablePriorityQueue<double, Dir8>();
 
             //choose the single direction that avoids other characters the most
@@ -186,24 +197,10 @@ namespace PMDC.Dungeon
                 double dirDistance = 0;
                 //iterated in increasing character indices
                 foreach (Character seenChar in seenCharacters)
-                {
-                    if (RunFromAllies && !RunFromFoes)
-                    {
-                        //only avoid if their character index is lower than this one, aka higher ranking member
-                        CharIndex seenIndex = ZoneManager.Instance.CurrentMap.GetCharIndex(seenChar);
-                        if (seenIndex.Team > ownIndex.Team)
-                            break;
-                        else if (seenIndex.Team == ownIndex.Team)
-                        {
-                            if (seenIndex.Char > ownIndex.Char && seenChar.MemberTeam.LeaderIndex != seenIndex.Char)
-                                continue;
-                        }
-                    }
-
                     dirDistance += Math.Sqrt((checkLoc - seenChar.CharLoc).DistSquared());
-                }
 
-                candidateDirs.Enqueue(-dirDistance, (Dir8)ii);
+                if (dirDistance > 0)
+                    candidateDirs.Enqueue(-dirDistance, (Dir8)ii);
             }
 
 
@@ -234,6 +231,9 @@ namespace PMDC.Dungeon
 
                 return false;
             };
+
+            if (candidateDirs.Count == 0)
+                return null;
 
             //try each direction from most appealing to least appealing, stopping if we get to "none"
             while (candidateDirs.Count > 0)
