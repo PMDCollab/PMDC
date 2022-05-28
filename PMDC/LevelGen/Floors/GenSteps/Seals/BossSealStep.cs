@@ -5,13 +5,29 @@ using RogueEssence;
 using RogueEssence.LevelGen;
 using PMDC.Dungeon;
 using System.Collections.Generic;
+using RogueEssence.Dev;
+using RogueEssence.Data;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// One part of several steps used to create a boss room.
+    /// This step takes an already-placed boss room, with an already-placed summoning tile and fills it with data on which tiles to lock down before summoning the boss.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class BossSealStep<T> : BaseSealStep<T> where T : ListMapGenContext
     {
+        /// <summary>
+        /// The tile used to seal the room.
+        /// </summary>
+        [DataType(0, DataManager.DataType.Tile, false)]
         public int SealedTile;
+
+        /// <summary>
+        /// The tile used to summon the battle.
+        /// </summary>
+        [DataType(0, DataManager.DataType.Tile, false)]
         public int BossTile;
 
         public BossSealStep()
@@ -26,6 +42,9 @@ namespace PMDC.LevelGen
             BossFilters = new List<BaseRoomFilter>();
         }
 
+        /// <summary>
+        /// Singles out the boss room intended for this process.
+        /// </summary>
         public List<BaseRoomFilter> BossFilters { get; set; }
 
         protected override void PlaceBorders(T map, Dictionary<Loc, SealType> sealList)

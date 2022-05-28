@@ -3,16 +3,44 @@ using RogueElements;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// Populates the empty floor plan of a map by creating a path consisting of one big room in the middle, with normal rooms connected to it.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class GridPathBeetle<T> : GridPathStartStepGeneric<T>
         where T : class, IRoomGridGenContext
     {
+        /// <summary>
+        /// Choose a horizontal or vertical orientation.
+        /// </summary>
         public bool Vertical;
-        public SpawnList<RoomGen<T>> GiantHallGen;
-        public ComponentCollection LargeRoomComponents { get; set; }
+
+        /// <summary>
+        /// The number of small rooms attached to the main large room, as a percent of the rooms possible.
+        /// </summary>
         public int LegPercent;
+
+        /// <summary>
+        /// The number of connections between adjacent small rooms, as a percent of the connections possible.
+        /// </summary>
         public int ConnectPercent;
+
+        /// <summary>
+        /// Allows the main body to be in a corner instead of in the center.
+        /// </summary>
         public bool FromCorners;
+
+
+        /// <summary>
+        /// The room types that can be used for the giant room in the layout.
+        /// </summary>
+        public SpawnList<RoomGen<T>> GiantHallGen;
+
+        /// <summary>
+        /// Components that the giant room will be labeled with.
+        /// </summary>
+        public ComponentCollection LargeRoomComponents { get; set; }
 
         public GridPathBeetle()
             : base()

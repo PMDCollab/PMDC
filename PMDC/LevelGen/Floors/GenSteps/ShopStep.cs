@@ -8,18 +8,50 @@ using PMDC.Dungeon;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// Spawns a shop somewhere in the map.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class ShopStep<T> : GenStep<T> where T : ListMapGenContext
     {
         const int MIN_SHOP_SIZE = 3;
 
+        /// <summary>
+        /// The map status used to check for thievery.
+        /// </summary>
         public int SecurityStatus;
+
+        /// <summary>
+        /// The items that can be sold in the shop.
+        /// This is filtered by Item Themes when generating.
+        /// </summary>
         public SpawnList<MapItem> Items { get; set; }
+
+        /// <summary>
+        /// Every shop chooses a theme to populate its catalog with.
+        /// This variable determines the possible themes to filter the items with.
+        /// </summary>
         public SpawnList<ItemTheme> ItemThemes { get; set; }
+
+        /// <summary>
+        /// The mobs that will be spawned if the player is caught stealing.
+        /// </summary>
         public SpawnList<MobSpawn> Mobs { get; set; }
+
+        /// <summary>
+        /// The mob that will run the shop.
+        /// </summary>
         public MobSpawn StartMob { get; set; }
+
+        /// <summary>
+        /// Narrows down the rooms in the map that the shop can spawn in.  No boss rooms, etc.
+        /// </summary>
         public List<BaseRoomFilter> Filters { get; set; }
 
+        /// <summary>
+        /// The personality of the shopkeeper.
+        /// </summary>
         public int Personality;
 
         public ShopStep() : base()

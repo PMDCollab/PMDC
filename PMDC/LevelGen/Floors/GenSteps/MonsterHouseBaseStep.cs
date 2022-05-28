@@ -14,10 +14,26 @@ namespace PMDC.LevelGen
     {
         public const int ALT_COLOR_ODDS = 32;
 
-        //they're generated on runtime, so they use map RNG, thus use spawnlists
+        /// <summary>
+        /// Items that can be found in the monster house.
+        /// This is in addition to the items naturally found on the map.
+        /// </summary>
         public SpawnList<MapItem> Items { get; set; }
+
+        /// <summary>
+        /// Themes that items in the item pool will be filtered by.
+        /// </summary>
         public SpawnList<ItemTheme> ItemThemes { get; set; }
+
+        /// <summary>
+        /// Mobs that can be found in the monster house.
+        /// This is in addition to the mobs naturally found on the map.
+        /// </summary>
         public SpawnList<MobSpawn> Mobs { get; set; }
+
+        /// <summary>
+        /// Themes that mobs in the mob pool will be filtered by.
+        /// </summary>
         public SpawnList<MobTheme> MobThemes { get; set; }
 
         public MonsterHouseBaseStep()

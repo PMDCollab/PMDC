@@ -5,25 +5,41 @@ using RogueEssence;
 using RogueEssence.LevelGen;
 using PMDC.Dungeon;
 using System.Collections.Generic;
+using RogueEssence.Dev;
+using RogueEssence.Data;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// Adds an extra room to the layout that can only be accessed by using a key item.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class KeyDetourStep<T> : BaseDetourStep<T> where T : BaseMapGenContext
     {
+        /// <summary>
+        /// The tile with which to lock the room with.
+        /// </summary>
+        [DataType(0, DataManager.DataType.Tile, false)]
         public int LockedTile;
-        
+
+        /// <summary>
+        /// The item with which to unlock the room with.
+        /// </summary>
+        [DataType(0, DataManager.DataType.Item, false)]
+        public int KeyItem;
+
         public KeyDetourStep()
         { }
 
-        public KeyDetourStep(int sealedTile) : this()
+        public KeyDetourStep(int sealedTile, int keyItem) : this()
         {
             LockedTile = sealedTile;
+            KeyItem = keyItem;
         }
 
         public override void Apply(T map)
         {
-
             Grid.LocTest checkGround = (Loc testLoc) =>
             {
                 if (!Collision.InBounds(map.Width, map.Height, testLoc))
@@ -42,6 +58,7 @@ namespace PMDC.LevelGen
             EffectTile effect = new EffectTile(LockedTile, true);
             TileListState state = new TileListState();
             effect.TileStates.Set(state);
+            effect.TileStates.Set(new UnlockState(KeyItem));
 
             List<Loc> freeTiles = new List<Loc>();
             LocRay4? ray = PlaceRoom(map, rays, effect, freeTiles);

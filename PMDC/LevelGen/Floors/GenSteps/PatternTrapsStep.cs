@@ -5,6 +5,11 @@ using RogueEssence.Dungeon;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// Litters traps on a room in specified patterns.
+    /// UNFINISHED DOES NOT WORK
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class PatternTrapsStep<T> : GenStep<T> where T : class, IFloorPlanGenContext
     {

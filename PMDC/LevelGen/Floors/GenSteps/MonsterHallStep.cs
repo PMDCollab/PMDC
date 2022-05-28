@@ -8,6 +8,12 @@ using PMDC.Dungeon;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// A monster house that occurs in hallways.
+    /// The room will gradually crumble away to reveal all monsters and items.
+    /// This step chooses an existing room (hallways are rooms) to put the house in.  The room must have a one-tile chokepoint to be selected.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class MonsterHallStep<T> : MonsterHouseBaseStep<T> where T : ListMapGenContext
     {
@@ -19,8 +25,16 @@ namespace PMDC.LevelGen
             Filters.AddRange(other.Filters);
         }
         public override MonsterHouseBaseStep<T> CreateNew() { return new MonsterHallStep<T>(this); }
+
+
+        /// <summary>
+        /// Used to filter out unwanted rooms to be used for this monster house.
+        /// </summary>
         public List<BaseRoomFilter> Filters { get; set; }
 
+        /// <summary>
+        /// The final size of the room after the crumbling finishes.
+        /// </summary>
         public Loc Size { get; set; }
 
         private Rect clampToBounds(Rect input, Rect bounds)

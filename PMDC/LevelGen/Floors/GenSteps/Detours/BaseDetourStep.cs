@@ -11,17 +11,29 @@ namespace PMDC.LevelGen
     [Serializable]
     public abstract class BaseDetourStep<T> : GenStep<T> where T : BaseMapGenContext
     {
-        //its own items, randomly or specifically
+        /// <summary>
+        /// Treasures found in the detour room.
+        /// </summary>
         public BulkSpawner<T, MapItem> Treasures;
-        //can have its own tiles (such as exits, or traps), randomly or specifically
+
+        /// <summary>
+        /// Tiles (such as exits or traps) found in the detour room.
+        /// </summary>
         public BulkSpawner<T, EffectTile> TileTreasures;
-        //its own mobs, randomly or specifically
+        
+        /// <summary>
+        /// Enemies found in the detour room.
+        /// </summary>
         public BulkSpawner<T, MobSpawn> GuardTypes;
 
-        //choose how long the hallway is (range)
+        /// <summary>
+        /// Length of the hall connecting the main path to the detour room.
+        /// </summary>
         public RandRange HallLength;
 
-        //choose the kind of room it can be
+        /// <summary>
+        /// The possible types of room shapes.
+        /// </summary>
         public SpawnList<RoomGen<T>> GenericRooms;
 
         public BaseDetourStep()

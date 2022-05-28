@@ -8,6 +8,12 @@ using RogueEssence.LevelGen;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// Spawns a rescue flag somewhere on the map, complete with a Monster House.
+    /// This step should never be explicitly added to a map's gen steps.
+    /// Instead, it needs to be dynamically added only when in rescue mode.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class RescueSpawner<T> : GenStep<T> where T : BaseMapGenContext
     {

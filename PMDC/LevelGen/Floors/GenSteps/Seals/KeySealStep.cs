@@ -5,14 +5,36 @@ using RogueEssence;
 using RogueEssence.LevelGen;
 using PMDC.Dungeon;
 using System.Collections.Generic;
+using RogueEssence.Dev;
+using RogueEssence.Data;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// One part of several steps used to create a sealed key room, or several thereof.
+    /// This step takes the target rooms and surrounds them with unbreakable walls, with one key block used to unlock them.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class KeySealStep<T> : BaseSealStep<T> where T : ListMapGenContext
     {
+        /// <summary>
+        /// The tile that is used to block off the room.
+        /// It is removed when the player inserts the key into the Key Tile.
+        /// </summary>
+        [DataType(0, DataManager.DataType.Tile, false)]
         public int LockedTile;
+
+        /// <summary>
+        /// The tile with which to lock the room with, requiring a key to open.
+        /// </summary>
+        [DataType(0, DataManager.DataType.Tile, false)]
         public int KeyTile;
+
+        /// <summary>
+        /// The item to be used as a key to unlock the vault.
+        /// </summary>
+        [DataType(0, DataManager.DataType.Item, false)]
         public int KeyItem;
 
         public KeySealStep()

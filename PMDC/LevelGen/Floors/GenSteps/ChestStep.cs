@@ -8,10 +8,22 @@ using RogueEssence.LevelGen;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// A monster house that takes the form of a booby-trapped chest.
+    /// Once opened, items spill out, the walls lock down, and monsters appear.
+    /// All must be defeated in order to unlock.
+    /// It could also just be a normal chest.
+    /// This step chooses an existing room to put the house in.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class ChestStep<T> : MonsterHouseBaseStep<T> where T : ListMapGenContext
     {
+        /// <summary>
+        /// Determines if this is actually a monster house and not just a chest with treasure.
+        /// </summary>
         public bool Ambush;
+
         public ChestStep() : base()
         {
             Filters = new List<BaseRoomFilter>();
@@ -28,6 +40,10 @@ namespace PMDC.LevelGen
             Filters.AddRange(other.Filters);
         }
         public override MonsterHouseBaseStep<T> CreateNew() { return new ChestStep<T>(this); }
+
+        /// <summary>
+        /// Used to filter out unwanted rooms to be used for this monster house.
+        /// </summary>
         public List<BaseRoomFilter> Filters { get; set; }
 
         public override void Apply(T map)

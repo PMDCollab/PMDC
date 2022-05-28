@@ -8,6 +8,11 @@ using PMDC.Dungeon;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// A monster house that consists of the entire floor.
+    /// When it activates, you can see all enemies on the map, and all enemies can see you.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class MonsterMansionStep<T> : MonsterHouseBaseStep<T> where T : ListMapGenContext
     {

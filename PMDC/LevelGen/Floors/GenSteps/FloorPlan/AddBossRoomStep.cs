@@ -6,6 +6,10 @@ using RogueEssence;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// Given a floor plan, this step attaches a boss room connected to an existing room, and then attaches a vault room that is unlocked when the player defeats the boss.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class AddBossRoomStep<T> : FloorPlanStep<T>
         where T : class, IFloorPlanGenContext
@@ -32,17 +36,45 @@ namespace PMDC.LevelGen
             this.Filters = new List<BaseRoomFilter>();
         }
 
-        public IRandPicker<RoomGen<T>> TreasureRooms { get; set; }
-        public ComponentCollection VaultComponents { get; set; }
+        /// <summary>
+        /// Determines which rooms are eligible to have the boss room added on.
+        /// </summary>
+        public List<BaseRoomFilter> Filters { get; set; }
+
+        /// <summary>
+        /// The room types that can be used for the boss room being added.
+        /// </summary>
         public IRandPicker<RoomGen<T>> BossRooms { get; set; }
+
+        /// <summary>
+        /// Components that the newly added boss room will be labeled with.
+        /// </summary>
         public ComponentCollection BossComponents { get; set; }
 
+        /// <summary>
+        /// The room types that can be used for the treasure room being added.
+        /// </summary>
+        public IRandPicker<RoomGen<T>> TreasureRooms { get; set; }
+
+        /// <summary>
+        /// Components that the newly added treasure room will be labeled with.
+        /// </summary>
+        public ComponentCollection VaultComponents { get; set; }
+
+        /// <summary>
+        /// The room types that can be used as the intermediate hall.
+        /// </summary>
         public IRandPicker<PermissiveRoomGen<T>> GenericHalls { get; set; }
 
+        /// <summary>
+        /// Components that the hall between the boss room and the rest of the layout will be labeled with.
+        /// </summary>
         public ComponentCollection BossHallComponents { get; set; }
-        public ComponentCollection VaultHallComponents { get; set; }
 
-        public List<BaseRoomFilter> Filters { get; set; }
+        /// <summary>
+        /// Components that the hall between the boss room and the vault room will be labeled with.
+        /// </summary>
+        public ComponentCollection VaultHallComponents { get; set; }
 
         public override void ApplyToPath(IRandom rand, FloorPlan floorPlan)
         {

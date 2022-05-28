@@ -5,19 +5,36 @@ using RogueEssence.Dungeon;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// Generates a room containing a ring of water encircling treasure.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class RoomGenWaterRing<T> : PermissiveRoomGen<T> where T : ITiledGenContext, IPlaceableGenContext<MapItem>
     {
-        //future features:?
-        //*note that the water ring will always be one tile thick here
-        //if you want an island in water, make another class
-
+        /// <summary>
+        /// The extra width of the room added to the area occupied by the water ring.
+        /// </summary>
         public RandRange PadWidth;
+
+        /// <summary>
+        /// The extra height of the room added to the area occupied by the water ring.
+        /// </summary>
         public RandRange PadHeight;
 
+        /// <summary>
+        /// The amount of items to spawn.
+        /// </summary>
         public int ItemAmount;
+
+        /// <summary>
+        /// Which items to spawn.
+        /// </summary>
         public SpawnList<MapItem> Treasures;
 
+        /// <summary>
+        /// The terrain used for the water ring.
+        /// </summary>
         public ITile WaterTerrain;
 
         public RoomGenWaterRing()

@@ -10,13 +10,32 @@ using PMDC.Dungeon;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// Sets various attributes about the map.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class MapDataStep<T> : GenStep<T> where T : BaseMapGenContext
     {
+        /// <summary>
+        /// The default map music.
+        /// </summary>
         [Music(0)]
         public string Music;
+
+        /// <summary>
+        /// How many turns the player can spend on the map before an instant game over.
+        /// </summary>
         public int TimeLimit;
+
+        /// <summary>
+        /// The darkness level for map exploration.
+        /// </summary>
         public Map.SightRange TileSight;
+
+        /// <summary>
+        /// The darkness level for character viewing.
+        /// </summary>
         public Map.SightRange CharSight;
 
         public MapDataStep()
@@ -56,11 +75,23 @@ namespace PMDC.LevelGen
         }
     }
 
+    /// <summary>
+    /// Adds a map status that is considered the "default" for that map.
+    /// The map will always revert back to this status even if replaced (it will wait for the replacing status to run out).
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class DefaultMapStatusStep<T> : GenStep<T> where T : BaseMapGenContext
     {
+        /// <summary>
+        /// The map status used to set the default map status.
+        /// </summary>
         [DataType(0, DataManager.DataType.MapStatus, false)]
         public int SetterID;
+
+        /// <summary>
+        /// The possible default map statuses.
+        /// </summary>
         [DataType(1, DataManager.DataType.MapStatus, false)]
         public int[] DefaultMapStatus;
 
@@ -95,7 +126,10 @@ namespace PMDC.LevelGen
     }
 
 
-
+    /// <summary>
+    /// Adds a map status to the map, with the specified MapStatusStates
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class StateMapStatusStep<T> : GenStep<T> where T : BaseMapGenContext
     {

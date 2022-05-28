@@ -8,6 +8,12 @@ using PMDC.Dungeon;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// A standard monster house that appears as a room filled with treasure.
+    /// When an explorer enters the premises, the monsters appear.
+    /// This step chooses an existing room to put the house in.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class MonsterHouseStep<T> : MonsterHouseBaseStep<T> where T : ListMapGenContext
     {
@@ -20,6 +26,10 @@ namespace PMDC.LevelGen
             Filters.AddRange(other.Filters);
         }
         public override MonsterHouseBaseStep<T> CreateNew() { return new MonsterHouseStep<T>(this); }
+
+        /// <summary>
+        /// Used to filter out unwanted rooms to be used for this monster house.
+        /// </summary>
         public List<BaseRoomFilter> Filters { get; set; }
 
         public override void Apply(T map)

@@ -7,6 +7,10 @@ using RogueEssence.LevelGen;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// Generates a cave guarded by a single mob.  It's hardcoded to look a specific way.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class RoomGenGuardedCave<T> : RoomGen<T> where T : IUnbreakableGenContext, IPlaceableGenContext<MapItem>, IPlaceableGenContext<EffectTile>, IGroupPlaceableGenContext<TeamSpawn>, IMobSpawnMap
     {

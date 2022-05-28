@@ -8,12 +8,32 @@ using System.Collections.Generic;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// Adds an extra room to the layout that can only be accessed by pushing a switch.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class SwitchDetourStep<T> : BaseDetourStep<T> where T : BaseMapGenContext
     {
+        /// <summary>
+        /// The tile with which to lock the room with.
+        /// </summary>
         public int SealedTile;
+
+
+        /// <summary>
+        /// The tile that serves as the switch to open the door.
+        /// </summary>
         public int SwitchTile;
+
+        /// <summary>
+        /// Determines if a time limit is triggered when pressing the switch.
+        /// </summary>
         public bool TimeLimit;
+
+        /// <summary>
+        /// The number of detours created.
+        /// </summary>
         public RandRange EntranceCount;
 
         public SwitchDetourStep()

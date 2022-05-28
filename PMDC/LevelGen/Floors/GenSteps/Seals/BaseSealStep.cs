@@ -23,6 +23,9 @@ namespace PMDC.LevelGen
             this.Filters = new List<BaseRoomFilter>();
         }
 
+        /// <summary>
+        /// Determines the rooms that serve as a vault and are to be locked away.
+        /// </summary>
         public List<BaseRoomFilter> Filters { get; set; }
 
         protected abstract void PlaceBorders(T map, Dictionary<Loc, SealType> sealList);

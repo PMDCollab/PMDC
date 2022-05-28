@@ -8,6 +8,11 @@ using RogueEssence.LevelGen;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// Generates a boss room with specific tiles and mobs.
+    /// EDITOR UNFRIENDLY
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class RoomGenSpecificBoss<T> : RoomGenSpecific<T> where T : ListMapGenContext
     {

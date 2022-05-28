@@ -7,6 +7,10 @@ using RogueEssence.LevelGen;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// Generates an evolution room.  It's 7x6 in size and hardcoded to look a specific way.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class RoomGenEvo<T> : RoomGen<T> where T : ITiledGenContext, IPostProcGenContext, IPlaceableGenContext<EffectTile>
     {
@@ -118,7 +122,10 @@ namespace PMDC.LevelGen
     }
 
 
-
+    /// <summary>
+    /// Generates an evolution room.  It's 5x6 in size and hardcoded to look a specific way.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class RoomGenEvoSmall<T> : PermissiveRoomGen<T> where T : ITiledGenContext, IPostProcGenContext, IPlaceableGenContext<EffectTile>
     {
