@@ -13,13 +13,20 @@ using System.Linq;
 namespace PMDC.LevelGen
 {
     /// <summary>
-    /// Spawns the mob if it matches version ID.
+    /// Spawns the mob if the player's random seed has a specific remainder when divided by a specific number.
     /// </summary>
     [Serializable]
     public class MobCheckVersionDiff : MobSpawnCheck
     {
-        public int Remainder;
+        /// <summary>
+        /// The number to divide the player's seed by.
+        /// </summary>
         public int Div;
+
+        /// <summary>
+        /// The remainder to check for when dividing the player's seed.
+        /// </summary>
+        public int Remainder;
 
         public MobCheckVersionDiff()
         {

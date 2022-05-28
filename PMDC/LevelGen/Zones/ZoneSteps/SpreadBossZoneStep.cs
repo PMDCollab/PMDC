@@ -8,9 +8,15 @@ using RogueEssence.LevelGen;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// Generates boss battles randomly across the whole dungeon segment.
+    /// </summary>
     [Serializable]
     public class SpreadBossZoneStep : ZoneStep
     {
+        /// <summary>
+        /// Determines how many floors to distribute the step to, and how spread apart they are.
+        /// </summary>
         public SpreadPlanBase SpreadPlan;
         public Priority BossRoomPriority;
         public Priority RewardPriority;

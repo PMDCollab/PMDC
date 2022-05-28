@@ -8,32 +8,54 @@ using RogueEssence.LevelGen;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// Generates vaults randomly across the whole dungeon segment.
+    /// </summary>
     [Serializable]
     public class SpreadVaultZoneStep : ZoneStep
     {
+        /// <summary>
+        /// Determines how many floors to distribute the step to, and how spread apart they are.
+        /// </summary>
         public SpreadPlanBase SpreadPlan;
+
+        /// <summary>
+        /// At what point in the map gen process to run the item placement steps in.
+        /// </summary>
         public Priority ItemPriority;
+
+        /// <summary>
+        /// At what point in the map gen process to run the mob placement steps in.
+        /// </summary>
         public Priority MobPriority;
 
         public List<IGenPriority> VaultSteps;
 
-        //items can be multiple lists
+        /// <summary>
+        /// Encounter table for items found in the vault.
+        /// </summary>
         [RangeBorder(0, true, true)]
         public SpawnRangeList<MapItem> Items;
+
+        /// <summary>
+        /// Amount of the items randomly chosen from spawnlist
+        /// </summary>
+        [RangeBorder(0, true, true)]
+        public RangeDict<RandRange> ItemAmount;
+
+        [RangeBorder(0, true, true)]
+        public RangeDict<IStepSpawner<ListMapGenContext, MapItem>> ItemSpawners;
+        [RangeBorder(0, true, true)]
+        public RangeDict<RandomRoomSpawnStep<ListMapGenContext, MapItem>> ItemPlacements;
+
+        /// <summary>
+        /// Encounter table for mobs found in the vault.
+        /// </summary>
         [RangeBorder(0, true, true)]
         public SpawnRangeList<MobSpawn> Mobs;
         //special enemies will have their level scaled according to the paramrange provided by the floor
         //levels will be a spawnrangelist of ints, autocalculated with increments of 3-4
 
-        /// <summary>
-        /// Amount for the items randomly chosen from spawnlist
-        /// </summary>
-        [RangeBorder(0, true, true)]
-        public RangeDict<RandRange> ItemAmount;
-        [RangeBorder(0, true, true)]
-        public RangeDict<IStepSpawner<ListMapGenContext, MapItem>> ItemSpawners;
-        [RangeBorder(0, true, true)]
-        public RangeDict<RandomRoomSpawnStep<ListMapGenContext, MapItem>> ItemPlacements;
         [RangeBorder(0, true, true)]
         public RangeDict<RandRange> MobAmount;
         [RangeBorder(0, true, true)]

@@ -7,9 +7,16 @@ using RogueEssence.LevelGen;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// The zone step responsible for placing the rescue tile and monster house when a rescue is active.
+    /// Does nothing otherwise.
+    /// </summary>
     [Serializable]
     public class SaveVarsZoneStep : ZoneStep
     {
+        /// <summary>
+        /// At what point in the map gen process to run the step in.
+        /// </summary>
         public Priority Priority;
 
         public SaveVarsZoneStep(Priority priority)

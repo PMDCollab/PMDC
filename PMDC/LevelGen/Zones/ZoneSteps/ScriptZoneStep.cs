@@ -11,12 +11,23 @@ using System.Linq;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// Calls a lua script function that acts as the map gen step.
+    /// </summary>
     [Serializable]
     public class ScriptZoneStep : ZoneStep
     {
+        /// <summary>
+        /// The name of the script.  The resulting function will be ZONE_GEN_SCRIPT.[Script Name]
+        /// </summary>
         public string Script;
+
+        /// <summary>
+        /// Additional arguments that will be passed into the script.
+        /// </summary>
         [Multiline(0)]
         public string ArgTable;
+
         [NonSerialized]
         private ulong seed;
 

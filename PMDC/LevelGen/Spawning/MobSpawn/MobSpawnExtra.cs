@@ -47,6 +47,9 @@ namespace PMDC.LevelGen
     [Serializable]
     public class MobSpawnAltColor : MobSpawnExtra
     {
+        /// <summary>
+        /// One-in-this chance.
+        /// </summary>
         public int Odds;
 
         public MobSpawnAltColor() { }
@@ -78,7 +81,14 @@ namespace PMDC.LevelGen
     [Serializable]
     public class MobSpawnMovesOff : MobSpawnExtra
     {
+        /// <summary>
+        /// The move index to start turning moves off.
+        /// </summary>
         public int StartAt;
+
+        /// <summary>
+        /// Remove the moves entirely.
+        /// </summary>
         public bool Remove;
 
         public MobSpawnMovesOff() { }
@@ -156,7 +166,7 @@ namespace PMDC.LevelGen
     }
 
     /// <summary>
-    /// Spawn the mob with stat boosts (vitamin boosts) that scale based on level
+    /// Spawn the mob with stat boosts (vitamin boosts) that scale based on its level
     /// </summary>
     [Serializable]
     public class MobSpawnScaledBoost : MobSpawnExtra
@@ -205,12 +215,20 @@ namespace PMDC.LevelGen
     }
 
     /// <summary>
-    /// Spawn the mob an item
+    /// Spawn the mob with an item.
     /// </summary>
     [Serializable]
     public class MobSpawnItem : MobSpawnExtra
     {
+        /// <summary>
+        /// The possible items.  Picks one.
+        /// </summary>
         public SpawnList<InvItem> Items;
+
+        /// <summary>
+        /// Only give it the item on map generation.
+        /// Respawns that occur after the map is generated do not get the item.
+        /// </summary>
         public bool MapStartOnly;
 
         public MobSpawnItem()
@@ -254,12 +272,21 @@ namespace PMDC.LevelGen
 
 
     /// <summary>
-    /// Spawn the mob an item
+    /// Spawn the mob with its inventory filled with the specified items.
+    /// Inventory items are not dropped when the mob is defeated.
     /// </summary>
     [Serializable]
     public class MobSpawnInv : MobSpawnExtra
     {
+        /// <summary>
+        /// Items to give.  All of them will be placed in the mob's inventory.
+        /// </summary>
         public List<InvItem> Items;
+
+        /// <summary>
+        /// Only give it the item on map generation.
+        /// Respawns that occur after the map is generated do not get the item.
+        /// </summary>
         public bool MapStartOnly;
 
         public MobSpawnInv()
@@ -302,8 +329,19 @@ namespace PMDC.LevelGen
     [Serializable]
     public class MobSpawnLevelScale : MobSpawnExtra
     {
+        /// <summary>
+        /// The floor to start scaling level at.
+        /// </summary>
         public int StartFromID;
+
+        /// <summary>
+        /// The numerator for the fractional level to add per floor.
+        /// </summary>
         public int AddNumerator;
+
+        /// <summary>
+        /// The denominator for the fractional level to add per floor.
+        /// </summary>
         public int AddDenominator;
 
         public MobSpawnLevelScale()
@@ -342,7 +380,14 @@ namespace PMDC.LevelGen
     [Serializable]
     public class MobSpawnLoc : MobSpawnExtra
     {
+        /// <summary>
+        /// The location.
+        /// </summary>
         public Loc Loc;
+
+        /// <summary>
+        /// The direction.
+        /// </summary>
         public Dir8 Dir;
 
         public MobSpawnLoc() { }
@@ -369,7 +414,7 @@ namespace PMDC.LevelGen
 
 
     /// <summary>
-    /// Spawn the mob with recruitment turned off
+    /// Spawn the mob with recruitment turned off.
     /// </summary>
     [Serializable]
     public class MobSpawnUnrecruitable : MobSpawnExtra
@@ -391,7 +436,7 @@ namespace PMDC.LevelGen
 
 
     /// <summary>
-    /// Spawn the mob with recruitment turned off
+    /// Spawns the mob with aggression towards enemy mobs.  Only applies to neutral mobs.
     /// </summary>
     [Serializable]
     public class MobSpawnFoeConflict : MobSpawnExtra
@@ -412,7 +457,7 @@ namespace PMDC.LevelGen
 
 
     /// <summary>
-    /// Spawn the mob with an effect on interaction (shows up for allies only)
+    /// Spawn the mob with an effect on interaction.  Only applies to allies or neutral mobs.
     /// </summary>
     [Serializable]
     public class MobSpawnInteractable : MobSpawnExtra
@@ -451,11 +496,14 @@ namespace PMDC.LevelGen
 
 
     /// <summary>
-    /// Spawn the mob with a lua data table
+    /// Spawn the mob with a lua data table.
     /// </summary>
     [Serializable]
     public class MobSpawnLuaTable : MobSpawnExtra
     {
+        /// <summary>
+        /// The lua table.
+        /// </summary>
         [Multiline(0)]
         public string LuaTable;
 
@@ -482,7 +530,7 @@ namespace PMDC.LevelGen
 
 
     /// <summary>
-    /// Spawn the mob with a lua data table
+    /// Spawn the mob with a discriminator.  This is used for personality calculations.
     /// </summary>
     [Serializable]
     public class MobSpawnDiscriminator : MobSpawnExtra

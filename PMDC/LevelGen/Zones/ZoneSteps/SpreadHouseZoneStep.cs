@@ -10,10 +10,20 @@ using RogueEssence.LevelGen;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// Generates monster houses randomly across the whole dungeon segment.
+    /// </summary>
     [Serializable]
     public class SpreadHouseZoneStep : ZoneStep
     {
+        /// <summary>
+        /// Determines how many floors to distribute the step to, and how spread apart they are.
+        /// </summary>
         public SpreadPlanBase SpreadPlan;
+
+        /// <summary>
+        /// At what point in the map gen process to run the step in.
+        /// </summary>
         public Priority Priority;
 
         //they're generated on runtime, so they use map RNG, thus use spawnlists
