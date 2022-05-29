@@ -3257,14 +3257,7 @@ namespace PMDC.Dungeon
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(status, false));
 
             foreach (Character character in DungeonScene.Instance.ActiveTeam.IterateMainByRank())
-            {
-                if (character.Dead)
-                {
-                    character.Dead = false;
-                    character.DefeatAt = "";
-                }
                 character.FullRestore();
-            }
 
             yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
         }
