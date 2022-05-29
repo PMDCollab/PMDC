@@ -30,13 +30,13 @@ jobs:
       - name: Build Mac App
         run: dotnet publish -c Release -r osx-x64 PMDC/PMDC.csproj
       - name: Build Windows Server x86
-        run: dotnet publish -c Release -r win-x86 RogueEssence/WaypointServer/WaypointServer.csproj
+        run: dotnet publish -c Release -r win-x86 RogueEssence/WaypointServer/WaypointServer.csproj;mv RogueEssence/publish/win-x86/WaypointServer/ publish/win-x86/
       - name: Build Windows Server
-        run: dotnet publish -c Release -r win-x64 RogueEssence/WaypointServer/WaypointServer.csproj
+        run: dotnet publish -c Release -r win-x64 RogueEssence/WaypointServer/WaypointServer.csproj;mv RogueEssence/publish/win-x64/WaypointServer/ publish/win-x64/
       - name: Build Linux Server
-        run: dotnet publish -c Release -r linux-x64 RogueEssence/WaypointServer/WaypointServer.csproj
+        run: dotnet publish -c Release -r linux-x64 RogueEssence/WaypointServer/WaypointServer.csproj;mv RogueEssence/publish/linux-x64/WaypointServer/ publish/linux-x64/
       - name: Build Mac Server
-        run: dotnet publish -c Release -r osx-x64 RogueEssence/WaypointServer/WaypointServer.csproj
+        run: dotnet publish -c Release -r osx-x64 RogueEssence/WaypointServer/WaypointServer.csproj;mv RogueEssence/publish/osx-x64/WaypointServer.app/ publish/osx-x64/
       - name: Zip Windows x86
         run: cd publish/win-x86/;zip -r windows-x86.zip PMDC/ WaypointServer/
       - name: Zip Windows
