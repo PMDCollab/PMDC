@@ -39,7 +39,12 @@ namespace PMDC.LevelGen
         public SpawnRangeList<MobTheme> MobThemes;
         public SpawnList<IMonsterHouseBaseStep> HouseStepSpawns;
 
-        [StringTypeConstraint(0, typeof(ModGenState))]
+        /// <summary>
+        /// Flags from the player's passives that will affect the appearance rate of the monster house.
+        /// If a player enters a floor and is carrying an item, intrinsic, etc. that has a ModGenState listed here,
+        /// The chance of the monster house appearing will be increased by the ModGenState's value.
+        /// </summary>
+        [StringTypeConstraint(1, typeof(ModGenState))]
         public List<FlagType> ModStates;
 
         //spreads an item through the floors
