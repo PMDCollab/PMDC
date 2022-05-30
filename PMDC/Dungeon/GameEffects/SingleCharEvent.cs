@@ -2566,17 +2566,18 @@ namespace PMDC.Dungeon
                     }
                 }
 
+                ItemData itemEntry = DataManager.Instance.GetItem(unlock.UnlockItem);
                 if (itemSlot > -2)
-                    DungeonScene.Instance.PendingLeaderAction = MenuManager.Instance.ProcessMenuCoroutine(askItemUseQuestion(itemSlot));
+                    DungeonScene.Instance.PendingLeaderAction = MenuManager.Instance.ProcessMenuCoroutine(askItemUseQuestion(itemSlot, itemEntry));
                 else
-                    DungeonScene.Instance.PendingLeaderAction = MenuManager.Instance.SetSign(String.Format(new StringKey("DLG_LOCK").ToLocal()));
+                    DungeonScene.Instance.PendingLeaderAction = MenuManager.Instance.SetSign(String.Format(new StringKey("DLG_LOCK").ToLocal(), itemEntry.GetIconName()));
 
             }
         }
 
-        private DialogueBox askItemUseQuestion(int itemSlot)
+        private DialogueBox askItemUseQuestion(int itemSlot, ItemData item)
         {
-            return MenuManager.Instance.CreateQuestion(String.Format(new StringKey("DLG_LOCK_KEY").ToLocal()),
+            return MenuManager.Instance.CreateQuestion(String.Format(new StringKey("DLG_LOCK_KEY").ToLocal(), item.GetIconName()),
                 () => { MenuManager.Instance.EndAction = DungeonScene.Instance.ProcessPlayerInput(new GameAction(GameAction.ActionType.UseItem, Dir8.None, itemSlot, -1)); },
                 () => { });
         }
