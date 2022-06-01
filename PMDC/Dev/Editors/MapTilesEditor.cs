@@ -24,6 +24,7 @@ namespace RogueEssence.Dev
             //for strings, use an edit textbox
             TextBox txtValue = new TextBox();
             txtValue.Height = 100;
+            txtValue.AcceptsReturn = true;
             StringBuilder str = new StringBuilder();
             Tile floor = new Tile(0);
             Tile impassable = new Tile(1);
@@ -31,28 +32,31 @@ namespace RogueEssence.Dev
             Tile water = new Tile(3);
             Tile lava = new Tile(4);
             Tile pit = new Tile(5);
-            for (int yy = 0; yy < member[0].Length; yy++)
+            if (member != null && member.Length > 0)
             {
-                for (int xx = 0; xx < member.Length; xx++)
+                for (int yy = 0; yy < member[0].Length; yy++)
                 {
-                    ITile tile = member[xx][yy];
-                    if (tile.TileEquivalent(floor))
-                        str.Append('.');
-                    else if (tile.TileEquivalent(impassable))
-                        str.Append('X');
-                    else if (tile.TileEquivalent(wall))
-                        str.Append('#');
-                    else if (tile.TileEquivalent(water))
-                        str.Append('~');
-                    else if (tile.TileEquivalent(lava))
-                        str.Append('^');
-                    else if (tile.TileEquivalent(pit))
-                        str.Append('_');
-                    else
-                        str.Append('?');
+                    for (int xx = 0; xx < member.Length; xx++)
+                    {
+                        ITile tile = member[xx][yy];
+                        if (tile.TileEquivalent(floor))
+                            str.Append('.');
+                        else if (tile.TileEquivalent(impassable))
+                            str.Append('X');
+                        else if (tile.TileEquivalent(wall))
+                            str.Append('#');
+                        else if (tile.TileEquivalent(water))
+                            str.Append('~');
+                        else if (tile.TileEquivalent(lava))
+                            str.Append('^');
+                        else if (tile.TileEquivalent(pit))
+                            str.Append('_');
+                        else
+                            str.Append('?');
+                    }
+                    if (yy < member[0].Length - 1)
+                        str.Append('\n');
                 }
-                if (yy < member[0].Length-1)
-                    str.Append('\n');
             }
 
             txtValue.Text = str.ToString();
