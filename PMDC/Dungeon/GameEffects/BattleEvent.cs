@@ -5908,12 +5908,12 @@ namespace PMDC.Dungeon
             MonsterID formData = context.Target.BaseForm;
             BaseMonsterForm form = DataManager.Instance.GetMonster(formData.Species).Forms[formData.Form];
 
-            int typeMatchup = PreTypeEvent.CalculateTypeMatchup(TargetElement, form.Element1);
-            typeMatchup += PreTypeEvent.CalculateTypeMatchup(TargetElement, form.Element2);
+            int typeMatchup = PreTypeEvent.CalculateTypeMatchup(TargetElement, context.Target.Element1);
+            typeMatchup += PreTypeEvent.CalculateTypeMatchup(TargetElement, context.Target.Element2);
 
             int heal = 5;
             List<Stat> stats = new List<Stat>();
-            if (TargetElement == 00 || form.Element1 == TargetElement || form.Element2 == TargetElement)
+            if (TargetElement == 00 || context.Target.Element1 == TargetElement || context.Target.Element2 == TargetElement)
             {
                 heal = 20;
                 stats.Add(Stat.HP);
@@ -13861,7 +13861,7 @@ namespace PMDC.Dungeon
         {
             MonsterID formData = context.Target.BaseForm;
             BaseMonsterForm form = DataManager.Instance.GetMonster(formData.Species).Forms[formData.Form];
-            if (Elements.Contains(form.Element1) || Elements.Contains(form.Element2))
+            if (Elements.Contains(context.Target.Element1) || Elements.Contains(context.Target.Element2))
                 return 35;
             else
                 return -50;
