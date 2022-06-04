@@ -44,7 +44,7 @@ jobs:
       - name: Zip Linux
         run: cd publish/linux-x64/;zip -r linux-x64.zip PMDC/ WaypointServer/
       - name: Zip Mac
-        run: cd publish/osx-x64/;zip -r osx-x64.zip PMDC/ WaypointServer/
+        run: cd publish/osx-x64/;zip -r osx-x64.zip PMDC/ WaypointServer.app/
       - name: Set Version
         run: echo "::set-output name=version::$(sed -En 's,<\AssemblyVersion>(.+)</AssemblyVersion>,\1,p' PMDC/PMDC.csproj)"
         id: version
