@@ -4099,6 +4099,21 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class DistanceOnlyEvent : BattleEvent
+    {
+        public DistanceOnlyEvent() { }
+        public override GameEvent Clone() { return new DistanceOnlyEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            int diff = (context.StrikeStartTile - context.Target.CharLoc).Dist8();
+            if (diff < 2)
+                context.AddContextStateMult<AccMult>(false, 0, 1);
+            yield break;
+        }
+    }
+
+    [Serializable]
     public class TipPowerEvent : BattleEvent
     {
         public TipPowerEvent() { }
