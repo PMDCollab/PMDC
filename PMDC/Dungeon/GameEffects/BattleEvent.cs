@@ -5777,10 +5777,14 @@ namespace PMDC.Dungeon
             if (!recent)//don't immediately count down after status is inflicted
             {
                 if (damage > 0)
-                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.RemoveStatusEffect(((StatusEffect)owner).ID, true));
+                {
+                    //yield return CoroutineManager.Instance.StartCoroutine(context.Target.RemoveStatusEffect(((StatusEffect)owner).ID, true));
+                    ((StatusEffect)owner).StatusStates.GetWithDefault<CountDownState>().Counter = 0;
+                }
                 else if (hit)
                     ((StatusEffect)owner).StatusStates.GetWithDefault<CountDownState>().Counter = Math.Max(((StatusEffect)owner).StatusStates.GetWithDefault<CountDownState>().Counter - 1, 0);
             }
+            yield break;
         }
     }
     [Serializable]

@@ -112,9 +112,17 @@ namespace PMDC.Dungeon
         protected bool playerSensibleToAttack(Character seenChar)
         {
             //NOTE: specialized AI code!
-            if (seenChar.GetStatusEffect(1) != null || seenChar.GetStatusEffect(3) != null)//if they're asleep or frozen, do not attack
+            if (seenChar.GetStatusEffect(3) != null)//if they're frozen, do not attack
                 return false;
-            
+
+            StatusEffect sleepStatus = seenChar.GetStatusEffect(1);
+            if (sleepStatus != null)//if they're asleep and have one turn or less
+            {
+                CountDownState sleepState = sleepStatus.StatusStates.GetWithDefault<CountDownState>();
+                if (sleepState.Counter < 0 || sleepState.Counter > 1)
+                    return false;
+            }
+
             if (seenChar.GetStatusEffect(25) == null)//last targeted by someone; NOTE: specialized AI code!
             {
                 //don't attack certain kinds of foes that won't attack first
@@ -1297,13 +1305,19 @@ namespace PMDC.Dungeon
                         if (moveIndex == 138 || moveIndex == 358)
                             leaveSleeping = false;
 
+                        int counter = sleepStatus.StatusStates.GetWithDefault<CountDownState>().Counter;
                         if (!teamPartner)
                         {
-                            int counter = sleepStatus.StatusStates.GetWithDefault<CountDownState>().Counter;
                             //team partners are extra cautious not to do anything to sleepers, but npcs will still attack with status if it applies
                             if (entry.Data.Category == BattleData.SkillCategory.Status && counter > 1)
                                 leaveSleeping = false;
                             else if (entry.Data.Category != BattleData.SkillCategory.Status && counter <= 1)
+                                leaveSleeping = false;
+                        }
+                        else
+                        {
+                            //attack to wake up if they were going to wake up anyway
+                            if (counter == 0 || counter == 1)
                                 leaveSleeping = false;
                         }
                         if (leaveSleeping)
