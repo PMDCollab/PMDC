@@ -16,7 +16,7 @@ namespace PMDC.Dungeon
     public class ThiefPlan : AvoidPlan
     {
         //for thieves and switcheroo thieves
-        
+        [NonSerialized]
         private int origItem;
         public ThiefPlan(AIFlags iq) : base(iq)
         {

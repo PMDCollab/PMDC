@@ -13,8 +13,11 @@ namespace PMDC.Dungeon
         public AttackChoice AttackPattern;
         public PositionChoice PositionPattern;
         //continue to the last place the enemy was found (if no other enemies can be found) before losing aggro
+        [NonSerialized]
         private Loc? targetLoc;
+        [NonSerialized]
         public List<Loc> LocHistory;
+        [NonSerialized]
         private Character lastSeenChar;
 
         public AttackFoesPlan() { }

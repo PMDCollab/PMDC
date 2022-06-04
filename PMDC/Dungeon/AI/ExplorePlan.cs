@@ -35,7 +35,9 @@ namespace PMDC.Dungeon
     [Serializable]
     public class ExplorePlan : AIPlan
     {
+        [NonSerialized]
         private List<Loc> goalPath;
+        [NonSerialized]
         public List<Loc> LocHistory;
         public ExplorePlan(AIFlags iq) : base(iq)
         {

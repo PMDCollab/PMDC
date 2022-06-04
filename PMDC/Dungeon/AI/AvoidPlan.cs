@@ -10,7 +10,9 @@ namespace PMDC.Dungeon
     [Serializable]
     public abstract class AvoidPlan : AIPlan
     {
+        [NonSerialized]
         private List<Loc> goalPath;
+        [NonSerialized]
         private List<Loc> locHistory;
 
         public AvoidPlan(AIFlags iq) : base(iq)

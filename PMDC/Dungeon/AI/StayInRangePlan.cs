@@ -12,6 +12,7 @@ namespace PMDC.Dungeon
     {
         const int MAX_RANGE = 5;
 
+        [NonSerialized]
         private Loc targetLoc;
         public StayInRangePlan(AIFlags iq) : base(iq)
         {
