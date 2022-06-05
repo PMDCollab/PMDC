@@ -52,18 +52,9 @@ namespace PMDC.Dungeon
 
 
             //past this point, using moves won't work, so try to find a path
-            List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets());
-
-            bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
-            if (playerSense)
-            {
-                //check for statuses that may make them ineligible targets
-                for (int ii = seenCharacters.Count - 1; ii >= 0; ii--)
-                {
-                    if (!playerSensibleToAttack(seenCharacters[ii]))
-                        seenCharacters.RemoveAt(ii);
-                }
-            }
+            List<Character> seenCharacters = new List<Character>();
+            foreach (Character seenChar in GetAcceptableTargets(controlledChar))
+                seenCharacters.Add(seenChar);
 
             Character closestChar = null;
             Loc closestDiff = Loc.Zero;
@@ -114,6 +105,7 @@ namespace PMDC.Dungeon
             if (controlledChar.AttackOnly)
                 positioning = PositionChoice.Approach;
 
+            bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
             if (!playerSense)
             {
                 //for dumb NPCs, if they have a status where they can't attack, treat it as a regular attack pattern so that they walk up to the player

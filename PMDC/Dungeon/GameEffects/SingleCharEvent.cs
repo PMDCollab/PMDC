@@ -2105,18 +2105,24 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            List<MonsterID> candidateSpecies = new List<MonsterID>();
-            foreach (Character target in ZoneManager.Instance.CurrentMap.IterateCharacters())
+            if (ZoneManager.Instance.CurrentMap.TeamSpawns.CanPick)
             {
-                if (!character.Dead && character.CurrentForm.Species != target.CurrentForm.Species)
-                    candidateSpecies.Add(target.CurrentForm);
-            }
-            if (candidateSpecies.Count > 0)
-            {
-                StatusEffect status = new StatusEffect(IllusionID);
-                status.LoadFromData();
-                status.StatusStates.Set(new MonsterIDState(candidateSpecies[DataManager.Instance.Save.Rand.Next(candidateSpecies.Count)]));
-                yield return CoroutineManager.Instance.StartCoroutine(character.AddStatusEffect(status));
+                TeamSpawner spawner = ZoneManager.Instance.CurrentMap.TeamSpawns.Pick(DataManager.Instance.Save.Rand);
+                List<MobSpawn> candidateSpecies = spawner.ChooseSpawns(DataManager.Instance.Save.Rand);
+
+                if (candidateSpecies.Count > 0)
+                {
+                    StatusEffect status = new StatusEffect(IllusionID);
+                    status.LoadFromData();
+                    MonsterID id = candidateSpecies[DataManager.Instance.Save.Rand.Next(candidateSpecies.Count)].BaseForm;
+                    id.Form = Math.Max(0, id.Form);
+                    id.Skin = Math.Max(0, id.Skin);
+                    id.Gender = (Gender)Math.Max(0, (int)id.Gender);
+                    status.StatusStates.Set(new MonsterIDState(id));
+                    if (character.MemberTeam == DungeonScene.Instance.ActiveTeam)
+                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ILLUSION_START").ToLocal(), character.GetDisplayName(true)));
+                    yield return CoroutineManager.Instance.StartCoroutine(character.AddStatusEffect(status));
+                }
             }
         }
     }

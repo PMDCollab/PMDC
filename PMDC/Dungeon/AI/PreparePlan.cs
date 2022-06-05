@@ -27,14 +27,10 @@ namespace PMDC.Dungeon
         {
             bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
             Character target = null;
-            List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets());
-            foreach (Character seenChar in seenCharacters)
+            foreach (Character seenChar in GetAcceptableTargets(controlledChar))
             {
-                if (!playerSense || playerSensibleToAttack(seenChar))
-                {
-                    target = seenChar;
-                    break;
-                }
+                target = seenChar;
+                break;
             }
 
             //need attack action check
@@ -89,14 +85,10 @@ namespace PMDC.Dungeon
 
             bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
             Character target = null;
-            List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets());
-            foreach (Character seenChar in seenCharacters)
+            foreach (Character seenChar in GetAcceptableTargets(controlledChar))
             {
-                if (!playerSense || playerSensibleToAttack(seenChar))
-                {
-                    target = seenChar;
-                    break;
-                }
+                target = seenChar;
+                break;
             }
 
             //need attack action check
@@ -138,14 +130,10 @@ namespace PMDC.Dungeon
 
             bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
             Character target = null;
-            List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargets());
-            foreach (Character seenChar in seenCharacters)
+            foreach (Character seenChar in GetAcceptableTargets(controlledChar))
             {
-                if (!playerSense || playerSensibleToAttack(seenChar))
-                {
-                    target = seenChar;
-                    break;
-                }
+                target = seenChar;
+                break;
             }
 
             //need attack action check

@@ -5206,7 +5206,7 @@ namespace PMDC.Dungeon
                     yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, otherStatus, null));
                 }
 
-                if (context.User.MemberTeam != context.Target.MemberTeam)
+                if (context.User.MemberTeam.MapFaction != context.Target.MemberTeam.MapFaction)
                 {
                     StatusEffect targetStatus = new StatusEffect(TargetStatusID);
                     targetStatus.LoadFromData();

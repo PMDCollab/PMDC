@@ -111,12 +111,11 @@ namespace PMDC.Dungeon
         /// <returns></returns>
         protected bool playerSensibleToAttack(Character seenChar)
         {
-            //NOTE: specialized AI code!
-            if (seenChar.GetStatusEffect(3) != null)//if they're frozen, do not attack
+            if (seenChar.GetStatusEffect(3) != null)//if they're frozen, do not attack; NOTE: specialized AI code!
                 return false;
 
             StatusEffect sleepStatus = seenChar.GetStatusEffect(1);
-            if (sleepStatus != null)//if they're asleep and have one turn or less
+            if (sleepStatus != null)//if they're asleep and have one turn or less; NOTE: specialized AI code!
             {
                 CountDownState sleepState = sleepStatus.StatusStates.GetWithDefault<CountDownState>();
                 if (sleepState.Counter < 0 || sleepState.Counter > 1)
@@ -222,12 +221,48 @@ namespace PMDC.Dungeon
             return false;
         }
 
-        protected Alignment GetAcceptableTargets()
+        protected Alignment GetAcceptableTargetAlignments()
         {
             Alignment target = Alignment.Foe;
             if ((IQ & AIFlags.Cannibal) != AIFlags.None)
                 target |= Alignment.Friend;
             return target;
+        }
+
+        private bool isIllusionStealth(Character controlledChar, Character seenChar)
+        {
+            //illusion check; NOTE: specialized AI code!
+            StatusEffect illusionEffect = seenChar.GetStatusEffect(111);
+            if (illusionEffect != null)
+            {
+                StatusEffect previouslyAttackedEffect = controlledChar.GetStatusEffect(25);//only be passive if not previously attacked
+                if (previouslyAttackedEffect == null)
+                {
+                    MonsterIDState illusionMon = illusionEffect.StatusStates.GetWithDefault<MonsterIDState>();
+                    if (illusionMon.MonID.Species == controlledChar.CurrentForm.Species)
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        protected IEnumerable<Character> GetAcceptableTargets(Character controlledChar)
+        {
+            List<Character> seenCharacters = controlledChar.GetSeenCharacters(GetAcceptableTargetAlignments());
+
+            bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
+            bool teamPartner = (IQ & AIFlags.TeamPartner) != AIFlags.None;
+            foreach (Character seenChar in seenCharacters)
+            {
+                if (playerSense && !playerSensibleToAttack(seenChar))
+                    continue;
+                if (!teamPartner)
+                {
+                    if (isIllusionStealth(controlledChar, seenChar))
+                        continue;
+                }
+                yield return seenChar;
+            }
         }
 
         /// <summary>
@@ -375,7 +410,12 @@ namespace PMDC.Dungeon
             //assumes that this direction was checked for blocking against VISIBLE enemies, and no-walking
             Character invisibleChar = ZoneManager.Instance.CurrentMap.GetCharAtLoc(controlledChar.CharLoc + dir.GetLoc());
             if (invisibleChar != null && DungeonScene.Instance.GetMatchup(controlledChar, invisibleChar, false) == Alignment.Foe)
+            {
+                if (isIllusionStealth(controlledChar, invisibleChar))
+                    return new GameAction(GameAction.ActionType.Move, dir, ((IQ & AIFlags.ItemGrabber) != AIFlags.None) ? 1 : 0);
+
                 return new GameAction(GameAction.ActionType.Attack, dir);
+            }
             else
             {
                 if (controlledChar.Fullness <= 0)
@@ -409,7 +449,7 @@ namespace PMDC.Dungeon
                 foreach (Character seenChar in seenChars)
                 {
                     bool canBetray = (IQ & AIFlags.TeamPartner) == AIFlags.None;
-                    if ((DungeonScene.Instance.GetMatchup(controlledChar, seenChar, canBetray) & GetAcceptableTargets()) != Alignment.None)
+                    if ((DungeonScene.Instance.GetMatchup(controlledChar, seenChar, canBetray) & GetAcceptableTargetAlignments()) != Alignment.None)
                     {
                         //just for attacking, we check to see if we can see the controlledchar's current location from the target's location
                         //this is a hack to prevent unfair-feeling surprise attacks brought about by the non-symmetrical FOV
@@ -1340,6 +1380,11 @@ namespace PMDC.Dungeon
                         else if (target.Tactic.ID == 18)//tit for tat; NOTE: specialized AI code!
                             return 0;
                     }
+                }
+                else
+                {
+                    if (isIllusionStealth(controlledChar, target))
+                        return 0;
                 }
             }
 
