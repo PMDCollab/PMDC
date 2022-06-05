@@ -792,6 +792,60 @@ namespace PMDC.Dungeon
 
 
     [Serializable]
+    public class PreDeathEvent : SingleCharEvent
+    {
+        public PreDeathEvent() { }
+        public override GameEvent Clone() { return new PreDeathEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            int animTime = 10 + GameManager.Instance.ModifyBattleSpeed(50, character.CharLoc);
+
+            if (character.MemberTeam == DungeonScene.Instance.ActiveTeam)
+            {
+                CharAnimDefeated defeatAnim = new CharAnimDefeated();
+                defeatAnim.CharLoc = character.CharLoc;
+                defeatAnim.CharDir = character.CharDir;
+                defeatAnim.MajorAnim = true;
+                defeatAnim.AnimTime = animTime;
+                yield return CoroutineManager.Instance.StartCoroutine(character.StartAnim(defeatAnim));
+                DungeonScene.Instance.LogMsg(Text.FormatKey("MSG_DEFEAT", character.GetDisplayName(true)));
+            }
+            else
+            {
+                CharAnimDefeated defeatAnim = new CharAnimDefeated();
+                defeatAnim.CharLoc = character.CharLoc;
+                defeatAnim.CharDir = character.CharDir;
+                defeatAnim.MajorAnim = true;
+                defeatAnim.AnimTime = animTime;
+                yield return CoroutineManager.Instance.StartCoroutine(character.StartAnim(defeatAnim));
+                DungeonScene.Instance.LogMsg(Text.FormatKey("MSG_DEFEAT_FOE", character.GetDisplayName(true)));
+
+            }
+
+            yield return new WaitForFrames(animTime - 1);
+
+            character.HP = 0;
+            character.Dead = true;
+        }
+    }
+
+    [Serializable]
+    public class SetDeathEvent : SingleCharEvent
+    {
+        public SetDeathEvent() { }
+        public override GameEvent Clone() { return new SetDeathEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            character.HP = 0;
+            character.Dead = true;
+
+            yield break;
+        }
+    }
+
+    [Serializable]
     public abstract class HandoutExpEvent : SingleCharEvent
     {
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
