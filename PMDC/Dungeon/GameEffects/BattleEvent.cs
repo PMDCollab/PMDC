@@ -2077,7 +2077,7 @@ namespace PMDC.Dungeon
                     context.Explosion.ExplodeFX.Delay = 30;
                     context.Explosion.TargetAlignments = (Alignment.Self | Alignment.Friend);
 
-                    DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), ownerChar.GetDisplayName(false)));
+                    DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
                 }
             }
             yield break;
