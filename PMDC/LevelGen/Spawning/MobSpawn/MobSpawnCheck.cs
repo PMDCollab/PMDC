@@ -51,4 +51,31 @@ namespace PMDC.LevelGen
 
     }
 
+    /// <summary>
+    /// Spawns the mob if the time of day is right.  DOESNT WORK.
+    /// </summary>
+    [Serializable]
+    public class MobCheckTimeOfDay : MobSpawnCheck
+    {
+        /// <summary>
+        /// The time of day
+        /// </summary>
+        public TimeOfDay Time;
+
+        public MobCheckTimeOfDay()
+        {
+
+        }
+        public MobCheckTimeOfDay(MobCheckTimeOfDay other) : this()
+        {
+            Time = other.Time;
+        }
+        public override MobSpawnCheck Copy() { return new MobCheckTimeOfDay(this); }
+
+        public override bool CanSpawn()
+        {
+            return DataManager.Instance.Save.Time == Time;
+        }
+
+    }
 }

@@ -883,6 +883,10 @@ namespace PMDC.Dungeon
         protected abstract int GetExp(GameEventOwner owner, Character ownerChar, Character character, int idx);
     }
 
+    /// <summary>
+    /// EXP handed out for defeating an enemy is scaled based on the enemy's level.
+    /// BaseEXP * Numerator * Level / Denominator + 1
+    /// </summary>
     [Serializable]
     public class HandoutScaledExpEvent : HandoutExpEvent
     {
@@ -910,7 +914,9 @@ namespace PMDC.Dungeon
         }
     }
 
-
+    /// <summary>
+    /// EXP handed out for defeating an enemy is equal to its base EXP yield without any changes.
+    /// </summary>
     [Serializable]
     public class HandoutConstantExpEvent : HandoutExpEvent
     {
@@ -925,6 +931,10 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// EXP handed out to each team member is scaled based on the team member's level relative to the defeated enemy's level.
+    /// BaseEXP * Numerator * (2 * EnemyLv + LevelBuffer) ^ 3 / (EnemyLv + PlayerLv + LevelBuffer) ^ 3 / Denominator + 1
+    /// </summary>
     [Serializable]
     public class HandoutRelativeExpEvent : HandoutExpEvent
     {
