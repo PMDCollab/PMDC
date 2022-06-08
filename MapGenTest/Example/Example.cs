@@ -48,8 +48,8 @@ namespace MapGenTest
                         if (label.Length > longestWidth)
                             longestWidth = label.Length;
                     }
-                    int cols = Math.Min(3, (Console.WindowWidth - 1) / longestWidth + 1);
-                    int rows = Math.Max(Math.Min(12, zoneNames.Count), (zoneNames.Count - 1) / cols + 1);
+                    int cols = Math.Min(3, MathUtils.DivUp(Console.WindowWidth, longestWidth));
+                    int rows = Math.Max(Math.Min(12, zoneNames.Count), MathUtils.DivUp(zoneNames.Count, cols));
 
                     for (int ii = 0; ii < rows; ii++)
                     {
@@ -143,8 +143,8 @@ namespace MapGenTest
                         if (label.Length > longestWidth)
                             longestWidth = label.Length;
                     }
-                    int cols = Math.Min(3, (Console.WindowWidth - 1) / longestWidth + 1);
-                    int rows = Math.Max(Math.Min(12, zone.Segments.Count), (zone.Segments.Count - 1) / cols + 1);
+                    int cols = Math.Min(3, MathUtils.DivUp(Console.WindowWidth, longestWidth));
+                    int rows = Math.Max(Math.Min(12, zone.Segments.Count), MathUtils.DivUp(zone.Segments.Count, cols));
 
                     for (int ii = 0; ii < rows; ii++)
                     {

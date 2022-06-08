@@ -30,7 +30,7 @@ namespace PMDC.LevelGen
                 if (newChar.Skills[ii].Element.SkillNum > -1)
                 {
                     SkillData data = DataManager.Instance.GetSkill(newChar.Skills[ii].Element.SkillNum);
-                    newChar.SetSkillCharges(ii, (data.BaseCharges - 1) / 2 + 1);
+                    newChar.SetSkillCharges(ii, MathUtils.DivUp(data.BaseCharges, 2));
                 }
             }
         }
