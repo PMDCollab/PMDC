@@ -1744,6 +1744,50 @@ namespace PMDC.Dungeon
 
 
     [Serializable]
+    public class CompassEvent : SingleCharEvent
+    {
+        public FiniteEmitter Emitter;
+
+        public CompassEvent()
+        {
+            Emitter = new EmptyFiniteEmitter();
+        }
+        public CompassEvent(FiniteEmitter emitter)
+        {
+            Emitter = emitter;
+        }
+        protected CompassEvent(CompassEvent other)
+        {
+            Emitter = other.Emitter;
+        }
+        public override GameEvent Clone() { return new CompassEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            TileListState destState = ((EffectTile)owner).TileStates.GetWithDefault<TileListState>();
+
+            if (destState == null)
+                yield break;
+
+            foreach(Loc loc in destState.Tiles)
+            {
+                Dir8 stairsDir = DirExt.ApproximateDir8(loc - character.CharLoc);
+                if (stairsDir == Dir8.None)
+                    continue;
+
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STAIR_SENSOR").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
+
+                FiniteEmitter endEmitter = (FiniteEmitter)Emitter.Clone();
+                endEmitter.SetupEmit(character.MapLoc + stairsDir.GetLoc() * 16, character.MapLoc + stairsDir.GetLoc() * 16, stairsDir);
+                DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+            }
+
+            yield break;
+        }
+    }
+
+
+    [Serializable]
     public class StairSensorEvent : SingleCharEvent
     {
         [DataType(0, DataManager.DataType.MapStatus, false)]
