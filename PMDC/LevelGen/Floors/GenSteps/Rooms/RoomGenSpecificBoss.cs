@@ -33,8 +33,8 @@ namespace PMDC.LevelGen
             Bosses = new List<MobSpawn>();
         }
 
-        public RoomGenSpecificBoss(int width, int height, ITile roomTerrain, bool fulfillAll, int triggerTile, Loc trigger, string song)
-            : base(width, height, roomTerrain, fulfillAll)
+        public RoomGenSpecificBoss(int width, int height, ITile roomTerrain, int triggerTile, Loc trigger, string song)
+            : base(width, height, roomTerrain)
         {
             TriggerTile = triggerTile;
             Trigger = trigger;
