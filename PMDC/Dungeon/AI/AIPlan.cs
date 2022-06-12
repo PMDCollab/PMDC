@@ -1437,6 +1437,11 @@ namespace PMDC.Dungeon
                     if ((controlledChar.CharLoc - target.CharLoc).Dist8() != Math.Max(entry.HitboxAction.Distance + rangeMod, 1))
                         return 0;
                 }
+                else if (effect is DistanceOnlyEvent)
+                {
+                    if ((controlledChar.CharLoc - target.CharLoc).Dist8() < 2)
+                        return 0;
+                }
             }
             if (moveIndex == 217)//Present; if an ally, use healing calculations; NOTE: specialized AI code!
             {
