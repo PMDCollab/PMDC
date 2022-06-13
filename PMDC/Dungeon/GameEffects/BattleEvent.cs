@@ -12735,10 +12735,16 @@ namespace PMDC.Dungeon
             for (int ii = 0; ii < ZoneManager.Instance.CurrentMap.Items.Count; ii++)
                 itemLocs.Add(ZoneManager.Instance.CurrentMap.Items[ii].TileLoc, ii);
             bool[] chosenItems = new bool[ZoneManager.Instance.CurrentMap.Items.Count];
+
+            uint mobility = 0;
+            mobility |= (1U << (int)TerrainData.Mobility.Lava);
+            mobility |= (1U << (int)TerrainData.Mobility.Water);
+            mobility |= (1U << (int)TerrainData.Mobility.Abyss);
+
             Grid.AffectConnectedTiles(context.User.CharLoc - new Loc(CharAction.MAX_RANGE), new Loc(CharAction.MAX_RANGE * 2 + 1),
                 (Loc effectLoc) =>
                 {
-                    if (!ZoneManager.Instance.CurrentMap.TileBlocked(effectLoc, true))
+                    if (!ZoneManager.Instance.CurrentMap.TileBlocked(effectLoc, mobility))
                     {
                         if (itemLocs.ContainsKey(effectLoc))
                             chosenItems[itemLocs[effectLoc]] = true;
