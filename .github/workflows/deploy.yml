@@ -22,13 +22,13 @@ jobs:
       - name: Restore
         run: dotnet restore
       - name: Build Windows App x86
-        run: dotnet publish -c Release -r win-x86 PMDC/PMDC.csproj
+        run: dotnet publish -c Release -r win-x86 PMDC/PMDC.csproj;mv publish/win-x86/PMDC/ publish/win-x86/PMDO/;mv publish/win-x86/PMDO/PMDC.exe publish/win-x86/PMDO/PMDO.exe
       - name: Build Windows App
-        run: dotnet publish -c Release -r win-x64 PMDC/PMDC.csproj
+        run: dotnet publish -c Release -r win-x64 PMDC/PMDC.csproj;mv publish/win-x64/PMDC/ publish/win-x64/PMDO/;mv publish/win-x64/PMDO/PMDC.exe publish/win-x64/PMDO/PMDO.exe
       - name: Build Linux App
-        run: dotnet publish -c Release -r linux-x64 PMDC/PMDC.csproj
+        run: dotnet publish -c Release -r linux-x64 PMDC/PMDC.csproj;mv publish/linux-x64/PMDC/ publish/linux-x64/PMDO/;mv publish/linux-x64/PMDO/PMDC publish/linux-x64/PMDO/PMDO
       - name: Build Mac App
-        run: dotnet publish -c Release -r osx-x64 PMDC/PMDC.csproj
+        run: dotnet publish -c Release -r osx-x64 PMDC/PMDC.csproj;mv publish/osx-x64/PMDC/ publish/osx-x64/PMDO/;mv publish/osx-x64/PMDO/PMDC publish/osx-x64/PMDO/PMDO
       - name: Build Windows Server x86
         run: dotnet publish -c Release -r win-x86 RogueEssence/WaypointServer/WaypointServer.csproj;mv RogueEssence/publish/win-x86/WaypointServer/ publish/win-x86/
       - name: Build Windows Server
@@ -38,13 +38,13 @@ jobs:
       - name: Build Mac Server
         run: dotnet publish -c Release -r osx-x64 RogueEssence/WaypointServer/WaypointServer.csproj;mv RogueEssence/publish/osx-x64/WaypointServer.app/ publish/osx-x64/
       - name: Zip Windows x86
-        run: cd publish/win-x86/;zip -r windows-x86.zip PMDC/ WaypointServer/
+        run: cd publish/win-x86/;zip -r windows-x86.zip PMDO/ WaypointServer/
       - name: Zip Windows
-        run: cd publish/win-x64/;zip -r windows-x64.zip PMDC/ WaypointServer/
+        run: cd publish/win-x64/;zip -r windows-x64.zip PMDO/ WaypointServer/
       - name: Zip Linux
-        run: cd publish/linux-x64/;zip -r linux-x64.zip PMDC/ WaypointServer/
+        run: cd publish/linux-x64/;zip -r linux-x64.zip PMDO/ WaypointServer/
       - name: Zip Mac
-        run: cd publish/osx-x64/;zip -r osx-x64.zip PMDC/ WaypointServer.app/
+        run: cd publish/osx-x64/;zip -r osx-x64.zip PMDO/ WaypointServer.app/
       - name: Set Version
         run: echo "::set-output name=version::$(sed -En 's,<\AssemblyVersion>(.+)</AssemblyVersion>,\1,p' PMDC/PMDC.csproj)"
         id: version
