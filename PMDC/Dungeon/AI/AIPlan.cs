@@ -65,18 +65,42 @@ namespace PMDC.Dungeon
 
         public enum AttackChoice
         {
+            /// <summary>
+            /// Only chooses standard attack.
+            /// </summary>
             StandardAttack,
-            DumbAttack,//randomly chooses moves based on weight, sometimes walks within range due to missing moves having weight
-            RandomAttack,//randomly chooses moves based on weight, always attacks with damaging moves when within range, but sometimes moves forward if the only choice is a status move
-            StatusAttack,//randomly chooses a status move first and foremost
-            SmartAttack,//always chooses the best move, and always attacks when within range
+            /// <summary>
+            /// randomly chooses moves based on weight, sometimes walks within range due to missing moves having weight
+            /// </summary>
+            DumbAttack,
+            /// <summary>
+            /// randomly chooses moves based on weight, always attacks with damaging moves when within range, but sometimes moves forward if the only choice is a status move
+            /// </summary>
+            RandomAttack,
+            /// <summary>
+            /// randomly chooses a status move first and foremost
+            /// </summary>
+            StatusAttack,
+            /// <summary>
+            /// always chooses the best move, and always attacks when within range
+            /// </summary>
+            SmartAttack,
         }
 
         public enum PositionChoice
         {
-            Approach,//move in even if it's out of range of moves
-            Close,//move in as close as possible within range of moves
-            Avoid,//move as far as possible within range
+            /// <summary>
+            /// move in even if it's out of range of moves
+            /// </summary>
+            Approach,
+            /// <summary>
+            /// move in as close as possible within range of moves
+            /// </summary>
+            Close,
+            /// <summary>
+            /// move as far as possible within range
+            /// </summary>
+            Avoid,
         }
 
         public AIPlan() { }
@@ -564,14 +588,6 @@ namespace PMDC.Dungeon
             return moveIndices[choice];
         }
 
-        private GameAction actionFromActionVal(ActionDirValue actionVal)
-        {
-            if (actionVal.MoveIndex < CharData.MAX_SKILL_SLOTS)
-                return new GameAction(GameAction.ActionType.UseSkill, actionVal.Dir, actionVal.MoveIndex);
-            else
-                return new GameAction(GameAction.ActionType.Attack, actionVal.Dir);
-        }
-
         protected GameAction TryDefaultAttackChoice(IRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
         {
             List<ActionDirValue> backupIndices = new List<ActionDirValue>();
@@ -579,14 +595,14 @@ namespace PMDC.Dungeon
             {
                 HitValue[] attackDirs = new HitValue[8];
                 GetActionValues(controlledChar, seenChars, closestThreat, 0, attackDirs, false);
-                UpdateTotalIndices(rand, backupIndices, CharData.MAX_SKILL_SLOTS, attackDirs);
+                UpdateTotalIndices(rand, backupIndices, new GameAction(GameAction.ActionType.Attack, Dir8.None), attackDirs);
             }
 
             //if that attempt failed, because we hit a move that would hit no one, then we default to attempting attack
             if (backupIndices.Count > 0)
             {
                 ActionDirValue actionVal = backupIndices[rand.Next(backupIndices.Count)];
-                return actionFromActionVal(actionVal);
+                return actionVal.Action;
             }
             //if we can't attack, then we pass along to movement
             return new GameAction(GameAction.ActionType.Wait, Dir8.None);
@@ -600,7 +616,24 @@ namespace PMDC.Dungeon
             {
                 HitValue[] moveDirs = new HitValue[8];
                 GetActionValues(controlledChar, seenChars, closestThreat, controlledChar.Skills[ii].Element.SkillNum, moveDirs, true);
-                UpdateTotalIndices(rand, moveIndices, ii, moveDirs);
+                UpdateTotalIndices(rand, moveIndices, new GameAction(GameAction.ActionType.UseSkill, Dir8.None, ii), moveDirs);
+            }
+
+            if (controlledChar.EquippedItem.ID > -1 && (IQ & AIFlags.ItemMaster) != AIFlags.None)
+            {
+                //check item use
+                {
+                    HitValue[] moveDirs = new HitValue[8];
+                    GetItemUseValues(controlledChar, seenChars, closestThreat, controlledChar.EquippedItem.ID, moveDirs);
+                    UpdateTotalIndices(rand, moveIndices, new GameAction(GameAction.ActionType.UseItem, Dir8.None, BattleContext.EQUIP_ITEM_SLOT, -1), moveDirs);
+                }
+
+                //check item throw
+                {
+                    HitValue[] moveDirs = new HitValue[8];
+                    GetItemThrowValues(controlledChar, seenChars, closestThreat, controlledChar.EquippedItem.ID, moveDirs);
+                    UpdateTotalIndices(rand, moveIndices, new GameAction(GameAction.ActionType.Throw, Dir8.None, BattleContext.EQUIP_ITEM_SLOT), moveDirs);
+                }
             }
 
             //default on attacking if no moves are to be found
@@ -609,7 +642,7 @@ namespace PMDC.Dungeon
                 GetActionValues(controlledChar, seenChars, closestThreat, 0, attackDirs, true);
                 for (int ii = 0; ii < attackDirs.Length; ii++)
                     attackDirs[ii].Value = attackDirs[ii].Value * 2;
-                UpdateTotalIndices(rand, moveIndices, CharData.MAX_SKILL_SLOTS, attackDirs);
+                UpdateTotalIndices(rand, moveIndices, new GameAction(GameAction.ActionType.Attack, Dir8.None), attackDirs);
             }
 
             //just try to choose once
@@ -617,7 +650,7 @@ namespace PMDC.Dungeon
             {
                 ActionDirValue actionVal = weightedActionChoice(moveIndices, rand);
                 if (!actionVal.Hit.ImaginedHit)
-                    return actionFromActionVal(actionVal);
+                    return actionVal.Action;
 
                 //if we chose an imagined hit, we fall through and skip choosing a move altogether
                 //this is equivalent of choosing a move that is out of range and thus doing nothing
@@ -640,7 +673,7 @@ namespace PMDC.Dungeon
                 {
                     HitValue[] moveDirs = new HitValue[8];
                     GetActionValues(controlledChar, seenChars, closestThreat, controlledChar.Skills[ii].Element.SkillNum, moveDirs, true);
-                    UpdateTotalIndices(rand, moveIndices, ii, moveDirs);
+                    UpdateTotalIndices(rand, moveIndices, new GameAction(GameAction.ActionType.UseSkill, Dir8.None, ii), moveDirs);
                 }
             }
 
@@ -648,7 +681,7 @@ namespace PMDC.Dungeon
             {
                 ActionDirValue actionVal = weightedActionChoice(moveIndices, rand);
                 if (!actionVal.Hit.ImaginedHit)
-                    return actionFromActionVal(actionVal);
+                    return actionVal.Action;
             }
 
             //if we can't attack, then we pass along to movement
@@ -666,7 +699,7 @@ namespace PMDC.Dungeon
             {
                 HitValue[] moveDirs = new HitValue[8];
                 GetActionValues(controlledChar, seenChars, closestThreat, controlledChar.Skills[ii].Element.SkillNum, moveDirs, true);
-                UpdateTotalIndices(rand, moveIndices, ii, moveDirs);
+                UpdateTotalIndices(rand, moveIndices, new GameAction(GameAction.ActionType.UseSkill, Dir8.None, ii), moveDirs);
 
                 SkillData entry = DataManager.Instance.GetSkill(controlledChar.Skills[ii].Element.SkillNum);
                 if (entry.Data.Category != BattleData.SkillCategory.Status)
@@ -676,7 +709,24 @@ namespace PMDC.Dungeon
                         if (moveDirs[jj].ImaginedHit)
                             moveDirs[jj] = new HitValue();
                     }
-                    UpdateTotalIndices(rand, attackIndices, ii, moveDirs);
+                    UpdateTotalIndices(rand, attackIndices, new GameAction(GameAction.ActionType.UseSkill, Dir8.None, ii), moveDirs);
+                }
+            }
+
+            if (controlledChar.EquippedItem.ID > -1 && (IQ & AIFlags.ItemMaster) != AIFlags.None)
+            {
+                //check item use
+                {
+                    HitValue[] moveDirs = new HitValue[8];
+                    GetItemUseValues(controlledChar, seenChars, closestThreat, controlledChar.EquippedItem.ID, moveDirs);
+                    UpdateTotalIndices(rand, moveIndices, new GameAction(GameAction.ActionType.UseItem, Dir8.None, BattleContext.EQUIP_ITEM_SLOT, -1), moveDirs);
+                }
+
+                //check item throw
+                {
+                    HitValue[] moveDirs = new HitValue[8];
+                    GetItemThrowValues(controlledChar, seenChars, closestThreat, controlledChar.EquippedItem.ID, moveDirs);
+                    UpdateTotalIndices(rand, moveIndices, new GameAction(GameAction.ActionType.Throw, Dir8.None, BattleContext.EQUIP_ITEM_SLOT), moveDirs);
                 }
             }
 
@@ -684,7 +734,7 @@ namespace PMDC.Dungeon
             {
                 ActionDirValue actionVal = weightedActionChoice(moveIndices, rand);
                 if (!actionVal.Hit.ImaginedHit)
-                    return actionFromActionVal(actionVal);
+                    return actionVal.Action;
 
                 //if we chose an imagined hit, we fall through and skip choosing a move altogether
                 //this is equivalent of choosing a move that is out of range and thus doing nothing
@@ -695,7 +745,7 @@ namespace PMDC.Dungeon
             {
                 //get a random move based on weighted chance
                 ActionDirValue actionVal = weightedActionChoice(attackIndices, rand);
-                return actionFromActionVal(actionVal);
+                return actionVal.Action;
             }
 
             //if we can't attack, then we pass along to movement
@@ -721,16 +771,33 @@ namespace PMDC.Dungeon
 
                 SkillData entry = DataManager.Instance.GetSkill(controlledChar.Skills[ii].Element.SkillNum);
                 if (entry.Data.Category == BattleData.SkillCategory.Status)
-                    UpdateHighestIndices(highestStatusIndices, ii, moveDirs);
+                    UpdateHighestIndices(highestStatusIndices, new GameAction(GameAction.ActionType.UseSkill, Dir8.None, ii), moveDirs);
                 else
-                    UpdateHighestIndices(highestIndices, ii, moveDirs);
+                    UpdateHighestIndices(highestIndices, new GameAction(GameAction.ActionType.UseSkill, Dir8.None, ii), moveDirs);
+            }
+
+            if (controlledChar.EquippedItem.ID > -1 && (IQ & AIFlags.ItemMaster) != AIFlags.None)
+            {
+                //check item use
+                {
+                    HitValue[] moveDirs = new HitValue[8];
+                    GetItemUseValues(controlledChar, seenChars, closestThreat, controlledChar.EquippedItem.ID, moveDirs);
+                    UpdateHighestIndices(highestIndices, new GameAction(GameAction.ActionType.UseItem, Dir8.None, BattleContext.EQUIP_ITEM_SLOT, -1), moveDirs);
+                }
+
+                //check item throw
+                {
+                    HitValue[] moveDirs = new HitValue[8];
+                    GetItemThrowValues(controlledChar, seenChars, closestThreat, controlledChar.EquippedItem.ID, moveDirs);
+                    UpdateHighestIndices(highestIndices, new GameAction(GameAction.ActionType.Throw, Dir8.None, BattleContext.EQUIP_ITEM_SLOT), moveDirs);
+                }
             }
 
             if (highestIndices.Count > 0 || highestStatusIndices.Count > 0)
             {
                 int randIndex = rand.Next(highestIndices.Count + highestStatusIndices.Count);
                 ActionDirValue actionVal = (randIndex < highestIndices.Count) ? highestIndices[randIndex] : highestStatusIndices[randIndex - highestIndices.Count];
-                return actionFromActionVal(actionVal);
+                return actionVal.Action;
             }
 
             return new GameAction(GameAction.ActionType.Wait, Dir8.None);
@@ -764,12 +831,12 @@ namespace PMDC.Dungeon
 
             HitValue[] moveDirs = new HitValue[8];
             GetActionValues(controlledChar, seenChars, closestThreat, forcedMove, moveDirs, false);
-            UpdateHighestIndices(highestIndices, CharData.MAX_SKILL_SLOTS, moveDirs);
+            UpdateHighestIndices(highestIndices, new GameAction(GameAction.ActionType.Attack, Dir8.None), moveDirs);
 
             if (highestIndices.Count > 0)
             {
                 ActionDirValue actionVal = highestIndices[rand.Next(highestIndices.Count)];
-                return new GameAction(GameAction.ActionType.Attack, actionVal.Dir);
+                return actionVal.Action;
             }
 
             if (controlledChar.CantWalk)
@@ -778,7 +845,13 @@ namespace PMDC.Dungeon
                 return new GameAction(GameAction.ActionType.Wait, Dir8.None);
         }
 
-        protected void UpdateHighestIndices(List<ActionDirValue> highestIndices, int moveIndex, HitValue[] attackDirs)
+        /// <summary>
+        /// Updates the highest indices list with the GameAction with the highest score.
+        /// </summary>
+        /// <param name="highestIndices"></param>
+        /// <param name="baseAction">Non-directional action to use.  Direction will be selected when adding to list.</param>
+        /// <param name="attackDirs"></param>
+        protected void UpdateHighestIndices(List<ActionDirValue> highestIndices, GameAction baseAction, HitValue[] attackDirs)
         {
             int highestScore = 1;
             if (highestIndices.Count > 0)
@@ -789,15 +862,28 @@ namespace PMDC.Dungeon
                 if (attackDirs[ii].Value > highestScore)
                 {
                     highestIndices.Clear();
-                    highestIndices.Add(new ActionDirValue(moveIndex, (Dir8)ii, attackDirs[ii]));
+                    GameAction newAction = new GameAction(baseAction);
+                    newAction.Dir = (Dir8)ii;
+                    highestIndices.Add(new ActionDirValue(newAction, attackDirs[ii]));
                     highestScore = attackDirs[ii].Value;
                 }
                 else if (attackDirs[ii].Value == highestScore)
-                    highestIndices.Add(new ActionDirValue(moveIndex, (Dir8)ii, attackDirs[ii]));
+                {
+                    GameAction newAction = new GameAction(baseAction);
+                    newAction.Dir = (Dir8)ii;
+                    highestIndices.Add(new ActionDirValue(newAction, attackDirs[ii]));
+                }
             }
         }
 
-        protected void UpdateTotalIndices(IRandom rand, List<ActionDirValue> totalIndices, int moveIndex, HitValue[] attackDirs)
+        /// <summary>
+        /// Updates the highest indices list with the GameAction with all scores.
+        /// </summary>
+        /// <param name="rand"></param>
+        /// <param name="totalIndices"></param>
+        /// <param name="baseAction">Non-directional action to use.  Direction will be selected when adding to list.</param>
+        /// <param name="attackDirs"></param>
+        protected void UpdateTotalIndices(IRandom rand, List<ActionDirValue> totalIndices, GameAction baseAction, HitValue[] attackDirs)
         {
             HitValue highestScore = new HitValue(0, false);
             List<int> highestDirs = new List<int>();
@@ -815,7 +901,9 @@ namespace PMDC.Dungeon
             if (highestScore.Value > 0)
             {
                 int highestDir = highestDirs[rand.Next(highestDirs.Count)];
-                totalIndices.Add(new ActionDirValue(moveIndex, (Dir8)highestDir, highestScore));
+                GameAction newAction = new GameAction(baseAction);
+                newAction.Dir = (Dir8)highestDir;
+                totalIndices.Add(new ActionDirValue(newAction, highestScore));
             }
         }
 
@@ -841,7 +929,7 @@ namespace PMDC.Dungeon
                     defaultDir = DirExt.ApproximateDir8(closestThreat.CharLoc - controlledChar.CharLoc);
                 if (defaultDir == Dir8.None)
                     defaultDir = controlledChar.CharDir;
-                HitValue highestVal = GetActionDirValue(moveIndex, entry, controlledChar, seenChars, defaultDir);
+                HitValue highestVal = GetAttackDirValue(moveIndex, entry, controlledChar, seenChars, defaultDir);
                 canHitSomething = (highestVal.Value > 0);
                 dirs[(int)defaultDir] = highestVal;
             }
@@ -854,7 +942,7 @@ namespace PMDC.Dungeon
                 for (int ii = 0; ii < DirExt.DIR8_COUNT; ii++)
                 {
                     Dir8 dir = (Dir8)ii;
-                    vals[ii] = GetActionDirValue(moveIndex, entry, controlledChar, seenChars, dir);
+                    vals[ii] = GetAttackDirValue(moveIndex, entry, controlledChar, seenChars, dir);
                     if (vals[ii].CompareTo(highestVal) > 0)
                         highestVal = vals[ii];
                 }
@@ -877,6 +965,71 @@ namespace PMDC.Dungeon
                 //this action value represents how valuable the action *would* be if in range
                 if (newVal > 0)
                     dirs[(int)controlledChar.CharDir] = new HitValue(newVal, true, true);
+            }
+        }
+
+        protected void GetItemUseValues(Character controlledChar, List<Character> seenChars, Character closestThreat, int itemIndex, HitValue[] dirs)
+        {
+            ItemData entry = DataManager.Instance.GetItem(itemIndex);
+            if (!entry.ItemStates.Contains<BerryState>() && !entry.ItemStates.Contains<SeedState>() && !entry.ItemStates.Contains<WandState>())
+                return;
+
+            Dir8 defaultDir = Dir8.None;
+            if (closestThreat != null)
+                defaultDir = DirExt.ApproximateDir8(closestThreat.CharLoc - controlledChar.CharLoc);
+            if (defaultDir == Dir8.None)
+                defaultDir = controlledChar.CharDir;
+            HitValue highestVal = GetActionDirValue(-1, null, entry.UseAction, entry.Explosion, entry.UseEvent, 0, controlledChar, seenChars, defaultDir);
+            dirs[(int)defaultDir] = highestVal;
+        }
+
+        protected void GetItemThrowValues(Character controlledChar, List<Character> seenChars, Character closestThreat, int itemIndex, HitValue[] dirs)
+        {
+            ItemData entry = DataManager.Instance.GetItem(itemIndex);
+
+            if (!entry.ItemStates.Contains<BerryState>() && !entry.ItemStates.Contains<SeedState>() && !entry.ItemStates.Contains<AmmoState>())
+                return;
+
+            CombatAction hitboxAction;
+            ExplosionData testExplosion = new ExplosionData(entry.Explosion);
+            if (entry.ArcThrow)
+            {
+                ThrowAction action = new ThrowAction();
+                action.Coverage = ThrowAction.ArcCoverage.WideAngle;
+                action.TargetAlignments = Alignment.Foe;
+                action.Speed = 10;
+                action.Range = 6;
+                hitboxAction = action;
+            }
+            else
+            {
+                ProjectileAction action = new ProjectileAction();
+                action.TargetAlignments = Alignment.Friend | Alignment.Foe;
+                action.Range = 8;
+                action.StopAtHit = true;
+                action.StopAtWall = true;
+                action.HitTiles = true;
+                hitboxAction = action;
+                testExplosion.TargetAlignments = Alignment.Friend | Alignment.Foe | Alignment.Self;
+            }
+
+            HitValue[] vals = new HitValue[8];
+            HitValue highestVal = new HitValue(0, false);
+
+            //get the values of firing off an attack in the given direction, keeping track of the highest value
+            for (int ii = 0; ii < DirExt.DIR8_COUNT; ii++)
+            {
+                Dir8 dir = (Dir8)ii;
+                vals[ii] = GetActionDirValue(-1, null, hitboxAction, testExplosion, entry.UseEvent, 0, controlledChar, seenChars, dir);
+                if (vals[ii].CompareTo(highestVal) > 0)
+                    highestVal = vals[ii];
+            }
+
+            //get the directions that result in the highest value and place them in the dirs to be used as the return variable
+            for (int ii = 0; ii < DirExt.DIR8_COUNT; ii++)
+            {
+                if (vals[ii].CompareTo(highestVal) == 0)
+                    dirs[ii] = vals[ii];
             }
         }
 
@@ -907,7 +1060,7 @@ namespace PMDC.Dungeon
                         continue;
 
                     Dir8 approxDir = (seenChar.CharLoc - controlledChar.CharLoc).ApproximateDir8();
-                    getActionHitboxes(controlledChar, seenChars, approxDir, ref skillIndex, ref entry, ref rangeMod, ref hitboxAction, ref explosion);
+                    modifyActionHitboxes(controlledChar, seenChars, approxDir, ref skillIndex, ref entry, ref rangeMod, ref hitboxAction, ref explosion);
 
                     if (hitboxAction == null)
                         continue;
@@ -1043,7 +1196,7 @@ namespace PMDC.Dungeon
             return null;
         }
 
-        private void getActionHitboxes(Character controlledChar, List<Character> seenChars, Dir8 dir, ref int skillIndex, ref SkillData entry, ref  int rangeMod, ref CombatAction hitboxAction, ref ExplosionData explosion)
+        private void modifyActionHitboxes(Character controlledChar, List<Character> seenChars, Dir8 dir, ref int skillIndex, ref SkillData entry, ref  int rangeMod, ref CombatAction hitboxAction, ref ExplosionData explosion)
         {
             //check for passives that modify range; NOTE: specialized AI code!
             foreach (PassiveContext passive in controlledChar.IteratePassives(GameEventPriority.USER_PORT_PRIORITY))
@@ -1246,7 +1399,7 @@ namespace PMDC.Dungeon
             }
         }
 
-        protected HitValue GetActionDirValue(int skillIndex, SkillData entry, Character controlledChar, List<Character> seenChars, Dir8 dir)
+        protected HitValue GetAttackDirValue(int skillIndex, SkillData entry, Character controlledChar, List<Character> seenChars, Dir8 dir)
         {
 
             //Dig/Fly/Dive/Phantom Force; NOTE: specialized AI code!
@@ -1277,8 +1430,13 @@ namespace PMDC.Dungeon
             CombatAction hitboxAction = entry.HitboxAction;
             ExplosionData explosion = entry.Explosion;
 
-            getActionHitboxes(controlledChar, seenChars, dir, ref skillIndex, ref entry, ref rangeMod, ref hitboxAction, ref explosion);
+            modifyActionHitboxes(controlledChar, seenChars, dir, ref skillIndex, ref entry, ref rangeMod, ref hitboxAction, ref explosion);
 
+            return GetActionDirValue(skillIndex, entry, hitboxAction, explosion, entry.Data, rangeMod, controlledChar, seenChars, dir);
+        }
+
+        protected HitValue GetActionDirValue(int skillIndex, SkillData entry, CombatAction hitboxAction, ExplosionData explosion, BattleData data, int rangeMod, Character controlledChar, List<Character> seenChars, Dir8 dir)
+        {
             if (hitboxAction == null)
                 return new HitValue(0, false);
 
@@ -1299,7 +1457,12 @@ namespace PMDC.Dungeon
                     if (Collision.InFront(controlledChar.CharLoc, target.CharLoc, dir, -1))
                         directHit = true;
 
-                    int newVal = GetAttackValue(controlledChar, skillIndex, entry, seenChars, target, rangeMod);
+                    int newVal;
+                    
+                    if (entry != null)//for moves
+                        newVal = GetAttackValue(controlledChar, skillIndex, entry, seenChars, target, rangeMod);
+                    else//for items
+                        newVal = GetBattleValue(controlledChar, data, seenChars, target, rangeMod);
                     totalValue += newVal;
                     if (newVal >= 0)
                         maxValue = Math.Max(newVal, maxValue);
@@ -1316,7 +1479,7 @@ namespace PMDC.Dungeon
                 }
             }
 
-            if (entry.Data.Category == BattleData.SkillCategory.Status && maxValue > 0)
+            if (data.Category == BattleData.SkillCategory.Status && maxValue > 0)
                 return new HitValue(totalValue / totalTargets, directHit);
             else
                 return new HitValue(maxValue, directHit);
@@ -1326,9 +1489,20 @@ namespace PMDC.Dungeon
         {
             int delta = GetTargetEffect(controlledChar, moveIndex, entry, seenChars, target, rangeMod);
 
+            return AlignTargetEffect(controlledChar, entry.Data, target, delta);
+        }
+
+        protected int GetBattleValue(Character controlledChar, BattleData data, List<Character> seenChars, Character target, int rangeMod)
+        {
+            int delta = GetTargetBattleDataEffect(controlledChar, data, seenChars, target, 0, 1);
+
+            return AlignTargetEffect(controlledChar, data, target, delta);
+        }
+
+        protected int AlignTargetEffect(Character controlledChar, BattleData data, Character target, int delta)
+        {
             bool teamPartner = (IQ & AIFlags.TeamPartner) != AIFlags.None;
             Alignment matchup = DungeonScene.Instance.GetMatchup(controlledChar, target, !teamPartner);
-
 
             if (matchup == Alignment.Foe)
             {
@@ -1340,18 +1514,14 @@ namespace PMDC.Dungeon
                     if (sleepStatus != null)
                     {
                         bool leaveSleeping = true;
-                        //don't wake up sleeping foes; NOTE: specialized AI code!
-                        //the exceptions are dream eater and wake-up slap
-                        if (moveIndex == 138 || moveIndex == 358)
-                            leaveSleeping = false;
 
                         int counter = sleepStatus.StatusStates.GetWithDefault<CountDownState>().Counter;
                         if (!teamPartner)
                         {
                             //team partners are extra cautious not to do anything to sleepers, but npcs will still attack with status if it applies
-                            if (entry.Data.Category == BattleData.SkillCategory.Status && counter > 1)
+                            if (data.Category == BattleData.SkillCategory.Status && counter > 1)
                                 leaveSleeping = false;
-                            else if (entry.Data.Category != BattleData.SkillCategory.Status && counter <= 1)
+                            else if (data.Category != BattleData.SkillCategory.Status && counter <= 1)
                                 leaveSleeping = false;
                         }
                         else
@@ -1454,122 +1624,124 @@ namespace PMDC.Dungeon
                     return hpWorthHealing * 200 / healHP;
                 }
             }
-                
-
-
-            if (entry.Data.Category == BattleData.SkillCategory.Status)
+            else if (moveIndex == 275)//Ingrain; use it only if damaged, AND if enemies are close; NOTE: specialized AI code!
             {
-                if (moveIndex == 275)//Ingrain; use it only if damaged, AND if enemies are close; NOTE: specialized AI code!
+                bool nearEnemy = false;
+                foreach (Character character in seenChars)
                 {
+                    if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Foe && (character.CharLoc - controlledChar.CharLoc).Dist8() <= 2)
+                    {
+                        nearEnemy = true;
+                        break;
+                    }
+                }
+                if (target.HP * 4 / 3 > target.MaxHP && !nearEnemy)
+                    return 0;
+            }
+            else if (moveIndex == 150)//Splash; use it only if enemies are close; NOTE: specialized AI code!
+            {
+                bool nearEnemy = false;
+                foreach (Character character in seenChars)
+                {
+                    if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Foe && (character.CharLoc - controlledChar.CharLoc).Dist8() <= 1)
+                    {
+                        nearEnemy = true;
+                        break;
+                    }
+                }
+                if (!nearEnemy)
+                    return 0;
+                //always use on self; considered good on self
+                return 100;
+            }
+            else if (moveIndex == 195)//perish song; don't care if it hits self or allies; NOTE: specialized AI code!
+            {
+                if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
+                    return 0;
+            }
+            else if (moveIndex == 392)//aqua ring; use only if damaged; NOTE: specialized AI code!
+            {
+                if (target.HP * 4 / 3 > target.MaxHP)
+                    return 0;
+            }
+            else if (moveIndex == 68 && (IQ & AIFlags.KnowsMatchups) == AIFlags.None)//counter; do not use if mirror coat status exists and has more than 1 turn left; NOTE: specialized AI code!
+            {
+                StatusEffect mutexStatus = controlledChar.GetStatusEffect(66);
+                if (mutexStatus != null)
+                {
+                    CountDownState state = mutexStatus.StatusStates.Get<CountDownState>();
+                    if (state.Counter > 1)
+                        return 0;
+                }
+            }
+            else if (moveIndex == 243 && (IQ & AIFlags.KnowsMatchups) == AIFlags.None)//Mirror coat; do not use if counter status exists and has more than 1 turn left; NOTE: specialized AI code!
+            {
+                StatusEffect mutexStatus = controlledChar.GetStatusEffect(67);
+                if (mutexStatus != null)
+                {
+                    CountDownState state = mutexStatus.StatusStates.Get<CountDownState>();
+                    if (state.Counter > 1)
+                        return 0;
+                }
+            }
+            else if (moveIndex == 256)//swallow; use only if stockpiled and damaged; NOTE: specialized AI code!
+            {
+                StatusEffect stockStatus = controlledChar.GetStatusEffect(53);
+                if (stockStatus != null)
+                {
+                    StackState stack = stockStatus.StatusStates.Get<StackState>();
+                    int healHP = target.MaxHP * stack.Stack / 2;
+                    int hpToHeal = target.MaxHP - target.HP;
+                    int hpWorthHealing = Math.Max(hpToHeal - healHP / 2, 0);
+                    //the healing only has worth if the target is missing at least half the HP the healing would give
+                    return hpWorthHealing * 200 / healHP;
+                }
+                return 0;
+            }
+            else if (moveIndex == 516)//Bestow; use only if you have an item to give; NOTE: specialized AI code!
+            {
+                if (controlledChar.EquippedItem.ID > -1)//let's assume the item is always bad
+                    return -100;
+                return 0;
+            }
+            else if (moveIndex == 281)//yawn; use only if the target is OK; NOTE: specialized AI code!
+            {
+                foreach (StatusEffect status in target.IterateStatusEffects())
+                {
+                    if (status.StatusStates.Contains<MajorStatusState>())
+                        return 0;
+                }
+            }
+            else if (moveIndex == 100)//teleport; never use here if we attack to escape; handle it elsewhere; NOTE: specialized AI code!
+            {
+                if ((IQ & AIFlags.AttackToEscape) != AIFlags.None)
+                {
+                    if (target.HP < target.MaxHP)// only have a chance if damaged, or enemies close
+                        return 100;//always use on self; considered good on self
+
                     bool nearEnemy = false;
                     foreach (Character character in seenChars)
                     {
-                        if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Foe && (character.CharLoc - controlledChar.CharLoc).Dist8() <= 2)
+                        if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Foe && (character.CharLoc - controlledChar.CharLoc).Dist8() <= 3)
                         {
                             nearEnemy = true;
                             break;
                         }
                     }
-                    if (target.HP * 4 / 3 > target.MaxHP && !nearEnemy)
-                        return 0;
+                    if (nearEnemy)
+                        return 100;
                 }
-                else if (moveIndex == 150)//Splash; use it only if enemies are close; NOTE: specialized AI code!
-                {
-                    bool nearEnemy = false;
-                    foreach (Character character in seenChars)
-                    {
-                        if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Foe && (character.CharLoc - controlledChar.CharLoc).Dist8() <= 1)
-                        {
-                            nearEnemy = true;
-                            break;
-                        }
-                    }
-                    if (!nearEnemy)
-                        return 0;
-                    //always use on self; considered good on self
-                    return 100;
-                }
-                else if (moveIndex == 195)//perish song; don't care if it hits self or allies; NOTE: specialized AI code!
-                {
-                    if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
-                        return 0;
-                }
-                else if (moveIndex == 392)//aqua ring; use only if damaged; NOTE: specialized AI code!
-                {
-                    if (target.HP * 4 / 3 > target.MaxHP)
-                        return 0;
-                }
-                else if (moveIndex == 68 && (IQ & AIFlags.KnowsMatchups) == AIFlags.None)//counter; do not use if mirror coat status exists and has more than 1 turn left; NOTE: specialized AI code!
-                {
-                    StatusEffect mutexStatus = controlledChar.GetStatusEffect(66);
-                    if (mutexStatus != null)
-                    {
-                        CountDownState state = mutexStatus.StatusStates.Get<CountDownState>();
-                        if (state.Counter > 1)
-                            return 0;
-                    }
-                }
-                else if (moveIndex == 243 && (IQ & AIFlags.KnowsMatchups) == AIFlags.None)//Mirror coat; do not use if counter status exists and has more than 1 turn left; NOTE: specialized AI code!
-                {
-                    StatusEffect mutexStatus = controlledChar.GetStatusEffect(67);
-                    if (mutexStatus != null)
-                    {
-                        CountDownState state = mutexStatus.StatusStates.Get<CountDownState>();
-                        if (state.Counter > 1)
-                            return 0;
-                    }
-                }
-                else if (moveIndex == 256)//swallow; use only if stockpiled and damaged; NOTE: specialized AI code!
-                {
-                    StatusEffect stockStatus = controlledChar.GetStatusEffect(53);
-                    if (stockStatus != null)
-                    {
-                        StackState stack = stockStatus.StatusStates.Get<StackState>();
-                        int healHP = target.MaxHP * stack.Stack / 2;
-                        int hpToHeal = target.MaxHP - target.HP;
-                        int hpWorthHealing = Math.Max(hpToHeal - healHP / 2, 0);
-                        //the healing only has worth if the target is missing at least half the HP the healing would give
-                        return hpWorthHealing * 200 / healHP;
-                    }
-                    return 0;
-                }
-                else if (moveIndex == 516)//Bestow; use only if you have an item to give; NOTE: specialized AI code!
-                {
-                    if (controlledChar.EquippedItem.ID > -1)//let's assume the item is always bad
-                        return -100;
-                    return 0;
-                }
-                else if (moveIndex == 281)//yawn; use only if the target is OK; NOTE: specialized AI code!
-                {
-                    foreach (StatusEffect status in target.IterateStatusEffects())
-                    {
-                        if (status.StatusStates.Contains<MajorStatusState>())
-                            return 0;
-                    }
-                }
-                else if (moveIndex == 100)//teleport; never use here if we attack to escape; handle it elsewhere; NOTE: specialized AI code!
-                {
-                    if ((IQ & AIFlags.AttackToEscape) != AIFlags.None)
-                    {
-                        if (target.HP < target.MaxHP)// only have a chance if damaged, or enemies close
-                            return 100;//always use on self; considered good on self
+                return 0;
+            }
 
-                        bool nearEnemy = false;
-                        foreach (Character character in seenChars)
-                        {
-                            if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Foe && (character.CharLoc - controlledChar.CharLoc).Dist8() <= 3)
-                            {
-                                nearEnemy = true;
-                                break;
-                            }
-                        }
-                        if (nearEnemy)
-                            return 100;
-                    }
-                    return 0;
-                }
+            return GetTargetBattleDataEffect(controlledChar, entry.Data, seenChars, target, rangeMod, entry.Strikes);
+        }
 
-                foreach (BattleEvent effect in entry.Data.OnHitTiles.EnumerateInOrder())
+        protected int GetTargetBattleDataEffect(Character controlledChar, BattleData data, List<Character> seenChars, Character target, int rangeMod, int strikes)
+        {
+            if (data.Category == BattleData.SkillCategory.Status || data.Category == BattleData.SkillCategory.None)
+            {
+                foreach (BattleEvent effect in data.OnHitTiles.EnumerateInOrder())
                 {
                     if (effect is SetTrapEvent)
                     {
@@ -1581,7 +1753,7 @@ namespace PMDC.Dungeon
                 }
 
                 //heal checker/status removal checker/other effects
-                foreach (BattleEvent effect in entry.Data.OnHits.EnumerateInOrder())
+                foreach (BattleEvent effect in data.OnHits.EnumerateInOrder())
                 {
                     if (effect is IHealEvent)
                     {
@@ -1615,6 +1787,7 @@ namespace PMDC.Dungeon
                                 addedEffect *= stack.Stack;
                                 addedEffect /= 2;
                             }
+                            totalEffect += addedEffect;
                         }
                         return totalEffect;
                     }
@@ -1859,7 +2032,7 @@ namespace PMDC.Dungeon
                 //status checker
                 bool givesStatus = false;
                 int statusWorth = 0;
-                foreach (BattleEvent effect in entry.Data.OnHits.EnumerateInOrder())
+                foreach (BattleEvent effect in data.OnHits.EnumerateInOrder())
                 {
                     if (effect is StatusBattleEvent)
                     {
@@ -1948,36 +2121,49 @@ namespace PMDC.Dungeon
                 //x0 if it does nothing
                 int power = 0;
 
-                BasePowerState state = entry.Data.SkillStates.GetWithDefault<BasePowerState>();
+                BasePowerState state = data.SkillStates.GetWithDefault<BasePowerState>();
                 if (state != null)
                     power = state.Power * 2;
 
-                power *= entry.Strikes;
+                power *= strikes;
 
                 if (power == 0)
                     power = 100;
 
-                if (controlledChar.HasElement(entry.Data.Element))
+                if (controlledChar.HasElement(data.Element))
                 {
                     power *= 4;
                     power /= 3;
                 }
 
-                if (moveIndex == 162)//super fang; NOTE: specialized AI code!
-                    power = 200 * target.HP / target.MaxHP;
-                else if (moveIndex == 515)//final gambit; NOTE: specialized AI code!
+                foreach (BattleEvent effect in data.BeforeHits.EnumerateInOrder())
                 {
-                    power = 200 * controlledChar.HP / controlledChar.MaxHP;
-                    if (power < 20)
-                        power = 0;
+                    if (effect is DistanceDropEvent)
+                    {
+                        int diff = (target.CharLoc - controlledChar.CharLoc).Dist8();
+                        for (int nn = 0; nn < diff; nn++)
+                            power /= 2;
+                    }
                 }
-                else if (moveIndex == 283)//endeavor; NOTE: specialized AI code!
-                    power = 200 * Math.Max(0, target.HP - controlledChar.HP) / target.MaxHP;
-                else if (moveIndex == 222)//magnitude; NOTE: specialized AI code!
+
+                foreach (BattleEvent effect in data.OnHits.EnumerateInOrder())
                 {
-                    int diff = (target.CharLoc - controlledChar.CharLoc).Dist8();
-                    for (int nn = 0; nn < diff; nn++)
-                        power /= 2;
+                    if (effect is CutHPDamageEvent)
+                    {
+                        power = 200 * target.HP / target.MaxHP;
+                    }
+                    else if (effect is UserHPDamageEvent)
+                    {
+                        if (((UserHPDamageEvent)effect).Reverse)
+                            power = 200 - 200 * controlledChar.HP / controlledChar.MaxHP;
+                        else
+                            power = 200 * controlledChar.HP / controlledChar.MaxHP;
+
+                        if (power < 20)
+                            power = 0;
+                    }
+                    else if (effect is EndeavorEvent)
+                        power = 200 * Math.Max(0, target.HP - controlledChar.HP) / target.MaxHP;
                 }
 
                 //check against move-neutralizing abilities; NOTE: specialized AI code!
@@ -1990,7 +2176,7 @@ namespace PMDC.Dungeon
                             if (effect is AbsorbElementEvent)
                             {
                                 AbsorbElementEvent absorbEffect = (AbsorbElementEvent)effect;
-                                if (absorbEffect.AbsorbElement == entry.Data.Element)
+                                if (absorbEffect.AbsorbElement == data.Element)
                                 {
                                     bool redundantStatus = false;
                                     foreach (BattleEvent result in absorbEffect.BaseEvents)
@@ -2012,7 +2198,7 @@ namespace PMDC.Dungeon
                         }
                     }
                 }
-                foreach (BattleEvent effect in entry.Data.OnHits.EnumerateInOrder())
+                foreach (BattleEvent effect in data.OnHits.EnumerateInOrder())
                 {
                     if (effect is OnHitEvent)
                     {
@@ -2034,7 +2220,7 @@ namespace PMDC.Dungeon
                     }
                 }
 
-                int matchup = PreTypeEvent.GetDualEffectiveness(controlledChar, target, entry.Data);
+                int matchup = PreTypeEvent.GetDualEffectiveness(controlledChar, target, data);
                 power *= PreTypeEvent.GetEffectivenessMult(matchup);
                 power /= PreTypeEvent.GetEffectivenessMult(PreTypeEvent.NRM_2);
 
@@ -2120,14 +2306,12 @@ namespace PMDC.Dungeon
 
     public struct ActionDirValue
     {
-        public int MoveIndex;
-        public Dir8 Dir;
+        public GameAction Action;
         public HitValue Hit;
 
-        public ActionDirValue(int moveIndex, Dir8 dir, HitValue hit)
+        public ActionDirValue(GameAction action, HitValue hit)
         {
-            MoveIndex = moveIndex;
-            Dir = dir;
+            Action = action;
             Hit = hit;
         }
     }
