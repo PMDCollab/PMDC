@@ -1814,15 +1814,12 @@ namespace PMDC.Dungeon
         {
             if (!ZoneManager.Instance.CurrentMap.Status.ContainsKey(SniffedStatusID))
             {
-
-                int radius = 80;
-                Loc? loc = Grid.FindClosestConnectedTile(character.CharLoc - new Loc(radius), new Loc(radius * 2 + 1),
+                Loc? loc = Grid.FindClosestConnectedTile(character.CharLoc - new Loc(CharAction.MAX_RANGE), new Loc(CharAction.MAX_RANGE * 2 + 1),
                     (Loc testLoc) => {
 
-                        if (!Collision.InBounds(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height, testLoc))
+                        Tile tile = ZoneManager.Instance.CurrentMap.GetTile(testLoc);
+                        if (tile == null)
                             return false;
-
-                        Tile tile = ZoneManager.Instance.CurrentMap.Tiles[testLoc.X][testLoc.Y];
 
                         if (tile.Effect.ID == 1 || tile.Effect.ID == 2)//TODO: remove this magic number
                             return true;

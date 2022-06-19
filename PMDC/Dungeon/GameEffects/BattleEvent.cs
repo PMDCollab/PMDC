@@ -10588,10 +10588,9 @@ namespace PMDC.Dungeon
             Loc? loc = Grid.FindClosestConnectedTile(character.CharLoc - new Loc(radius), new Loc(radius * 2 + 1),
                 (Loc testLoc) => {
 
-                    if (!Collision.InBounds(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height, testLoc))
+                    Tile tile = ZoneManager.Instance.CurrentMap.GetTile(testLoc);
+                    if (tile == null)
                         return false;
-
-                    Tile tile = ZoneManager.Instance.CurrentMap.Tiles[testLoc.X][testLoc.Y];
 
                     if (tile.Effect.ID == 1 || tile.Effect.ID == 2)//TODO: remove this magic number
                         return true;
@@ -12734,7 +12733,7 @@ namespace PMDC.Dungeon
             Dictionary<Loc, int> itemLocs = new Dictionary<Loc, int>();
             for (int ii = 0; ii < ZoneManager.Instance.CurrentMap.Items.Count; ii++)
                 itemLocs.Add(ZoneManager.Instance.CurrentMap.Items[ii].TileLoc, ii);
-            bool[] chosenItems = new bool[ZoneManager.Instance.CurrentMap.Items.Count];
+            Loc?[] chosenItems = new Loc?[ZoneManager.Instance.CurrentMap.Items.Count];
 
             uint mobility = 0;
             mobility |= (1U << (int)TerrainData.Mobility.Lava);
@@ -12744,11 +12743,12 @@ namespace PMDC.Dungeon
             Grid.AffectConnectedTiles(context.User.CharLoc - new Loc(CharAction.MAX_RANGE), new Loc(CharAction.MAX_RANGE * 2 + 1),
                 (Loc effectLoc) =>
                 {
-                    if (!ZoneManager.Instance.CurrentMap.TileBlocked(effectLoc, mobility))
-                    {
-                        if (itemLocs.ContainsKey(effectLoc))
-                            chosenItems[itemLocs[effectLoc]] = true;
-                    }
+                    if (ZoneManager.Instance.CurrentMap.TileBlocked(effectLoc, mobility))
+                        return;
+
+                    Loc wrapLoc = ZoneManager.Instance.CurrentMap.WrapLoc(effectLoc);
+                    if (itemLocs.ContainsKey(wrapLoc))
+                        chosenItems[itemLocs[wrapLoc]] = effectLoc;
                 },
                 (Loc testLoc) =>
                 {
@@ -12760,30 +12760,30 @@ namespace PMDC.Dungeon
                 },
                 context.User.CharLoc);
 
-            List<Loc> unclaimed_startings = new List<Loc>();
             for (int ii = ZoneManager.Instance.CurrentMap.Items.Count - 1; ii >= 0; ii--)
             {
-                if (chosenItems[ii])
+                if (chosenItems[ii] != null)
                 {
                     MapItem item = ZoneManager.Instance.CurrentMap.Items[ii];
                     Loc? newLoc = ZoneManager.Instance.CurrentMap.FindItemlessTile(context.User.CharLoc, CharAction.MAX_RANGE, true);
-                    unclaimed_startings.Add(item.TileLoc);
                     if (newLoc != null)
-                        item.TileLoc = newLoc.Value;
+                    {
+                        ItemAnim itemAnim = new ItemAnim(chosenItems[ii].Value * GraphicsManager.TileSize, newLoc.Value * GraphicsManager.TileSize, item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, 1);
+                        DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
+                        item.TileLoc = ZoneManager.Instance.CurrentMap.WrapLoc(newLoc.Value);
+                    }
+                    else
+                        chosenItems[ii] = null;
                 }
             }
-            int unclaimed_index = unclaimed_startings.Count - 1;
             List<MapItem> unclaimed_items = new List<MapItem>();
             for (int ii = ZoneManager.Instance.CurrentMap.Items.Count - 1; ii >= 0; ii--)
             {
-                if (chosenItems[ii])
+                if (chosenItems[ii] != null)
                 {
                     MapItem item = ZoneManager.Instance.CurrentMap.Items[ii];
-                    ItemAnim itemAnim = new ItemAnim(unclaimed_startings[unclaimed_index] * GraphicsManager.TileSize, item.MapLoc, item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, 1);
-                    DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
                     unclaimed_items.Add(item);
                     ZoneManager.Instance.CurrentMap.Items.RemoveAt(ii);
-                    unclaimed_index--;
                 }
             }
             DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRAWL").ToLocal(), context.User.GetDisplayName(false)));
@@ -12813,12 +12813,13 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (Collision.InBounds(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height, context.TargetTile) && 
-                ZoneManager.Instance.CurrentMap.DiscoveryArray[context.TargetTile.X][context.TargetTile.Y] == Map.DiscoveryState.None)
-            {
-                    ZoneManager.Instance.CurrentMap.DiscoveryArray[context.TargetTile.X][context.TargetTile.Y] = Map.DiscoveryState.Hinted;
-            }
-            yield break;
+            Loc testTile = context.TargetTile;
+            if (!ZoneManager.Instance.CurrentMap.GetLocInMapBounds(ref testTile))
+                yield break;
+            
+            if (ZoneManager.Instance.CurrentMap.DiscoveryArray[testTile.X][testTile.Y] == Map.DiscoveryState.None)
+                    ZoneManager.Instance.CurrentMap.DiscoveryArray[testTile.X][testTile.Y] = Map.DiscoveryState.Hinted;
+
         }
     }
 
@@ -12835,10 +12836,10 @@ namespace PMDC.Dungeon
             if (context.Data.Category == BattleData.SkillCategory.None)
                 yield break;
 
-            if (!Collision.InBounds(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height, context.TargetTile))
+            Tile tile = ZoneManager.Instance.CurrentMap.GetTile(context.TargetTile);
+            if (tile == null)
                 yield break;
 
-            Tile tile = ZoneManager.Instance.CurrentMap.Tiles[context.TargetTile.X][context.TargetTile.Y];
             if (tile.Effect.ID > -1 && ZoneManager.Instance.CurrentMap.GetTileOwner(context.User) != tile.Effect.Owner)
             {
                 TileData entry = DataManager.Instance.GetTile(tile.Effect.GetID());
@@ -12896,13 +12897,13 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (!Collision.InBounds(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height, context.TargetTile))
+            Tile tile = ZoneManager.Instance.CurrentMap.GetTile(context.TargetTile);
+            if (tile == null)
                 yield break;
 
-            Tile tile = ZoneManager.Instance.CurrentMap.Tiles[context.TargetTile.X][context.TargetTile.Y];
             if (tile.Data.GetData().BlockType == TerrainData.Mobility.Passable && tile.Effect.ID == -1)
             {
-                tile.Effect = new EffectTile(TrapID, true, context.TargetTile);
+                tile.Effect = new EffectTile(TrapID, true, tile.Effect.TileLoc);
                 tile.Effect.Owner = ZoneManager.Instance.CurrentMap.GetTileOwner(context.User);
             }
         }
@@ -12946,10 +12947,10 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (!Collision.InBounds(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height, context.TargetTile))
+            Tile tile = ZoneManager.Instance.CurrentMap.GetTile(context.TargetTile);
+            if (tile == null)
                 yield break;
 
-            Tile tile = ZoneManager.Instance.CurrentMap.Tiles[context.TargetTile.X][context.TargetTile.Y];
             if (tile.Effect.ID > -1)
             {
                 TileData entry = DataManager.Instance.GetTile(tile.Effect.GetID());
@@ -12966,10 +12967,10 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (!Collision.InBounds(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height, context.TargetTile))
+            Tile tile = ZoneManager.Instance.CurrentMap.GetTile(context.TargetTile);
+            if (tile == null)
                 yield break;
 
-            Tile tile = ZoneManager.Instance.CurrentMap.Tiles[context.TargetTile.X][context.TargetTile.Y];
             if (tile.Effect.ID > -1)
                 tile.Effect.Revealed = true;
         }
@@ -12982,10 +12983,10 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (!Collision.InBounds(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height, context.TargetTile))
+            Tile tile = ZoneManager.Instance.CurrentMap.GetTile(context.TargetTile);
+            if (tile == null)
                 yield break;
 
-            Tile tile = ZoneManager.Instance.CurrentMap.Tiles[context.TargetTile.X][context.TargetTile.Y];
             if (tile.Effect.ID > -1)
             {
                 TileData entry = DataManager.Instance.GetTile(tile.Effect.GetID());
@@ -13027,26 +13028,25 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (!Collision.InBounds(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height, context.TargetTile))
+            Tile tile = ZoneManager.Instance.CurrentMap.GetTile(context.TargetTile);
+            if (tile == null)
+                yield break;
+            if (!TileTypes.Contains(tile.Data.ID))
                 yield break;
 
-            Tile tile = ZoneManager.Instance.CurrentMap.Tiles[context.TargetTile.X][context.TargetTile.Y];
-            if (TileTypes.Contains(tile.Data.ID))
+            if (context.Target == null)
             {
-                if (context.Target == null)
-                {
-                    GameManager.Instance.BattleSE(RemoveSound);
-                    FiniteEmitter emitter = (FiniteEmitter)RemoveAnim.Clone();
-                    emitter.SetupEmit(context.TargetTile * GraphicsManager.TileSize, context.TargetTile * GraphicsManager.TileSize, context.User.CharDir);
-                    DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
-                }
-
-                tile.Data = new TerrainTile(0);
-                int distance = 0;
-                Loc startLoc = context.TargetTile - new Loc(distance + 2);
-                Loc sizeLoc = new Loc((distance + 2) * 2 + 1);
-                ZoneManager.Instance.CurrentMap.MapModified(startLoc, sizeLoc);
+                GameManager.Instance.BattleSE(RemoveSound);
+                FiniteEmitter emitter = (FiniteEmitter)RemoveAnim.Clone();
+                emitter.SetupEmit(context.TargetTile * GraphicsManager.TileSize, context.TargetTile * GraphicsManager.TileSize, context.User.CharDir);
+                DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
             }
+
+            tile.Data = new TerrainTile(0);
+            int distance = 0;
+            Loc startLoc = context.TargetTile - new Loc(distance + 2);
+            Loc sizeLoc = new Loc((distance + 2) * 2 + 1);
+            ZoneManager.Instance.CurrentMap.MapModified(startLoc, sizeLoc);
         }
     }
 
@@ -13072,38 +13072,35 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (!Collision.InBounds(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height, context.TargetTile))
+            Tile tile = ZoneManager.Instance.CurrentMap.GetTile(context.TargetTile);
+            if (tile == null)
                 yield break;
 
-            Tile tile = ZoneManager.Instance.CurrentMap.Tiles[context.TargetTile.X][context.TargetTile.Y];
-            if (TileTypes.Contains(tile.Data.ID))
+            if (!TileTypes.Contains(tile.Data.ID))
+                yield break;
+
+            if (context.Target == null)
             {
-                if (context.Target == null)
-                {
-                    GameManager.Instance.BattleSE("DUN_Rollout");
-                    SingleEmitter emitter = new SingleEmitter(new AnimData("Rock_Smash", 2));
-                    emitter.SetupEmit(context.TargetTile * GraphicsManager.TileSize, context.TargetTile * GraphicsManager.TileSize, context.User.CharDir);
-                    DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
-                }
-
-                //destroy the wall
-                tile.Data = new TerrainTile(0);
-                for (int ii = 0; ii < DirExt.DIR4_COUNT; ii++)
-                {
-                    Loc moveLoc = context.TargetTile + ((Dir4)ii).GetLoc();
-                    if (Collision.InBounds(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height, moveLoc))
-                    {
-                        Tile sideTile = ZoneManager.Instance.CurrentMap.Tiles[moveLoc.X][moveLoc.Y];
-                        if (TileTypes.Contains(sideTile.Data.ID))
-                            sideTile.Data = new TerrainTile(0);
-                    }
-                }
-
-                int distance = 0;
-                Loc startLoc = context.TargetTile - new Loc(distance + 3);
-                Loc sizeLoc = new Loc((distance + 3) * 2 + 1);
-                ZoneManager.Instance.CurrentMap.MapModified(startLoc, sizeLoc);
+                GameManager.Instance.BattleSE("DUN_Rollout");
+                SingleEmitter emitter = new SingleEmitter(new AnimData("Rock_Smash", 2));
+                emitter.SetupEmit(context.TargetTile * GraphicsManager.TileSize, context.TargetTile * GraphicsManager.TileSize, context.User.CharDir);
+                DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
             }
+
+            //destroy the wall
+            tile.Data = new TerrainTile(0);
+            for (int ii = 0; ii < DirExt.DIR4_COUNT; ii++)
+            {
+                Loc moveLoc = context.TargetTile + ((Dir4)ii).GetLoc();
+                Tile sideTile = ZoneManager.Instance.CurrentMap.GetTile(moveLoc);
+                if (sideTile != null && TileTypes.Contains(sideTile.Data.ID))
+                    sideTile.Data = new TerrainTile(0);
+            }
+
+            int distance = 0;
+            Loc startLoc = context.TargetTile - new Loc(distance + 3);
+            Loc sizeLoc = new Loc((distance + 3) * 2 + 1);
+            ZoneManager.Instance.CurrentMap.MapModified(startLoc, sizeLoc);
         }
     }
 
@@ -13126,16 +13123,19 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            Tile tile = ZoneManager.Instance.CurrentMap.Tiles[context.TargetTile.X][context.TargetTile.Y];
+            Tile tile = ZoneManager.Instance.CurrentMap.GetTile(context.TargetTile);
+            if (tile == null)
+                yield break;
+
             if (!BlockedByTerrain || tile.Data.ID == 0)
             {
+                Loc wrappedLoc = ZoneManager.Instance.CurrentMap.WrapLoc(context.TargetTile);
                 for (int ii = ZoneManager.Instance.CurrentMap.Items.Count - 1; ii >= 0; ii--)
                 {
-                    if (ZoneManager.Instance.CurrentMap.Items[ii].TileLoc == context.TargetTile)
+                    if (ZoneManager.Instance.CurrentMap.Items[ii].TileLoc == wrappedLoc)
                         ZoneManager.Instance.CurrentMap.Items.RemoveAt(ii);
                 }
             }
-            yield break;
         }
     }
 
@@ -13160,20 +13160,19 @@ namespace PMDC.Dungeon
                     //check if the tile in front can be unlocked
                     bool unlockable = false;
                     Loc hitLoc = context.User.CharLoc + context.User.CharDir.GetLoc();
-                    if (Collision.InBounds(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height, hitLoc))
+
+                    Tile tile = ZoneManager.Instance.CurrentMap.GetTile(hitLoc);
+                    if (tile != null && tile.Effect.ID > -1)
                     {
-                        Tile tile = ZoneManager.Instance.CurrentMap.Tiles[hitLoc.X][hitLoc.Y];
-                        if (tile.Effect.ID > -1)
+                        TileData tileData = DataManager.Instance.GetTile(tile.Effect.ID);
+                        if (tileData.StepType == TileData.TriggerType.Unlockable)
                         {
-                            TileData tileData = DataManager.Instance.GetTile(tile.Effect.ID);
-                            if (tileData.StepType == TileData.TriggerType.Unlockable)
-                            {
-                                UnlockState unlock = tile.Effect.TileStates.GetWithDefault<UnlockState>();
-                                if (unlock != null && unlock.UnlockItem == context.Item.ID)
-                                    unlockable = true;
-                            }
+                            UnlockState unlock = tile.Effect.TileStates.GetWithDefault<UnlockState>();
+                            if (unlock != null && unlock.UnlockItem == context.Item.ID)
+                                unlockable = true;
                         }
                     }
+
                     if (!unlockable)
                     {
                         DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_KEY_MISS").ToLocal()));
@@ -13193,10 +13192,10 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new KeyUnlockEvent(); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (!Collision.InBounds(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height, context.TargetTile))
+            Tile tile = ZoneManager.Instance.CurrentMap.GetTile(context.TargetTile);
+            if (tile == null)
                 yield break;
 
-            Tile tile = ZoneManager.Instance.CurrentMap.Tiles[context.TargetTile.X][context.TargetTile.Y];
             if (tile.Effect.ID > -1)
             {
                 TileData entry = DataManager.Instance.GetTile(tile.Effect.GetID());
