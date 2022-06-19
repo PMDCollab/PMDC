@@ -351,23 +351,26 @@ namespace PMDC.Dungeon
             
             foreach (Character newTarget in ZoneManager.Instance.CurrentMap.IterateCharacters())
             {
-                if (!newTarget.Dead && newTarget != ownerChar && newTarget != context.User
-                    && (newTarget.CharLoc - ownerChar.CharLoc).Dist8() <= 1)
+                if (!newTarget.Dead && newTarget != ownerChar && newTarget != context.User)
                 {
-                    CharAnimSpin spinAnim = new CharAnimSpin();
-                    spinAnim.CharLoc = ownerChar.CharLoc;
-                    spinAnim.CharDir = ownerChar.CharDir;
-                    spinAnim.MajorAnim = true;
+                    Rect region = ownerChar.CharLoc.CreateRect(1);
+                    if (ZoneManager.Instance.CurrentMap.InBounds(region, newTarget.CharLoc))
+                    {
+                        CharAnimSpin spinAnim = new CharAnimSpin();
+                        spinAnim.CharLoc = ownerChar.CharLoc;
+                        spinAnim.CharDir = ownerChar.CharDir;
+                        spinAnim.MajorAnim = true;
 
-                    yield return CoroutineManager.Instance.StartCoroutine(ownerChar.StartAnim(spinAnim));
-                    yield return new WaitWhile(ownerChar.OccupiedwithAction);
+                        yield return CoroutineManager.Instance.StartCoroutine(ownerChar.StartAnim(spinAnim));
+                        yield return new WaitWhile(ownerChar.OccupiedwithAction);
 
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PASS_ATTACK").ToLocal(), ownerChar.GetDisplayName(false), newTarget.GetDisplayName(false)));
-                    context.ExplosionTile = newTarget.CharLoc;
-                    context.Explosion.TargetAlignments |= Alignment.Foe;
-                    context.Explosion.TargetAlignments |= Alignment.Friend;
-                    context.ContextStates.Set(new Redirected());
-                    yield break;
+                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PASS_ATTACK").ToLocal(), ownerChar.GetDisplayName(false), newTarget.GetDisplayName(false)));
+                        context.ExplosionTile = newTarget.CharLoc;
+                        context.Explosion.TargetAlignments |= Alignment.Foe;
+                        context.Explosion.TargetAlignments |= Alignment.Friend;
+                        context.ContextStates.Set(new Redirected());
+                        yield break;
+                    }
                 }
             }
             
