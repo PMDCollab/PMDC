@@ -4015,7 +4015,7 @@ namespace PMDC.Dungeon
                     if (DataManager.Instance.Save.Rand.Next(2) == 0)
                         character.StartEmote(new Emote(altEmoteData.Anim, altEmoteData.LocHeight, 1));
 
-                    if (insideLoc == null && Collision.InBounds(bounds, target.CharLoc))
+                    if (insideLoc == null && ZoneManager.Instance.CurrentMap.InBounds(bounds, target.CharLoc))
                         insideLoc = target.CharLoc;
                 }
             }
@@ -4032,7 +4032,7 @@ namespace PMDC.Dungeon
             {
                 if (!target.Dead)
                 {
-                    if (!Collision.InBounds(innerBounds, target.CharLoc))
+                    if (!ZoneManager.Instance.CurrentMap.InBounds(innerBounds, target.CharLoc))
                     {
                         yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.WarpNear(target, insideLoc.Value, false));
                         //yield return CoroutineManager.Instance.StartCoroutine(shoveTo(target, insideLoc.Value, insideLoc.Value));
@@ -4212,7 +4212,7 @@ namespace PMDC.Dungeon
             Character turnTarget = null;
             foreach (Character target in ZoneManager.Instance.CurrentMap.ActiveTeam.IterateByRank())
             {
-                if (!target.Dead && Collision.InBounds(bounds, target.CharLoc))
+                if (!target.Dead && ZoneManager.Instance.CurrentMap.InBounds(bounds, target.CharLoc))
                 {
                     turnTarget = target;
                     break;
@@ -4400,7 +4400,7 @@ namespace PMDC.Dungeon
             Character turnTarget = null;
             foreach (Character target in ZoneManager.Instance.CurrentMap.ActiveTeam.IterateByRank())
             {
-                if (!target.Dead && Collision.InBounds(bounds, target.CharLoc))
+                if (!target.Dead && ZoneManager.Instance.CurrentMap.InBounds(bounds, target.CharLoc))
                 {
                     turnTarget = target;
                     break;
@@ -4519,7 +4519,7 @@ namespace PMDC.Dungeon
 
                     target.CharDir = Dir8.Up;
 
-                    if (turnTarget == null && Collision.InBounds(bounds, target.CharLoc))
+                    if (turnTarget == null && ZoneManager.Instance.CurrentMap.InBounds(bounds, target.CharLoc))
                         turnTarget = target;
 
                     playerIndex++;
@@ -4531,7 +4531,7 @@ namespace PMDC.Dungeon
             {
                 foreach (Character player in team.EnumerateChars())
                 {
-                    if (!player.Dead && Collision.InBounds(bounds, player.CharLoc))
+                    if (!player.Dead && ZoneManager.Instance.CurrentMap.InBounds(bounds, player.CharLoc))
                         shoveTo(player, ZoneManager.Instance.CurrentMap.EntryPoints[0].Loc);
                 }
             }
@@ -4632,7 +4632,7 @@ namespace PMDC.Dungeon
             {
                 foreach (Character player in ZoneManager.Instance.CurrentMap.ActiveTeam.Players)
                 {
-                    if (!player.Dead && Collision.InBounds(Bounds, player.CharLoc))
+                    if (!player.Dead && ZoneManager.Instance.CurrentMap.InBounds(Bounds, player.CharLoc))
                     {
                         //remove this from the map
                         MapCheckState checks = ((MapStatus)owner).StatusStates.GetWithDefault<MapCheckState>();
@@ -4709,7 +4709,7 @@ namespace PMDC.Dungeon
             bool noPlayers = true;
             foreach (Character player in ZoneManager.Instance.CurrentMap.ActiveTeam.Players)
             {
-                if (!player.Dead && Collision.InBounds(Bounds, player.CharLoc))
+                if (!player.Dead && ZoneManager.Instance.CurrentMap.InBounds(Bounds, player.CharLoc))
                 {
                     noPlayers = false;
                     break;
@@ -4720,7 +4720,7 @@ namespace PMDC.Dungeon
             {
                 foreach (Character player in team.Players)
                 {
-                    if (!player.Dead && Collision.InBounds(Bounds, player.CharLoc))
+                    if (!player.Dead && ZoneManager.Instance.CurrentMap.InBounds(Bounds, player.CharLoc))
                     {
                         noFoes = false;
                         break;
