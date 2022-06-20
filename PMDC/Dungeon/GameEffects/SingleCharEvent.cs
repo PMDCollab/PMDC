@@ -1932,8 +1932,9 @@ namespace PMDC.Dungeon
                             if (diff.DistSquared() < limitSquared)
                             {
                                 Loc loc = character.CharLoc + diff;
-                                if (Collision.InBounds(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height, loc) &&
-                                    ZoneManager.Instance.CurrentMap.DiscoveryArray[loc.X][loc.Y] == Map.DiscoveryState.None)
+                                if (!ZoneManager.Instance.CurrentMap.GetLocInMapBounds(ref loc))
+                                    continue;
+                                if (ZoneManager.Instance.CurrentMap.DiscoveryArray[loc.X][loc.Y] == Map.DiscoveryState.None)
                                     ZoneManager.Instance.CurrentMap.DiscoveryArray[loc.X][loc.Y] = Map.DiscoveryState.Hinted;
                             }
                         }
@@ -3385,7 +3386,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
             Loc destTile = character.CharLoc + character.CharDir.GetLoc();
-            if (!Collision.InBounds(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height, destTile))
+            if (!ZoneManager.Instance.CurrentMap.GetLocInMapBounds(ref destTile))
                 yield break;
 
             if (character.MemberTeam is ExplorerTeam)
