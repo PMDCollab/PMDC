@@ -10324,9 +10324,10 @@ namespace PMDC.Dungeon
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), context.Target.GetDisplayName(false)));
             else
             {
-                Dir8 dir = DirExt.GetDir(context.User.CharLoc, context.Target.CharLoc);
+                Loc closeLoc = ZoneManager.Instance.CurrentMap.GetClosestUnwrappedLoc(context.User.CharLoc, context.Target.CharLoc);
+                Dir8 dir = DirExt.GetDir(context.User.CharLoc, closeLoc);
                 if (dir == Dir8.None)
-                    dir = context.User.CharDir;
+                    dir = context.User.CharDir.Reverse();
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.KnockBack(context.Target, dir, Distance));
             }
         }
@@ -10359,8 +10360,12 @@ namespace PMDC.Dungeon
             {
                 int damage = HitEvent.CalculateDamage(owner, context);
                 ThrowTargetContext throwContext = new ThrowTargetContext(damage);
+                Loc closeLoc = ZoneManager.Instance.CurrentMap.GetClosestUnwrappedLoc(context.User.CharLoc, context.Target.CharLoc);
+                Dir8 dir = DirExt.GetDir(context.User.CharLoc, closeLoc);
+                if (dir == Dir8.None)
+                    dir = context.User.CharDir.Reverse();
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.ThrowTo(context.Target, context.User,
-                    DirExt.GetDir(context.User.CharLoc, context.Target.CharLoc), Distance, Alignment.Foe, throwContext.Hit));
+                    dir, Distance, Alignment.Foe, throwContext.Hit));
             }
         }
 
