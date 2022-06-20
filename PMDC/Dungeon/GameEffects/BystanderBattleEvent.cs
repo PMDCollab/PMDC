@@ -353,8 +353,7 @@ namespace PMDC.Dungeon
             {
                 if (!newTarget.Dead && newTarget != ownerChar && newTarget != context.User)
                 {
-                    Rect region = ownerChar.CharLoc.CreateRect(1);
-                    if (ZoneManager.Instance.CurrentMap.InBounds(region, newTarget.CharLoc))
+                    if (ZoneManager.Instance.CurrentMap.InRange(ownerChar.CharLoc, newTarget.CharLoc, 1))
                     {
                         CharAnimSpin spinAnim = new CharAnimSpin();
                         spinAnim.CharLoc = ownerChar.CharLoc;

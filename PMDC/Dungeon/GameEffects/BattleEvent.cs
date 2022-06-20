@@ -3004,9 +3004,9 @@ namespace PMDC.Dungeon
             if (context.Explosion.Range == 0)
                 yield break;
 
-            //make sure to exempt round
+            //make sure to exempt round?
 
-            if ((context.ExplosionTile - context.Target.CharLoc).Dist8() >= Range)
+            if (!ZoneManager.Instance.CurrentMap.InRange(context.ExplosionTile, context.Target.CharLoc, Range - 1))
             {
                 if (Msg)
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PROTECT_WITH").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
@@ -3473,11 +3473,9 @@ namespace PMDC.Dungeon
             {
                 if (DungeonScene.Instance.GetMatchup(context.User, context.Target) == Alignment.Foe)
                 {
-                    int diff = (context.StrikeStartTile - context.Target.CharLoc).Dist8();
+                    int diff = ZoneManager.Instance.CurrentMap.GetClosestDist8(context.StrikeStartTile, context.Target.CharLoc);
                     if (diff > 1)
-                    {
                         context.AddContextStateMult<AccMult>(false, 4, 3 + diff);
-                    }
                 }
             }
             yield break;
@@ -3496,11 +3494,8 @@ namespace PMDC.Dungeon
             {
                 if (DungeonScene.Instance.GetMatchup(context.User, context.Target) == Alignment.Foe)
                 {
-                    int diff = (context.StrikeStartTile - context.Target.CharLoc).Dist8();
-                    if (diff <= 1)
-                    {
+                    if (ZoneManager.Instance.CurrentMap.InRange(context.StrikeStartTile, context.Target.CharLoc, 1))
                         context.AddContextStateMult<AccMult>(false, 1, 2);
-                    }
                 }
             }
             yield break;
@@ -3530,8 +3525,7 @@ namespace PMDC.Dungeon
             {
                 if (context.Target.GetStatusEffect(StatusID) != null && DungeonScene.Instance.GetMatchup(context.User, context.Target) == Alignment.Foe)
                 {
-                    int diff = (context.StrikeStartTile - context.Target.CharLoc).Dist8();
-                    if (diff > 1 && context.Data.HitRate > -1)
+                    if (!ZoneManager.Instance.CurrentMap.InRange(context.StrikeStartTile, context.Target.CharLoc, 1) && context.Data.HitRate > -1)
                     {
                         DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_AVOID").ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName()));
                         context.AddContextStateMult<AccMult>(false, -1, 1);
@@ -3691,7 +3685,7 @@ namespace PMDC.Dungeon
         {
             if (context.ActionType == BattleActionType.Skill && context.Data.ID > 0)
             {
-                if ((context.StrikeStartTile - context.Target.CharLoc).Dist8() > 1 && context.Data.HitRate > -1)
+                if (!ZoneManager.Instance.CurrentMap.InRange(context.StrikeStartTile, context.Target.CharLoc, 1) && context.Data.HitRate > -1)
                 {
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_AVOID").ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName()));
                     context.AddContextStateMult<AccMult>(false, -1, 1);
@@ -4076,7 +4070,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            int diff = (context.StrikeStartTile - context.Target.CharLoc).Dist8();
+            int diff = ZoneManager.Instance.CurrentMap.GetClosestDist8(context.StrikeStartTile, context.Target.CharLoc);
             for(int ii = 0; ii < diff; ii++)
                 context.AddContextStateMult<DmgMult>(false, 1, 2);
             yield break;
@@ -4091,7 +4085,8 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            int diff = (context.StrikeStartTile - context.Target.CharLoc).Dist8();
+            //TODO: this breaks in small wrapped maps
+            int diff = ZoneManager.Instance.CurrentMap.GetClosestDist8(context.StrikeStartTile, context.Target.CharLoc);
             if (diff != context.HitboxAction.GetEffectiveDistance())
                 context.AddContextStateMult<AccMult>(false, 0, 1);
             yield break;
@@ -4106,8 +4101,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            int diff = (context.StrikeStartTile - context.Target.CharLoc).Dist8();
-            if (diff < 2)
+            if (ZoneManager.Instance.CurrentMap.InRange(context.StrikeStartTile, context.Target.CharLoc, 1))
                 context.AddContextStateMult<AccMult>(false, 0, 1);
             yield break;
         }
@@ -4121,7 +4115,8 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            int diff = (context.StrikeStartTile - context.Target.CharLoc).Dist8();
+            //TODO: this breaks in small wrapped maps
+            int diff = ZoneManager.Instance.CurrentMap.GetClosestDist8(context.StrikeStartTile, context.Target.CharLoc);
             for(int ii = 0; ii < diff; ii++)
                 context.AddContextStateMult<DmgMult>(false, 2, 1);
             yield break;
@@ -6587,7 +6582,7 @@ namespace PMDC.Dungeon
                 int totalAllies = 0;
                 foreach (Character ally in context.User.MemberTeam.EnumerateChars())
                 {
-                    if ((ally.CharLoc - context.User.CharLoc).Dist8() <= 1)
+                    if (ZoneManager.Instance.CurrentMap.InRange(ally.CharLoc, context.User.CharLoc, 1))
                         totalAllies++;
                 }
                 if (Reverse)
@@ -7437,7 +7432,8 @@ namespace PMDC.Dungeon
         {
             // 1 2 1 0 1 2 1 0
             // sine wave function
-            int locDiff = (context.StrikeStartTile - context.Target.CharLoc).Dist8();
+            //TODO: this breaks in small wrapped maps
+            int locDiff = ZoneManager.Instance.CurrentMap.GetClosestDist8(context.StrikeStartTile, context.Target.CharLoc);
             int diff = locDiff % 4;
             int power = (diff > 2) ? 1 : diff;
             return Math.Max(1, context.GetContextStateInt<UserLevel>(0) * power / 2);
@@ -9848,7 +9844,7 @@ namespace PMDC.Dungeon
         {
             foreach (Character target in ZoneManager.Instance.CurrentMap.IterateCharacters())
             {
-                if (!target.Dead && context.User != target && (context.User.CharLoc - target.CharLoc).Dist8() <= 1)
+                if (!target.Dead && context.User != target && ZoneManager.Instance.CurrentMap.InRange(context.User.CharLoc, target.CharLoc, 1))
                 {
                     List<int> badStatuses = new List<int>();
                     foreach (StatusEffect status in target.IterateStatusEffects())
@@ -10267,7 +10263,7 @@ namespace PMDC.Dungeon
             {
                 foreach (Character character in ZoneManager.Instance.CurrentMap.IterateCharacters())
                 {
-                    if (!character.Dead && DungeonScene.Instance.GetMatchup(character, target) == Alignment.Friend && (character.CharLoc - context.User.CharLoc).Dist8() <= AllyRadius)
+                    if (!character.Dead && DungeonScene.Instance.GetMatchup(character, target) == Alignment.Friend && ZoneManager.Instance.CurrentMap.InRange(character.CharLoc, context.User.CharLoc, AllyRadius))
                         allies.Add(character);
                 }
             }
@@ -10470,7 +10466,7 @@ namespace PMDC.Dungeon
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RandomWarp(target, Distance));
                 foreach (Character character in ZoneManager.Instance.CurrentMap.IterateCharacters())
                 {
-                    if (!character.Dead && DungeonScene.Instance.GetMatchup(character, target) == Alignment.Friend && (character.CharLoc - startLoc).Dist8() <= 1)
+                    if (!character.Dead && DungeonScene.Instance.GetMatchup(character, target) == Alignment.Friend && ZoneManager.Instance.CurrentMap.InRange(character.CharLoc, startLoc, 1))
                     {
                         if (character.CharStates.Contains<AnchorState>())
                             DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), character.GetDisplayName(false)));
@@ -10670,7 +10666,7 @@ namespace PMDC.Dungeon
                     {
                         //found a target
                         //are we already next to them?
-                        if ((character.CharLoc - context.Target.CharLoc).Dist8() <= 1)
+                        if (ZoneManager.Instance.CurrentMap.InRange(character.CharLoc, context.Target.CharLoc, 1))
                             break;
                         for (int ii = 0; ii < DirRemap.FOCUSED_DIR8.Length; ii++)
                         {
