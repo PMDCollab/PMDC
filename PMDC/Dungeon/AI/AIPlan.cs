@@ -2179,6 +2179,30 @@ namespace PMDC.Dungeon
                     }
                     else if (effect is EndeavorEvent)
                         power = 200 * Math.Max(0, target.HP - controlledChar.HP) / target.MaxHP;
+                    else if (effect is FutureAttackEvent)
+                    {
+                        StatusEffect existingStatus = target.GetStatusEffect(((FutureAttackEvent)effect).StatusID);
+                        if (existingStatus != null)
+                            power = 0;
+                    }
+                    else if (effect is OnHitEvent)
+                    {
+                        foreach (BattleEvent baseEffect in ((OnHitEvent)effect).BaseEvents)
+                        {
+                            if (baseEffect is GiveContinuousDamageEvent)
+                                power *= 3;
+                            else if (baseEffect is StatusBattleEvent)
+                            {
+                                //note: specialized code mainly for trapping attacks!
+                                //this part is usually only hit for trapping attacks!
+                                StatusBattleEvent giveEffect = (StatusBattleEvent)baseEffect;
+                                Character statusTarget = giveEffect.AffectTarget ? target : controlledChar;
+                                StatusEffect existingStatus = statusTarget.GetStatusEffect(giveEffect.StatusID);
+                                if (existingStatus == null)
+                                    power += 100;
+                            }
+                        }
+                    }
                 }
 
                 //check against move-neutralizing abilities; NOTE: specialized AI code!
@@ -2209,27 +2233,6 @@ namespace PMDC.Dungeon
                                         power /= -2;
                                     break;
                                 }
-                            }
-                        }
-                    }
-                }
-                foreach (BattleEvent effect in data.OnHits.EnumerateInOrder())
-                {
-                    if (effect is OnHitEvent)
-                    {
-                        foreach (BattleEvent baseEffect in ((OnHitEvent)effect).BaseEvents)
-                        {
-                            if (baseEffect is GiveContinuousDamageEvent)
-                                power *= 3;
-                            if (baseEffect is StatusBattleEvent)
-                            {
-                                //note: specialized code mainly for trapping attacks!
-                                //this part is usually only hit for trapping attacks!
-                                StatusBattleEvent giveEffect = (StatusBattleEvent)baseEffect;
-                                Character statusTarget = giveEffect.AffectTarget ? target : controlledChar;
-                                StatusEffect existingStatus = statusTarget.GetStatusEffect(giveEffect.StatusID);
-                                if (existingStatus == null)
-                                    power += 100;
                             }
                         }
                     }
