@@ -120,7 +120,7 @@ namespace PMDC.Dungeon
                     if (BlockedByHazard(controlledChar, testLoc))
                         return true;
 
-                    if (testLoc != targetChar.CharLoc && respectPeers && BlockedByChar(testLoc, Alignment.Self | Alignment.Foe))
+                    if (ZoneManager.Instance.CurrentMap.WrapLoc(testLoc) != targetChar.CharLoc && respectPeers && BlockedByChar(controlledChar, testLoc, Alignment.Friend | Alignment.Foe))
                         return true;
 
                     return false;
@@ -136,7 +136,7 @@ namespace PMDC.Dungeon
                 return null;
 
             //check to see if moving in this direction will get to the target char
-            if (endLoc == targetChar.CharLoc)
+            if (ZoneManager.Instance.CurrentMap.WrapLoc(endLoc) == targetChar.CharLoc)
                 return new GameAction(GameAction.ActionType.Wait, Dir8.None);
 
 

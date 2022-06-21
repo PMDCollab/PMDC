@@ -65,7 +65,7 @@ namespace PMDC.Dungeon
                                     if (BlockedByHazard(controlledChar, testLoc))
                                         return true;
 
-                                    if (!preThink && BlockedByChar(testLoc, Alignment.Self | Alignment.Foe))
+                                    if (!preThink && BlockedByChar(controlledChar, testLoc, Alignment.Friend | Alignment.Foe))
                                         return true;
 
                                     return false;

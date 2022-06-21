@@ -228,7 +228,7 @@ namespace PMDC.Dungeon
                     }
                 }
 
-                if (respectPeers && BlockedByChar(testLoc, Alignment.Self | Alignment.Foe))
+                if (respectPeers && BlockedByChar(controlledChar, testLoc, Alignment.Friend | Alignment.Foe))
                     return true;
 
                 return false;

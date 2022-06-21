@@ -163,41 +163,14 @@ namespace PMDC.Dungeon
             return true;
         }
 
-        protected bool BlockedByChar(Loc testLoc, Alignment alignment)
+        protected bool BlockedByChar(Character controlledChar, Loc testLoc, Alignment alignment)
         {
-            if ((alignment & Alignment.Self) != Alignment.None)
+            Character character = ZoneManager.Instance.CurrentMap.GetCharAtLoc(testLoc);
+            if (character != null)
             {
-                foreach (Character chara in ZoneManager.Instance.CurrentMap.ActiveTeam.EnumerateChars())
-                {
-                    if (!chara.Dead && chara.CharLoc == testLoc)
-                        return true;
-                }
+                if (!character.Dead && (DungeonScene.Instance.GetMatchup(controlledChar, character) & alignment) != Alignment.None)
+                    return true;
             }
-
-            if ((alignment & Alignment.Friend) != Alignment.None)
-            {
-                for (int ii = 0; ii < ZoneManager.Instance.CurrentMap.AllyTeams.Count; ii++)
-                {
-                    foreach (Character chara in ZoneManager.Instance.CurrentMap.AllyTeams[ii].EnumerateChars())
-                    {
-                        if (!chara.Dead && chara.CharLoc == testLoc)
-                            return true;
-                    }
-                }
-            }
-
-            if ((alignment & Alignment.Foe) != Alignment.None)
-            {
-                for (int ii = 0; ii < ZoneManager.Instance.CurrentMap.MapTeams.Count; ii++)
-                {
-                    foreach (Character chara in ZoneManager.Instance.CurrentMap.MapTeams[ii].EnumerateChars())
-                    {
-                        if (!chara.Dead && chara.CharLoc == testLoc)
-                            return true;
-                    }
-                }
-            }
-
             return false;
         }
 
@@ -289,6 +262,28 @@ namespace PMDC.Dungeon
             }
         }
 
+        private Loc[] getWrappedEnds(Loc mapStart, Loc mapSize, Loc start, Loc[] ends)
+        {
+            Rect mapRect = new Rect(mapStart, mapSize);
+
+            Loc[] wrappedEnds = new Loc[ends.Length];
+            for (int ii = 0; ii < ends.Length; ii++)
+            {
+                bool first = true;
+                foreach (Loc wrapLoc in ZoneManager.Instance.CurrentMap.IterateLocInBounds(mapRect, ends[ii]))
+                {
+                    if (first)
+                    {
+                        wrappedEnds[ii] = wrapLoc;
+                        first = false;
+                    }
+                    else if ((start - wrapLoc).Dist8() < (start - wrappedEnds[ii]).Dist8())
+                        wrappedEnds[ii] = wrapLoc;
+                }
+            }
+            return wrappedEnds;
+        }
+
         /// <summary>
         /// Gets the path directly to a target
         /// </summary>
@@ -299,6 +294,9 @@ namespace PMDC.Dungeon
         /// <returns></returns>
         protected List<Loc>[] GetPaths(Character controlledChar, Loc[] ends, bool freeGoal, bool respectPeers, int limit = 1)
         {
+            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
+            Loc mapSize = Character.GetSightDims() * 2 + new Loc(1);
+            Loc[] wrappedEnds = getWrappedEnds(mapStart, mapSize, controlledChar.CharLoc, ends);
 
             //requires a valid target tile
             Grid.LocTest checkDiagBlock = (Loc loc) => {
@@ -310,7 +308,7 @@ namespace PMDC.Dungeon
 
                 if (freeGoal)
                 {
-                    foreach (Loc end in ends)
+                    foreach (Loc end in wrappedEnds)
                     {
                         if (testLoc == end)
                             return false;
@@ -325,15 +323,14 @@ namespace PMDC.Dungeon
                 if (BlockedByHazard(controlledChar, testLoc))
                     return true;
 
-                if (respectPeers && BlockedByChar(testLoc, Alignment.Self | Alignment.Foe))
+                if (respectPeers && BlockedByChar(controlledChar, testLoc, Alignment.Friend | Alignment.Foe))
                     return true;
 
                 return false;
             };
 
 
-            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
-            return Grid.FindNPaths(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, ends, checkBlock, checkDiagBlock, limit, true);
+            return Grid.FindNPaths(mapStart, mapSize, controlledChar.CharLoc, wrappedEnds, checkBlock, checkDiagBlock, limit, true);
         }
 
         protected List<Loc> GetRandomPathPermissive(IRandom rand, Character controlledChar, List<Loc> seenExits)
@@ -356,6 +353,10 @@ namespace PMDC.Dungeon
 
         protected List<Loc>[] GetPathsPermissive(Character controlledChar, List<Loc> ends)
         {
+            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
+            Loc mapSize = Character.GetSightDims() * 2 + new Loc(1);
+            Loc[] wrappedEnds = getWrappedEnds(mapStart, mapSize, controlledChar.CharLoc, ends.ToArray());
+
             //requires a valid target tile
             Grid.LocTest checkDiagBlock = (Loc testLoc) => {
                 return (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, controlledChar.Mobility, true));
@@ -364,7 +365,7 @@ namespace PMDC.Dungeon
 
             Grid.LocTest checkBlock = (Loc testLoc) => {
 
-                foreach (Loc end in ends)
+                foreach (Loc end in wrappedEnds)
                 {
                     if (testLoc == end)
                         return false;
@@ -378,14 +379,13 @@ namespace PMDC.Dungeon
                 if (BlockedByHazard(controlledChar, testLoc))
                     return true;
 
-                if (BlockedByChar(testLoc, Alignment.Self))
+                if (BlockedByChar(controlledChar, testLoc, Alignment.Foe))
                     return true;
 
                 return false;
             };
 
-            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
-            return Grid.FindAllPaths(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, ends.ToArray(), checkBlock, checkDiagBlock);
+            return Grid.FindAllPaths(mapStart, mapSize, controlledChar.CharLoc, wrappedEnds, checkBlock, checkDiagBlock);
         }
 
 
@@ -397,6 +397,10 @@ namespace PMDC.Dungeon
         /// <returns></returns>
         protected List<Loc>[] GetPathsImpassable(Character controlledChar, List<Loc> ends)
         {
+            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
+            Loc mapSize = Character.GetSightDims() * 2 + new Loc(1);
+            Loc[] wrappedEnds = getWrappedEnds(mapStart, mapSize, controlledChar.CharLoc, ends.ToArray());
+
             //requires a valid target tile
             Grid.LocTest checkDiagBlock = (Loc testLoc) => {
                 return (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, uint.MaxValue, true));
@@ -405,7 +409,7 @@ namespace PMDC.Dungeon
 
             Grid.LocTest checkBlock = (Loc testLoc) => {
 
-                foreach (Loc end in ends)
+                foreach (Loc end in wrappedEnds)
                 {
                     if (testLoc == end)
                         return false;
@@ -417,8 +421,7 @@ namespace PMDC.Dungeon
                 return false;
             };
 
-            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
-            return Grid.FindNPaths(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, ends.ToArray(), checkBlock, checkDiagBlock, 1, false);
+            return Grid.FindNPaths(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, wrappedEnds, checkBlock, checkDiagBlock, 1, false);
         }
 
         protected GameAction SelectChoiceFromPath(Character controlledChar, List<Loc> path)
@@ -493,7 +496,7 @@ namespace PMDC.Dungeon
                 List<Loc>[] threatPaths = GetPathsImpassable(controlledChar, threatEnds);
                 for (int ii = 0; ii < threatPaths.Length; ii++)
                 {
-                    if (threatPaths[ii] != null && threatPaths[ii][0] == threats[ii].CharLoc)
+                    if (threatPaths[ii] != null && ZoneManager.Instance.CurrentMap.WrapLoc(threatPaths[ii][0]) == threats[ii].CharLoc)
                     {
                         seesDanger = true;
 
@@ -1255,7 +1258,10 @@ namespace PMDC.Dungeon
                         int calledMove = -1;
                         HashSet<Loc> callTiles = new HashSet<Loc>();
                         foreach (Loc loc in hitboxAction.GetPreTargets(controlledChar, dir, rangeMod))
-                            explosion.AddTargetedTiles(loc, callTiles);
+                        {
+                            foreach (Loc expLoc in explosion.IterateTargetedTiles(loc))
+                                callTiles.Add(ZoneManager.Instance.CurrentMap.WrapLoc(expLoc));
+                        }
 
                         foreach (Character target in seenChars)
                         {
@@ -1343,7 +1349,10 @@ namespace PMDC.Dungeon
                         int calledMove = -1;
                         HashSet<Loc> callTiles = new HashSet<Loc>();
                         foreach (Loc loc in hitboxAction.GetPreTargets(controlledChar, dir, rangeMod))
-                            explosion.AddTargetedTiles(loc, callTiles);
+                        {
+                            foreach (Loc expLoc in explosion.IterateTargetedTiles(loc))
+                                callTiles.Add(ZoneManager.Instance.CurrentMap.WrapLoc(expLoc));
+                        }
 
                         foreach (Character target in seenChars)
                         {
@@ -1443,7 +1452,10 @@ namespace PMDC.Dungeon
 
             HashSet<Loc> hitTiles = new HashSet<Loc>();
             foreach (Loc loc in hitboxAction.GetPreTargets(controlledChar, dir, rangeMod))
-                explosion.AddTargetedTiles(loc, hitTiles);
+            {
+                foreach (Loc expLoc in explosion.IterateTargetedTiles(loc))
+                    hitTiles.Add(ZoneManager.Instance.CurrentMap.WrapLoc(expLoc));
+            }
 
             bool directHit = false;
             int totalTargets = 0;

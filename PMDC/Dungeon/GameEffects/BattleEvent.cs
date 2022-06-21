@@ -843,7 +843,7 @@ namespace PMDC.Dungeon
             SkillData skill = DataManager.Instance.GetSkill(move);
             HashSet<Loc> targetLocs = new HashSet<Loc>();
             foreach (Loc loc in skill.HitboxAction.GetPreTargets(user, user.CharDir, 0))
-                targetLocs.Add(loc);
+                targetLocs.Add(ZoneManager.Instance.CurrentMap.WrapLoc(loc));
             foreach (Character seenChar in seenChars)
             {
                 if (targetLocs.Contains(seenChar.CharLoc))
