@@ -53,9 +53,9 @@ namespace PMDC.Dungeon
                 //use A* to get this first direction?  check only walls?
                 List<Loc>[] paths = GetPaths(controlledChar, new Loc[1] { targetChar.CharLoc }, true, false);
                 List<Loc> path = paths[0];
-                Dir8 dirToChar = DirExt.GetDir(controlledChar.CharLoc, targetChar.CharLoc);
+                Dir8 dirToChar = ZoneManager.Instance.CurrentMap.GetClosestDir8(controlledChar.CharLoc, targetChar.CharLoc);
                 if (path.Count > 1)
-                    dirToChar = DirExt.GetDir(path[path.Count - 1], path[path.Count - 2]);                    
+                    dirToChar = ZoneManager.Instance.CurrentMap.GetClosestDir8(path[path.Count - 1], path[path.Count - 2]);                    
 
                 //is it possible to move in that direction?
                 //if so, use it

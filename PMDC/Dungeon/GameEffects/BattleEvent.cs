@@ -10324,8 +10324,7 @@ namespace PMDC.Dungeon
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), context.Target.GetDisplayName(false)));
             else
             {
-                Loc closeLoc = ZoneManager.Instance.CurrentMap.GetClosestUnwrappedLoc(context.User.CharLoc, context.Target.CharLoc);
-                Dir8 dir = DirExt.GetDir(context.User.CharLoc, closeLoc);
+                Dir8 dir = ZoneManager.Instance.CurrentMap.GetClosestDir8(context.User.CharLoc, context.Target.CharLoc);
                 if (dir == Dir8.None)
                     dir = context.User.CharDir.Reverse();
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.KnockBack(context.Target, dir, Distance));
@@ -10360,8 +10359,7 @@ namespace PMDC.Dungeon
             {
                 int damage = HitEvent.CalculateDamage(owner, context);
                 ThrowTargetContext throwContext = new ThrowTargetContext(damage);
-                Loc closeLoc = ZoneManager.Instance.CurrentMap.GetClosestUnwrappedLoc(context.User.CharLoc, context.Target.CharLoc);
-                Dir8 dir = DirExt.GetDir(context.User.CharLoc, closeLoc);
+                Dir8 dir = ZoneManager.Instance.CurrentMap.GetClosestDir8(context.User.CharLoc, context.Target.CharLoc);
                 if (dir == Dir8.None)
                     dir = context.User.CharDir.Reverse();
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.ThrowTo(context.Target, context.User,

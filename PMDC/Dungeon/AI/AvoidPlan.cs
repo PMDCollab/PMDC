@@ -101,7 +101,7 @@ namespace PMDC.Dungeon
                             if (destChar != null && ZoneManager.Instance.CurrentMap.TerrainBlocked(controlledChar.CharLoc, destChar.Mobility))
                                 return new GameAction(GameAction.ActionType.Wait, Dir8.None);
                         }
-                        GameAction act = TrySelectWalk(controlledChar, DirExt.GetDir(goalPath[goalPath.Count - 1], goalPath[goalPath.Count - 2]));
+                        GameAction act = TrySelectWalk(controlledChar, ZoneManager.Instance.CurrentMap.GetClosestDir8(goalPath[goalPath.Count - 1], goalPath[goalPath.Count - 2]));
                         //attempt to continue the path
                         //however, we can only verify that we continued on the path on the next loop, using the CHECK FOR ADVANCE block
                         return act;
@@ -219,7 +219,7 @@ namespace PMDC.Dungeon
 
                 if ((IQ & AIFlags.TrapAvoider) != AIFlags.None)
                 {
-                    Tile tile = ZoneManager.Instance.CurrentMap.Tiles[testLoc.X][testLoc.Y];
+                    Tile tile = ZoneManager.Instance.CurrentMap.GetTile(testLoc);
                     if (tile.Effect.ID > -1)
                     {
                         TileData entry = DataManager.Instance.GetTile(tile.Effect.ID);

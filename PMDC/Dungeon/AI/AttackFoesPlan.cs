@@ -239,8 +239,7 @@ namespace PMDC.Dungeon
                 GameAction attack = null;
                 if (path.Count > 3)//if it takes more than 2 steps to get into position (list includes the loc for start position, for a total of 3), try a local attack
                 {
-                    Loc diff = targetChar.CharLoc - controlledChar.CharLoc;
-                    if (diff.Dist8() == 1)
+                    if (ZoneManager.Instance.CurrentMap.InRange(targetChar.CharLoc, controlledChar.CharLoc, 1))
                     {
                         attack = TryAttackChoice(rand, controlledChar, AttackPattern, true);
                         if (attack.Type != GameAction.ActionType.Wait)

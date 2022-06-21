@@ -3849,7 +3849,7 @@ namespace PMDC.Dungeon
             List<Loc> freeTiles = Grid.FindTilesInBox(bounds.Start + new Loc(1), bounds.Size - new Loc(2),
                 (Loc testLoc) =>
                 {
-                    Tile testTile = ZoneManager.Instance.CurrentMap.Tiles[testLoc.X][testLoc.Y];
+                    Tile testTile = ZoneManager.Instance.CurrentMap.GetTile(testLoc);
                     if (testTile.Data.GetData().BlockType == TerrainData.Mobility.Passable && testTile.Effect.ID == -1)//hardcoded Walkable check
                     {
                         foreach (MapItem item in ZoneManager.Instance.CurrentMap.Items)
@@ -4065,7 +4065,7 @@ namespace PMDC.Dungeon
 
         private void lockTile(Loc changePoint, List<LockedTile> blockedLocs, List<Character> moveChars)
         {
-            Tile modTile = ZoneManager.Instance.CurrentMap.Tiles[changePoint.X][changePoint.Y];
+            Tile modTile = ZoneManager.Instance.CurrentMap.GetTile(changePoint);
             //it ignores the tiles that are already locked
             if (modTile.Data.ID != 1)
             {
@@ -4345,9 +4345,9 @@ namespace PMDC.Dungeon
             {
                 for (int yy = bounds.Y; yy < bounds.End.Y; yy++)
                 {
-                    if (ZoneManager.Instance.CurrentMap.Tiles[xx][yy].Data.ID == 1)//if impassable
+                    Tile modTile = ZoneManager.Instance.CurrentMap.GetTile(new Loc(xx, yy));
+                    if (modTile.Data.ID == 1)//if impassable
                     {
-                        Tile modTile = ZoneManager.Instance.CurrentMap.Tiles[xx][yy];
                         modTile.Data = new TerrainTile(0);
 
                         //animate with a crumble

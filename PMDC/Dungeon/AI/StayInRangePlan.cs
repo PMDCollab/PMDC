@@ -10,7 +10,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class StayInRangePlan : AIPlan
     {
-        const int MAX_RANGE = 5;
+        const int MAX_RANGE = 4;
 
         [NonSerialized]
         private Loc targetLoc;
@@ -33,7 +33,7 @@ namespace PMDC.Dungeon
                 return null;
 
             //check to see if the end loc is still valid
-            if ((controlledChar.CharLoc - targetLoc).Dist8() < MAX_RANGE)
+            if (ZoneManager.Instance.CurrentMap.InRange(controlledChar.CharLoc, targetLoc, MAX_RANGE))
             {
                 List<Dir8> dirs = new List<Dir8>();
                 dirs.Add(Dir8.None);
@@ -48,7 +48,7 @@ namespace PMDC.Dungeon
                     else
                     {
                         Loc endLoc = controlledChar.CharLoc + ((Dir8)dirs[randIndex]).GetLoc();
-                        if ((endLoc - targetLoc).Dist8() < MAX_RANGE)
+                        if (ZoneManager.Instance.CurrentMap.InRange(endLoc, targetLoc, MAX_RANGE))
                         {
 
                             bool blocked = Grid.IsDirBlocked(controlledChar.CharLoc, (Dir8)dirs[randIndex],

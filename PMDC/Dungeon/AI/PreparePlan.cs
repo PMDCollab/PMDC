@@ -76,7 +76,7 @@ namespace PMDC.Dungeon
                 {
                     //only check the first leader that is within sight
                     //leader found; check if nearby
-                    if ((testChar.CharLoc - controlledChar.CharLoc).Dist8() <= 1)
+                    if (ZoneManager.Instance.CurrentMap.InRange(testChar.CharLoc, controlledChar.CharLoc, 1))
                         break;
                     else
                         return null;

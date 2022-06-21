@@ -449,8 +449,7 @@ namespace PMDC.Dungeon
             if (damage > 0 && ownerChar != context.User)
             {
                 //the attack needs to face the foe, and *auto-target*
-                Loc closeLoc = ZoneManager.Instance.CurrentMap.GetClosestUnwrappedLoc(ownerChar.CharLoc, target.CharLoc);
-                Dir8 attackDir = DirExt.GetDir(ownerChar.CharLoc, closeLoc);
+                Dir8 attackDir = ZoneManager.Instance.CurrentMap.GetClosestDir8(ownerChar.CharLoc, target.CharLoc);
                 ownerChar.CharDir = attackDir;
                 Loc frontLoc = ownerChar.CharLoc + attackDir.GetLoc() * FrontOffset;
 

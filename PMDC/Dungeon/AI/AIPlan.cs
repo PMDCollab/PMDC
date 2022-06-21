@@ -206,7 +206,7 @@ namespace PMDC.Dungeon
             if ((IQ & AIFlags.TrapAvoider) == AIFlags.None)
                 return false;
 
-            Tile tile = ZoneManager.Instance.CurrentMap.Tiles[testLoc.X][testLoc.Y];
+            Tile tile = ZoneManager.Instance.CurrentMap.GetTile(testLoc);
             if (tile.Effect.ID > -1)
             {
                 if (!tile.Effect.Revealed)
@@ -239,7 +239,7 @@ namespace PMDC.Dungeon
             List<Character> seenChars = controlledChar.GetSeenCharacters(Alignment.Foe);
             foreach (Character seenChar in seenChars)
             {
-                if (seenChar.Tactic.ID == 8 && (seenChar.CharLoc - testLoc).Dist8() <= 1 && seenChar.GetStatusEffect(25) == null)//do not approach silcoon/cascoon; NOTE: specialized AI code!
+                if (seenChar.Tactic.ID == 8 && ZoneManager.Instance.CurrentMap.InRange(seenChar.CharLoc, testLoc, 1) && seenChar.GetStatusEffect(25) == null)//do not approach silcoon/cascoon; NOTE: specialized AI code!
                     return true;
             }
             return false;
@@ -426,7 +426,7 @@ namespace PMDC.Dungeon
             if (path.Count <= 1)
                 return new GameAction(GameAction.ActionType.Wait, Dir8.None);
             else
-                return TrySelectWalk(controlledChar, DirExt.GetDir(path[path.Count - 1], path[path.Count - 2]));
+                return TrySelectWalk(controlledChar, ZoneManager.Instance.CurrentMap.GetClosestDir8(path[path.Count - 1], path[path.Count - 2]));
         }
 
         protected GameAction TrySelectWalk(Character controlledChar, Dir8 dir)
@@ -558,6 +558,7 @@ namespace PMDC.Dungeon
             if (!controlledChar.CanSeeLocFromLoc(loc, chara.CharLoc, controlledChar.GetCharSight()))
                 return;
 
+            //due to all end locations being relative when passed in, this should be consistent with wrapped maps as well.
             int weight = diff.Dist8();
             if (endHash.ContainsKey(loc))
             {
@@ -1409,7 +1410,7 @@ namespace PMDC.Dungeon
                 {
                     foreach (Character target in seenChars)
                     {
-                        if (DungeonScene.Instance.IsTargeted(controlledChar, target, Alignment.Foe) && (target.CharLoc - controlledChar.CharLoc).Dist8() <= 3)
+                        if (DungeonScene.Instance.IsTargeted(controlledChar, target, Alignment.Foe) && ZoneManager.Instance.CurrentMap.InRange(target.CharLoc, controlledChar.CharLoc, 3))
                         {
                             int newVal = GetAttackValue(controlledChar, skillIndex, entry, seenChars, target, 0);
                             if (newVal > 0)
@@ -1604,12 +1605,14 @@ namespace PMDC.Dungeon
             {
                 if (effect is TipOnlyEvent)
                 {
-                    if ((controlledChar.CharLoc - target.CharLoc).Dist8() != Math.Max(entry.HitboxAction.Distance + rangeMod, 1))
+                    //TODO: this breaks in small wrapped maps
+                    if (ZoneManager.Instance.CurrentMap.InRange(controlledChar.CharLoc, target.CharLoc, Math.Max(entry.HitboxAction.Distance + rangeMod, 1) - 1))
                         return 0;
                 }
                 else if (effect is DistanceOnlyEvent)
                 {
-                    if ((controlledChar.CharLoc - target.CharLoc).Dist8() < 2)
+                    //TODO: this breaks in small wrapped maps
+                    if (ZoneManager.Instance.CurrentMap.InRange(controlledChar.CharLoc, target.CharLoc, 1))
                         return 0;
                 }
             }
@@ -1629,7 +1632,7 @@ namespace PMDC.Dungeon
                 bool nearEnemy = false;
                 foreach (Character character in seenChars)
                 {
-                    if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Foe && (character.CharLoc - controlledChar.CharLoc).Dist8() <= 2)
+                    if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Foe && ZoneManager.Instance.CurrentMap.InRange(character.CharLoc, controlledChar.CharLoc, 2))
                     {
                         nearEnemy = true;
                         break;
@@ -1643,7 +1646,7 @@ namespace PMDC.Dungeon
                 bool nearEnemy = false;
                 foreach (Character character in seenChars)
                 {
-                    if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Foe && (character.CharLoc - controlledChar.CharLoc).Dist8() <= 1)
+                    if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Foe && ZoneManager.Instance.CurrentMap.InRange(character.CharLoc, controlledChar.CharLoc, 1))
                     {
                         nearEnemy = true;
                         break;
@@ -1722,7 +1725,7 @@ namespace PMDC.Dungeon
                     bool nearEnemy = false;
                     foreach (Character character in seenChars)
                     {
-                        if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Foe && (character.CharLoc - controlledChar.CharLoc).Dist8() <= 3)
+                        if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Foe && ZoneManager.Instance.CurrentMap.InRange(character.CharLoc, controlledChar.CharLoc, 3))
                         {
                             nearEnemy = true;
                             break;
@@ -1985,7 +1988,7 @@ namespace PMDC.Dungeon
 
                         foreach (Character character in seenChars)
                         {
-                            if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Friend && (character.CharLoc - controlledChar.CharLoc).Dist8() <= 5)
+                            if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Friend && ZoneManager.Instance.CurrentMap.InRange(character.CharLoc, controlledChar.CharLoc, 5))
                             {
                                 foundAllies++;
                                 if (foundAllies >= 2)
@@ -2140,7 +2143,7 @@ namespace PMDC.Dungeon
                 {
                     if (effect is DistanceDropEvent)
                     {
-                        int diff = (target.CharLoc - controlledChar.CharLoc).Dist8();
+                        int diff = ZoneManager.Instance.CurrentMap.GetClosestDist8(target.CharLoc, controlledChar.CharLoc);
                         for (int nn = 0; nn < diff; nn++)
                             power /= 2;
                     }
