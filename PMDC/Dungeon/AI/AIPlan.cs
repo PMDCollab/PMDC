@@ -930,7 +930,7 @@ namespace PMDC.Dungeon
             {
                 Dir8 defaultDir = Dir8.None;
                 if (closestThreat != null)
-                    defaultDir = DirExt.ApproximateDir8(closestThreat.CharLoc - controlledChar.CharLoc);
+                    defaultDir = ZoneManager.Instance.CurrentMap.ApproximateClosestDir8(controlledChar.CharLoc, closestThreat.CharLoc);
                 if (defaultDir == Dir8.None)
                     defaultDir = controlledChar.CharDir;
                 HitValue highestVal = GetAttackDirValue(moveIndex, entry, controlledChar, seenChars, defaultDir);
@@ -980,7 +980,7 @@ namespace PMDC.Dungeon
 
             Dir8 defaultDir = Dir8.None;
             if (closestThreat != null)
-                defaultDir = DirExt.ApproximateDir8(closestThreat.CharLoc - controlledChar.CharLoc);
+                defaultDir = ZoneManager.Instance.CurrentMap.ApproximateClosestDir8(controlledChar.CharLoc, closestThreat.CharLoc);
             if (defaultDir == Dir8.None)
                 defaultDir = controlledChar.CharDir;
             HitValue highestVal = GetActionDirValue(-1, null, entry.UseAction, entry.Explosion, entry.UseEvent, 0, controlledChar, seenChars, defaultDir);
@@ -1063,7 +1063,7 @@ namespace PMDC.Dungeon
                     if ((explosion.TargetAlignments & Alignment.Foe) == Alignment.None)
                         continue;
 
-                    Dir8 approxDir = (seenChar.CharLoc - controlledChar.CharLoc).ApproximateDir8();
+                    Dir8 approxDir = ZoneManager.Instance.CurrentMap.ApproximateClosestDir8(controlledChar.CharLoc, seenChar.CharLoc);
                     modifyActionHitboxes(controlledChar, seenChars, approxDir, ref skillIndex, ref entry, ref rangeMod, ref hitboxAction, ref explosion);
 
                     if (hitboxAction == null)

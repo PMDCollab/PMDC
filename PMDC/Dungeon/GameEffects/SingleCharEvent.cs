@@ -1748,13 +1748,22 @@ namespace PMDC.Dungeon
     {
         public FiniteEmitter Emitter;
 
+        /// <summary>
+        /// Tiles eligible to be pointed to.
+        /// </summary>
+        [DataType(1, DataManager.DataType.Tile, false)]
+        public List<int> EligibleTiles;
+
         public CompassEvent()
         {
             Emitter = new EmptyFiniteEmitter();
+            EligibleTiles = new List<int>();
         }
-        public CompassEvent(FiniteEmitter emitter)
+        public CompassEvent(FiniteEmitter emitter, params int[] eligibles)
         {
             Emitter = emitter;
+            EligibleTiles = new List<int>();
+            EligibleTiles.AddRange(eligibles);
         }
         protected CompassEvent(CompassEvent other)
         {
@@ -1764,18 +1773,35 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            TileListState destState = ((EffectTile)owner).TileStates.GetWithDefault<TileListState>();
+            EffectTile effectTile = (EffectTile)owner;
+            TileListState destState = effectTile.TileStates.GetWithDefault<TileListState>();
 
             if (destState == null)
                 yield break;
 
-            foreach(Loc loc in destState.Tiles)
+            CharAnimation standAnim = new CharAnimIdle(character.CharLoc, character.CharDir);
+            standAnim.MajorAnim = true;
+            yield return CoroutineManager.Instance.StartCoroutine(character.StartAnim(standAnim));
+
+            GameManager.Instance.BattleSE("DUN_Tile_Step");
+            effectTile.Revealed = true;
+
+            TileData entry = DataManager.Instance.GetTile(owner.GetID());
+            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TILE_CHECK").ToLocal(), character.GetDisplayName(false), entry.Name.ToLocal()));
+
+            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
+
+            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TREASURE_SENSOR").ToLocal()));
+
+            foreach (Loc loc in destState.Tiles)
             {
-                Dir8 stairsDir = DirExt.ApproximateDir8(loc - character.CharLoc);
-                if (stairsDir == Dir8.None)
+                Tile tile = ZoneManager.Instance.CurrentMap.GetTile(loc);
+                if (!EligibleTiles.Contains(tile.Effect.ID))
                     continue;
 
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STAIR_SENSOR").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
+                Dir8 stairsDir = ZoneManager.Instance.CurrentMap.ApproximateClosestDir8(character.CharLoc, loc);
+                if (stairsDir == Dir8.None)
+                    continue;
 
                 FiniteEmitter endEmitter = (FiniteEmitter)Emitter.Clone();
                 endEmitter.SetupEmit(character.MapLoc + stairsDir.GetLoc() * 16, character.MapLoc + stairsDir.GetLoc() * 16, stairsDir);
@@ -1837,7 +1863,7 @@ namespace PMDC.Dungeon
                 {
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STAIR_SENSOR").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
 
-                    Dir8 stairsDir = DirExt.ApproximateDir8(loc.Value - character.CharLoc);
+                    Dir8 stairsDir = ZoneManager.Instance.CurrentMap.ApproximateClosestDir8(character.CharLoc, loc.Value);
 
                     FiniteEmitter endEmitter = (FiniteEmitter)Emitter.Clone();
                     endEmitter.SetupEmit(character.MapLoc + stairsDir.GetLoc() * 16, character.MapLoc + stairsDir.GetLoc() * 16, stairsDir);
@@ -4233,7 +4259,7 @@ namespace PMDC.Dungeon
 
                     if (turnTarget != null)
                     {
-                        Dir8 dir = (turnTarget.CharLoc - respawn.CharLoc).ApproximateDir8();
+                        Dir8 dir = ZoneManager.Instance.CurrentMap.ApproximateClosestDir8(respawn.CharLoc, turnTarget.CharLoc);
                         if (dir > Dir8.None)
                             respawn.CharDir = dir;
                     }
@@ -4422,7 +4448,7 @@ namespace PMDC.Dungeon
 
                     if (turnTarget != null)
                     {
-                        Dir8 dir = (turnTarget.CharLoc - respawn.CharLoc).ApproximateDir8();
+                        Dir8 dir = ZoneManager.Instance.CurrentMap.ApproximateClosestDir8(respawn.CharLoc, turnTarget.CharLoc);
                         if (dir > Dir8.None)
                             respawn.CharDir = dir;
                     }
@@ -4551,7 +4577,7 @@ namespace PMDC.Dungeon
 
                 if (turnTarget != null)
                 {
-                    Dir8 dir = (turnTarget.CharLoc - mob.CharLoc).ApproximateDir8();
+                    Dir8 dir = ZoneManager.Instance.CurrentMap.ApproximateClosestDir8(mob.CharLoc, turnTarget.CharLoc);
                     if (dir > Dir8.None)
                         mob.CharDir = dir;
                 }

@@ -80,7 +80,7 @@ namespace PMDC.Dungeon
                 DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
             }
 
-            CharAnimAction SpinAnim = new CharAnimAction(ownerChar.CharLoc, (context.Target.CharLoc - ownerChar.CharLoc).ApproximateDir8(), 05);//Attack
+            CharAnimAction SpinAnim = new CharAnimAction(ownerChar.CharLoc, ZoneManager.Instance.CurrentMap.ApproximateClosestDir8(ownerChar.CharLoc, context.Target.CharLoc), 05);//Attack
             SpinAnim.MajorAnim = true;
 
             yield return CoroutineManager.Instance.StartCoroutine(ownerChar.StartAnim(SpinAnim));
