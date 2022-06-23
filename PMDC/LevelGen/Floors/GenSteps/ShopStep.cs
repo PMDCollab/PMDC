@@ -78,10 +78,10 @@ namespace PMDC.LevelGen
 
                 //also do not choose a room that contains the start or end
                 IViewPlaceableGenContext<MapGenEntrance> entranceMap = map;
-                if (Collision.InBounds(testPlan.RoomGen.Draw, entranceMap.GetLoc(0)))
+                if (map.RoomPlan.InBounds(testPlan.RoomGen.Draw, entranceMap.GetLoc(0)))
                     continue;
                 IViewPlaceableGenContext<MapGenExit> exitMap = map;
-                if (Collision.InBounds(testPlan.RoomGen.Draw, exitMap.GetLoc(0)))
+                if (map.RoomPlan.InBounds(testPlan.RoomGen.Draw, exitMap.GetLoc(0)))
                     continue;
 
                 possibleRooms.Add(ii);
@@ -103,10 +103,11 @@ namespace PMDC.LevelGen
                     {
                         bool eligible = true;
                         Loc testLoc = roomPlan.RoomGen.Draw.Start + new Loc(xx, yy);
-                        if (map.Tiles[testLoc.X][testLoc.Y].TileEquivalent(map.RoomTerrain) && !map.HasTileEffect(testLoc) &&
-                            map.Tiles[testLoc.X][testLoc.Y + 1].TileEquivalent(map.RoomTerrain) && !map.HasTileEffect(new Loc(testLoc.X, testLoc.Y + 1)) &&
-                            !map.PostProcGrid[testLoc.X][testLoc.Y].Status[(int)PostProcType.Panel] &&
-                            !map.PostProcGrid[testLoc.X][testLoc.Y].Status[(int)PostProcType.Item])
+                        Loc frontLoc = testLoc + Dir8.Down.GetLoc();
+                        if (map.RoomTerrain.TileEquivalent(map.GetTile(testLoc)) && !map.HasTileEffect(testLoc) &&
+                            map.RoomTerrain.TileEquivalent(map.GetTile(frontLoc)) && !map.HasTileEffect(frontLoc) &&
+                            !map.GetPostProc(testLoc).Status[(int)PostProcType.Panel] &&
+                            !map.GetPostProc(testLoc).Status[(int)PostProcType.Item])
                         {
                             foreach (MapItem item in map.Items)
                             {
@@ -151,8 +152,8 @@ namespace PMDC.LevelGen
                     itemTiles.Add(matLoc);
                     EffectTile effect = new EffectTile(45, true, matLoc);
                     ((IPlaceableGenContext<EffectTile>)map).PlaceItem(matLoc, effect);
-                    map.PostProcGrid[matLoc.X][matLoc.Y].Status[(int)PostProcType.Panel] = true;
-                    map.PostProcGrid[matLoc.X][matLoc.Y].Status[(int)PostProcType.Item] = true;
+                    map.GetPostProc(matLoc).Status[(int)PostProcType.Panel] = true;
+                    map.GetPostProc(matLoc).Status[(int)PostProcType.Item] = true;
                 }
             }
 

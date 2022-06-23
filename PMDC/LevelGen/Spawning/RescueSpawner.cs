@@ -59,7 +59,7 @@ namespace PMDC.LevelGen
                         if ((xx == bounds.X || xx == bounds.End.X - 1) && (yy == bounds.Y || yy == bounds.End.Y - 1))
                             continue;
 
-                        if (map.GetTile(new Loc(xx,yy)).TileEquivalent(map.WallTerrain))
+                        if (map.WallTerrain.TileEquivalent(map.GetTile(new Loc(xx,yy))))
                             map.SetTile(new Loc(xx, yy), map.RoomTerrain.Copy());
                     }
                 }

@@ -202,7 +202,7 @@ namespace PMDC.LevelGen
                 for (int y = 0; y < Draw.Height - 1; y++)
                 {
                     Loc checkLoc = new Loc(Draw.X + x, Draw.Y + y);
-                    if (!map.GetTile(checkLoc).TileEquivalent(map.RoomTerrain))
+                    if (!map.RoomTerrain.TileEquivalent(map.GetTile(checkLoc)))
                         map.SetTile(checkLoc, map.UnbreakableTerrain.Copy());
                 }
             }

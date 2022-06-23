@@ -115,16 +115,17 @@ namespace PMDC.LevelGen
             {
                 for (int xx = potentialBounds.Start.X; xx < potentialBounds.End.X; xx++)
                 {
-                    if (map.Tiles[xx][yy].TileEquivalent(map.UnbreakableTerrain))
+                    Loc loc = new Loc(xx, yy);
+                    if (map.UnbreakableTerrain.TileEquivalent(map.GetTile(loc)))
                     {
                         containsImpassable = true;
                         break;
                     }
-                    else if (map.Tiles[xx][yy].TileEquivalent(map.WallTerrain))
+                    else if (map.WallTerrain.TileEquivalent(map.GetTile(loc)))
                     {
                         for (int nn = 0; nn < phases.Count; nn++)
                         {
-                            if (Collision.InBounds(phases[nn], new Loc(xx, yy)))
+                            if (map.RoomPlan.InBounds(phases[nn], new Loc(xx, yy)))
                             {
                                 blockedTiles[nn]++;
                                 break;
@@ -201,9 +202,9 @@ namespace PMDC.LevelGen
                 for (int yy = lastPhase.Y; yy < lastPhase.Y + lastPhase.Size.Y; yy++)
                 {
                     Loc testLoc = new Loc(xx, yy);
-                    if (map.Tiles[xx][yy].TileEquivalent(map.WallTerrain))
+                    if (map.WallTerrain.TileEquivalent(map.GetTile(testLoc)))
                     {
-                        if (!map.HasTileEffect(new Loc(xx, yy)) && !map.PostProcGrid[xx][yy].Status[(int)PostProcType.Panel] && !map.PostProcGrid[xx][yy].Status[(int)PostProcType.Item])
+                        if (!map.HasTileEffect(new Loc(xx, yy)) && !map.GetPostProc(testLoc).Status[(int)PostProcType.Panel] && !map.GetPostProc(testLoc).Status[(int)PostProcType.Item])
                         {
                             bool hasItem = false;
                             foreach (MapItem item in map.Items)
@@ -294,8 +295,9 @@ namespace PMDC.LevelGen
                 {
                     for (int yy = finalPhase.Y; yy < finalPhase.Y + finalPhase.Size.Y; yy++)
                     {
-                        if (map.Tiles[xx][yy].TileEquivalent(map.WallTerrain))
-                            map.Tiles[xx][yy] = (Tile)map.UnbreakableTerrain.Copy();
+                        Loc loc = new Loc(xx, yy);
+                        if (map.WallTerrain.TileEquivalent(map.GetTile(loc)))
+                            map.SetTile(loc, (Tile)map.UnbreakableTerrain.Copy());
                     }
                 }
 

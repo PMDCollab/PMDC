@@ -81,7 +81,7 @@ namespace PMDC.LevelGen
                 switch (sealList[loc])
                 {
                     case SealType.Blocked:
-                        map.Tiles[loc.X][loc.Y] = (Tile)map.UnbreakableTerrain.Copy();
+                        map.SetTile(loc, map.UnbreakableTerrain.Copy());
                         break;
                     default:
                         lockList.Add(loc);
@@ -91,7 +91,7 @@ namespace PMDC.LevelGen
 
             foreach (Loc loc in lockList)
             {
-                map.Tiles[loc.X][loc.Y] = (Tile)map.UnbreakableTerrain.Copy();
+                map.SetTile(loc, map.UnbreakableTerrain.Copy());
                 EffectTile newEffect = new EffectTile(SealedTile, true, loc);
                 ((IPlaceableGenContext<EffectTile>)map).PlaceItem(loc, newEffect);
             }

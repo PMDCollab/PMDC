@@ -70,9 +70,10 @@ namespace PMDC.LevelGen
             {
                 for (int yy = bossRect.Value.Start.Y; yy < bossRect.Value.End.Y; yy++)
                 {
-                    if (map.Tiles[xx][yy].Effect.ID == BossTile)
+                    Tile tile = (Tile)map.GetTile(new Loc(xx, yy));
+                    if (tile.Effect.ID == BossTile)
                     {
-                        bossEffect = map.Tiles[xx][yy].Effect;
+                        bossEffect = tile.Effect;
                         break;
                     }
                 }
@@ -91,7 +92,7 @@ namespace PMDC.LevelGen
                 switch (sealList[loc])
                 {
                     case SealType.Blocked:
-                        map.Tiles[loc.X][loc.Y] = (Tile)map.UnbreakableTerrain.Copy();
+                        map.SetTile(loc, map.UnbreakableTerrain.Copy());
                         break;
                     default:
                         lockList.Add(loc);
@@ -101,7 +102,7 @@ namespace PMDC.LevelGen
 
             foreach (Loc loc in lockList)
             {
-                map.Tiles[loc.X][loc.Y] = (Tile)map.UnbreakableTerrain.Copy();
+                map.SetTile(loc, map.UnbreakableTerrain.Copy());
                 EffectTile newEffect = new EffectTile(SealedTile, true, loc);
                 ((IPlaceableGenContext<EffectTile>)map).PlaceItem(loc, newEffect);
             }

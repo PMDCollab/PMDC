@@ -56,15 +56,11 @@ namespace PMDC.LevelGen
 
             Grid.LocTest checkGround = (Loc testLoc) =>
             {
-                if (!Collision.InBounds(map.Width, map.Height, testLoc))
-                    return false;
-                return (map.Tiles[testLoc.X][testLoc.Y].TileEquivalent(map.RoomTerrain) && !map.HasTileEffect(testLoc));
+                return (map.RoomTerrain.TileEquivalent(map.GetTile(testLoc)) && !map.HasTileEffect(testLoc));
             };
             Grid.LocTest checkBlock = (Loc testLoc) =>
             {
-                if (!Collision.InBounds(map.Width, map.Height, testLoc))
-                    return false;
-                return map.Tiles[testLoc.X][testLoc.Y].TileEquivalent(map.WallTerrain);
+                return map.WallTerrain.TileEquivalent(map.GetTile(testLoc));
             };
 
             List<LocRay4> rays = Detection.DetectWalls(((IViewPlaceableGenContext<MapGenEntrance>)map).GetLoc(0), new Rect(0, 0, map.Width, map.Height), checkBlock, checkGround);

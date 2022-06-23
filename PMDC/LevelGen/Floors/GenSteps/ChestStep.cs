@@ -50,7 +50,7 @@ namespace PMDC.LevelGen
         {
             Grid.LocTest checkBlock = (Loc testLoc) =>
             {
-                return (!map.Tiles[testLoc.X][testLoc.Y].TileEquivalent(map.RoomTerrain) || map.HasTileEffect(testLoc));
+                return (!map.RoomTerrain.TileEquivalent(map.GetTile(testLoc)) || map.HasTileEffect(testLoc));
             };
 
             //choose a room to put the chest in
@@ -66,7 +66,7 @@ namespace PMDC.LevelGen
 
                 //also do not choose a room that contains the end stairs
                 IViewPlaceableGenContext<MapGenExit> exitMap = (IViewPlaceableGenContext<MapGenExit>)map;
-                if (Collision.InBounds(testPlan.RoomGen.Draw, exitMap.GetLoc(0)))
+                if (map.RoomPlan.InBounds(testPlan.RoomGen.Draw, exitMap.GetLoc(0)))
                     continue;
 
                 possibleRooms.Add(ii);
@@ -86,10 +86,11 @@ namespace PMDC.LevelGen
                 //get all places that the chest is eligible
                 freeTiles = Grid.FindTilesInBox(room.Draw.Start, room.Draw.Size, (Loc testLoc) =>
                 {
-                    if (map.Tiles[testLoc.X][testLoc.Y].TileEquivalent(map.RoomTerrain) && !map.HasTileEffect(testLoc) &&
-                        map.Tiles[testLoc.X][testLoc.Y + 1].TileEquivalent(map.RoomTerrain) && !map.HasTileEffect(new Loc(testLoc.X, testLoc.Y + 1)) &&
-                        !map.PostProcGrid[testLoc.X][testLoc.Y].Status[(int)PostProcType.Panel] &&
-                        !map.PostProcGrid[testLoc.X][testLoc.Y].Status[(int)PostProcType.Item])
+                    Loc frontLoc = testLoc + Dir8.Down.GetLoc();
+                    if (map.RoomTerrain.TileEquivalent(map.GetTile(testLoc)) && !map.HasTileEffect(testLoc) &&
+                        map.RoomTerrain.TileEquivalent(map.GetTile(frontLoc)) && !map.HasTileEffect(frontLoc) &&
+                        !map.GetPostProc(testLoc).Status[(int)PostProcType.Panel] &&
+                        !map.GetPostProc(testLoc).Status[(int)PostProcType.Item])
                     {
                         if (Grid.GetForkDirs(testLoc, checkBlock, checkBlock).Count < 2)
                         {
@@ -178,8 +179,8 @@ namespace PMDC.LevelGen
             spawnedChest.TileStates.Set(new BoundsState(wallBounds));
 
             ((IPlaceableGenContext<EffectTile>)map).PlaceItem(loc, spawnedChest);
-            map.PostProcGrid[loc.X][loc.Y].Status[(int)PostProcType.Panel] = true;
-            map.PostProcGrid[loc.X][loc.Y].Status[(int)PostProcType.Item] = true;
+            map.GetPostProc(loc).Status[(int)PostProcType.Panel] = true;
+            map.GetPostProc(loc).Status[(int)PostProcType.Item] = true;
 
             GenContextDebug.DebugProgress("Placed Chest");
         }

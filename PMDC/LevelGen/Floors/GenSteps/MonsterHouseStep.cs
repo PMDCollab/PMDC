@@ -66,7 +66,7 @@ namespace PMDC.LevelGen
                     Loc testLoc = new Loc(x, y);
                     if (!map.TileBlocked(testLoc))
                     {
-                        if (!map.HasTileEffect(new Loc(x, y)) && !map.PostProcGrid[x][y].Status[(int)PostProcType.Panel] && !map.PostProcGrid[x][y].Status[(int)PostProcType.Item])
+                        if (!map.HasTileEffect(new Loc(x, y)) && !map.GetPostProc(testLoc).Status[(int)PostProcType.Panel] && !map.GetPostProc(testLoc).Status[(int)PostProcType.Item])
                         {
                             bool hasItem = false;
                             foreach (MapItem item in map.Items)

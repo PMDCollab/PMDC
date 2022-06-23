@@ -59,7 +59,7 @@ namespace PMDC.LevelGen
                 {
                     //lay down the blocks
                     case SealType.Blocked:
-                        map.Tiles[loc.X][loc.Y] = (Tile)map.UnbreakableTerrain.Copy();
+                        map.SetTile(loc, map.UnbreakableTerrain.Copy());
                         break;
                     case SealType.Locked:
                         lockList.Add(loc);
@@ -82,14 +82,14 @@ namespace PMDC.LevelGen
             //seal the tiles that are gated
             foreach (Loc loc in lockList)
             {
-                map.Tiles[loc.X][loc.Y] = (Tile)map.UnbreakableTerrain.Copy();
+                map.SetTile(loc, map.UnbreakableTerrain.Copy());
                 EffectTile newEffect = new EffectTile(LockedTile, true, loc);
                 ((IPlaceableGenContext<EffectTile>)map).PlaceItem(loc, newEffect);
             }
 
             //finally, seal with a locked door
             {
-                map.Tiles[keyLoc.X][keyLoc.Y] = (Tile)map.UnbreakableTerrain.Copy();
+                map.SetTile(keyLoc, map.UnbreakableTerrain.Copy());
                 EffectTile newEffect = new EffectTile(KeyTile, true, keyLoc);
                 TileListState state = new TileListState();
                 state.Tiles = lockList;

@@ -49,9 +49,7 @@ namespace PMDC.LevelGen
 
             Grid.LocTest checkBlockForPlace = (Loc testLoc) =>
             {
-                if (!Collision.InBounds(map.Width, map.Height, testLoc))
-                    return false;
-                return !map.Tiles[testLoc.X][testLoc.Y].TileEquivalent(map.RoomTerrain) && !map.Tiles[testLoc.X][testLoc.Y].TileEquivalent(map.UnbreakableTerrain);
+                return !map.RoomTerrain.TileEquivalent(map.GetTile(testLoc)) && !map.UnbreakableTerrain.TileEquivalent(map.GetTile(testLoc));
             };
             //try X times to dig a passage
             for (int ii = 0; ii < 500 && rays.Count > 0; ii++)
@@ -116,13 +114,13 @@ namespace PMDC.LevelGen
                         //surround the room with bounds
                         for (int xx = roomTestBound.X; xx < roomTestBound.Right; xx++)
                         {
-                            map.Tiles[xx][roomTestBound.Y] = (Tile)map.UnbreakableTerrain.Copy();
-                            map.Tiles[xx][roomTestBound.End.Y - 1] = (Tile)map.UnbreakableTerrain.Copy();
+                            map.SetTile(new Loc(xx, roomTestBound.Y), map.UnbreakableTerrain.Copy());
+                            map.SetTile(new Loc(xx, roomTestBound.End.Y - 1), map.UnbreakableTerrain.Copy());
                         }
                         for (int yy = roomTestBound.Y + 1; yy < roomTestBound.Bottom - 1; yy++)
                         {
-                            map.Tiles[roomTestBound.X][yy] = (Tile)map.UnbreakableTerrain.Copy();
-                            map.Tiles[roomTestBound.End.X - 1][yy] = (Tile)map.UnbreakableTerrain.Copy();
+                            map.SetTile(new Loc(roomTestBound.X, yy), map.UnbreakableTerrain.Copy());
+                            map.SetTile(new Loc(roomTestBound.End.X - 1, yy), map.UnbreakableTerrain.Copy());
                         }
 
                         //spawn tiles, items, foes
@@ -135,21 +133,21 @@ namespace PMDC.LevelGen
                         for (int tt = 0; tt < tunnelLen; tt++)
                         {
                             //make walkable
-                            map.Tiles[loc.X][loc.Y] = (Tile)map.RoomTerrain.Copy();
+                            map.SetTile(loc, map.RoomTerrain.Copy());
 
                             //make left side unbreakable
                             Loc lLoc = loc + DirExt.AddAngles(ray.Dir, Dir4.Left).GetLoc();
-                            map.Tiles[lLoc.X][lLoc.Y] = (Tile)map.UnbreakableTerrain.Copy();
+                            map.SetTile(lLoc, map.UnbreakableTerrain.Copy());
 
                             //make right side unbreakable
                             Loc rLoc = loc + DirExt.AddAngles(ray.Dir, Dir4.Right).GetLoc();
-                            map.Tiles[rLoc.X][rLoc.Y] = (Tile)map.UnbreakableTerrain.Copy();
+                            map.SetTile(rLoc, map.UnbreakableTerrain.Copy());
 
                             loc += rayDirLoc;
                         }
 
                         //finally, seal with a locked door
-                        map.Tiles[ray.Loc.X][ray.Loc.Y] = (Tile)map.UnbreakableTerrain.Copy();
+                        map.SetTile(ray.Loc, map.UnbreakableTerrain.Copy());
                         EffectTile newEffect = new EffectTile(sealingTile, ray.Loc);
                         ((IPlaceableGenContext<EffectTile>)map).PlaceItem(ray.Loc, newEffect);
 
@@ -208,8 +206,6 @@ namespace PMDC.LevelGen
                 for (int jj = rect.Top; jj < rect.Bottom; jj++)
                 {
                     Loc testLoc = new Loc(ii, jj);
-                    if (!Collision.InBounds(map.Width, map.Height, testLoc))
-                        return false;
                     if (!checkBlock(testLoc))
                         return false;
                 }
