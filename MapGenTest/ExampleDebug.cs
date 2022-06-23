@@ -22,6 +22,7 @@ namespace MapGenTest
         static List<DebugState> tileDebugString;
         static int currentDepth;
         static IGenContext curMap;
+        public static Exception Error;
 
         public static void Init(IGenContext newMap)
         {
@@ -36,6 +37,7 @@ namespace MapGenTest
             gridDebugString.Add(new DebugState());
             listDebugString.Add(new DebugState());
             tileDebugString.Add(new DebugState());
+            Error = null;
         }
 
         public static void StepIn(string msg)
@@ -675,7 +677,6 @@ namespace MapGenTest
             Console.Write(new string(' ', Console.WindowWidth - Console.CursorLeft));
         }
 
-
         private static string createStackString()
         {
             StringBuilder str = new StringBuilder();
@@ -686,6 +687,11 @@ namespace MapGenTest
                 str.Append(stepStack[ii]);
             }
             return str.ToString();
+        }
+
+        public static void OnError(Exception ex)
+        {
+            Error = ex;
         }
     }
 }

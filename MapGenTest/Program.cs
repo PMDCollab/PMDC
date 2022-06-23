@@ -18,7 +18,7 @@ namespace MapGenTest
             string[] args = Environment.GetCommandLineArgs();
             PathMod.InitExePath(args[0]);
             DiagManager.InitInstance();
-
+            //DiagManager.Instance.DevMode = true;
 
             for (int ii = 1; ii < args.Length; ii++)
             {
@@ -45,6 +45,7 @@ namespace MapGenTest
             GenContextDebug.OnStep += ExampleDebug.OnStep;
             GenContextDebug.OnStepIn += ExampleDebug.StepIn;
             GenContextDebug.OnStepOut += ExampleDebug.StepOut;
+            GenContextDebug.OnError += ExampleDebug.OnError;
 #endif
             Example.Run();
 

@@ -207,7 +207,7 @@ namespace MapGenTest
             }
             catch (Exception ex)
             {
-                DiagManager.Instance.LogInfo("ERROR at Zone " + zoneIndex);
+                System.Diagnostics.Debug.WriteLine("ERROR at Zone " + zoneIndex);
                 PrintError(ex);
                 Registry.SetValue(DiagManager.REG_PATH, "SeedChoice", "");
                 Registry.SetValue(DiagManager.REG_PATH, "FloorChoice", -1);
@@ -269,7 +269,7 @@ namespace MapGenTest
             }
             catch (Exception ex)
             {
-                DiagManager.Instance.LogInfo("ERROR at Struct " + structureIndex);
+                System.Diagnostics.Debug.WriteLine("ERROR at Struct " + structureIndex);
                 PrintError(ex);
                 Registry.SetValue(DiagManager.REG_PATH, "SeedChoice", "");
                 Registry.SetValue(DiagManager.REG_PATH, "FloorChoice", -1);
@@ -298,11 +298,19 @@ namespace MapGenTest
                     bool threwException = false;
                     try
                     {
+                        GameProgress save = new MainProgress(MathUtils.Rand.NextUInt64(), Guid.NewGuid().ToString());
+                        DataManager.Instance.SetProgress(save);
+
                         ZoneGenContext newContext = CreateZoneGenContext(zoneSeed, zoneIndex, floorIndex, structure);
 
                         IGenContext context = structure.GetMap(newContext);
 
+                        DataManager.Instance.SetProgress(null);
+
                         ExampleDebug.SteppingIn = false;
+
+                        if (ExampleDebug.Error != null)
+                            throw ExampleDebug.Error;
 
                         BaseMapGenContext stairsMap = context as BaseMapGenContext;
                         state += stairsMap.Map.Name.DefaultText.Replace('\n', ' ');
@@ -315,7 +323,7 @@ namespace MapGenTest
                     }
                     catch (Exception ex)
                     {
-                        DiagManager.Instance.LogInfo("ERROR at F" + floorIndex.ID + " SEED:" + zoneSeed);
+                        System.Diagnostics.Debug.WriteLine("ERROR at F" + floorIndex.ID + " SEED:" + zoneSeed);
                         PrintError(ex);
                         Console.WriteLine("Press Enter to retry error scenario.");
                         key = Console.ReadKey().Key;
@@ -372,7 +380,7 @@ namespace MapGenTest
             }
             catch (Exception ex)
             {
-                DiagManager.Instance.LogInfo("ERROR at F"+floorIndex.ID+" ZSEED:" + zoneSeed);
+                System.Diagnostics.Debug.WriteLine("ERROR at F"+floorIndex.ID+" ZSEED:" + zoneSeed);
                 PrintError(ex);
                 Registry.SetValue(DiagManager.REG_PATH, "SeedChoice", "");
                 Console.ReadKey();
@@ -472,6 +480,8 @@ namespace MapGenTest
                             ulong[] doubleSeed = totalNoise.GetTwoUInt64((ulong)structureIndex);
                             ZoneGenContext zoneContext = CreateZoneGenContextSegment(doubleSeed[0], zoneIndex, structureIndex, structure);
 
+                            GameProgress save = new MainProgress(MathUtils.Rand.NextUInt64(), Guid.NewGuid().ToString());
+
                             INoise idNoise = new ReNoise(doubleSeed[1]);
 
                             foreach (int floorId in structure.GetFloorIDs())
@@ -480,7 +490,7 @@ namespace MapGenTest
                                 zoneContext.CurrentID = floorId;
                                 zoneContext.Seed = idNoise.GetUInt64((ulong)floorId);
 
-                                TestFloor(watch, structure, zoneContext, null, null, generationTimes[kk]);
+                                TestFloor(watch, save, structure, zoneContext, null, null, generationTimes[kk]);
                             }
                         }
                     }
@@ -490,7 +500,7 @@ namespace MapGenTest
             }
             catch (Exception ex)
             {
-                DiagManager.Instance.LogInfo("ERROR at Z"+zoneIndex+" S" + structureIndex + " F" + floor + " ZSeed:" + zoneSeed);
+                System.Diagnostics.Debug.WriteLine("ERROR at Z"+zoneIndex+" S" + structureIndex + " F" + floor + " ZSeed:" + zoneSeed);
                 PrintError(ex);
             }
             finally
@@ -526,6 +536,8 @@ namespace MapGenTest
                         ulong[] doubleSeed = totalNoise.GetTwoUInt64((ulong)structureIndex);
                         ZoneGenContext zoneContext = CreateZoneGenContextSegment(doubleSeed[0], zoneIndex, structureIndex, structure);
 
+                        GameProgress save = new MainProgress(MathUtils.Rand.NextUInt64(), Guid.NewGuid().ToString());
+
                         INoise idNoise = new ReNoise(doubleSeed[1]);
 
                         foreach (int floorId in structure.GetFloorIDs())
@@ -534,7 +546,7 @@ namespace MapGenTest
                             zoneContext.CurrentID = floorId;
                             zoneContext.Seed = idNoise.GetUInt64((ulong)floorId);
 
-                            TestFloor(watch, structure, zoneContext, null, null, generationTimes[nn]);
+                            TestFloor(watch, save, structure, zoneContext, null, null, generationTimes[nn]);
                         }
                     }
                 }
@@ -543,7 +555,7 @@ namespace MapGenTest
             }
             catch (Exception ex)
             {
-                DiagManager.Instance.LogInfo("ERROR at S" + structureIndex + " F" + floor + " ZSeed:" + zoneSeed);
+                System.Diagnostics.Debug.WriteLine("ERROR at S" + structureIndex + " F" + floor + " ZSeed:" + zoneSeed);
                 PrintError(ex);
             }
             finally
@@ -580,6 +592,7 @@ namespace MapGenTest
                     ulong[] doubleSeed = totalNoise.GetTwoUInt64((ulong)structureIndex);
                     INoise idNoise = new ReNoise(doubleSeed[1]);
 
+                    GameProgress save = new MainProgress(MathUtils.Rand.NextUInt64(), Guid.NewGuid().ToString());
                     ZoneGenContext zoneContext = CreateZoneGenContextSegment(doubleSeed[0], zoneIndex, structureIndex, structure);
 
                     foreach (int floorId in structure.GetFloorIDs())
@@ -588,7 +601,7 @@ namespace MapGenTest
                         zoneContext.CurrentID = floorId;
                         zoneContext.Seed = idNoise.GetUInt64((ulong)floorId);
 
-                        TestFloor(watch, structure, zoneContext, generatedItems[floorId], generatedEnemies[floorId], generationTimes[floorId]);
+                        TestFloor(watch, save, structure, zoneContext, generatedItems[floorId], generatedEnemies[floorId], generationTimes[floorId]);
                     }
                 }
 
@@ -597,7 +610,7 @@ namespace MapGenTest
                 Dictionary<int, int> totalGeneratedEnemies = new Dictionary<int, int>();
                 for (int ii = 0; ii < structure.FloorCount; ii++)
                 {
-                    DiagManager.Instance.LogInfo("F"+ii+":");
+                    System.Diagnostics.Debug.WriteLine("F"+ii+":");
                     PrintContentAnalysis(generatedItems[ii], generatedEnemies[ii]);
                     
                     foreach(int key in generatedItems[ii].Keys)
@@ -607,14 +620,14 @@ namespace MapGenTest
                         MathUtils.AddToDictionary<int>(totalGeneratedEnemies, key, generatedEnemies[ii][key]);
                 }
 
-                DiagManager.Instance.LogInfo("Overall:");
+                System.Diagnostics.Debug.WriteLine("Overall:");
                 PrintContentAnalysis(totalGeneratedItems, totalGeneratedEnemies);
 
                 PrintTimeAnalysisTier2(generationTimes, "F");
             }
             catch (Exception ex)
             {
-                DiagManager.Instance.LogInfo("ERROR at F" + floor + " ZSeed:" + zoneSeed);
+                System.Diagnostics.Debug.WriteLine("ERROR at F" + floor + " ZSeed:" + zoneSeed);
                 PrintError(ex);
             }
             finally
@@ -639,9 +652,10 @@ namespace MapGenTest
                 {
                     zoneSeed = MathUtils.Rand.NextUInt64();
 
+                    GameProgress save = new MainProgress(MathUtils.Rand.NextUInt64(), Guid.NewGuid().ToString());
                     ZoneGenContext zoneContext = CreateZoneGenContext(zoneSeed, zoneIndex, floorIndex, structure);
 
-                    TestFloor(watch, structure, zoneContext, generatedItems, generatedEnemies, generationTimes);
+                    TestFloor(watch, save, structure, zoneContext, generatedItems, generatedEnemies, generationTimes);
 
                 }
 
@@ -651,7 +665,7 @@ namespace MapGenTest
             }
             catch (Exception ex)
             {
-                DiagManager.Instance.LogInfo("ERROR: " + zoneSeed);
+                System.Diagnostics.Debug.WriteLine("ERROR: " + zoneSeed);
                 PrintError(ex);
             }
             finally
@@ -660,8 +674,10 @@ namespace MapGenTest
             }
         }
 
-        public static void TestFloor(Stopwatch watch, ZoneSegmentBase structure, ZoneGenContext zoneContext, Dictionary<int, int> generatedItems, Dictionary<int, int> generatedEnemies, List<TimeSpan> generationTimes)
+        public static void TestFloor(Stopwatch watch, GameProgress save, ZoneSegmentBase structure, ZoneGenContext zoneContext, Dictionary<int, int> generatedItems, Dictionary<int, int> generatedEnemies, List<TimeSpan> generationTimes)
         {
+            DataManager.Instance.SetProgress(save);
+
             TimeSpan before = watch.Elapsed;
             watch.Start();
             IGenContext context = structure.GetMap(zoneContext);
@@ -669,6 +685,10 @@ namespace MapGenTest
             TimeSpan diff = watch.Elapsed - before;
             generationTimes.Add(diff);
 
+            DataManager.Instance.SetProgress(null);
+
+            if (ExampleDebug.Error != null)
+                throw ExampleDebug.Error;
 
             BaseMapGenContext mapContext = context as BaseMapGenContext;
             if (generatedItems != null)
@@ -731,9 +751,9 @@ namespace MapGenTest
                 finalString.Append(String.Format("    {0:D5} #{1:000} {2}", GeneratedEnemies[key], key, data.Name) + "\n");
             }
             finalString.Append("\n");
-            //DiagManager.Instance.LogInfo(String.Format("Gen Logs Printed"));
+            //System.Diagnostics.Debug.WriteLine(String.Format("Gen Logs Printed"));
 
-            DiagManager.Instance.LogInfo(finalString.ToString());
+            System.Diagnostics.Debug.WriteLine(finalString.ToString());
         }
 
         public static void PrintTimeAnalysis(List<TimeSpan> generationTimes)
@@ -765,7 +785,7 @@ namespace MapGenTest
                     TimeSpan medTime = generationTimes[ii][generationTimes[ii].Count / 2];
                     TimeSpan maxTime = generationTimes[ii][generationTimes[ii].Count - 1];
 
-                    DiagManager.Instance.LogInfo(String.Format("{3}{4:D3}    MIN: {0}    MED: {1}    MAX: {2}", minTime.ToString(), medTime.ToString(), maxTime.ToString(), category, ii));
+                    System.Diagnostics.Debug.WriteLine(String.Format("{3}{4:D3}    MIN: {0}    MED: {1}    MAX: {2}", minTime.ToString(), medTime.ToString(), maxTime.ToString(), category, ii));
 
                     flatTimes.AddRange(generationTimes[ii]);
                 }
