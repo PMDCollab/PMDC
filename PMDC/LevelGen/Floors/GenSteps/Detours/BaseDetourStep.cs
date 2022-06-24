@@ -107,7 +107,7 @@ namespace PMDC.LevelGen
 
                         plan.SetLoc(roomLoc);
 
-                        plan.ReceiveBorderRange(new IntRange(perpOffset, perpOffset + 1) + roomLoc.GetScalar(orth), ray.Dir.Reverse());
+                        plan.AskBorderRange(new IntRange(perpOffset, perpOffset + 1) + roomLoc.GetScalar(orth), ray.Dir.Reverse());
                         //draw the room
                         plan.DrawOnMap(map);
 
