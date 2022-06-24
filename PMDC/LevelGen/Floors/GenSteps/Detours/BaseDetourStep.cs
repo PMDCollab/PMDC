@@ -78,7 +78,7 @@ namespace PMDC.LevelGen
                     plan.PrepareSize(map.Rand, size);
                     //attempt to place the bounds somewhere, anywhere, within the limitations that the room itself provides
                     List<int> candidateOpenings = new List<int>();
-                    int planLength = plan.GetBorderLength(ray.Dir.Reverse());
+                    int planLength = plan.Draw.GetBorderLength(ray.Dir.Reverse());
                     for (int kk = 0; kk < planLength; kk++)
                     {
                         if (plan.GetFulfillableBorder(ray.Dir.Reverse(), kk))
