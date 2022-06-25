@@ -351,7 +351,7 @@ namespace PMDC.Dungeon
             
             foreach (Character newTarget in ZoneManager.Instance.CurrentMap.IterateCharacters())
             {
-                if (!newTarget.Dead && newTarget != ownerChar && newTarget != context.User)
+                if (!newTarget.Dead && newTarget != context.User && DungeonScene.Instance.GetMatchup(ownerChar, newTarget) == Alignment.Friend)
                 {
                     if (ZoneManager.Instance.CurrentMap.InRange(ownerChar.CharLoc, newTarget.CharLoc, 1))
                     {
