@@ -331,8 +331,17 @@ namespace PMDC.Dungeon
     [Serializable]
     public class PassAttackEvent : BattleEvent
     {
+        public int BellyCost;
         public PassAttackEvent() { }
-        public override GameEvent Clone() { return new PassAttackEvent(); }
+        public PassAttackEvent(int bellyCost)
+        {
+            BellyCost = bellyCost;
+        }
+        protected PassAttackEvent(PassAttackEvent other)
+        {
+            BellyCost = other.BellyCost;
+        }
+        public override GameEvent Clone() { return new PassAttackEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
@@ -348,13 +357,20 @@ namespace PMDC.Dungeon
 
             if (ZoneManager.Instance.CurrentMap.GetCharAtLoc(context.ExplosionTile) != ownerChar)
                 yield break;
+
+            if (ownerChar.Fullness < BellyCost)
+                yield break;
             
             foreach (Character newTarget in ZoneManager.Instance.CurrentMap.IterateCharacters())
             {
-                if (!newTarget.Dead && newTarget != context.User && DungeonScene.Instance.GetMatchup(ownerChar, newTarget) == Alignment.Friend)
+                if (!newTarget.Dead && newTarget != ownerChar && newTarget != context.User)
                 {
                     if (ZoneManager.Instance.CurrentMap.InRange(ownerChar.CharLoc, newTarget.CharLoc, 1))
                     {
+                        ownerChar.Fullness -= BellyCost;
+                        if (ownerChar.Fullness < 0)
+                            ownerChar.Fullness = 0;
+
                         CharAnimSpin spinAnim = new CharAnimSpin();
                         spinAnim.CharLoc = ownerChar.CharLoc;
                         spinAnim.CharDir = ownerChar.CharDir;
