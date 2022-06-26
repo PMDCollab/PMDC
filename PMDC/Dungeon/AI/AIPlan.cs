@@ -1442,7 +1442,7 @@ namespace PMDC.Dungeon
 
             modifyActionHitboxes(controlledChar, seenChars, dir, ref skillIndex, ref entry, ref rangeMod, ref hitboxAction, ref explosion);
 
-            return GetActionDirValue(skillIndex, entry, hitboxAction, explosion, entry.Data, rangeMod, controlledChar, seenChars, dir);
+            return GetActionDirValue(skillIndex, entry, hitboxAction, explosion, entry?.Data, rangeMod, controlledChar, seenChars, dir);
         }
 
         protected HitValue GetActionDirValue(int skillIndex, SkillData entry, CombatAction hitboxAction, ExplosionData explosion, BattleData data, int rangeMod, Character controlledChar, List<Character> seenChars, Dir8 dir)
@@ -2107,6 +2107,8 @@ namespace PMDC.Dungeon
                                 if (statusTarget.StatusEffects.ContainsKey(26))
                                     addedWorth = 100;
                             }
+                            else if (giveEffect.StatusID == 112)//substitute; not necessarily a bad status, but treated like one
+                                addedWorth = -100;
                             else
                                 addedWorth = 100;
                         }
