@@ -106,8 +106,7 @@ namespace PMDC.LevelGen
                         Loc frontLoc = testLoc + Dir8.Down.GetLoc();
                         if (map.RoomTerrain.TileEquivalent(map.GetTile(testLoc)) && !map.HasTileEffect(testLoc) &&
                             map.RoomTerrain.TileEquivalent(map.GetTile(frontLoc)) && !map.HasTileEffect(frontLoc) &&
-                            !map.GetPostProc(testLoc).Status[(int)PostProcType.Panel] &&
-                            !map.GetPostProc(testLoc).Status[(int)PostProcType.Item])
+                             (map.GetPostProc(testLoc).Status & (PostProcType.Panel | PostProcType.Item)) == PostProcType.None)
                         {
                             foreach (MapItem item in map.Items)
                             {
@@ -152,8 +151,8 @@ namespace PMDC.LevelGen
                     itemTiles.Add(matLoc);
                     EffectTile effect = new EffectTile(45, true, matLoc);
                     ((IPlaceableGenContext<EffectTile>)map).PlaceItem(matLoc, effect);
-                    map.GetPostProc(matLoc).Status[(int)PostProcType.Panel] = true;
-                    map.GetPostProc(matLoc).Status[(int)PostProcType.Item] = true;
+                    map.GetPostProc(matLoc).Status |= PostProcType.Panel;
+                    map.GetPostProc(matLoc).Status |= PostProcType.Item;
                 }
             }
 

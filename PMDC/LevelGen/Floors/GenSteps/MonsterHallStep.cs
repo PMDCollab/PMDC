@@ -204,7 +204,7 @@ namespace PMDC.LevelGen
                     Loc testLoc = new Loc(xx, yy);
                     if (map.WallTerrain.TileEquivalent(map.GetTile(testLoc)))
                     {
-                        if (!map.HasTileEffect(new Loc(xx, yy)) && !map.GetPostProc(testLoc).Status[(int)PostProcType.Panel] && !map.GetPostProc(testLoc).Status[(int)PostProcType.Item])
+                        if (!map.HasTileEffect(new Loc(xx, yy)) && (map.GetPostProc(testLoc).Status & (PostProcType.Panel | PostProcType.Item)) == PostProcType.None)
                         {
                             bool hasItem = false;
                             foreach (MapItem item in map.Items)

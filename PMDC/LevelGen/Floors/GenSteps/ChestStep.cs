@@ -89,8 +89,7 @@ namespace PMDC.LevelGen
                     Loc frontLoc = testLoc + Dir8.Down.GetLoc();
                     if (map.RoomTerrain.TileEquivalent(map.GetTile(testLoc)) && !map.HasTileEffect(testLoc) &&
                         map.RoomTerrain.TileEquivalent(map.GetTile(frontLoc)) && !map.HasTileEffect(frontLoc) &&
-                        !map.GetPostProc(testLoc).Status[(int)PostProcType.Panel] &&
-                        !map.GetPostProc(testLoc).Status[(int)PostProcType.Item])
+                        (map.GetPostProc(testLoc).Status & (PostProcType.Panel | PostProcType.Item)) == PostProcType.None)
                     {
                         if (Grid.GetForkDirs(testLoc, checkBlock, checkBlock).Count < 2)
                         {
@@ -179,8 +178,8 @@ namespace PMDC.LevelGen
             spawnedChest.TileStates.Set(new BoundsState(wallBounds));
 
             ((IPlaceableGenContext<EffectTile>)map).PlaceItem(loc, spawnedChest);
-            map.GetPostProc(loc).Status[(int)PostProcType.Panel] = true;
-            map.GetPostProc(loc).Status[(int)PostProcType.Item] = true;
+            map.GetPostProc(loc).Status |= PostProcType.Panel;
+            map.GetPostProc(loc).Status |= PostProcType.Item;
 
             GenContextDebug.DebugProgress("Placed Chest");
         }

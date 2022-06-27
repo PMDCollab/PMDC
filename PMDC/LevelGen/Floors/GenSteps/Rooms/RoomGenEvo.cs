@@ -83,12 +83,12 @@ namespace PMDC.LevelGen
             for (int x = 0; x < platWidth; x++)
             {
                 for (int y = 0; y < platHeight; y++)
-                    map.GetPostProc(new Loc(platStart.X + x, platStart.Y + y)).Status[(int)PostProcType.Panel] = true;
+                    map.GetPostProc(new Loc(platStart.X + x, platStart.Y + y)).Status |= PostProcType.Panel;
             }
             map.SetTile(new Loc(Draw.X + 1, Draw.Y + ROOM_OFFSET), map.WallTerrain.Copy());
-            map.GetPostProc(new Loc(Draw.X + 1, Draw.Y + ROOM_OFFSET)).Status[(int)PostProcType.Terrain] = true;
+            map.GetPostProc(new Loc(Draw.X + 1, Draw.Y + ROOM_OFFSET)).Status |= PostProcType.Terrain;
             map.SetTile(new Loc(Draw.X + 5, Draw.Y + ROOM_OFFSET), map.WallTerrain.Copy());
-            map.GetPostProc(new Loc(Draw.X + 5, Draw.Y + ROOM_OFFSET)).Status[(int)PostProcType.Terrain] = true;
+            map.GetPostProc(new Loc(Draw.X + 5, Draw.Y + ROOM_OFFSET)).Status |= PostProcType.Terrain;
 
 
             //dig tunnels within this room to hook up to the incoming demands
@@ -167,14 +167,14 @@ namespace PMDC.LevelGen
             for (int x = 0; x < platWidth; x++)
             {
                 for (int y = 0; y < platHeight; y++)
-                    map.GetPostProc(new Loc(platStart.X + x, platStart.Y + y)).Status[(int)PostProcType.Panel] = true;
+                    map.GetPostProc(new Loc(platStart.X + x, platStart.Y + y)).Status |= PostProcType.Panel;
             }
             map.SetTile(new Loc(Draw.X + 2, Draw.Y + 1), map.WallTerrain.Copy());
-            map.GetPostProc(new Loc(Draw.X + 2, Draw.Y + 1)).Status[(int)PostProcType.Terrain] = true;
+            map.GetPostProc(new Loc(Draw.X + 2, Draw.Y + 1)).Status |= PostProcType.Terrain;
             map.SetTile(new Loc(Draw.X + 1, Draw.Y + 4), map.WallTerrain.Copy());
-            map.GetPostProc(new Loc(Draw.X + 1, Draw.Y + 4)).Status[(int)PostProcType.Terrain] = true;
+            map.GetPostProc(new Loc(Draw.X + 1, Draw.Y + 4)).Status |= PostProcType.Terrain;
             map.SetTile(new Loc(Draw.X + 3, Draw.Y + 4), map.WallTerrain.Copy());
-            map.GetPostProc(new Loc(Draw.X + 3, Draw.Y + 4)).Status[(int)PostProcType.Terrain] = true;
+            map.GetPostProc(new Loc(Draw.X + 3, Draw.Y + 4)).Status |= PostProcType.Terrain;
 
             SetRoomBorders(map);
         }
