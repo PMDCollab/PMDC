@@ -182,6 +182,15 @@ namespace PMDC.Dungeon
         }
     }
     [Serializable]
+    public class NoNameEvent : RefreshEvent
+    {
+        public override GameEvent Clone() { return new NoNameEvent(); }
+        public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            character.ProxyName = "???";
+        }
+    }
+    [Serializable]
     public class VanishEvent : RefreshEvent
     {
         public override GameEvent Clone() { return new VanishEvent(); }
@@ -568,6 +577,15 @@ namespace PMDC.Dungeon
         public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
             character.StopItemAtHit = true;
+        }
+    }
+    [Serializable]
+    public class FriendlyFireToEvent : RefreshEvent
+    {
+        public override GameEvent Clone() { return new FriendlyFireToEvent(); }
+        public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            character.AttackFriend = true;
         }
     }
     [Serializable]

@@ -5312,6 +5312,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class AffectHighestStatBattleEvent : BattleEvent
     {
+        public bool AffectTarget;
         public int AtkStat;
         public int DefStat;
         public int SpAtkStat;
@@ -5320,8 +5321,9 @@ namespace PMDC.Dungeon
         public int Stack;
 
         public AffectHighestStatBattleEvent() { }
-        public AffectHighestStatBattleEvent(int atkStat, int defStat, int spAtkStat, int spDefStat, bool anonymous, int stack)
+        public AffectHighestStatBattleEvent(bool affectTarget, int atkStat, int defStat, int spAtkStat, int spDefStat, bool anonymous, int stack)
         {
+            AffectTarget = affectTarget;
             AtkStat = atkStat;
             DefStat = defStat;
             SpAtkStat = spAtkStat;
@@ -5332,6 +5334,7 @@ namespace PMDC.Dungeon
         }
         protected AffectHighestStatBattleEvent(AffectHighestStatBattleEvent other)
         {
+            AffectTarget = other.AffectTarget;
             AtkStat = other.AtkStat;
             DefStat = other.DefStat;
             SpAtkStat = other.SpAtkStat;
@@ -5343,22 +5346,23 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.Target.Dead)
+            Character target = (AffectTarget ? context.Target : context.User);
+            if (target.Dead)
                 yield break;
 
             int highestSpecial = SpAtkStat;
-            int highestSpecialValue = context.Target.MAtk;
+            int highestSpecialValue = target.MAtk;
             int highestPhysical = AtkStat;
-            int highestPhysicalValue = context.Target.Atk;
-            if (context.Target.Def > context.Target.Atk)
+            int highestPhysicalValue = target.Atk;
+            if (target.Def > target.Atk)
             {
                 highestPhysical = DefStat;
-                highestPhysicalValue = context.Target.Def;
+                highestPhysicalValue = target.Def;
             }
-            if (context.Target.MDef > context.Target.MAtk)
+            if (target.MDef > target.MAtk)
             {
                 highestSpecial = SpDefStat;
-                highestSpecialValue = context.Target.MDef;
+                highestSpecialValue = target.MDef;
             }
             int highestStat = highestPhysical;
             if (highestSpecialValue > highestPhysicalValue)
@@ -5368,7 +5372,7 @@ namespace PMDC.Dungeon
             setStatus.LoadFromData();
             setStatus.StatusStates.Set(new StackState(Stack));
 
-            yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(Anonymous ? null : context.User, setStatus, Anonymous ? null : context.ContextStates));
+            yield return CoroutineManager.Instance.StartCoroutine(target.AddStatusEffect(Anonymous ? null : context.User, setStatus, Anonymous ? null : context.ContextStates));
         }
     }
 

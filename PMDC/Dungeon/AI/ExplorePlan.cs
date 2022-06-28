@@ -78,13 +78,13 @@ namespace PMDC.Dungeon
             Loc offset = controlledChar.CharLoc - seen;
 
             //CHECK FOR ADVANCE
-            if (goalPath.Count > 1 && goalPath[goalPath.Count-2] == controlledChar.CharLoc)//check if we advanced since last time
+            if (goalPath.Count > 1 && ZoneManager.Instance.CurrentMap.WrapLoc(goalPath[goalPath.Count-2]) == controlledChar.CharLoc)//check if we advanced since last time
                 goalPath.RemoveAt(goalPath.Count-1);//remove our previous trail
 
             //check to see if the end loc is still valid... or, just check to see if *the next step* is still valid
             if (goalPath.Count > 1)
             {
-                if (controlledChar.CharLoc == goalPath[goalPath.Count - 1])//check if on the trail
+                if (controlledChar.CharLoc == ZoneManager.Instance.CurrentMap.WrapLoc(goalPath[goalPath.Count - 1]))//check if on the trail
                 {
                     if (!ZoneManager.Instance.CurrentMap.TileBlocked(goalPath[goalPath.Count - 2], controlledChar.Mobility) &&
                         !BlockedByTrap(controlledChar, goalPath[goalPath.Count - 2]) &&
@@ -121,7 +121,8 @@ namespace PMDC.Dungeon
             List<Loc> forwardFacingLocs = new List<Loc>();
             if (LocHistory.Count > 0)
             {
-                Loc pastDir = LocHistory[0] - controlledChar.CharLoc;
+                Loc pastLoc = ZoneManager.Instance.CurrentMap.GetClosestUnwrappedLoc(controlledChar.CharLoc, LocHistory[0]);
+                Loc pastDir = pastLoc - controlledChar.CharLoc;
                 for (int ii = seenExits.Count - 1; ii >= 0; ii--)
                 {
                     if (Loc.Dot(pastDir, (seenExits[ii] - controlledChar.CharLoc)) <= 0)
