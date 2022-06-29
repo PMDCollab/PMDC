@@ -371,7 +371,8 @@ namespace MapGenTest
                 {
                     for (int yy = gen.Draw.Top; yy < gen.Draw.Bottom; yy++)
                     {
-                        int index = yy * plan.DrawRect.Right + xx;
+                        Loc wrapLoc = Loc.Wrap(new Loc(xx, yy), plan.Size);
+                        int index = wrapLoc.Y * plan.DrawRect.Right + wrapLoc.X;
 
                         if (str[index] == ' ')
                             str[index] = chosenChar;
@@ -392,7 +393,8 @@ namespace MapGenTest
                 {
                     for (int yy = gen.Draw.Top; yy < gen.Draw.Bottom; yy++)
                     {
-                        int index = yy * plan.DrawRect.Right + xx;
+                        Loc wrapLoc = Loc.Wrap(new Loc(xx, yy), plan.Size);
+                        int index = wrapLoc.Y * plan.DrawRect.Right + wrapLoc.X;
 
                         if (str[index] == ' ')
                             str[index] = chosenChar;
