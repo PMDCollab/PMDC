@@ -6432,7 +6432,8 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            context.Data.Element = 1 + DataManager.Instance.Save.Rand.Next() % (DataManager.Instance.DataIndices[DataManager.DataType.Element].Count - 1);
+            ulong elementID = 1 + (ZoneManager.Instance.CurrentMap.Rand.FirstSeed ^ (ulong)context.User.Discriminator) % (ulong)(DataManager.Instance.DataIndices[DataManager.DataType.Element].Count - 1);
+            context.Data.Element = (int)elementID;
             ElementData element = DataManager.Instance.GetElement(context.Data.Element);
             DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SKILL_TO_ELEMENT").ToLocal(), element.GetIconName()));
             yield break;
