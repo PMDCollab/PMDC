@@ -2082,7 +2082,7 @@ namespace PMDC.Dungeon
             //do not activate if inv is full
             if (character.MemberTeam is ExplorerTeam)
             {
-                if (((ExplorerTeam)character.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone) >= character.MemberTeam.GetInvCount())
+                if (((ExplorerTeam)character.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone) <= character.MemberTeam.GetInvCount())
                     yield break;
             }
 
@@ -2111,27 +2111,50 @@ namespace PMDC.Dungeon
     public class GatherEvent : SingleCharEvent
     {
         public int GatherItem;
+        public List<AnimEvent> Anims;
 
-        public GatherEvent() { }
-        public GatherEvent(int gatherItem)
+        public GatherEvent()
+        {
+            Anims = new List<AnimEvent>();
+        }
+        public GatherEvent(int gatherItem, params AnimEvent[] anims)
         {
             GatherItem = gatherItem;
+            Anims = new List<AnimEvent>();
+            Anims.AddRange(anims);
         }
         protected GatherEvent(GatherEvent other)
         {
+            Anims = new List<AnimEvent>();
+            foreach (AnimEvent anim in other.Anims)
+                Anims.Add((AnimEvent)anim.Clone());
             GatherItem = other.GatherItem;
         }
         public override GameEvent Clone() { return new GatherEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (character.EquippedItem.ID == -1)
+            //do not activate if already holding an item
+            if (character.EquippedItem.ID != -1)
+                yield break;
+
+            //do not activate if inv is full
+            if (character.MemberTeam is ExplorerTeam)
+            {
+                if (((ExplorerTeam)character.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone) <= character.MemberTeam.GetInvCount())
+                    yield break;
+            }
+
+            if (ZoneManager.Instance.CurrentMap.MapTurns == 0)
             {
                 InvItem invItem = new InvItem(GatherItem);
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PICKUP").ToLocal(), character.GetDisplayName(false), invItem.GetDisplayName()));
+
+                foreach (AnimEvent anim in Anims)
+                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, character));
+
                 character.EquipItem(invItem);
             }
-            yield break;
         }
     }
 
