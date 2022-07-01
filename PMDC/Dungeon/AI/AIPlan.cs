@@ -197,7 +197,12 @@ namespace PMDC.Dungeon
             if (tile.Data.ID == 6 && !controlledChar.HasElement(14) && !controlledChar.HasElement(17))//check for poison; NOTE: specialized AI code!
                 return true;
             if (tile.Data.ID == 2 && controlledChar.MemberTeam is ExplorerTeam)//check for block; NOTE: specialized AI code!
-                return true;
+            {
+                //we can still walk on it if we're already in a block
+                Tile curTile = ZoneManager.Instance.CurrentMap.GetTile(controlledChar.CharLoc);
+                if (curTile.Data.ID != 2)
+                    return true;
+            }
 
             return false;
         }
