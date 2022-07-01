@@ -415,4 +415,42 @@ namespace PMDC.Dungeon
             yield break;
         }
     }
+
+
+
+
+    [Serializable]
+    public abstract class ShareEquipMapStatusEvent : MapStatusGivenEvent
+    {
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character, MapStatus status, bool msg)
+        {
+            if (ownerChar.EquippedItem.ID > -1)
+            {
+                ItemData entry = (ItemData)ownerChar.EquippedItem.GetData();
+                if (CheckEquipPassValidityEvent.CanItemEffectBePassed(entry))
+                {
+                    foreach (var effect in GetEvents(entry))
+                        yield return CoroutineManager.Instance.StartCoroutine(effect.Value.Apply(owner, ownerChar, character, status, msg));
+                }
+            }
+        }
+
+        protected abstract PriorityList<MapStatusGivenEvent> GetEvents(ItemData entry);
+    }
+
+    [Serializable]
+    public class ShareOnMapStatusAddsEvent : ShareEquipMapStatusEvent
+    {
+        public override GameEvent Clone() { return new ShareOnMapStatusAddsEvent(); }
+
+        protected override PriorityList<MapStatusGivenEvent> GetEvents(ItemData entry) => entry.OnMapStatusAdds;
+    }
+
+    [Serializable]
+    public class ShareOnMapStatusRemovesEvent : ShareEquipMapStatusEvent
+    {
+        public override GameEvent Clone() { return new ShareOnMapStatusRemovesEvent(); }
+
+        protected override PriorityList<MapStatusGivenEvent> GetEvents(ItemData entry) => entry.OnMapStatusRemoves;
+    }
 }

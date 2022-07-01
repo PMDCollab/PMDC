@@ -4,6 +4,7 @@ using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Dev;
 using System.Collections.Generic;
+using RogueElements;
 
 namespace PMDC.Dungeon
 {
@@ -252,5 +253,43 @@ namespace PMDC.Dungeon
             else if (effectiveness == PreTypeEvent.S_E)
                 effectiveness = PreTypeEvent.NVE;
         }
+    }
+
+
+
+
+    [Serializable]
+    public abstract class ShareEquipElementEvent : ElementEffectEvent
+    {
+        public override void Apply(GameEventOwner owner, Character ownerChar, int moveType, int targetType, ref int effectiveness)
+        {
+            if (ownerChar.EquippedItem.ID > -1)
+            {
+                ItemData entry = (ItemData)ownerChar.EquippedItem.GetData();
+                if (CheckEquipPassValidityEvent.CanItemEffectBePassed(entry))
+                {
+                    foreach (var effect in GetEvents(entry))
+                        effect.Value.Apply(owner, ownerChar, moveType, targetType, ref effectiveness);
+                }
+            }
+        }
+
+        protected abstract PriorityList<ElementEffectEvent> GetEvents(ItemData entry);
+    }
+
+    [Serializable]
+    public class ShareTargetElementEvent : ShareEquipElementEvent
+    {
+        public override GameEvent Clone() { return new ShareTargetElementEvent(); }
+
+        protected override PriorityList<ElementEffectEvent> GetEvents(ItemData entry) => entry.TargetElementEffects;
+    }
+
+    [Serializable]
+    public class ShareUserElementEvent : ShareEquipElementEvent
+    {
+        public override GameEvent Clone() { return new ShareUserElementEvent(); }
+
+        protected override PriorityList<ElementEffectEvent> GetEvents(ItemData entry) => entry.UserElementEffects;
     }
 }

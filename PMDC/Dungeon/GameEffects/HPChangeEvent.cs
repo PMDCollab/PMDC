@@ -4,6 +4,7 @@ using RogueEssence.Dungeon;
 using RogueEssence.Data;
 using RogueEssence.Dev;
 using System.Collections.Generic;
+using RogueElements;
 
 namespace PMDC.Dungeon
 {
@@ -61,5 +62,43 @@ namespace PMDC.Dungeon
             if (family.Members.Contains(ownerChar.BaseForm.Species))
                 BaseEvent.Apply(owner, ownerChar, ref hpChange);
         }
+    }
+
+
+
+
+    [Serializable]
+    public abstract class ShareEquipHPEvent : HPChangeEvent
+    {
+        public override void Apply(GameEventOwner owner, Character ownerChar, ref int hpChange)
+        {
+            if (ownerChar.EquippedItem.ID > -1)
+            {
+                ItemData entry = (ItemData)ownerChar.EquippedItem.GetData();
+                if (CheckEquipPassValidityEvent.CanItemEffectBePassed(entry))
+                {
+                    foreach (var effect in GetEvents(entry))
+                        effect.Value.Apply(owner, ownerChar, ref hpChange);
+                }
+            }
+        }
+
+        protected abstract PriorityList<HPChangeEvent> GetEvents(ItemData entry);
+    }
+
+    [Serializable]
+    public class ShareModifyHPsEvent : ShareEquipHPEvent
+    {
+        public override GameEvent Clone() { return new ShareModifyHPsEvent(); }
+
+        protected override PriorityList<HPChangeEvent> GetEvents(ItemData entry) => entry.ModifyHPs;
+    }
+
+    [Serializable]
+    public class ShareRestoreHPsEvent : ShareEquipHPEvent
+    {
+        public override GameEvent Clone() { return new ShareRestoreHPsEvent(); }
+
+        protected override PriorityList<HPChangeEvent> GetEvents(ItemData entry) => entry.RestoreHPs;
     }
 }

@@ -5008,4 +5008,72 @@ namespace PMDC.Dungeon
                 yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, character));
         }
     }
+
+
+    [Serializable]
+    public abstract class ShareEquipEvent : SingleCharEvent
+    {
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (ownerChar.EquippedItem.ID > -1)
+            {
+                ItemData entry = (ItemData)ownerChar.EquippedItem.GetData();
+                if (CheckEquipPassValidityEvent.CanItemEffectBePassed(entry))
+                {
+                    foreach (var effect in GetEvents(entry))
+                        yield return CoroutineManager.Instance.StartCoroutine(effect.Value.Apply(owner, ownerChar, character));
+                }
+            }
+        }
+
+        protected abstract PriorityList<SingleCharEvent> GetEvents(ItemData entry);
+    }
+
+    [Serializable]
+    public class ShareOnMapStartsEvent : ShareEquipEvent
+    {
+        public override GameEvent Clone() { return new ShareOnMapStartsEvent(); }
+
+        protected override PriorityList<SingleCharEvent> GetEvents(ItemData entry) => entry.OnMapStarts;
+    }
+
+    [Serializable]
+    public class ShareOnMapTurnEndsEvent : ShareEquipEvent
+    {
+        public override GameEvent Clone() { return new ShareOnMapTurnEndsEvent(); }
+
+        protected override PriorityList<SingleCharEvent> GetEvents(ItemData entry) => entry.OnMapTurnEnds;
+    }
+
+    [Serializable]
+    public class ShareOnTurnEndsEvent : ShareEquipEvent
+    {
+        public override GameEvent Clone() { return new ShareOnTurnEndsEvent(); }
+
+        protected override PriorityList<SingleCharEvent> GetEvents(ItemData entry) => entry.OnTurnStarts;
+    }
+
+    [Serializable]
+    public class ShareOnTurnStartsEvent : ShareEquipEvent
+    {
+        public override GameEvent Clone() { return new ShareOnTurnStartsEvent(); }
+
+        protected override PriorityList<SingleCharEvent> GetEvents(ItemData entry) => entry.OnTurnStarts;
+    }
+
+    [Serializable]
+    public class ShareOnDeathsEvent : ShareEquipEvent
+    {
+        public override GameEvent Clone() { return new ShareOnDeathsEvent(); }
+
+        protected override PriorityList<SingleCharEvent> GetEvents(ItemData entry) => entry.OnDeaths;
+    }
+
+    [Serializable]
+    public class ShareOnWalksEvent : ShareEquipEvent
+    {
+        public override GameEvent Clone() { return new ShareOnWalksEvent(); }
+
+        protected override PriorityList<SingleCharEvent> GetEvents(ItemData entry) => entry.OnWalks;
+    }
 }

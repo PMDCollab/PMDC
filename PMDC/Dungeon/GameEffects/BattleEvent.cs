@@ -284,7 +284,7 @@ namespace PMDC.Dungeon
             //Friendly Fire: default off; when turned on, attacks that hit enemies will also hit allies and vice-versa
             //Friendly Item Fire: default on; turning it on will have thrown items hit allies as well as enemies
 
-                context.StartDir = context.User.CharDir;
+            context.StartDir = context.User.CharDir;
 
             //while attack, use, and throw, will all use the same battle contexts and hitboxes,
             //they will still have different Execution methods, as well as EndEffects
@@ -493,7 +493,7 @@ namespace PMDC.Dungeon
             if (UseTarget)
                 DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.Target.GetDisplayName(false)));
             else
-            DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false)));
+                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false)));
             if (Delay)
                 yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(10));
         }
@@ -678,7 +678,7 @@ namespace PMDC.Dungeon
             Character target = (AffectTarget ? context.Target : context.User);
             if (target.Dead)
                 yield break;
-            
+
             if (context.Data.Element != 00
                 && !(target.Element1 == context.Data.Element && target.Element2 == 00))
             {
@@ -1538,7 +1538,7 @@ namespace PMDC.Dungeon
             StatusID = other.StatusID;
             FailMsg = other.FailMsg;
             foreach (int stack in other.StackPair.Keys)
-                StackPair.Add(stack, new  Tuple<CombatAction, ExplosionData, BattleData>(other.StackPair[stack].Item1.Clone(), new ExplosionData(other.StackPair[stack].Item2), new BattleData(other.StackPair[stack].Item3)));
+                StackPair.Add(stack, new Tuple<CombatAction, ExplosionData, BattleData>(other.StackPair[stack].Item1.Clone(), new ExplosionData(other.StackPair[stack].Item2), new BattleData(other.StackPair[stack].Item3)));
         }
         public override GameEvent Clone() { return new StatusStackDifferentEvent(this); }
 
@@ -1711,7 +1711,7 @@ namespace PMDC.Dungeon
                 newData.Element = context.Data.Element;
                 newData.Category = context.Data.Category;
                 newData.HitRate = context.Data.HitRate;
-                foreach(SkillState state in context.Data.SkillStates)
+                foreach (SkillState state in context.Data.SkillStates)
                     newData.SkillStates.Set(state.Clone<SkillState>());
                 //add the absorption effects
                 if (!SingleDraw || !context.GlobalContextStates.Contains<SingleDrawAbsorb>())
@@ -2085,6 +2085,45 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class BerryBoostEvent : BattleEvent
+    {
+        public List<int> StatsToBoost;
+
+        public BerryBoostEvent() { StatsToBoost = new List<int>(); }
+        public BerryBoostEvent(params int[] effects)
+        {
+            StatsToBoost = new List<int>();
+            foreach (int effect in effects)
+                StatsToBoost.Add(effect);
+        }
+        protected BerryBoostEvent(BerryBoostEvent other)
+            : this()
+        {
+            StatsToBoost.AddRange(other.StatsToBoost);
+        }
+        public override GameEvent Clone() { return new BerryBoostEvent(this); }
+
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.ActionType == BattleActionType.Item)
+            {
+                ItemData itemData = DataManager.Instance.GetItem(context.Item.ID);
+                if (itemData.ItemStates.Contains<BerryState>())
+                {
+                    int statusID = StatsToBoost[DataManager.Instance.Save.Rand.Next(StatsToBoost.Count)];
+
+                    StatusEffect setStatus = new StatusEffect(statusID);
+                    setStatus.LoadFromData();
+                    setStatus.StatusStates.Set(new StackState(1));
+
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(null, setStatus, null, false, true));
+                }
+            }
+        }
+    }
+
+    [Serializable]
     public class PrepareJudgmentEvent : BattleEvent
     {
         [DataType(2, DataManager.DataType.Element, false)]
@@ -2234,7 +2273,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.Data.Category == Category)
+            if (context.Data.Category == Category || Category == BattleData.SkillCategory.None)
             {
 
                 foreach (BattleAnimEvent anim in Anims)
@@ -2443,7 +2482,31 @@ namespace PMDC.Dungeon
                 context.AddContextStateMult<DmgMult>(false, Numerator, Denominator);
             yield break;
         }
+    }
 
+    [Serializable]
+    public class RemoveMoveStateEvent : BattleEvent
+    {
+        [StringTypeConstraint(1, typeof(SkillState))]
+        public List<FlagType> States;
+
+        public RemoveMoveStateEvent() { States = new List<FlagType>(); }
+        public RemoveMoveStateEvent(Type state) : this()
+        {
+            States.Add(new FlagType(state));
+        }
+        protected RemoveMoveStateEvent(RemoveMoveStateEvent other) : this()
+        {
+            States.AddRange(other.States);
+        }
+        public override GameEvent Clone() { return new RemoveMoveStateEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            foreach (FlagType state in States)
+                context.Data.SkillStates.Remove(state.FullType);
+            yield break;
+        }
     }
 
 
@@ -2476,7 +2539,7 @@ namespace PMDC.Dungeon
         {
             if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(WeatherID))
             {
-                if (context.Data.Category == Category)
+                if (context.Data.Category == Category || Category == BattleData.SkillCategory.None)
                     context.AddContextStateMult<DmgMult>(false, Numerator, Denominator);
             }
             yield break;
@@ -2512,7 +2575,7 @@ namespace PMDC.Dungeon
         {
             Character target = (AffectTarget ? context.Target : context.User);
 
-            if (context.Data.Category == Category)
+            if (context.Data.Category == Category || Category == BattleData.SkillCategory.None)
             {
                 foreach (StatusEffect status in target.IterateStatusEffects())
                 {
@@ -2522,6 +2585,48 @@ namespace PMDC.Dungeon
                         break;
                     }
                 }
+            }
+            yield break;
+        }
+    }
+
+    [Serializable]
+    public class MultiplyCategoryWithoutStatusEvent : BattleEvent
+    {
+        [DataType(0, DataManager.DataType.Status, false)]
+        public int StatusID;
+        public BattleData.SkillCategory Category;
+        public int Numerator;
+        public int Denominator;
+        public bool AffectTarget;
+
+        public MultiplyCategoryWithoutStatusEvent() { }
+        public MultiplyCategoryWithoutStatusEvent(int statusID, BattleData.SkillCategory category, int numerator, int denominator, bool affectTarget)
+        {
+            StatusID = statusID;
+            Category = category;
+            Numerator = numerator;
+            Denominator = denominator;
+            AffectTarget = affectTarget;
+        }
+        protected MultiplyCategoryWithoutStatusEvent(MultiplyCategoryWithoutStatusEvent other)
+        {
+            StatusID = other.StatusID;
+            Category = other.Category;
+            Numerator = other.Numerator;
+            Denominator = other.Denominator;
+            AffectTarget = other.AffectTarget;
+        }
+        public override GameEvent Clone() { return new MultiplyCategoryWithoutStatusEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            Character target = (AffectTarget ? context.Target : context.User);
+
+            if (context.Data.Category == Category || Category == BattleData.SkillCategory.None)
+            {
+                if (target.GetStatusEffect(StatusID) == null)
+                    context.AddContextStateMult<DmgMult>(false, Numerator, Denominator);
             }
             yield break;
         }
@@ -2560,7 +2665,7 @@ namespace PMDC.Dungeon
         {
             Character target = (AffectTarget ? context.Target : context.User);
 
-            if (context.Data.Category == Category)
+            if (context.Data.Category == Category || Category == BattleData.SkillCategory.None)
             {
                 if (target.GetStatusEffect(StatusID) != null)
                     context.AddContextStateMult<DmgMult>(false, Numerator, Denominator);
@@ -2695,7 +2800,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            context.AddContextStateMult<DmgMult>(false, context.StrikesMade+1, Denominator);
+            context.AddContextStateMult<DmgMult>(false, context.StrikesMade + 1, Denominator);
             yield break;
         }
     }
@@ -3245,7 +3350,7 @@ namespace PMDC.Dungeon
         public bool ItemsPierce;
         public bool PierceEnemies;
         public bool PierceWalls;
-        
+
         public PierceEvent() { }
         public PierceEvent(bool skills, bool items, bool enemies, bool walls)
         {
@@ -4071,7 +4176,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             int diff = ZoneManager.Instance.CurrentMap.GetClosestDist8(context.StrikeStartTile, context.Target.CharLoc);
-            for(int ii = 0; ii < diff; ii++)
+            for (int ii = 0; ii < diff; ii++)
                 context.AddContextStateMult<DmgMult>(false, 1, 2);
             yield break;
         }
@@ -4117,7 +4222,7 @@ namespace PMDC.Dungeon
         {
             //TODO: this breaks in small wrapped maps
             int diff = ZoneManager.Instance.CurrentMap.GetClosestDist8(context.StrikeStartTile, context.Target.CharLoc);
-            for(int ii = 0; ii < diff; ii++)
+            for (int ii = 0; ii < diff; ii++)
                 context.AddContextStateMult<DmgMult>(false, 2, 1);
             yield break;
         }
@@ -4630,7 +4735,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.Data.Category == Category)
+            if (context.Data.Category == Category || Category == BattleData.SkillCategory.None)
                 context.ContextStates.Set(new AttackEndure());
             yield break;
         }
@@ -4683,7 +4788,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.Target.HP == context.Target.MaxHP && 
+            if (context.Target.HP == context.Target.MaxHP &&
                 (context.Data.Category == BattleData.SkillCategory.Physical || context.Data.Category == BattleData.SkillCategory.Magical))
             {
                 foreach (BattleAnimEvent anim in Anims)
@@ -4948,7 +5053,7 @@ namespace PMDC.Dungeon
                 yield break;
 
             context.UsageSlot = BattleContext.FAKE_ATTACK_SLOT;
-            
+
             SkillData entry = DataManager.Instance.GetSkill(MoveIndex);
             context.Data = new BattleData(entry.Data);
             context.Data.ID = MoveIndex;
@@ -5800,7 +5905,7 @@ namespace PMDC.Dungeon
                 yield return CoroutineManager.Instance.StartCoroutine(context.User.RemoveStatusEffect(((StatusEffect)owner).ID));
                 yield break;
             }
-            
+
             DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_FROZEN").ToLocal(), context.User.GetDisplayName(false)));
             context.CancelState.Cancel = true;
         }
@@ -6077,7 +6182,7 @@ namespace PMDC.Dungeon
         private bool boostStat(Stat stat, Character target)
         {
             int change = Change;
-            
+
             int prevStat = 0;
             int newStat = 0;
 
@@ -7427,7 +7532,7 @@ namespace PMDC.Dungeon
             return level * Numerator / Denominator;
         }
     }
-    
+
     [Serializable]
     public class PsywaveDamageEvent : FixedDamageEvent
     {
@@ -7443,7 +7548,7 @@ namespace PMDC.Dungeon
             return Math.Max(1, context.GetContextStateInt<UserLevel>(0) * power / 2);
         }
     }
-    
+
 
     [Serializable]
     public class UserHPDamageEvent : FixedDamageEvent
@@ -7681,7 +7786,7 @@ namespace PMDC.Dungeon
             int knockOuts = context.GetContextStateInt<TotalKnockouts>(true, 0);
             for (int ii = 0; ii < knockOuts; ii++)
             {
-                foreach(BattleEvent battleEffect in BaseEvents)
+                foreach (BattleEvent battleEffect in BaseEvents)
                     yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
             }
         }
@@ -7731,7 +7836,7 @@ namespace PMDC.Dungeon
         public int WeatherID;
         public List<BattleEvent> BaseEvents;
 
-        public WeatherNeededEvent() {BaseEvents = new List<BattleEvent>(); }
+        public WeatherNeededEvent() { BaseEvents = new List<BattleEvent>(); }
         public WeatherNeededEvent(int id, params BattleEvent[] effects)
             : this()
         {
@@ -8068,7 +8173,7 @@ namespace PMDC.Dungeon
             foreach (BattleEvent battleEffect in other.BaseEvents)
                 BaseEvents.Add((BattleEvent)battleEffect.Clone());
         }
-        public override GameEvent Clone() { return new OnDashActionEvent(this); }
+        public override GameEvent Clone() { return new OnSelfActionEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
@@ -8129,6 +8234,21 @@ namespace PMDC.Dungeon
                 foreach (BattleEvent battleEffect in BaseEvents)
                     yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
             }
+        }
+    }
+
+
+    [Serializable]
+    public class SnapDashBackEvent : BattleEvent
+    {
+        public override GameEvent Clone() { return new SnapDashBackEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            DashAction dash = context.HitboxAction as DashAction;
+            if (dash != null)
+                dash.SnapBack = true;
+            yield break;
         }
     }
 
@@ -8665,7 +8785,7 @@ namespace PMDC.Dungeon
 
         public StatusStateBattleEvent() { States = new StateCollection<StatusState>(); }
         public StatusStateBattleEvent(int statusID, bool affectTarget, bool silentCheck, StateCollection<StatusState> states) : this(statusID, affectTarget, silentCheck, false, states) { }
-        public StatusStateBattleEvent(int statusID, bool affectTarget, bool silentCheck, bool anonymous, StateCollection<StatusState> states) :base(statusID, affectTarget, silentCheck, anonymous)
+        public StatusStateBattleEvent(int statusID, bool affectTarget, bool silentCheck, bool anonymous, StateCollection<StatusState> states) : base(statusID, affectTarget, silentCheck, anonymous)
         {
             States = states;
         }
@@ -9115,7 +9235,7 @@ namespace PMDC.Dungeon
                     yield break;
                 }
             }
-            
+
             DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SKETCH_FAIL").ToLocal(), context.Target.GetDisplayName(false)));
         }
 
@@ -9974,7 +10094,7 @@ namespace PMDC.Dungeon
             }
         }
     }
-    
+
     [Serializable]
     public class ChipDamageEvent : BattleEvent
     {
@@ -10589,7 +10709,8 @@ namespace PMDC.Dungeon
             List<Character> characters = new List<Character>();
 
             Loc? loc = Grid.FindClosestConnectedTile(character.CharLoc - new Loc(radius), new Loc(radius * 2 + 1),
-                (Loc testLoc) => {
+                (Loc testLoc) =>
+                {
 
                     Tile tile = ZoneManager.Instance.CurrentMap.GetTile(testLoc);
                     if (tile == null)
@@ -10599,10 +10720,12 @@ namespace PMDC.Dungeon
                         return true;
                     return false;
                 },
-                (Loc testLoc) => {
+                (Loc testLoc) =>
+                {
                     return ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, true);
                 },
-                (Loc testLoc) => {
+                (Loc testLoc) =>
+                {
                     return ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, true, true);
                 },
                 character.CharLoc);
@@ -10724,7 +10847,7 @@ namespace PMDC.Dungeon
             foreach (Character character in ZoneManager.Instance.CurrentMap.IterateCharacters())
             {
                 if (!character.Dead && DungeonScene.Instance.GetMatchup(character, context.Target) == Alignment.Friend)
-                    targets.Enqueue((FarthestFirst ? -1 : 1) *(character.CharLoc - context.Target.CharLoc).DistSquared(), character);
+                    targets.Enqueue((FarthestFirst ? -1 : 1) * (character.CharLoc - context.Target.CharLoc).DistSquared(), character);
             }
             int totalWarp = 0;
             for (int ii = 0; ii < Amount && targets.Count > 0; ii++)
@@ -10767,7 +10890,7 @@ namespace PMDC.Dungeon
                 Character target = targets.Dequeue();
                 if (target.CharStates.Contains<AnchorState>())
                     yield break;
-                
+
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.WarpNear(target, context.TargetTile, false));
                 totalWarp++;
             }
@@ -10847,7 +10970,7 @@ namespace PMDC.Dungeon
                     newItem = DefaultItems[DataManager.Instance.Save.Rand.Next(DefaultItems.Count)];
 
                 context.Target.DequipItem();
-                
+
                 string oldName = item.GetDisplayName();
 
                 //restore this item
@@ -11588,7 +11711,7 @@ namespace PMDC.Dungeon
                         DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
                         yield return new WaitForFrames(ItemAnim.ITEM_ACTION_TIME);
                     }
-                    
+
                     if (!origin.EquippedItem.Cursed || origin.CanRemoveStuck)
                     {
                         if (origin.MemberTeam is ExplorerTeam)
@@ -11719,7 +11842,7 @@ namespace PMDC.Dungeon
 
                 team.UpdateInv(null, null);
             }
-            
+
             yield break;
         }
     }
@@ -11740,7 +11863,7 @@ namespace PMDC.Dungeon
 
             InvItem attackerItem = context.User.EquippedItem;
             InvItem targetItem = context.Target.EquippedItem;
-            
+
             if (attackerItem.ID > -1 || targetItem.ID > -1)
             {
                 //if it's an explorer, and their inv is full, and they're not holding anything, they cannot be given an item by the other party
@@ -11807,7 +11930,7 @@ namespace PMDC.Dungeon
             if (itemIndex > -2)
             {
                 InvItem item = (itemIndex > -1 ? ((ExplorerTeam)target.MemberTeam).GetInv(itemIndex) : target.EquippedItem);
-                
+
                 if (item.Cursed)
                 {
                     if (!SilentCheck)
@@ -12280,7 +12403,7 @@ namespace PMDC.Dungeon
             Character origin = (AffectTarget ? context.User : context.Target);
 
             if (Msg.IsValid())
-                DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), origin.GetDisplayName(false), target.GetDisplayName(false)));
+                DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), origin.GetDisplayName(false), target.GetDisplayName(false), owner.GetDisplayName()));
 
             //reflect ability (target to attacker, or vice versa)
             for (int ii = 0; ii < CharData.MAX_INTRINSIC_SLOTS; ii++)
@@ -12529,7 +12652,7 @@ namespace PMDC.Dungeon
                         statuses.Add(status);
                 }
             }
-            
+
             if (statuses.Count == 0)
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SKILL_FAILED").ToLocal()));
             else
@@ -12620,7 +12743,7 @@ namespace PMDC.Dungeon
                 //moves
                 for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
                     target.ChangeSkill(ii, user.Skills[ii].Element.SkillNum);
-                
+
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRANSFORM").ToLocal(), target.GetDisplayName(false), user.GetDisplayName(false)));
             }
         }
@@ -12819,9 +12942,9 @@ namespace PMDC.Dungeon
             Loc testTile = context.TargetTile;
             if (!ZoneManager.Instance.CurrentMap.GetLocInMapBounds(ref testTile))
                 yield break;
-            
+
             if (ZoneManager.Instance.CurrentMap.DiscoveryArray[testTile.X][testTile.Y] == Map.DiscoveryState.None)
-                    ZoneManager.Instance.CurrentMap.DiscoveryArray[testTile.X][testTile.Y] = Map.DiscoveryState.Hinted;
+                ZoneManager.Instance.CurrentMap.DiscoveryArray[testTile.X][testTile.Y] = Map.DiscoveryState.Hinted;
 
         }
     }
@@ -12856,7 +12979,7 @@ namespace PMDC.Dungeon
                         //character A sets a trap underfoot and owns it, expecting the trap to not hurt it
                         //character B attacks character A, hitting the tile with the owner on it
                         //character A takes the effect of the trap
-                        
+
                         //this is a fall-through case
                     }
                     else
@@ -12998,7 +13121,7 @@ namespace PMDC.Dungeon
             }
         }
     }
-    
+
     [Serializable]
     public class RemoveTerrainEvent : BattleEvent
     {
@@ -13318,7 +13441,7 @@ namespace PMDC.Dungeon
                         }
 
                         choices.Add(new DialogueChoice(Text.FormatKey("MENU_CANCEL"), () => { context.CancelState.Cancel = true; }));
-                        DialogueBox question = MenuManager.Instance.CreateMultiQuestion(String.Format(new StringKey("DLG_WHICH_FORM").ToLocal(), context.User.GetDisplayName(true)), true, choices, 0, choices.Count-1);
+                        DialogueBox question = MenuManager.Instance.CreateMultiQuestion(String.Format(new StringKey("DLG_WHICH_FORM").ToLocal(), context.User.GetDisplayName(true)), true, choices, 0, choices.Count - 1);
 
                         yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(question));
 
@@ -13733,7 +13856,7 @@ namespace PMDC.Dungeon
                 if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
                 {
                     ExplorerTeam team = (ExplorerTeam)context.User.MemberTeam;
-                    InvItem item = team.TakeItems(new List<int>{ slot })[0];
+                    InvItem item = team.TakeItems(new List<int> { slot })[0];
 
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STORAGE_TAKE").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName()));
                     if (team.GetInvCount() < team.GetMaxInvSlots(ZoneManager.Instance.CurrentZone))
@@ -13833,7 +13956,7 @@ namespace PMDC.Dungeon
         }
     }
 
-    
+
     [Serializable]
     public abstract class RecruitBoostEvent : BattleEvent
     {
@@ -14183,6 +14306,103 @@ namespace PMDC.Dungeon
             }
         }
     }
-    
+
+
+
+
+
+    [Serializable]
+    public abstract class ShareEquipBattleEvent : BattleEvent
+    {
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (ownerChar.EquippedItem.ID > -1)
+            {
+                ItemData entry = (ItemData)ownerChar.EquippedItem.GetData();
+                if (CheckEquipPassValidityEvent.CanItemEffectBePassed(entry))
+                {
+                    foreach (var effect in GetEvents(entry))
+                        yield return CoroutineManager.Instance.StartCoroutine(effect.Value.Apply(owner, ownerChar, context));
+                }
+            }
+        }
+
+        protected abstract PriorityList<BattleEvent> GetEvents(ItemData entry);
+    }
+
+    [Serializable]
+    public class ShareAfterActionsEvent : ShareEquipBattleEvent
+    {
+        public override GameEvent Clone() { return new ShareAfterActionsEvent(); }
+
+        protected override PriorityList<BattleEvent> GetEvents(ItemData entry) => entry.AfterActions;
+    }
+
+    [Serializable]
+    public class ShareAfterBeingHitsEvent : ShareEquipBattleEvent
+    {
+        public override GameEvent Clone() { return new ShareAfterBeingHitsEvent(); }
+
+        protected override PriorityList<BattleEvent> GetEvents(ItemData entry) => entry.AfterBeingHits;
+    }
+
+    [Serializable]
+    public class ShareAfterHittingsEvent : ShareEquipBattleEvent
+    {
+        public override GameEvent Clone() { return new ShareAfterHittingsEvent(); }
+
+        protected override PriorityList<BattleEvent> GetEvents(ItemData entry) => entry.AfterHittings;
+    }
+
+    [Serializable]
+    public class ShareBeforeActionsEvent : ShareEquipBattleEvent
+    {
+        public override GameEvent Clone() { return new ShareBeforeActionsEvent(); }
+
+        protected override PriorityList<BattleEvent> GetEvents(ItemData entry) => entry.BeforeActions;
+    }
+
+    [Serializable]
+    public class ShareBeforeBeingHitsEvent : ShareEquipBattleEvent
+    {
+        public override GameEvent Clone() { return new ShareBeforeBeingHitsEvent(); }
+
+        protected override PriorityList<BattleEvent> GetEvents(ItemData entry) => entry.BeforeBeingHits;
+    }
+
+    [Serializable]
+    public class ShareBeforeHittingsEvent : ShareEquipBattleEvent
+    {
+        public override GameEvent Clone() { return new ShareBeforeHittingsEvent(); }
+
+        protected override PriorityList<BattleEvent> GetEvents(ItemData entry) => entry.BeforeHittings;
+    }
+
+    [Serializable]
+    public class ShareBeforeTryActionsEvent : ShareEquipBattleEvent
+    {
+        public override GameEvent Clone() { return new ShareBeforeTryActionsEvent(); }
+
+        protected override PriorityList<BattleEvent> GetEvents(ItemData entry) => entry.BeforeTryActions;
+    }
+
+
+    [Serializable]
+    public class ShareOnActionsEvent : ShareEquipBattleEvent
+    {
+        public override GameEvent Clone() { return new ShareOnActionsEvent(); }
+
+        protected override PriorityList<BattleEvent> GetEvents(ItemData entry) => entry.OnActions;
+    }
+
+
+    [Serializable]
+    public class ShareOnHitTilesEvent : ShareEquipBattleEvent
+    {
+        public override GameEvent Clone() { return new ShareOnHitTilesEvent(); }
+
+        protected override PriorityList<BattleEvent> GetEvents(ItemData entry) => entry.OnHitTiles;
+    }
+
 }
 

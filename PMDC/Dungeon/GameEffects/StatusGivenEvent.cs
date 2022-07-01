@@ -1779,4 +1779,50 @@ namespace PMDC.Dungeon
             }
         }
     }
+
+
+
+
+    [Serializable]
+    public abstract class ShareEquipStatusEvent : StatusGivenEvent
+    {
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, StatusCheckContext context)
+        {
+            if (ownerChar.EquippedItem.ID > -1)
+            {
+                ItemData entry = (ItemData)ownerChar.EquippedItem.GetData();
+                if (CheckEquipPassValidityEvent.CanItemEffectBePassed(entry))
+                {
+                    foreach (var effect in GetEvents(entry))
+                        yield return CoroutineManager.Instance.StartCoroutine(effect.Value.Apply(owner, ownerChar, context));
+                }
+            }
+        }
+
+        protected abstract PriorityList<StatusGivenEvent> GetEvents(ItemData entry);
+    }
+
+    [Serializable]
+    public class ShareBeforeStatusAddsEvent : ShareEquipStatusEvent
+    {
+        public override GameEvent Clone() { return new ShareBeforeStatusAddsEvent(); }
+
+        protected override PriorityList<StatusGivenEvent> GetEvents(ItemData entry) => entry.BeforeStatusAdds;
+    }
+
+    [Serializable]
+    public class ShareOnStatusAddsEvent : ShareEquipStatusEvent
+    {
+        public override GameEvent Clone() { return new ShareOnStatusAddsEvent(); }
+
+        protected override PriorityList<StatusGivenEvent> GetEvents(ItemData entry) => entry.OnStatusAdds;
+    }
+
+    [Serializable]
+    public class ShareOnStatusRemovesEvent : ShareEquipStatusEvent
+    {
+        public override GameEvent Clone() { return new ShareOnStatusRemovesEvent(); }
+
+        protected override PriorityList<StatusGivenEvent> GetEvents(ItemData entry) => entry.OnStatusRemoves;
+    }
 }
