@@ -2280,6 +2280,10 @@ namespace PMDC.Dungeon
             }
             else if (stack < 0)
             {
+                //Speed drop below -1 is considered worthless for enemies. NOTE: specialized code!
+                if (statusID == 9 && (IQ & AIFlags.KnowsMatchups) == AIFlags.None)
+                    minStack = -1;
+
                 //negative stack implies a negative effect
                 addedWorth *= -1;
                 int addableStack = Math.Max(stack, minStack - existingStack);
