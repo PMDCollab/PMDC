@@ -4561,7 +4561,7 @@ namespace PMDC.Dungeon
                     }
 
                     if (deduction > 0)
-                        yield return CoroutineManager.Instance.StartCoroutine(context.User.DeductCharges(context.UsageSlot, deduction, true, false));
+                        yield return CoroutineManager.Instance.StartCoroutine(context.User.DeductCharges(context.UsageSlot, deduction, true, false, true));
                 }
             }
         }

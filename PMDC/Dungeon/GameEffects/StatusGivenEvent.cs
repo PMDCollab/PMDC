@@ -626,7 +626,8 @@ namespace PMDC.Dungeon
                 {
                     if (context.msg)
                     {
-                        DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName()));
+                        if (Message.IsValid())
+                            DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName()));
 
                         foreach (StatusAnimEvent anim in Anims)
                             yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
