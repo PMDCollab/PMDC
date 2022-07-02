@@ -1119,7 +1119,7 @@ namespace PMDC.Dungeon
                             Dir8 dir = (Dir8)ii;
                             for (int jj = 1; jj <= range; jj++)
                             {
-                                bool blocked = DungeonScene.Instance.ShotBlocked(controlledChar, seenChar.CharLoc + dir.GetLoc() * (jj - 1), dir, Alignment.None, false, lineAction.StopAtWall);
+                                bool blocked = DungeonScene.Instance.ShotBlocked(controlledChar, seenChar.CharLoc + dir.GetLoc() * (jj - 1), dir, entry.HitboxAction.TargetAlignments, false, lineAction.StopAtWall);
                                 if (blocked)
                                     break;
 
