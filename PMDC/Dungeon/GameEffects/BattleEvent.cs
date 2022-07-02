@@ -4799,25 +4799,34 @@ namespace PMDC.Dungeon
             yield break;
         }
     }
+
     [Serializable]
     public class PreventActionEvent : BattleEvent
     {
+        public HashSet<BattleActionType> Actions;
         public StringKey Message;
 
-        public PreventActionEvent() { }
-        public PreventActionEvent(StringKey message)
+        public PreventActionEvent() { Actions = new HashSet<BattleActionType>(); }
+        public PreventActionEvent(StringKey message, params BattleActionType[] actions) : this()
         {
             Message = message;
+            foreach (BattleActionType actionType in actions)
+                Actions.Add(actionType);
         }
-        protected PreventActionEvent(PreventActionEvent other)
+        protected PreventActionEvent(PreventActionEvent other) : this()
         {
             Message = other.Message;
+            foreach (BattleActionType actionType in other.Actions)
+                Actions.Add(actionType);
         }
         public override GameEvent Clone() { return new PreventActionEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             if (context.UsageSlot == BattleContext.FORCED_SLOT)
+                yield break;
+
+            if (!Actions.Contains(context.ActionType))
                 yield break;
 
             if (Message.IsValid())
@@ -4829,28 +4838,92 @@ namespace PMDC.Dungeon
     [Serializable]
     public class PreventItemActionEvent : BattleEvent
     {
+
+        [StringTypeConstraint(1, typeof(ItemState))]
+        public HashSet<FlagType> ExceptTypes;
         public StringKey Message;
 
-        public PreventItemActionEvent() { }
-        public PreventItemActionEvent(StringKey message)
+        public PreventItemActionEvent() { ExceptTypes = new HashSet<FlagType>(); }
+        public PreventItemActionEvent(StringKey message, params FlagType[] exceptTypes) : this()
         {
             Message = message;
+            foreach (FlagType useType in exceptTypes)
+                ExceptTypes.Add(useType);
         }
         protected PreventItemActionEvent(PreventItemActionEvent other)
         {
             Message = other.Message;
+            foreach (FlagType useType in other.ExceptTypes)
+                ExceptTypes.Add(useType);
         }
         public override GameEvent Clone() { return new PreventItemActionEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.ActionType == BattleActionType.Item || context.ActionType == BattleActionType.Throw)
+            if (context.ActionType == BattleActionType.Item)
             {
+                if (context.ActionType == BattleActionType.Item)
+                {
+                    ItemData entry = DataManager.Instance.GetItem(context.Item.ID);
+                    foreach (FlagType flag in ExceptTypes)
+                    {
+                        if (entry.ItemStates.Contains(flag.FullType))
+                            yield break;
+                    }
+                }
+
                 if (Message.IsValid())
                     DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false)));
                 context.CancelState.Cancel = true;
             }
-            yield break;
+        }
+    }
+
+    [Serializable]
+    public class PreventItemParalysisEvent : BattleEvent
+    {
+
+        [StringTypeConstraint(1, typeof(ItemState))]
+        public HashSet<FlagType> ExceptTypes;
+        public StringKey Message;
+
+        public PreventItemParalysisEvent() { ExceptTypes = new HashSet<FlagType>(); }
+        public PreventItemParalysisEvent(StringKey message, params FlagType[] exceptTypes) : this()
+        {
+            Message = message;
+            foreach (FlagType useType in exceptTypes)
+                ExceptTypes.Add(useType);
+        }
+        protected PreventItemParalysisEvent(PreventItemParalysisEvent other)
+        {
+            Message = other.Message;
+            foreach (FlagType useType in other.ExceptTypes)
+                ExceptTypes.Add(useType);
+        }
+        public override GameEvent Clone() { return new PreventItemParalysisEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.ActionType == BattleActionType.Item || context.ActionType == BattleActionType.Throw)
+            {
+                if (context.ActionType == BattleActionType.Item)
+                {
+                    ItemData entry = DataManager.Instance.GetItem(context.Item.ID);
+                    foreach (FlagType flag in ExceptTypes)
+                    {
+                        if (entry.ItemStates.Contains(flag.FullType))
+                            yield break;
+                    }
+                }
+
+                ParalyzeState para = ((StatusEffect)owner).StatusStates.GetWithDefault<ParalyzeState>();
+                if (para.Recent)
+                {
+                    if (Message.IsValid())
+                        DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false)));
+                    context.CancelState.Cancel = true;
+                }
+            }
         }
     }
 
@@ -4862,10 +4935,11 @@ namespace PMDC.Dungeon
         public StringKey Message;
 
         public PreventItemUseEvent() { UseTypes = new HashSet<FlagType>(); }
-        public PreventItemUseEvent(StringKey message, HashSet<FlagType> useTypes)
+        public PreventItemUseEvent(StringKey message, params FlagType[] useTypes) : this()
         {
             Message = message;
-            UseTypes = useTypes;
+            foreach (FlagType useType in useTypes)
+                UseTypes.Add(useType);
         }
         protected PreventItemUseEvent(PreventItemUseEvent other) : this()
         {
@@ -5820,6 +5894,13 @@ namespace PMDC.Dungeon
             if (context.UsageSlot == BattleContext.FORCED_SLOT)
                 yield break;
 
+            if (context.ActionType == BattleActionType.Item)
+            {
+                ItemData entry = DataManager.Instance.GetItem(context.Item.ID);
+                if (entry.ItemStates.Contains<CurerState>())
+                    yield break;
+            }
+
             if (((StatusEffect)owner).StatusStates.GetWithDefault<CountDownState>().Counter > 0)
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ASLEEP").ToLocal(), context.User.GetDisplayName(false)));
             if (!context.ContextStates.Contains<SleepAttack>())
@@ -5905,6 +5986,12 @@ namespace PMDC.Dungeon
                 yield return CoroutineManager.Instance.StartCoroutine(context.User.RemoveStatusEffect(((StatusEffect)owner).ID));
                 yield break;
             }
+            if (context.ActionType == BattleActionType.Item)
+            {
+                ItemData entry = DataManager.Instance.GetItem(context.Item.ID);
+                if (entry.ItemStates.Contains<CurerState>())
+                    yield break;
+            }
 
             DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_FROZEN").ToLocal(), context.User.GetDisplayName(false)));
             context.CancelState.Cancel = true;
@@ -5954,6 +6041,13 @@ namespace PMDC.Dungeon
         {
             if (context.UsageSlot == BattleContext.FORCED_SLOT)
                 yield break;
+
+            if (context.ActionType == BattleActionType.Item)
+            {
+                ItemData entry = DataManager.Instance.GetItem(context.Item.ID);
+                if (entry.ItemStates.Contains<CurerState>())
+                    yield break;
+            }
 
             ParalyzeState para = ((StatusEffect)owner).StatusStates.GetWithDefault<ParalyzeState>();
             if (para.Recent)

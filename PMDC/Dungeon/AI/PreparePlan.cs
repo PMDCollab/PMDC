@@ -172,7 +172,7 @@ namespace PMDC.Dungeon
             if (controlledChar.GetStatusEffect(FirstMoveStatus) != null)
                 return null;
 
-            if (controlledChar.AttackOnly)
+            if (controlledChar.CantInteract)//TODO: CantInteract doesn't always indicate forced attack, but this'll do for now.
                 return null;
 
             //use the first attack

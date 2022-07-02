@@ -517,7 +517,7 @@ namespace PMDC.Dungeon
                     return new GameAction(GameAction.ActionType.Wait, Dir8.None);
             }
 
-            if (controlledChar.AttackOnly)
+            if (controlledChar.CantInteract)//TODO: CantInteract doesn't always indicate forced attack, but this'll do for now.
                 return TryForcedAttackChoice(rand, controlledChar, seenChars, closestThreat);
 
             if (!playerSense)
@@ -1420,7 +1420,7 @@ namespace PMDC.Dungeon
             //Dig/Fly/Dive/Phantom Force; NOTE: specialized AI code!
             if (skillIndex == 91 || skillIndex == 19 || skillIndex == 291 || skillIndex == 566)
             {
-                if (!controlledChar.AttackOnly)
+                if (!controlledChar.CantInteract)//TODO: CantInteract doesn't always indicate forced attack, but this'll do for now.
                 {
                     foreach (Character target in seenChars)
                     {
@@ -1436,7 +1436,7 @@ namespace PMDC.Dungeon
             else if (skillIndex == 264)//Focus Punch;
             {
                 //always activate if not already forced to attack
-                if (!controlledChar.AttackOnly)
+                if (!controlledChar.CantInteract)//TODO: CantInteract doesn't always indicate forced attack, but this'll do for now.
                     return new HitValue(100, true);
             }
 

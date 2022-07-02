@@ -207,4 +207,10 @@ namespace PMDC.Dungeon
         public override GameplayState Clone() { return new RecruitState(); }
     }
 
+    [Serializable]
+    public class CurerState : ItemState
+    {
+        public override GameplayState Clone() { return new CurerState(); }
+    }
+
 }

@@ -228,6 +228,10 @@ namespace PMDC.Dungeon
                                 yield break;
                         }
 
+                        // throwing edibles at an ally always results in no-catch (eaten)
+                        if (DungeonScene.Instance.GetMatchup(context.User, targetChar) == Alignment.Friend && entry.ItemStates.Contains<EdibleState>())
+                            yield break;
+
                         context.Explosion.Range = 0;
                         context.Explosion.ExplodeFX = new BattleFX();
                         context.Explosion.Emitter = new EmptyCircleSquareEmitter();

@@ -102,7 +102,7 @@ namespace PMDC.Dungeon
             if (extraTurns > 0)
                 positioning = PositionChoice.Avoid;
 
-            if (controlledChar.AttackOnly)
+            if (controlledChar.CantInteract)//TODO: CantInteract doesn't always indicate forced attack, but this'll do for now.
                 positioning = PositionChoice.Approach;
 
             bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;

@@ -28,7 +28,7 @@ namespace PMDC.Dungeon
                 if (seenCharacters.Count == 0)
                     return null;
 
-                if (!controlledChar.AttackOnly)
+                if (!controlledChar.CantInteract)//TODO: CantInteract doesn't always indicate forced attack, but this'll do for now.
                 {
                     for (int ii = 0; ii < controlledChar.Skills.Count; ii++)
                     {

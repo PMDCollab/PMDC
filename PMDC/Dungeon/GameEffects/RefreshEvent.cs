@@ -381,13 +381,18 @@ namespace PMDC.Dungeon
                 character.CantWalk = true;
         }
     }
+
+    /// <summary>
+    /// Prevents all interactions except for using moves and normal attack.
+    /// </summary>
     [Serializable]
     public class AttackOnlyEvent : RefreshEvent
     {
         public override GameEvent Clone() { return new AttackOnlyEvent(); }
         public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            character.AttackOnly = true;
+            character.CantInteract = true;
+            character.WaitToAttack = true;
         }
     }
 
@@ -401,7 +406,8 @@ namespace PMDC.Dungeon
             if (para.Recent)
             {
                 character.CantWalk = true;
-                character.AttackOnly = true;
+                character.CantInteract = true;
+                character.WaitToAttack = true;
             }
         }
     }
