@@ -25,27 +25,6 @@ namespace PMDC.Dev
 
         public delegate IEntryData GetNamedData(int ii);
 
-        public static void IndexHardcodedNamedData(string dataPath, GetNamedData getData, int max)
-        {
-            try
-            {
-                EntryDataIndex fullGuide = new EntryDataIndex();
-                fullGuide.Entries = new EntrySummary[max];
-                for (int ii = 0; ii < max; ii++)
-                {
-                    IEntryData data = getData(ii);
-                    fullGuide.Entries[ii] = data.GenerateEntrySummary();
-                }
-
-                DataManager.SaveData(dataPath + "index.idx", fullGuide);
-            }
-            catch (Exception ex)
-            {
-                DiagManager.Instance.LogError(new Exception("Error importing index at " + dataPath + "\n", ex));
-            }
-        }
-
-
         public static void AddEvoFamily(Dictionary<int, HashSet<(string, ZoneLoc)>> found, int index, string tag, ZoneLoc encounter)
         {
             addMonster(found, index, tag, encounter);

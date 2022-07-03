@@ -59,8 +59,8 @@ namespace PMDC.Dungeon
             FamilyState family;
             if (!entry.ItemStates.TryGet<FamilyState>(out family))
                 yield break;
-
-            if (family.Members.Contains(ownerChar.BaseForm.Species))
+            //TODO: String Assets
+            if (family.Members.Contains(ownerChar.BaseForm.Species.ToString()))
                 yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, context));
         }
     }

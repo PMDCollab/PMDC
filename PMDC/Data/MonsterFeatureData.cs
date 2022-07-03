@@ -24,7 +24,7 @@ namespace PMDC.Data
     [Serializable]
     public class FormFeatureSummary
     {
-        public int Family;
+        public string Family;
         public EvoFlag Stage;
 
         public int Element1;
@@ -44,14 +44,14 @@ namespace PMDC.Data
         /// <summary>
         /// Maps monster, form to summary
         /// </summary>
-        public Dictionary<int, Dictionary<int, FormFeatureSummary>> FeatureData;
+        public Dictionary<string, Dictionary<int, FormFeatureSummary>> FeatureData;
 
         public MonsterFeatureData()
         {
-            FeatureData = new Dictionary<int, Dictionary<int, FormFeatureSummary>>();
+            FeatureData = new Dictionary<string, Dictionary<int, FormFeatureSummary>>();
         }
 
-        public override void ContentChanged(int idx)
+        public override void ContentChanged(string idx)
         {
             string dataPath = DataManager.DATA_PATH + DataManager.DataType.Monster.ToString() + "/";
             string dir = PathMod.ModPath(dataPath + idx + DataManager.DATA_EXT);
@@ -68,21 +68,20 @@ namespace PMDC.Data
             foreach (string dir in PathMod.GetModFiles(dataPath, "*" + DataManager.DATA_EXT))
             {
                 string file = Path.GetFileNameWithoutExtension(dir);
-                int num = Convert.ToInt32(file);
                 MonsterData data = DataManager.LoadData<MonsterData>(dir);
-                Dictionary<int, FormFeatureSummary> formSummaries = computeSummary(dataPath, num, data);
-                FeatureData[num] = formSummaries;
+                Dictionary<int, FormFeatureSummary> formSummaries = computeSummary(dataPath, file, data);
+                FeatureData[file] = formSummaries;
             }
         }
 
-        private Dictionary<int, FormFeatureSummary> computeSummary(string dataPath, int num, MonsterData data)
+        private Dictionary<int, FormFeatureSummary> computeSummary(string dataPath, string num, MonsterData data)
         {
             Dictionary<int, FormFeatureSummary> formFeatureData = new Dictionary<int, FormFeatureSummary>();
-            int family = num;
+            string family = num;
             MonsterData preEvo = data;
             while (preEvo.PromoteFrom > -1)
             {
-                family = preEvo.PromoteFrom;
+                family = preEvo.PromoteFrom.ToString();
                 string preDir = PathMod.ModPath(dataPath + family + DataManager.DATA_EXT);
                 preEvo = DataManager.LoadData<MonsterData>(preDir);
             }

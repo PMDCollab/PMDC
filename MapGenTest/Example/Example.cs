@@ -31,8 +31,9 @@ namespace MapGenTest
             try
             {
                 List<string> zoneNames = new List<string>();
+                //TODO: String Assets
                 for (int ii = 0; ii < DataManager.Instance.DataIndices[DataManager.DataType.Zone].Count; ii++)
-                    zoneNames.Add(DataManager.Instance.DataIndices[DataManager.DataType.Zone].Entries[ii].Name.ToLocal());
+                    zoneNames.Add(DataManager.Instance.DataIndices[DataManager.DataType.Zone].Entries[ii.ToString()].Name.ToLocal());
 
                 string state = "Zones";
                 while (true)

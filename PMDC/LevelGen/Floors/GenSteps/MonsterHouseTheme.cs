@@ -129,7 +129,8 @@ namespace PMDC.LevelGen
                     MapItem spawn = specialItems.GetSpawn(ii);
                     if (!spawn.IsMoney)
                     {
-                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.Value] as ItemEntrySummary;
+                        //TODO: String Assets
+                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.Value.ToString()] as ItemEntrySummary;
 
                         if (itemEntry.UsageType == UseType)
                             subList.Add(spawn, specialItems.GetSpawnRate(ii));
@@ -146,7 +147,8 @@ namespace PMDC.LevelGen
                     {
                         //TODO: spawn rate is somewhat distorted here
                         InvItem spawn = spawns.GetSpawn(ii);
-                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.ID] as ItemEntrySummary;
+                        //TODO: String Assets
+                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.ID.ToString()] as ItemEntrySummary;
                         if (itemEntry.UsageType == UseType)
                             subList.Add(new MapItem(spawn), spawns.GetSpawnRate(ii));
                     }
@@ -199,7 +201,8 @@ namespace PMDC.LevelGen
                     MapItem spawn = specialItems.GetSpawn(ii);
                     if (!spawn.IsMoney)
                     {
-                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.Value] as ItemEntrySummary;
+                        //TODO: String Assets
+                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.Value.ToString()] as ItemEntrySummary;
                         if (itemEntry.ContainsState(UseType.FullType))
                             subList.Add(spawn, specialItems.GetSpawnRate(ii));
                     }
@@ -215,7 +218,8 @@ namespace PMDC.LevelGen
                     {
                         //TODO: spawn rate is somewhat distorted here
                         InvItem spawn = spawns.GetSpawn(ii);
-                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.ID] as ItemEntrySummary;
+                        //TODO: String Assets
+                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.ID.ToString()] as ItemEntrySummary;
                         if (itemEntry.ContainsState(UseType.FullType))
                             subList.Add(new MapItem(spawn), spawns.GetSpawnRate(ii));
                     }
@@ -414,7 +418,7 @@ namespace PMDC.LevelGen
         { }
         public override MobTheme Copy() { return new MobThemeFamilySeeded(this); }
 
-        protected override IEnumerable<int> GetSpecies(BaseMapGenContext map, SpawnList<MobSpawn> specialMobs)
+        protected override IEnumerable<string> GetSpecies(BaseMapGenContext map, SpawnList<MobSpawn> specialMobs)
         {
             MobSpawn baseMob = GetSeedChar(map, specialMobs);
             if (baseMob != null)
@@ -422,7 +426,8 @@ namespace PMDC.LevelGen
                 int earliestBaseStage = baseMob.BaseForm.Species;
 
                 MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
-                FormFeatureSummary baseData = featureIndex.FeatureData[earliestBaseStage][0];
+                //TODO: String Assets
+                FormFeatureSummary baseData = featureIndex.FeatureData[earliestBaseStage.ToString()][0];
                 yield return baseData.Family;
             }
         }
@@ -445,10 +450,10 @@ namespace PMDC.LevelGen
         }
         public override MobTheme Copy() { return new MobThemeFamilyChosen(this); }
 
-        protected override IEnumerable<int> GetSpecies(BaseMapGenContext map, SpawnList<MobSpawn> specialMobs)
+        protected override IEnumerable<string> GetSpecies(BaseMapGenContext map, SpawnList<MobSpawn> specialMobs)
         {
             foreach (int specie in Species)
-                yield return specie;
+                yield return specie.ToString();
         }
     }
 
@@ -462,7 +467,7 @@ namespace PMDC.LevelGen
         {
             int mobCount = Amount.Pick(map.Rand);
             List<MobSpawn> spawners = new List<MobSpawn>();
-            IEnumerable<int> species = GetSpecies(map, specialMobs);
+            IEnumerable<string> species = GetSpecies(map, specialMobs);
             SpawnList<MobSpawn> subList = new SpawnList<MobSpawn>();
             for (int ii = 0; ii < specialMobs.Count; ii++)
             {
@@ -490,14 +495,15 @@ namespace PMDC.LevelGen
             return spawners;
         }
 
-        protected abstract IEnumerable<int> GetSpecies(BaseMapGenContext map, SpawnList<MobSpawn> specialMobs);
+        protected abstract IEnumerable<string> GetSpecies(BaseMapGenContext map, SpawnList<MobSpawn> specialMobs);
 
-        protected bool CheckIfAllowed(BaseMapGenContext map, MobSpawn spawn, IEnumerable<int> species)
+        protected bool CheckIfAllowed(BaseMapGenContext map, MobSpawn spawn, IEnumerable<string> species)
         {
             MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
-            FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species][0];
+            //TODO: String Assets
+            FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species.ToString()][0];
 
-            foreach (int baseStage in species)
+            foreach (string baseStage in species)
             {
                 if (baseStage == baseData.Family)
                     return true;
@@ -553,7 +559,8 @@ namespace PMDC.LevelGen
                 foreach (MobSpawn spawn in mobSpawns.EnumerateOutcomes())
                 {
                     MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
-                    FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species][Math.Max(0, spawn.BaseForm.Form)];
+                    //TODO: String Assets
+                    FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species.ToString()][Math.Max(0, spawn.BaseForm.Form)];
                     if (baseData.Element1 != 00)
                         MathUtils.AddToDictionary(elementFrequency, baseData.Element1, 1);
                     if (baseData.Element2 != 00)
@@ -567,7 +574,8 @@ namespace PMDC.LevelGen
                 {
                     MobSpawn spawn = specialMobs.GetSpawn(ii);
                     MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
-                    FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species][Math.Max(0, spawn.BaseForm.Form)];
+                    //TODO: String Assets
+                    FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species.ToString()][Math.Max(0, spawn.BaseForm.Form)];
                     if (baseData.Element1 != 00)
                         MathUtils.AddToDictionary(elementFrequency, baseData.Element1, 1);
                     if (baseData.Element2 != 00)
@@ -642,7 +650,8 @@ namespace PMDC.LevelGen
         protected bool CheckIfAllowed(BaseMapGenContext map, MobSpawn spawn, List<int> types)
         {
             MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
-            FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species][Math.Max(0, spawn.BaseForm.Form)];
+            //TODO: String Assets
+            FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species.ToString()][Math.Max(0, spawn.BaseForm.Form)];
             bool matchesType = false;
             foreach (int type in types)
             {
@@ -716,7 +725,8 @@ namespace PMDC.LevelGen
         protected bool CheckIfAllowed(MobSpawn spawn)
         {
             MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
-            FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species][Math.Max(0, spawn.BaseForm.Form)];
+            //TODO: String Assets
+            FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species.ToString()][Math.Max(0, spawn.BaseForm.Form)];
 
             Stat spawnStat = Weakness ? baseData.WorstStat : baseData.BestStat;
 

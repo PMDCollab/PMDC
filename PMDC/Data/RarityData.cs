@@ -19,19 +19,19 @@ namespace PMDC.Data
         /// <summary>
         /// Maps monster, rarity to list of applicable items 
         /// </summary>
-        public Dictionary<int, Dictionary<int, List<int>>> RarityMap;
+        public Dictionary<string, Dictionary<int, List<string>>> RarityMap;
 
         public RarityData()
         {
-            RarityMap = new Dictionary<int, Dictionary<int, List<int>>>();
+            RarityMap = new Dictionary<string, Dictionary<int, List<string>>>();
         }
 
-        public override void ContentChanged(int idx)
+        public override void ContentChanged(string idx)
         {
             //remove the index from its previous locations
-            foreach (Dictionary<int, List<int>> rarityTable in RarityMap.Values)
+            foreach (Dictionary<int, List<string>> rarityTable in RarityMap.Values)
             {
-                foreach (List<int> items in rarityTable.Values)
+                foreach (List<string> items in rarityTable.Values)
                 {
                     if (items.Remove(idx))
                         break;
@@ -53,25 +53,24 @@ namespace PMDC.Data
             foreach (string dir in PathMod.GetModFiles(dataPath, "*" + DataManager.DATA_EXT))
             {
                 string file = Path.GetFileNameWithoutExtension(dir);
-                int num = Convert.ToInt32(file);
                 ItemData data = DataManager.LoadData<ItemData>(dir);
                 if (data.Released)
-                    computeSummary(num, data);
+                    computeSummary(file, data);
             }
         }
 
-        private void computeSummary(int num, ItemData data)
+        private void computeSummary(string num, ItemData data)
         {
             FamilyState family;
             if (data.ItemStates.TryGet<FamilyState>(out family))
             {
-                foreach (int monster in family.Members)
+                foreach (string monster in family.Members)
                 {
                     if (!RarityMap.ContainsKey(monster))
-                        RarityMap[monster] = new Dictionary<int, List<int>>();
+                        RarityMap[monster] = new Dictionary<int, List<string>>();
 
                     if (!RarityMap[monster].ContainsKey(data.Rarity))
-                        RarityMap[monster][data.Rarity] = new List<int>();
+                        RarityMap[monster][data.Rarity] = new List<string>();
 
                     RarityMap[monster][data.Rarity].Add(num);
                 }

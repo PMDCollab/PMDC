@@ -88,8 +88,8 @@ namespace PMDC.Dungeon
             FamilyState family;
             if (!entry.ItemStates.TryGet<FamilyState>(out family))
                 return;
-
-            if (family.Members.Contains(ownerChar.BaseForm.Species))
+            //TODO: String Assets
+            if (family.Members.Contains(ownerChar.BaseForm.Species.ToString()))
                 BaseEvent.Apply(owner, ownerChar, moveType, targetType, ref effectiveness);
         }
     }

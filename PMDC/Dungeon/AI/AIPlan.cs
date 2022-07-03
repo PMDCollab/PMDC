@@ -1198,8 +1198,8 @@ namespace PMDC.Dungeon
                 FamilyState family;
                 if (!entry.ItemStates.TryGet<FamilyState>(out family))
                     return null;
-
-                if (family.Members.Contains(controlledChar.BaseForm.Species))
+                //TODO: String Assets
+                if (family.Members.Contains(controlledChar.BaseForm.Species.ToString()))
                     return getConditionalEvent<T>(controlledChar, passiveContext, familyEffect.BaseEvent);
             }
             return null;

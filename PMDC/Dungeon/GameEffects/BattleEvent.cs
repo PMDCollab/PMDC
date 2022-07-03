@@ -817,7 +817,8 @@ namespace PMDC.Dungeon
             List<int> releasedMoves = new List<int>();
             for (int ii = 1; ii < DataManager.Instance.DataIndices[DataManager.DataType.Skill].Count; ii++)
             {
-                if (DataManager.Instance.DataIndices[DataManager.DataType.Skill].Entries[ii].Released)
+                //TODO: String Assets
+                if (DataManager.Instance.DataIndices[DataManager.DataType.Skill].Entries[ii.ToString()].Released)
                     releasedMoves.Add(ii);
             }
             int randIndex = DataManager.Instance.Save.Rand.Next(releasedMoves.Count);
@@ -832,7 +833,8 @@ namespace PMDC.Dungeon
 
         private void tryAddMove(List<int> moves, int move)
         {
-            if (DataManager.Instance.DataIndices[DataManager.DataType.Skill].Entries[move].Released)
+            //TODO: String Assets
+            if (DataManager.Instance.DataIndices[DataManager.DataType.Skill].Entries[move.ToString()].Released)
                 moves.Add(move);
         }
 
@@ -2309,7 +2311,8 @@ namespace PMDC.Dungeon
             if (!entry.ItemStates.TryGet<FamilyState>(out family))
                 yield break;
 
-            if (family.Members.Contains(ownerChar.BaseForm.Species))
+            //TODO: String Assets
+            if (family.Members.Contains(ownerChar.BaseForm.Species.ToString()))
                 yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, context));
         }
     }

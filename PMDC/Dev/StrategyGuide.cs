@@ -304,8 +304,8 @@ namespace PMDC.Dev
             stats.Add(new string[4] { "###", "Name", "Join %", "Found In" });
 
             for (int ii = 1; ii < DataManager.Instance.DataIndices[DataManager.DataType.Monster].Count; ii++)
-            {
-                if (DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[ii].Released)
+            { //TODO: String Assets
+                if (DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[ii.ToString()].Released)
                 {
                     MonsterData data = DataManager.Instance.GetMonster(ii);
 
@@ -403,11 +403,11 @@ namespace PMDC.Dev
 
                         if (encounterMsg.Count > 0)
                             encounterStr = String.Join(", ", encounterMsg.ToArray());
-                    }
-                    stats.Add(new string[4] { ii.ToString("D3"), DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[ii].Name.ToLocal(), data.JoinRate.ToString() + "%", encounterStr });
+                    } //TODO: String Assets
+                    stats.Add(new string[4] { ii.ToString("D3"), DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[ii.ToString()].Name.ToLocal(), data.JoinRate.ToString() + "%", encounterStr });
                 }
-                else
-                    stats.Add(new string[4] { ii.ToString("D3"), DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[ii].Name.ToLocal(), "--%", "NO DATA" });
+                else //TODO: String Assets
+                    stats.Add(new string[4] { ii.ToString("D3"), DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[ii.ToString()].Name.ToLocal(), "--%", "NO DATA" });
             }
             if (csv)
                 writeCSVGuide("Encounters", stats);

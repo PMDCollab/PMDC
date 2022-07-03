@@ -37,13 +37,13 @@ namespace PMDC.LevelGen
             int chosenAmount = Amount.Pick(map.Rand);
 
             RarityData rarity = DataManager.Instance.UniversalData.Get<RarityData>();
-            List<int> possibleItems = new List<int>();
+            List<string> possibleItems = new List<string>();
             foreach (int baseSpecies in GetPossibleSpecies(map))
             {
                 for (int ii = Rarity.Min; ii < Rarity.Max; ii++)
                 {
-                    Dictionary<int, List<int>> rarityTable;
-                    if (rarity.RarityMap.TryGetValue(baseSpecies, out rarityTable))
+                    Dictionary<int, List<string>> rarityTable;
+                    if (rarity.RarityMap.TryGetValue(baseSpecies.ToString(), out rarityTable))
                     {
                         if (rarityTable.ContainsKey(ii))
                             possibleItems.AddRange(rarityTable[ii]);
@@ -56,8 +56,9 @@ namespace PMDC.LevelGen
             {
                 for (int ii = 0; ii < chosenAmount; ii++)
                 {
-                    int chosenItem = possibleItems[map.Rand.Next(possibleItems.Count)];
-                    results.Add(new MapItem(chosenItem));
+                    string chosenItem = possibleItems[map.Rand.Next(possibleItems.Count)];
+                    //TODO: String Assets
+                    results.Add(new MapItem(Int32.Parse(chosenItem)));
                 }
             }
 

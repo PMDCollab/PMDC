@@ -107,9 +107,9 @@ namespace PMDC.Dungeon
     public class FamilyState : ItemState
     {
         [DataType(1, DataManager.DataType.Monster, false)]
-        public List<int> Members;
-        public FamilyState() { Members = new List<int>(); }
-        public FamilyState(int[] dexNums) : this()
+        public List<string> Members;
+        public FamilyState() { Members = new List<string>(); }
+        public FamilyState(string[] dexNums) : this()
         {
             Members.AddRange(dexNums);
         }

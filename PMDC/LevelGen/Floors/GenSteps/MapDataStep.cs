@@ -119,8 +119,8 @@ namespace PMDC.LevelGen
         public override string ToString()
         {
             string status = String.Format("{0} Choices", DefaultMapStatus.Length);
-            if (status.Length == 1)
-                status = DataManager.Instance.DataIndices[DataManager.DataType.MapStatus].Entries[status[0]].Name.ToLocal();
+            if (DefaultMapStatus.Length == 1)//TODO: String Assets
+                status = DataManager.Instance.DataIndices[DataManager.DataType.MapStatus].Entries[DefaultMapStatus[0].ToString()].Name.ToLocal();
             return String.Format("{0}: {1}", this.GetType().Name, status);
         }
     }
