@@ -484,9 +484,9 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WithdrawStorageContext : ContextState
     {
-        public int WithdrawSlot;
+        public WithdrawSlot WithdrawSlot;
         public WithdrawStorageContext() { }
-        public WithdrawStorageContext(int slot) { WithdrawSlot = slot; }
+        public WithdrawStorageContext(WithdrawSlot slot) { WithdrawSlot = slot; }
         protected WithdrawStorageContext(WithdrawStorageContext other)
         {
             WithdrawSlot = other.WithdrawSlot;

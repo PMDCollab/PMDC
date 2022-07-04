@@ -13908,25 +13908,31 @@ namespace PMDC.Dungeon
                 {
                     if (DataManager.Instance.CurrentReplay != null) // this block of code will never evaluate to true AND have UI read back -1 (cancel) at the same time
                     {
+                        bool isBox = DataManager.Instance.CurrentReplay.ReadUI() != 0;
+                        int id = DataManager.Instance.CurrentReplay.ReadUI();
                         int slot = DataManager.Instance.CurrentReplay.ReadUI();
-                        context.ContextStates.Set(new WithdrawStorageContext(slot));
+                        context.ContextStates.Set(new WithdrawStorageContext(new WithdrawSlot(isBox, id, slot)));
                     }
                     else
                     {
                         yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(String.Format(new StringKey("DLG_ASK_STORAGE").ToLocal())));
 
-                        yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(new StorageMenu(context.User, false,
-                            (List<int> slots) => { context.ContextStates.Set(new WithdrawStorageContext(slots[0])); },
-                            () => { context.CancelState.Cancel = true; })));
+                        bool chose = false;
+                        yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(new WithdrawMenu(0, false,
+                            (List<WithdrawSlot> slots) => { context.ContextStates.Set(new WithdrawStorageContext(slots[0])); chose = true; })));
 
-                        if (!context.CancelState.Cancel)
+                        if (chose)
                         {
-                            int slot = -1;
                             WithdrawStorageContext withdraw = context.ContextStates.GetWithDefault<WithdrawStorageContext>();
                             if (withdraw != null)
-                                slot = withdraw.WithdrawSlot;
-                            DataManager.Instance.LogUIPlay(slot);
+                            {
+                                DataManager.Instance.LogUIPlay(withdraw.WithdrawSlot.IsBox ? 1 : 0);
+                                DataManager.Instance.LogUIPlay(withdraw.WithdrawSlot.ItemID);
+                                DataManager.Instance.LogUIPlay(withdraw.WithdrawSlot.BoxSlot);
+                            }
                         }
+                        else
+                            context.CancelState.Cancel = true;
                     }
                 }
             }
@@ -13942,16 +13948,15 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new WithdrawItemEvent(); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            int slot = -1;
             WithdrawStorageContext withdraw = context.ContextStates.GetWithDefault<WithdrawStorageContext>();
             if (withdraw != null)
-                slot = withdraw.WithdrawSlot;
-            if (slot > -1)
             {
+                WithdrawSlot slot = withdraw.WithdrawSlot;
+
                 if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
                 {
                     ExplorerTeam team = (ExplorerTeam)context.User.MemberTeam;
-                    InvItem item = team.TakeItems(new List<int> { slot })[0];
+                    InvItem item = team.TakeItems(new List<WithdrawSlot> { slot })[0];
 
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STORAGE_TAKE").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName()));
                     if (team.GetInvCount() < team.GetMaxInvSlots(ZoneManager.Instance.CurrentZone))
