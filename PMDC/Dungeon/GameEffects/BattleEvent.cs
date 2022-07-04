@@ -14258,19 +14258,14 @@ namespace PMDC.Dungeon
                                 () => { })));
                             if (nick)
                                 yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(new NicknameMenu((string text) => { name = text; }, () => { })));
-                            DataManager.Instance.LogUIPlay(name.Length);
-                            for (int ii = 0; ii < name.Length; ii++)
-                                DataManager.Instance.LogUIPlay((int)name[ii]);
+                            DataManager.Instance.LogUIStringPlay(name);
                             context.Target.Nickname = name;
                         }
                         else
                         {
                             int nameLength = DataManager.Instance.CurrentReplay.ReadUI();
-                            string name = "";
-                            for (int ii = 0; ii < nameLength; ii++)
-                                name += (char)DataManager.Instance.CurrentReplay.ReadUI();
                             //give nickname
-                            context.Target.Nickname = name;
+                            context.Target.Nickname = DataManager.Instance.CurrentReplay.ReadUIString();
                         }
                         if (DungeonScene.Instance.ActiveTeam.Name != "")
                             DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_RECRUIT").ToLocal(), context.Target.GetDisplayName(true), DungeonScene.Instance.ActiveTeam.GetDisplayName()));
