@@ -2106,7 +2106,7 @@ namespace PMDC.Dungeon
                 character.EquipItem(item);
                 //}
             }
-            
+
         }
     }
 

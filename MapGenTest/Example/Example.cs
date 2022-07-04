@@ -698,7 +698,7 @@ namespace MapGenTest
                 {
                     if (mapItem.IsMoney)
                     {
-                        MathUtils.AddToDictionary<int>(generatedItems, -1, mapItem.Value);
+                        MathUtils.AddToDictionary<int>(generatedItems, -1, mapItem.HiddenValue);
                         MathUtils.AddToDictionary<int>(generatedItems, 0, 1);
                     }
                     else

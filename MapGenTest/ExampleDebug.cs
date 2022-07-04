@@ -285,7 +285,7 @@ namespace MapGenTest
                         if (item.TileLoc == mapLoc)
                         {
                             if (item.IsMoney)
-                                rewriteLine(farthestPrint, String.Format("Money: {0}", item.Value));
+                                rewriteLine(farthestPrint, String.Format("Money: {0}", item.HiddenValue));
                             else
                                 rewriteLine(farthestPrint, String.Format("Item: {0}", item.GetDungeonName().Replace("\u000D7", "(X)")));
                             farthestPrint++;

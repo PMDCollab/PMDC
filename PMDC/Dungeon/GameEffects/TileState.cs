@@ -122,6 +122,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class TileScriptState : TileState
     {
+        [RogueEssence.Dev.Sanitize(0)]
         public string Script;
         public string ArgTable;
         public TileScriptState() { Script = ""; ArgTable = "{}"; }
