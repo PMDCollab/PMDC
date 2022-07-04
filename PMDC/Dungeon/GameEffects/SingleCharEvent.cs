@@ -2054,20 +2054,23 @@ namespace PMDC.Dungeon
     [Serializable]
     public class PickupEvent : SingleCharEvent
     {
+        public int Chance;
         public List<AnimEvent> Anims;
 
         public PickupEvent()
         {
             Anims = new List<AnimEvent>();
         }
-        public PickupEvent(params AnimEvent[] anims)
+        public PickupEvent(int chance, params AnimEvent[] anims)
         {
+            Chance = chance;
             Anims = new List<AnimEvent>();
             Anims.AddRange(anims);
         }
         protected PickupEvent(PickupEvent other)
         {
             Anims = new List<AnimEvent>();
+            Chance = other.Chance;
             foreach (AnimEvent anim in other.Anims)
                 Anims.Add((AnimEvent)anim.Clone());
         }
@@ -2086,7 +2089,7 @@ namespace PMDC.Dungeon
                     yield break;
             }
 
-            if (ZoneManager.Instance.CurrentMap.MapTurns == 0 && ZoneManager.Instance.CurrentMap.ItemSpawns.Spawns.CanPick)
+            if (ZoneManager.Instance.CurrentMap.MapTurns == 0 && ZoneManager.Instance.CurrentMap.ItemSpawns.Spawns.CanPick && DataManager.Instance.Save.Rand.Next(100) < Chance)
             {
                 InvItem item = ZoneManager.Instance.CurrentMap.ItemSpawns.Pick(DataManager.Instance.Save.Rand);
 
@@ -2103,7 +2106,7 @@ namespace PMDC.Dungeon
                 character.EquipItem(item);
                 //}
             }
-            
+
         }
     }
 
@@ -2111,21 +2114,24 @@ namespace PMDC.Dungeon
     public class GatherEvent : SingleCharEvent
     {
         public int GatherItem;
+        public int Chance;
         public List<AnimEvent> Anims;
 
         public GatherEvent()
         {
             Anims = new List<AnimEvent>();
         }
-        public GatherEvent(int gatherItem, params AnimEvent[] anims)
+        public GatherEvent(int gatherItem, int chance, params AnimEvent[] anims)
         {
             GatherItem = gatherItem;
+            Chance = chance;
             Anims = new List<AnimEvent>();
             Anims.AddRange(anims);
         }
         protected GatherEvent(GatherEvent other)
         {
             Anims = new List<AnimEvent>();
+            Chance = other.Chance;
             foreach (AnimEvent anim in other.Anims)
                 Anims.Add((AnimEvent)anim.Clone());
             GatherItem = other.GatherItem;
@@ -2145,7 +2151,7 @@ namespace PMDC.Dungeon
                     yield break;
             }
 
-            if (ZoneManager.Instance.CurrentMap.MapTurns == 0)
+            if (ZoneManager.Instance.CurrentMap.MapTurns == 0 && DataManager.Instance.Save.Rand.Next(100) < Chance)
             {
                 InvItem invItem = new InvItem(GatherItem);
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PICKUP").ToLocal(), character.GetDisplayName(false), invItem.GetDisplayName()));

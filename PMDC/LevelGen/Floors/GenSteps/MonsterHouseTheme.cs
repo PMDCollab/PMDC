@@ -398,7 +398,7 @@ namespace PMDC.LevelGen
             List<MapItem> spawners = new List<MapItem>();
 
             for (int ii = 0; ii < itemCount; ii++)
-                spawners.Add(new MapItem(true, Math.Max(1, map.MoneyAmount.Pick(map.Rand).Amount * Multiplier / 100)));
+                spawners.Add(MapItem.CreateMoney(Math.Max(1, map.MoneyAmount.Pick(map.Rand).Amount * Multiplier / 100)));
 
             return spawners;
         }
