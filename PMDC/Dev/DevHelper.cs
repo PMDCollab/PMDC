@@ -159,11 +159,13 @@ namespace PMDC.Dev
             Dictionary<int, HashSet<(string, ZoneLoc)>> foundSpecies = new Dictionary<int, HashSet<(string, ZoneLoc)>>();
             
             //check all structures
-            for (int zz = 0; zz < DataManager.Instance.DataIndices[DataManager.DataType.Zone].Count; zz++)
+            foreach(string zz in DataManager.Instance.DataIndices[DataManager.DataType.Zone].Entries.Keys)
             {
-                if (zz == 0 || zz == 35)
+                if (zz == DataManager.Instance.DebugZone)
                     continue;
                 ZoneData mainZone = DataManager.Instance.GetZone(zz);
+                if (!mainZone.Released)
+                    continue;
 
                 for (int ii = 0; ii < mainZone.Segments.Count; ii++)
                 {
