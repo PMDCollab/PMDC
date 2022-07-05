@@ -316,14 +316,14 @@ namespace PMDC.Dev
                         bool starter = false;
                         // = new Dictionary<int, HashSet<int>>();
                         // = new Dictionary<int, Dictionary<int, HashSet<int>>>();
-                        Dictionary<string, (Dictionary<int, HashSet<int>> specialDict, Dictionary<int, Dictionary<int, HashSet<int>>> floorDict)> foundDict = new Dictionary<string, (Dictionary<int, HashSet<int>> specialDict, Dictionary<int, Dictionary<int, HashSet<int>>> floorDict)>();
+                        Dictionary<string, (Dictionary<string, HashSet<int>> specialDict, Dictionary<string, Dictionary<int, HashSet<int>>> floorDict)> foundDict = new Dictionary<string, (Dictionary<string, HashSet<int>> specialDict, Dictionary<string, Dictionary<int, HashSet<int>>> floorDict)>();
 
                         foreach ((string tag, ZoneLoc encounter) in foundSpecies[ii])
                         {
                             if (!foundDict.ContainsKey(tag))
-                                foundDict[tag] = (new Dictionary<int, HashSet<int>>(), new Dictionary<int, Dictionary<int, HashSet<int>>>());
-                            Dictionary<int, HashSet<int>> specialDict = foundDict[tag].specialDict;
-                            Dictionary<int, Dictionary<int, HashSet<int>>> floorDict = foundDict[tag].floorDict;
+                                foundDict[tag] = (new Dictionary<string, HashSet<int>>(), new Dictionary<string, Dictionary<int, HashSet<int>>>());
+                            Dictionary<string, HashSet<int>> specialDict = foundDict[tag].specialDict;
+                            Dictionary<string, Dictionary<int, HashSet<int>>> floorDict = foundDict[tag].floorDict;
 
                             if (tag == "STARTER")
                                 starter = true;
@@ -349,10 +349,10 @@ namespace PMDC.Dev
 
                         foreach (string tag in foundDict.Keys)
                         {
-                            Dictionary<int, HashSet<int>> specialDict = foundDict[tag].specialDict;
-                            Dictionary<int, Dictionary<int, HashSet<int>>> floorDict = foundDict[tag].floorDict;
+                            Dictionary<string, HashSet<int>> specialDict = foundDict[tag].specialDict;
+                            Dictionary<string, Dictionary<int, HashSet<int>>> floorDict = foundDict[tag].floorDict;
 
-                            for (int zz = 0; zz < DataManager.Instance.DataIndices[DataManager.DataType.Zone].Count; zz++)
+                            foreach(string zz in DataManager.Instance.DataIndices[DataManager.DataType.Zone].Entries.Keys)
                             {
                                 ZoneData mainZone = DataManager.Instance.GetZone(zz);
                                 for (int yy = 0; yy < mainZone.Segments.Count; yy++)

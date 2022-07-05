@@ -13,9 +13,9 @@ namespace MapGenTest
 {
     public static class Example
     {
-        static Dictionary<int, ZoneData> loadedZones;
+        static Dictionary<string, ZoneData> loadedZones;
 
-        private static ZoneData getCachedZone(int zoneIndex)
+        private static ZoneData getCachedZone(string zoneIndex)
         {
             ZoneData zone;
             if (loadedZones.TryGetValue(zoneIndex, out zone))
@@ -27,13 +27,12 @@ namespace MapGenTest
 
         public static void Run()
         {
-            loadedZones = new Dictionary<int, ZoneData>();
+            loadedZones = new Dictionary<string, ZoneData>();
             try
             {
                 List<string> zoneNames = new List<string>();
-                //TODO: String Assets
-                for (int ii = 0; ii < DataManager.Instance.DataIndices[DataManager.DataType.Zone].Count; ii++)
-                    zoneNames.Add(DataManager.Instance.DataIndices[DataManager.DataType.Zone].Entries[ii.ToString()].Name.ToLocal());
+                foreach(string key in DataManager.Instance.DataIndices[DataManager.DataType.Zone].Entries.Keys)
+                    zoneNames.Add(key);
 
                 string state = "Zones";
                 while (true)
@@ -68,8 +67,8 @@ namespace MapGenTest
                         Console.WriteLine(String.Format(choiceStr, choiceList.ToArray()));
                     }
 
-                    int zoneIndex = (int)Registry.GetValue(DiagManager.REG_PATH, "ZoneChoice", -1);
-                    if (zoneIndex == -1)
+                    string zoneIndex = (string)Registry.GetValue(DiagManager.REG_PATH, "ZoneChoice", "");
+                    if (zoneIndex == "")
                     {
                         ConsoleKeyInfo key = Console.ReadKey();
                         if (key.Key == ConsoleKey.Escape)
@@ -96,15 +95,15 @@ namespace MapGenTest
                         }
 
                         if (key.KeyChar >= '0' && key.KeyChar <= '9')
-                            zoneIndex = key.KeyChar - '0';
+                            zoneIndex = zoneNames[key.KeyChar - '0'];
                         if (key.KeyChar >= 'a' && key.KeyChar <= 'z')
-                            zoneIndex = key.KeyChar - 'a' + 10;
+                            zoneIndex = zoneNames[key.KeyChar - 'a' + 10];
                     }
-                    if (zoneIndex > -1 && zoneIndex < zoneNames.Count)
+                    if (zoneIndex != "")
                     {
                         Registry.SetValue(DiagManager.REG_PATH, "ZoneChoice", zoneIndex);
                         StructureMenu(state, zoneIndex, getCachedZone(zoneIndex));
-                        Registry.SetValue(DiagManager.REG_PATH, "ZoneChoice", -1);
+                        Registry.SetValue(DiagManager.REG_PATH, "ZoneChoice", "");
                     }
                 }
 
@@ -126,7 +125,7 @@ namespace MapGenTest
             return select.ToString() + ") " + str;
         }
 
-        public static void StructureMenu(string prevState, int zoneIndex, ZoneData zone)
+        public static void StructureMenu(string prevState, string zoneIndex, ZoneData zone)
         {
             try
             {
@@ -217,7 +216,7 @@ namespace MapGenTest
             }
         }
 
-        public static void FloorMenu(string prevState, int zoneIndex, int structureIndex, ZoneSegmentBase structure)
+        public static void FloorMenu(string prevState, string zoneIndex, int structureIndex, ZoneSegmentBase structure)
         {
             try
             {
@@ -279,7 +278,7 @@ namespace MapGenTest
         }
 
 
-        public static void MapMenu(string prevState, int zoneIndex, SegLoc floorIndex, ZoneSegmentBase structure)
+        public static void MapMenu(string prevState, string zoneIndex, SegLoc floorIndex, ZoneSegmentBase structure)
         {
             ulong zoneSeed = MathUtils.Rand.NextUInt64();
             try
@@ -416,7 +415,7 @@ namespace MapGenTest
             return result;
         }
 
-        public static ZoneGenContext CreateZoneGenContext(ulong zoneSeed, int zoneIndex, SegLoc floorIndex, ZoneSegmentBase structure)
+        public static ZoneGenContext CreateZoneGenContext(ulong zoneSeed, string zoneIndex, SegLoc floorIndex, ZoneSegmentBase structure)
         {
             ReNoise totalNoise = new ReNoise(zoneSeed);
             ulong[] doubleSeed = totalNoise.GetTwoUInt64((ulong)floorIndex.Segment);
@@ -429,7 +428,7 @@ namespace MapGenTest
             return newContext;
         }
 
-        public static ZoneGenContext CreateZoneGenContextSegment(ulong structSeed, int zoneIndex, int structureIndex, ZoneSegmentBase structure)
+        public static ZoneGenContext CreateZoneGenContextSegment(ulong structSeed, string zoneIndex, int structureIndex, ZoneSegmentBase structure)
         {
             INoise structNoise = new ReNoise(structSeed);
 
@@ -451,15 +450,15 @@ namespace MapGenTest
         public static void StressTestAll(int amount)
         {
             ExampleDebug.Printing = -1;
-            int zoneIndex = 0;
+            string zoneIndex = "";
             int structureIndex = 0;
             ulong zoneSeed = 0;
             int floor = 0;
             try
             {
-                List<List<TimeSpan>> generationTimes = new List<List<TimeSpan>>();
-                for (int ii = 0; ii < DataManager.Instance.DataIndices[DataManager.DataType.Zone].Count; ii++)
-                    generationTimes.Add(new List<TimeSpan>());
+                Dictionary<string, List<TimeSpan>> generationTimes = new Dictionary<string, List<TimeSpan>>();
+                foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Zone].Entries.Keys)
+                    generationTimes[key] = new List<TimeSpan>();
 
                 Stopwatch watch = new Stopwatch();
 
@@ -468,10 +467,10 @@ namespace MapGenTest
                     zoneSeed = MathUtils.Rand.NextUInt64();
                     ReNoise totalNoise = new ReNoise(zoneSeed);
 
-                    for (int kk = 0; kk < DataManager.Instance.DataIndices[DataManager.DataType.Zone].Count; kk++)
+                    foreach(string key in DataManager.Instance.DataIndices[DataManager.DataType.Zone].Entries.Keys)
                     {
-                        zoneIndex = kk;
-                        ZoneData zone = getCachedZone(kk);
+                        zoneIndex = key;
+                        ZoneData zone = getCachedZone(key);
 
                         for (int nn = 0; nn < zone.Segments.Count; nn++)
                         {
@@ -491,7 +490,7 @@ namespace MapGenTest
                                 zoneContext.CurrentID = floorId;
                                 zoneContext.Seed = idNoise.GetUInt64((ulong)floorId);
 
-                                TestFloor(watch, save, structure, zoneContext, null, null, generationTimes[kk]);
+                                TestFloor(watch, save, structure, zoneContext, null, null, generationTimes[key]);
                             }
                         }
                     }
@@ -510,7 +509,7 @@ namespace MapGenTest
             }
         }
 
-        public static void StressTestZone(ZoneData zone, int zoneIndex, int amount)
+        public static void StressTestZone(ZoneData zone, string zoneIndex, int amount)
         {
             ExampleDebug.Printing = -1;
             int structureIndex = 0;
@@ -518,9 +517,9 @@ namespace MapGenTest
             int floor = 0;
             try
             {
-                List<List<TimeSpan>> generationTimes = new List<List<TimeSpan>>();
+                Dictionary<string, List<TimeSpan>> generationTimes = new Dictionary<string, List<TimeSpan>>();
                 for (int ii = 0; ii < zone.Segments.Count; ii++)
-                    generationTimes.Add(new List<TimeSpan>());
+                    generationTimes[ii.ToString("D3")] = new List<TimeSpan>();
 
                 Stopwatch watch = new Stopwatch();
 
@@ -547,7 +546,7 @@ namespace MapGenTest
                             zoneContext.CurrentID = floorId;
                             zoneContext.Seed = idNoise.GetUInt64((ulong)floorId);
 
-                            TestFloor(watch, save, structure, zoneContext, null, null, generationTimes[nn]);
+                            TestFloor(watch, save, structure, zoneContext, null, null, generationTimes[nn.ToString("D3")]);
                         }
                     }
                 }
@@ -566,7 +565,7 @@ namespace MapGenTest
         }
 
 
-        public static void StressTestStructure(ZoneSegmentBase structure, int zoneIndex, int structureIndex, int amount)
+        public static void StressTestStructure(ZoneSegmentBase structure, string zoneIndex, int structureIndex, int amount)
         {
             ExampleDebug.Printing = -1;
             ulong zoneSeed = 0;
@@ -575,12 +574,12 @@ namespace MapGenTest
             {
                 List<Dictionary<int, int>> generatedItems = new List<Dictionary<int, int>>();
                 List<Dictionary<int, int>> generatedEnemies = new List<Dictionary<int, int>>();
-                List<List<TimeSpan>> generationTimes = new List<List<TimeSpan>>();
+                Dictionary<string, List<TimeSpan>> generationTimes = new Dictionary<string, List<TimeSpan>>();
                 for (int ii = 0; ii < structure.FloorCount; ii++)
                 {
                     generatedItems.Add(new Dictionary<int, int>());
                     generatedEnemies.Add(new Dictionary<int, int>());
-                    generationTimes.Add(new List<TimeSpan>());
+                    generationTimes[ii.ToString("D3")] = new List<TimeSpan>();
                 }
 
                 Stopwatch watch = new Stopwatch();
@@ -602,7 +601,7 @@ namespace MapGenTest
                         zoneContext.CurrentID = floorId;
                         zoneContext.Seed = idNoise.GetUInt64((ulong)floorId);
 
-                        TestFloor(watch, save, structure, zoneContext, generatedItems[floorId], generatedEnemies[floorId], generationTimes[floorId]);
+                        TestFloor(watch, save, structure, zoneContext, generatedItems[floorId], generatedEnemies[floorId], generationTimes[floorId.ToString("D3")]);
                     }
                 }
 
@@ -611,7 +610,7 @@ namespace MapGenTest
                 Dictionary<int, int> totalGeneratedEnemies = new Dictionary<int, int>();
                 for (int ii = 0; ii < structure.FloorCount; ii++)
                 {
-                    System.Diagnostics.Debug.WriteLine("F"+ii+":");
+                    Debug.WriteLine("F"+ii+":");
                     PrintContentAnalysis(generatedItems[ii], generatedEnemies[ii]);
                     
                     foreach(int key in generatedItems[ii].Keys)
@@ -621,7 +620,7 @@ namespace MapGenTest
                         MathUtils.AddToDictionary<int>(totalGeneratedEnemies, key, generatedEnemies[ii][key]);
                 }
 
-                System.Diagnostics.Debug.WriteLine("Overall:");
+                Debug.WriteLine("Overall:");
                 PrintContentAnalysis(totalGeneratedItems, totalGeneratedEnemies);
 
                 PrintTimeAnalysisTier2(generationTimes, "F");
@@ -638,7 +637,7 @@ namespace MapGenTest
         }
 
 
-        public static void StressTestFloor(ZoneSegmentBase structure, int zoneIndex, SegLoc floorIndex, int amount)
+        public static void StressTestFloor(ZoneSegmentBase structure, string zoneIndex, SegLoc floorIndex, int amount)
         {
             ExampleDebug.Printing = -1;
             ulong zoneSeed = 0;
@@ -773,22 +772,23 @@ namespace MapGenTest
             Console.WriteLine("Completed in {0}.  View debug log for more details.", totalTime);
         }
 
-        public static void PrintTimeAnalysisTier2(List<List<TimeSpan>> generationTimes, string category)
+        public static void PrintTimeAnalysisTier2(Dictionary<string, List<TimeSpan>> generationTimes, string category)
         {
             List<TimeSpan> flatTimes = new List<TimeSpan>();
-            for (int ii = 0; ii < generationTimes.Count; ii++)
+            foreach(string key in generationTimes.Keys)
             {
-                if (generationTimes[ii].Count > 0)
+                List<TimeSpan> genTime = generationTimes[key];
+                if (genTime.Count > 0)
                 {
-                    generationTimes[ii].Sort();
+                    genTime.Sort();
 
-                    TimeSpan minTime = generationTimes[ii][0];
-                    TimeSpan medTime = generationTimes[ii][generationTimes[ii].Count / 2];
-                    TimeSpan maxTime = generationTimes[ii][generationTimes[ii].Count - 1];
+                    TimeSpan minTime = genTime[0];
+                    TimeSpan medTime = genTime[genTime.Count / 2];
+                    TimeSpan maxTime = genTime[genTime.Count - 1];
 
-                    System.Diagnostics.Debug.WriteLine(String.Format("{3}{4:D3}    MIN: {0}    MED: {1}    MAX: {2}", minTime.ToString(), medTime.ToString(), maxTime.ToString(), category, ii));
+                    Debug.WriteLine(String.Format("{3}{4:D3}    MIN: {0}    MED: {1}    MAX: {2}", minTime.ToString(), medTime.ToString(), maxTime.ToString(), category, key));
 
-                    flatTimes.AddRange(generationTimes[ii]);
+                    flatTimes.AddRange(genTime);
                 }
             }
 
