@@ -96,8 +96,21 @@ namespace PMDC.Dungeon
                         if (!preThink)
                         {
                             Character destChar = ZoneManager.Instance.CurrentMap.GetCharAtLoc(goalPath[goalPath.Count - 2]);
-                            if (destChar != null && ZoneManager.Instance.CurrentMap.TerrainBlocked(controlledChar.CharLoc, destChar.Mobility))
-                                return new GameAction(GameAction.ActionType.Wait, Dir8.None);
+                            // if there's a character there, and they're ordered before us
+                            if (destChar != null)
+                            {
+                                bool pushOver = true;
+                                if (destChar.MemberTeam == controlledChar.MemberTeam)
+                                {
+                                    Team team = destChar.MemberTeam;
+                                    if (destChar == team.Leader)
+                                        pushOver = false;
+                                    else if (team.GetCharIndex(destChar) < team.GetCharIndex(controlledChar))
+                                        pushOver = false;
+                                }
+                                if (!pushOver)
+                                    return new GameAction(GameAction.ActionType.Wait, Dir8.None);
+                            }
                         }
                         GameAction act = TrySelectWalk(controlledChar, ZoneManager.Instance.CurrentMap.GetClosestDir8(goalPath[goalPath.Count - 1], goalPath[goalPath.Count - 2]));
                         //attempt to continue the path
@@ -161,8 +174,20 @@ namespace PMDC.Dungeon
             if (!preThink && goalPath.Count > 1)
             {
                 Character destChar = ZoneManager.Instance.CurrentMap.GetCharAtLoc(goalPath[goalPath.Count - 2]);
-                if (destChar != null && ZoneManager.Instance.CurrentMap.TerrainBlocked(controlledChar.CharLoc, destChar.Mobility))
-                    return new GameAction(GameAction.ActionType.Wait, Dir8.None);
+                if (destChar != null)
+                {
+                    bool pushOver = true;
+                    if (destChar.MemberTeam == controlledChar.MemberTeam)
+                    {
+                        Team team = destChar.MemberTeam;
+                        if (destChar == team.Leader)
+                            pushOver = false;
+                        else if (team.GetCharIndex(destChar) < team.GetCharIndex(controlledChar))
+                            pushOver = false;
+                    }
+                    if (!pushOver)
+                        return new GameAction(GameAction.ActionType.Wait, Dir8.None);
+                }
             }
             return SelectChoiceFromPath(controlledChar, goalPath);
         }
