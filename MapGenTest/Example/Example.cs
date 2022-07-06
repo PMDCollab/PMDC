@@ -68,7 +68,7 @@ namespace MapGenTest
                     }
 
                     string zoneIndex = (string)Registry.GetValue(DiagManager.REG_PATH, "ZoneChoice", "");
-                    if (zoneIndex == "")
+                    if (String.IsNullOrEmpty(zoneIndex))
                     {
                         ConsoleKeyInfo key = Console.ReadKey();
                         if (key.Key == ConsoleKey.Escape)
@@ -99,7 +99,7 @@ namespace MapGenTest
                         if (key.KeyChar >= 'a' && key.KeyChar <= 'z')
                             zoneIndex = zoneNames[key.KeyChar - 'a' + 10];
                     }
-                    if (zoneIndex != "")
+                    if (!String.IsNullOrEmpty(zoneIndex))
                     {
                         Registry.SetValue(DiagManager.REG_PATH, "ZoneChoice", zoneIndex);
                         StructureMenu(state, zoneIndex, getCachedZone(zoneIndex));
