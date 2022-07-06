@@ -286,6 +286,7 @@ namespace PMDC
                     DataManager.InitInstance();
 
                     DataManager.InitDataDirs(PathMod.ModPath(""));
+                    RogueEssence.Dev.DevHelper.ConvertAssetNames();
                     RogueEssence.Dev.DevHelper.ReserializeBase();
                     DiagManager.Instance.LogInfo("Reserializing main data");
                     RogueEssence.Dev.DevHelper.Reserialize(reserializeIndices);
