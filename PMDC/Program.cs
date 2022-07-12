@@ -46,7 +46,6 @@ namespace PMDC
             PathMod.InitExePath(args[0]);
             DiagManager.InitInstance();
             DiagManager.Instance.CurSettings = DiagManager.Instance.LoadSettings();
-            DiagManager.Instance.LoadModSettings();
             DiagManager.Instance.UpgradeBinder = new UpgradeBinder();
 
             try
@@ -69,6 +68,7 @@ namespace PMDC
                 string quest = "";
                 List<string> mod = new List<string>();
                 bool buildQuest = false;
+                bool loadModXml = true;
                 string playInputs = null;
                 for (int ii = 1; ii < args.Length; ii++)
                 {
@@ -103,6 +103,7 @@ namespace PMDC
                     else if (args[ii] == "-quest")
                     {
                         quest = args[ii + 1];
+                        loadModXml = false;
                         ii++;
                     }
                     else if (args[ii] == "-mod")
@@ -116,11 +117,13 @@ namespace PMDC
                                 mod.Add(args[ii + jj]);
                             jj++;
                         }
+                        loadModXml = false;
                         ii += jj - 1;
                     }
                     else if (args[ii] == "-build")
                     {
                         buildQuest = true;
+                        loadModXml = false;
                         ii++;
                     }
                     else if (args[ii] == "-convert")
@@ -143,6 +146,7 @@ namespace PMDC
                                 break;
                             jj++;
                         }
+                        loadModXml = false;
                         ii += jj - 1;
                     }
                     else if (args[ii] == "-index")
@@ -165,6 +169,7 @@ namespace PMDC
                                 break;
                             jj++;
                         }
+                        loadModXml = false;
                         ii += jj - 1;
                     }
                     else if (args[ii] == "-reserialize")
@@ -187,6 +192,7 @@ namespace PMDC
                                 break;
                             jj++;
                         }
+                        loadModXml = false;
                         ii += jj - 1;
                     }
                 }
@@ -229,6 +235,9 @@ namespace PMDC
                     }
                     PathMod.Mods = workingMods.ToArray();
                 }
+
+                if (loadModXml)
+                    DiagManager.Instance.LoadModSettings();
 
 
                 if (playInputs != null)
