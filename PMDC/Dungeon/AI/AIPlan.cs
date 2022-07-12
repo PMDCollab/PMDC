@@ -192,15 +192,15 @@ namespace PMDC.Dungeon
                 }
             }
 
-            if (tile.Data.ID == 4 && !controlledChar.HasElement(07))//check for lava; NOTE: specialized AI code!
+            if (tile.Data.ID == "lava" && !controlledChar.HasElement(07))//check for lava; NOTE: specialized AI code!
                 return true;
-            if (tile.Data.ID == 6 && !controlledChar.HasElement(14) && !controlledChar.HasElement(17))//check for poison; NOTE: specialized AI code!
+            if (tile.Data.ID == "poison_water" && !controlledChar.HasElement(14) && !controlledChar.HasElement(17))//check for poison; NOTE: specialized AI code!
                 return true;
-            if (tile.Data.ID == 2 && controlledChar.MemberTeam is ExplorerTeam)//check for block; NOTE: specialized AI code!
+            if (tile.Data.ID == DataManager.Instance.GenWall && controlledChar.MemberTeam is ExplorerTeam)//check for block; NOTE: specialized AI code!
             {
                 //we can still walk on it if we're already in a block
                 Tile curTile = ZoneManager.Instance.CurrentMap.GetTile(controlledChar.CharLoc);
-                if (curTile.Data.ID != 2)
+                if (curTile.Data.ID != DataManager.Instance.GenWall)
                     return true;
             }
 

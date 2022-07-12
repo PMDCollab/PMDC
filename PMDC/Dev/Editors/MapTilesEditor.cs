@@ -26,12 +26,12 @@ namespace RogueEssence.Dev
             txtValue.Height = 100;
             txtValue.AcceptsReturn = true;
             StringBuilder str = new StringBuilder();
-            Tile floor = new Tile(0);
-            Tile impassable = new Tile(1);
-            Tile wall = new Tile(2);
-            Tile water = new Tile(3);
-            Tile lava = new Tile(4);
-            Tile pit = new Tile(5);
+            Tile floor = new Tile(DataManager.Instance.GenFloor);
+            Tile impassable = new Tile("unbreakable");
+            Tile wall = new Tile("wall");
+            Tile water = new Tile("water");
+            Tile lava = new Tile("lava");
+            Tile pit = new Tile("abyss");
             if (member != null && member.Length > 0)
             {
                 for (int yy = 0; yy < member[0].Length; yy++)
@@ -79,17 +79,17 @@ namespace RogueEssence.Dev
                 for (int yy = 0; yy < level.Length; yy++)
                 {
                     if (level[yy][xx] == 'X')
-                        tiles[xx][yy] = new Tile(1);
+                        tiles[xx][yy] = new Tile("unbreakable");
                     else if (level[yy][xx] == '#')
-                        tiles[xx][yy] = new Tile(2);
+                        tiles[xx][yy] = new Tile("wall");
                     else if (level[yy][xx] == '~')
-                        tiles[xx][yy] = new Tile(3);
+                        tiles[xx][yy] = new Tile("water");
                     else if (level[yy][xx] == '^')
-                        tiles[xx][yy] = new Tile(4);
+                        tiles[xx][yy] = new Tile("lava");
                     else if (level[yy][xx] == '_')
-                        tiles[xx][yy] = new Tile(5);
+                        tiles[xx][yy] = new Tile("abyss");
                     else
-                        tiles[xx][yy] = new Tile(0);
+                        tiles[xx][yy] = new Tile(DataManager.Instance.GenFloor);
                 }
             }
 

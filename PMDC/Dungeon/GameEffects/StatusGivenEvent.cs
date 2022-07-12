@@ -1490,8 +1490,8 @@ namespace PMDC.Dungeon
             if (context.Status != owner)
                 yield break;
 
-            if (((StatusEffect)owner).StatusStates.GetWithDefault<StackState>().Stack == 0)
-                yield return CoroutineManager.Instance.StartCoroutine(context.Target.RemoveStatusEffect(owner.GetID(), false));
+            if (((StatusEffect)owner).StatusStates.GetWithDefault<StackState>().Stack == 0)//TODO: String Assets owner.GetID()
+                yield return CoroutineManager.Instance.StartCoroutine(context.Target.RemoveStatusEffect(((StatusEffect)owner).ID, false));
         }
     }
 

@@ -10,7 +10,7 @@ using RogueEssence.Dungeon;
 using RogueEssence.Dev;
 using PMDC.Data;
 using System.Runtime.Serialization;
-
+using Newtonsoft.Json;
 
 namespace PMDC.Dungeon
 {
@@ -13223,27 +13223,28 @@ namespace PMDC.Dungeon
     [Serializable]
     public class RemoveTerrainEvent : BattleEvent
     {
-        public HashSet<int> TileTypes;
+        [JsonConverter(typeof(TerrainSetConverter))]
+        public HashSet<string> TileTypes;
         [Sound(0)]
         public string RemoveSound;
         public FiniteEmitter RemoveAnim;
 
         public RemoveTerrainEvent()
         {
-            TileTypes = new HashSet<int>();
+            TileTypes = new HashSet<string>();
             RemoveAnim = new EmptyFiniteEmitter();
         }
-        public RemoveTerrainEvent(string removeSound, FiniteEmitter removeAnim, params int[] tileTypes)
+        public RemoveTerrainEvent(string removeSound, FiniteEmitter removeAnim, params string[] tileTypes)
             : this()
         {
             RemoveSound = removeSound;
             RemoveAnim = removeAnim;
-            foreach (int tileType in tileTypes)
+            foreach (string tileType in tileTypes)
                 TileTypes.Add(tileType);
         }
         protected RemoveTerrainEvent(RemoveTerrainEvent other) : this()
         {
-            foreach (int tileType in other.TileTypes)
+            foreach (string tileType in other.TileTypes)
                 TileTypes.Add(tileType);
             RemoveSound = other.RemoveSound;
             RemoveAnim = (FiniteEmitter)other.RemoveAnim.Clone();
@@ -13266,7 +13267,7 @@ namespace PMDC.Dungeon
                 DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
             }
 
-            tile.Data = new TerrainTile(0);
+            tile.Data = new TerrainTile(DataManager.Instance.GenFloor);
             int distance = 0;
             Loc startLoc = context.TargetTile - new Loc(distance + 2);
             Loc sizeLoc = new Loc((distance + 2) * 2 + 1);
@@ -13277,19 +13278,20 @@ namespace PMDC.Dungeon
     [Serializable]
     public class ShatterTerrainEvent : BattleEvent
     {
-        public HashSet<int> TileTypes;
+        [JsonConverter(typeof(TerrainSetConverter))]
+        public HashSet<string> TileTypes;
 
-        public ShatterTerrainEvent() { TileTypes = new HashSet<int>(); }
-        public ShatterTerrainEvent(params int[] tileTypes)
+        public ShatterTerrainEvent() { TileTypes = new HashSet<string>(); }
+        public ShatterTerrainEvent(params string[] tileTypes)
             : this()
         {
-            foreach (int tileType in tileTypes)
+            foreach (string tileType in tileTypes)
                 TileTypes.Add(tileType);
         }
         protected ShatterTerrainEvent(ShatterTerrainEvent other)
         {
-            TileTypes = new HashSet<int>();
-            foreach (int tileType in other.TileTypes)
+            TileTypes = new HashSet<string>();
+            foreach (string tileType in other.TileTypes)
                 TileTypes.Add(tileType);
         }
         public override GameEvent Clone() { return new ShatterTerrainEvent(this); }
@@ -13312,13 +13314,13 @@ namespace PMDC.Dungeon
             }
 
             //destroy the wall
-            tile.Data = new TerrainTile(0);
+            tile.Data = new TerrainTile(DataManager.Instance.GenFloor);
             for (int ii = 0; ii < DirExt.DIR4_COUNT; ii++)
             {
                 Loc moveLoc = context.TargetTile + ((Dir4)ii).GetLoc();
                 Tile sideTile = ZoneManager.Instance.CurrentMap.GetTile(moveLoc);
                 if (sideTile != null && TileTypes.Contains(sideTile.Data.ID))
-                    sideTile.Data = new TerrainTile(0);
+                    sideTile.Data = new TerrainTile(DataManager.Instance.GenFloor);
             }
 
             int distance = 0;
@@ -13351,7 +13353,7 @@ namespace PMDC.Dungeon
             if (tile == null)
                 yield break;
 
-            if (!BlockedByTerrain || tile.Data.ID == 0)
+            if (!BlockedByTerrain || tile.Data.ID == DataManager.Instance.GenFloor)
             {
                 Loc wrappedLoc = ZoneManager.Instance.CurrentMap.WrapLoc(context.TargetTile);
                 for (int ii = ZoneManager.Instance.CurrentMap.Items.Count - 1; ii >= 0; ii--)

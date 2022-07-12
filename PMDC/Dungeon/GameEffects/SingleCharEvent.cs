@@ -13,6 +13,7 @@ using PMDC.Data;
 using NLua;
 using RogueEssence.Script;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace PMDC.Dungeon
 {
@@ -77,14 +78,15 @@ namespace PMDC.Dungeon
     [Serializable]
     public class TerrainNeededEvent : SingleCharEvent
     {
+        [JsonConverter(typeof(TerrainConverter))]
         [DataType(0, DataManager.DataType.Terrain, false)]
-        public int Terrain;
+        public string Terrain;
 
         public SingleCharEvent BaseEvent;
 
         public TerrainNeededEvent()
         { }
-        public TerrainNeededEvent(int terrain, SingleCharEvent baseEvent)
+        public TerrainNeededEvent(string terrain, SingleCharEvent baseEvent)
         {
             Terrain = terrain;
             BaseEvent = baseEvent;
@@ -406,19 +408,20 @@ namespace PMDC.Dungeon
     [Serializable]
     public class RemoveLocTerrainEvent : SingleCharEvent
     {
-        public HashSet<int> TileTypes;
+        [JsonConverter(typeof(TerrainSetConverter))]
+        public HashSet<string> TileTypes;
 
-        public RemoveLocTerrainEvent() { TileTypes = new HashSet<int>(); }
-        public RemoveLocTerrainEvent(params int[] tileTypes)
+        public RemoveLocTerrainEvent() { TileTypes = new HashSet<string>(); }
+        public RemoveLocTerrainEvent(params string[] tileTypes)
             : this()
         {
-            foreach (int tileType in tileTypes)
+            foreach (string tileType in tileTypes)
                 TileTypes.Add(tileType);
         }
         protected RemoveLocTerrainEvent(RemoveLocTerrainEvent other)
         {
-            TileTypes = new HashSet<int>();
-            foreach (int tileType in other.TileTypes)
+            TileTypes = new HashSet<string>();
+            foreach (string tileType in other.TileTypes)
                 TileTypes.Add(tileType);
         }
         public override GameEvent Clone() { return new RemoveLocTerrainEvent(this); }
@@ -431,7 +434,7 @@ namespace PMDC.Dungeon
             Tile tile = ZoneManager.Instance.CurrentMap.Tiles[character.CharLoc.X][character.CharLoc.Y];
             if (TileTypes.Contains(tile.Data.ID))
             {
-                tile.Data = new TerrainTile(0);
+                tile.Data = new TerrainTile(DataManager.Instance.GenFloor);
                 int distance = 0;
                 Loc startLoc = character.CharLoc - new Loc(distance + 2);
                 Loc sizeLoc = new Loc((distance + 2) * 2 + 1);
@@ -688,7 +691,8 @@ namespace PMDC.Dungeon
 
             //change move effects
             newContext.Data = new BattleData(NewData);
-            newContext.Data.ID = owner.GetID();
+            //TODO: String Assets owner.GetID()
+            newContext.Data.ID = ((Intrinsic)owner).ID;
 
             newContext.Explosion = new ExplosionData(Explosion);
             newContext.HitboxAction = HitboxAction.Clone();
@@ -2521,8 +2525,8 @@ namespace PMDC.Dungeon
                 if (countdown != null && countdown.Counter > -1)
                 {
                     countdown.Counter--;
-                    if (countdown.Counter <= 0)
-                        yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus((owner.GetID())));
+                    if (countdown.Counter <= 0)//TODO: String Assets owner.GetID()
+                        yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(((MapStatus)owner).ID));
                 }
             }
         }
@@ -2654,7 +2658,8 @@ namespace PMDC.Dungeon
                     }
                     else if (countdown.Counter <= 0)
                     {
-                        yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus((owner.GetID())));
+                        //TODO: String Assets owner.GetID()
+                        yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(((MapStatus)owner).ID));
                         DungeonScene.Instance.LogMsg(String.Format(TimeOut.ToLocal()));
 
                         FiniteEmitter endEmitter = (FiniteEmitter)Emitter.Clone();
@@ -2813,8 +2818,8 @@ namespace PMDC.Dungeon
             Loc baseLoc = ((EffectTile)owner).TileLoc;
             if (DungeonScene.Instance.ActiveTeam.Leader.CharLoc == baseLoc && ZoneManager.Instance.CurrentMap.Tiles[baseLoc.X][baseLoc.Y].Effect == owner)
             {
-                GameManager.Instance.SE("Menu/Confirm");
-                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(new TileUnderfootMenu(owner.GetID(), ((EffectTile)owner).Danger)));
+                GameManager.Instance.SE("Menu/Confirm");//TODO: String Assets owner.GetID()
+                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(new TileUnderfootMenu(((EffectTile)owner).ID, ((EffectTile)owner).Danger)));
 
             }
         }
@@ -3541,7 +3546,8 @@ namespace PMDC.Dungeon
 
             //change move effects
             newContext.Data = new BattleData(NewData);
-            newContext.Data.ID = owner.GetID();
+            //TODO: String Assets owner.GetID()
+            newContext.Data.ID = effectTile.ID;
 
             newContext.Explosion = new ExplosionData(Explosion);
             newContext.HitboxAction = HitboxAction.Clone();
@@ -3624,7 +3630,7 @@ namespace PMDC.Dungeon
                 DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
                 yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
                 {
-                    tile.Data = new TerrainTile(0);
+                    tile.Data = new TerrainTile(DataManager.Instance.GenFloor);
                     int distance = 0;
                     Loc startLoc = loc - new Loc(distance + 2);
                     Loc sizeLoc = new Loc((distance + 2) * 2 + 1);
@@ -3664,7 +3670,7 @@ namespace PMDC.Dungeon
             DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
             {
-                tile.Data = new TerrainTile(0);
+                tile.Data = new TerrainTile(DataManager.Instance.GenFloor);
                 int distance = 0;
                 Loc startLoc = baseLoc - new Loc(distance + 2);
                 Loc sizeLoc = new Loc((distance + 2) * 2 + 1);
@@ -3737,7 +3743,7 @@ namespace PMDC.Dungeon
                     {
                         Tile exTile = ZoneManager.Instance.CurrentMap.Tiles[loc.X][loc.Y];
                         {
-                            exTile.Data = new TerrainTile(0);
+                            exTile.Data = new TerrainTile(DataManager.Instance.GenFloor);
                             int distance = 0;
                             Loc startLoc = exTile.Effect.TileLoc - new Loc(distance + 2);
                             Loc sizeLoc = new Loc((distance + 2) * 2 + 1);
@@ -3974,9 +3980,9 @@ namespace PMDC.Dungeon
     public class LockedTile
     {
         public Loc LockedLoc;
-        public int OldTerrain;
+        public string OldTerrain;
 
-        public LockedTile(Loc loc, int terrain)
+        public LockedTile(Loc loc, string terrain)
         {
             LockedLoc = loc;
             OldTerrain = terrain;
@@ -4122,10 +4128,10 @@ namespace PMDC.Dungeon
         {
             Tile modTile = ZoneManager.Instance.CurrentMap.GetTile(changePoint);
             //it ignores the tiles that are already locked
-            if (modTile.Data.ID != 1)
+            if (modTile.Data.ID != DataManager.Instance.GenUnbreakable)
             {
-                int oldData = modTile.Data.ID;
-                modTile.Data = new TerrainTile(1);
+                string oldData = modTile.Data.ID;
+                modTile.Data = new TerrainTile(DataManager.Instance.GenUnbreakable);
                 //if an effect tile is on those tiles, remove the effect
                 modTile.Effect = new EffectTile(changePoint);
                 int distance = 0;
@@ -4401,9 +4407,9 @@ namespace PMDC.Dungeon
                 for (int yy = bounds.Y; yy < bounds.End.Y; yy++)
                 {
                     Tile modTile = ZoneManager.Instance.CurrentMap.GetTile(new Loc(xx, yy));
-                    if (modTile.Data.ID == 1)//if impassable
+                    if (modTile.Data.ID == DataManager.Instance.GenUnbreakable)//if impassable
                     {
-                        modTile.Data = new TerrainTile(0);
+                        modTile.Data = new TerrainTile(DataManager.Instance.GenFloor);
 
                         //animate with a crumble
 
@@ -4981,8 +4987,8 @@ namespace PMDC.Dungeon
 
             if (tile.Effect.ID != ShopTile)
             {
-                GameManager.Instance.BGM(ZoneManager.Instance.CurrentMap.Music, true);
-                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus((owner.GetID())));
+                GameManager.Instance.BGM(ZoneManager.Instance.CurrentMap.Music, true);//TODO: String Assets owner.GetID()
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(((MapStatus)owner).ID));
             }
         }
     }
