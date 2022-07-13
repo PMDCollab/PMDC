@@ -156,17 +156,18 @@ namespace MapGenTest
                     Loc loc = new Loc(xx, yy);
                     char tileChar = ' ';
                     Tile tile = (Tile)context.GetTile(loc);
-                    if (tile.ID <= 0)//floor
+                    TerrainData terrainData = tile.Data.GetData();
+                    if (terrainData.BlockType == TerrainData.Mobility.Passable)//floor
                         tileChar = '.';
-                    else if (tile.ID == 1)//unbreakable
+                    else if (terrainData.BlockType == TerrainData.Mobility.Impassable)//unbreakable
                         tileChar = 'X';
-                    else if (tile.ID == 2)//wall
+                    else if (terrainData.BlockType == TerrainData.Mobility.Block)//wall
                         tileChar = '#';
-                    else if (tile.ID == 3)//water
+                    else if (terrainData.BlockType == TerrainData.Mobility.Water)//water
                         tileChar = '~';
-                    else if (tile.ID == 4)//lava
+                    else if (terrainData.BlockType == TerrainData.Mobility.Lava)//lava
                         tileChar = '^';
-                    else if (tile.ID == 5)//abyss
+                    else if (terrainData.BlockType == TerrainData.Mobility.Abyss)//abyss
                         tileChar = '_';
                     else
                         tileChar = '?';
@@ -268,9 +269,9 @@ namespace MapGenTest
                     rewriteLine(farthestPrint, String.Format("X:{0}  Y:{1}", mapLoc.X.ToString("D3"), mapLoc.Y.ToString("D3")));
                     farthestPrint++;
                     Tile tile = context.Tiles[mapLoc.X][mapLoc.Y];
-                    rewriteLine(farthestPrint, String.Format("Terrain {0}: {1}", tile.Data.GetID(), tile.Data.GetID() > -1 ? tile.Data.GetData().Name.ToLocal() : "---"));
+                    rewriteLine(farthestPrint, String.Format("Terrain {0}: {1}", tile.Data.GetID(), !String.IsNullOrEmpty(tile.Data.GetID()) ? tile.Data.GetData().Name.ToLocal() : "---"));
                     farthestPrint++;
-                    rewriteLine(farthestPrint, String.Format("Tile {0}: {1}", tile.Effect.GetID(), tile.Effect.GetID() > -1 ? tile.Effect.GetData().Name.ToLocal() : "---"));
+                    rewriteLine(farthestPrint, String.Format("Tile {0}: {1}", tile.Effect.GetID(), tile.Effect.ID > -1 ? tile.Effect.GetData().Name.ToLocal() : "---"));
                     farthestPrint++;
                     for(int ii = 0; ii < context.Map.EntryPoints.Count; ii++)
                     {
