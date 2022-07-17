@@ -14268,7 +14268,6 @@ namespace PMDC.Dungeon
                         }
                         else
                         {
-                            int nameLength = DataManager.Instance.CurrentReplay.ReadUI();
                             //give nickname
                             context.Target.Nickname = DataManager.Instance.CurrentReplay.ReadUIString();
                         }
