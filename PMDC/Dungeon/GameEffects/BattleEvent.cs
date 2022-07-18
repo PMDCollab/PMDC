@@ -6358,7 +6358,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             context.Target.EXP = 0;
-            int growth = DataManager.Instance.GetMonster(context.Target.BaseForm.Species).EXPTable;
+            string growth = DataManager.Instance.GetMonster(context.Target.BaseForm.Species).EXPTable;
             GrowthData growthData = DataManager.Instance.GetGrowth(growth);
             if (Level < 0)
             {
@@ -6402,7 +6402,7 @@ namespace PMDC.Dungeon
                         player.EXP += gainedExp;
                         DungeonScene.Instance.MeterChanged(player.CharLoc, gainedExp, true);
 
-                        int growth = DataManager.Instance.GetMonster(player.BaseForm.Species).EXPTable;
+                        string growth = DataManager.Instance.GetMonster(player.BaseForm.Species).EXPTable;
                         GrowthData growthData = DataManager.Instance.GetGrowth(growth);
                         if (player.EXP >= growthData.GetExpToNext(player.Level) || player.EXP < 0)
                             DungeonScene.Instance.LevelGains.Add(ZoneManager.Instance.CurrentMap.GetCharIndex(context.User));

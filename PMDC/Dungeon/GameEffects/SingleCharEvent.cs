@@ -959,7 +959,7 @@ namespace PMDC.Dungeon
         {
             int levelDiff = 0;
             Character player = DungeonScene.Instance.ActiveTeam.Players[idx];
-            int growth = DataManager.Instance.GetMonster(player.BaseForm.Species).EXPTable;
+            string growth = DataManager.Instance.GetMonster(player.BaseForm.Species).EXPTable;
             GrowthData growthData = DataManager.Instance.GetGrowth(growth);
             while (player.Level + levelDiff < DataManager.Instance.MaxLevel && player.EXP + DungeonScene.Instance.GainedEXP[idx] >= growthData.GetExpTo(player.Level, player.Level + levelDiff + 1))
                 levelDiff++;
