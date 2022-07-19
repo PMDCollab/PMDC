@@ -4065,8 +4065,8 @@ namespace PMDC.Dungeon
             }
 
             //various members of the team emote
-            EmoteData emoteData = DataManager.Instance.GetEmote(5);
-            EmoteData altEmoteData = DataManager.Instance.GetEmote(8);
+            EmoteData emoteData = DataManager.Instance.GetEmote("sweating");
+            EmoteData altEmoteData = DataManager.Instance.GetEmote("shock");
             character.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 1));
             Loc? insideLoc = null;
             foreach (Character target in ZoneManager.Instance.CurrentMap.ActiveTeam.IterateByRank())
