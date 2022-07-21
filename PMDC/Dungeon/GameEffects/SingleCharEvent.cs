@@ -4912,7 +4912,7 @@ namespace PMDC.Dungeon
         public static IEnumerator<YieldInstruction> PlaceGuard(MobSpawn spawn, Loc dest, int guardStatusId)
         {
             ExplorerTeam team = new ExplorerTeam();
-            team.SetRank(1);
+            team.SetRank("normal");
             Character mob = spawn.Spawn(team, ZoneManager.Instance.CurrentMap);
 
             //add guard status

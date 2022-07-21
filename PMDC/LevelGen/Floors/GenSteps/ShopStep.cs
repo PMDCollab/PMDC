@@ -172,7 +172,7 @@ namespace PMDC.LevelGen
             // place the mob running the shop
             {
                 ExplorerTeam newTeam = new ExplorerTeam();
-                newTeam.SetRank(1);
+                newTeam.SetRank("normal");
                 Character shopkeeper = StartMob.Spawn(newTeam, map);
                 Loc randLoc = itemTiles[map.Rand.Next(itemTiles.Count)];
                 ((IGroupPlaceableGenContext<TeamSpawn>)map).PlaceItems(new TeamSpawn(newTeam, true), new Loc[] { randLoc });
