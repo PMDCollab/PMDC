@@ -161,7 +161,7 @@ namespace PMDC.Dev
             //check all structures
             foreach(string zz in DataManager.Instance.DataIndices[DataManager.DataType.Zone].Entries.Keys)
             {
-                if (zz == DataManager.Instance.DebugZone)
+                if (zz == DataManager.Instance.DefaultZone)
                     continue;
                 ZoneData mainZone = DataManager.Instance.GetZone(zz);
                 if (!mainZone.Released)

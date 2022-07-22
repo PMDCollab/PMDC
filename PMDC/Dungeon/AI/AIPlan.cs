@@ -149,15 +149,15 @@ namespace PMDC.Dungeon
             if (seenChar.GetStatusEffect(25) == null)//last targeted by someone; NOTE: specialized AI code!
             {
                 //don't attack certain kinds of foes that won't attack first
-                if (seenChar.Tactic.ID == 10)//weird tree; NOTE: specialized AI code!
+                if (seenChar.Tactic.ID == "weird_tree")//weird tree; NOTE: specialized AI code!
                     return false;
-                else if (seenChar.Tactic.ID == 8)//wait attack; NOTE: specialized AI code!
+                else if (seenChar.Tactic.ID == "wait_attack")//wait attack; NOTE: specialized AI code!
                     return false;
             }
             
             if (seenChar.GetStatusEffect(31) == null)
             {
-                if (seenChar.Tactic.ID == 18)//tit for tat; NOTE: specialized AI code!
+                if (seenChar.Tactic.ID == "tit_for_tat")//tit for tat; NOTE: specialized AI code!
                     return false;
             }
             return true;
@@ -217,7 +217,7 @@ namespace PMDC.Dungeon
             List<Character> seenChars = controlledChar.GetSeenCharacters(Alignment.Foe);
             foreach (Character seenChar in seenChars)
             {
-                if (seenChar.Tactic.ID == 8 && ZoneManager.Instance.CurrentMap.InRange(seenChar.CharLoc, testLoc, 1) && seenChar.GetStatusEffect(25) == null)//do not approach silcoon/cascoon; NOTE: specialized AI code!
+                if (seenChar.Tactic.ID == "wait_attack" && ZoneManager.Instance.CurrentMap.InRange(seenChar.CharLoc, testLoc, 1) && seenChar.GetStatusEffect(25) == null)//do not approach silcoon/cascoon; NOTE: specialized AI code!
                     return true;
             }
             return false;
@@ -1561,11 +1561,11 @@ namespace PMDC.Dungeon
                 {
                     if (target.GetStatusEffect(25) == null)//last targeted by someone; NOTE: specialized AI code!
                     {
-                        if (target.Tactic.ID == 10)//weird tree; NOTE: specialized AI code!
+                        if (target.Tactic.ID == "weird_tree")//weird tree; NOTE: specialized AI code!
                             return 0;
-                        else if (target.Tactic.ID == 8)//wait attack; NOTE: specialized AI code!
+                        else if (target.Tactic.ID == "wait_attack")//wait attack; NOTE: specialized AI code!
                             return 0;
-                        else if (target.Tactic.ID == 18)//tit for tat; NOTE: specialized AI code!
+                        else if (target.Tactic.ID == "tit_for_tat")//tit for tat; NOTE: specialized AI code!
                             return 0;
                     }
                 }

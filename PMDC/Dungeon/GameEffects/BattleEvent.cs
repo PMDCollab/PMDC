@@ -14209,7 +14209,7 @@ namespace PMDC.Dungeon
                     {
                         GameManager.Instance.Fanfare("Fanfare/JoinTeam");
                         DungeonScene.Instance.RemoveChar(context.Target);
-                        AITactic tactic = DataManager.Instance.GetAITactic(0);
+                        AITactic tactic = DataManager.Instance.GetAITactic(DataManager.Instance.DefaultAI);
                         context.Target.Tactic = new AITactic(tactic);
                         DungeonScene.Instance.AddCharToTeam(Faction.Player, 0, false, context.Target);
                         context.Target.RefreshTraits();
@@ -14317,7 +14317,7 @@ namespace PMDC.Dungeon
         {
             DungeonScene.Instance.RemoveChar(context.Target);
             ExplorerTeam neutralTeam = new ExplorerTeam();
-            AITactic tactic = DataManager.Instance.GetAITactic(21);
+            AITactic tactic = DataManager.Instance.GetAITactic("slow_wander");
             context.Target.Tactic = new AITactic(tactic);
             neutralTeam.Players.Add(context.Target);
             DungeonScene.Instance.AddTeam(Faction.Friend, neutralTeam);
