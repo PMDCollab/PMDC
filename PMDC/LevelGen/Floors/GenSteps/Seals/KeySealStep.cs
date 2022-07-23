@@ -7,6 +7,7 @@ using PMDC.Dungeon;
 using System.Collections.Generic;
 using RogueEssence.Dev;
 using RogueEssence.Data;
+using Newtonsoft.Json;
 
 namespace PMDC.LevelGen
 {
@@ -22,14 +23,16 @@ namespace PMDC.LevelGen
         /// The tile that is used to block off the room.
         /// It is removed when the player inserts the key into the Key Tile.
         /// </summary>
+        [JsonConverter(typeof(TileConverter))]
         [DataType(0, DataManager.DataType.Tile, false)]
-        public int LockedTile;
+        public string LockedTile;
 
         /// <summary>
         /// The tile with which to lock the room with, requiring a key to open.
         /// </summary>
+        [JsonConverter(typeof(TileConverter))]
         [DataType(0, DataManager.DataType.Tile, false)]
-        public int KeyTile;
+        public string KeyTile;
 
         /// <summary>
         /// The item to be used as a key to unlock the vault.
@@ -41,7 +44,7 @@ namespace PMDC.LevelGen
         {
         }
 
-        public KeySealStep(int sealedTile, int keyTile, int keyItem) : base()
+        public KeySealStep(string sealedTile, string keyTile, int keyItem) : base()
         {
             LockedTile = sealedTile;
             KeyTile = keyTile;

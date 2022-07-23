@@ -22,7 +22,7 @@ namespace PMDC.LevelGen
         public override void Apply(T map)
         {
             //TODO: move magic numbers out of here
-            EffectTile spawnedChest = new EffectTile(44, true);
+            EffectTile spawnedChest = new EffectTile("tile_rescue", true);
 
             List<Loc> freeTiles = ((IPlaceableGenContext<EffectTile>)map).GetAllFreeTiles();
 

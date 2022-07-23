@@ -10795,7 +10795,7 @@ namespace PMDC.Dungeon
                 {
                     Tile tile = ZoneManager.Instance.CurrentMap.Tiles[xx][yy];
 
-                    if (tile.Effect.ID == 1 || tile.Effect.ID == 2)//TODO: remove this magic number
+                    if (tile.Effect.ID == "stairs_go_up" || tile.Effect.ID == "stairs_go_down")//TODO: remove this magic number
                         exits.Add(new Loc(xx, yy));
                 }
             }
@@ -10814,7 +10814,7 @@ namespace PMDC.Dungeon
                     if (tile == null)
                         return false;
 
-                    if (tile.Effect.ID == 1 || tile.Effect.ID == 2)//TODO: remove this magic number
+                    if (tile.Effect.ID == "stairs_go_up" || tile.Effect.ID == "stairs_go_down")//TODO: remove this magic number
                         return true;
                     return false;
                 },
@@ -13064,7 +13064,7 @@ namespace PMDC.Dungeon
             if (tile == null)
                 yield break;
 
-            if (tile.Effect.ID > -1 && ZoneManager.Instance.CurrentMap.GetTileOwner(context.User) != tile.Effect.Owner)
+            if (!String.IsNullOrEmpty(tile.Effect.ID) && ZoneManager.Instance.CurrentMap.GetTileOwner(context.User) != tile.Effect.Owner)
             {
                 TileData entry = DataManager.Instance.GetTile(tile.Effect.GetID());
                 if (entry.StepType == TileData.TriggerType.Trap)
@@ -13105,11 +13105,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class SetTrapEvent : BattleEvent
     {
+        [JsonConverter(typeof(TileConverter))]
         [DataType(0, DataManager.DataType.Tile, false)]
-        public int TrapID;
+        public string TrapID;
 
         public SetTrapEvent() { }
-        public SetTrapEvent(int trapID)
+        public SetTrapEvent(string trapID)
         {
             TrapID = trapID;
         }
@@ -13125,7 +13126,7 @@ namespace PMDC.Dungeon
             if (tile == null)
                 yield break;
 
-            if (tile.Data.GetData().BlockType == TerrainData.Mobility.Passable && tile.Effect.ID == -1)
+            if (tile.Data.GetData().BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(tile.Effect.ID))
             {
                 tile.Effect = new EffectTile(TrapID, true, tile.Effect.TileLoc);
                 tile.Effect.Owner = ZoneManager.Instance.CurrentMap.GetTileOwner(context.User);
@@ -13136,11 +13137,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class CounterTrapEvent : BattleEvent
     {
+        [JsonConverter(typeof(TileConverter))]
         [DataType(0, DataManager.DataType.Tile, false)]
-        public int TrapID;
+        public string TrapID;
 
         public CounterTrapEvent() { }
-        public CounterTrapEvent(int trapID)
+        public CounterTrapEvent(string trapID)
         {
             TrapID = trapID;
         }
@@ -13156,7 +13158,7 @@ namespace PMDC.Dungeon
                 yield break;
 
             Tile tile = ZoneManager.Instance.CurrentMap.Tiles[context.Target.CharLoc.X][context.Target.CharLoc.Y];
-            if (tile.Data.GetData().BlockType == TerrainData.Mobility.Passable && tile.Effect.ID == -1)
+            if (tile.Data.GetData().BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(tile.Effect.ID))
             {
                 tile.Effect = new EffectTile(TrapID, true, context.Target.CharLoc);
                 tile.Effect.Owner = ZoneManager.Instance.CurrentMap.GetTileOwner(context.Target);
@@ -13175,7 +13177,7 @@ namespace PMDC.Dungeon
             if (tile == null)
                 yield break;
 
-            if (tile.Effect.ID > -1)
+            if (!String.IsNullOrEmpty(tile.Effect.ID))
             {
                 TileData entry = DataManager.Instance.GetTile(tile.Effect.GetID());
                 if (entry.StepType == TileData.TriggerType.Trap)
@@ -13195,7 +13197,7 @@ namespace PMDC.Dungeon
             if (tile == null)
                 yield break;
 
-            if (tile.Effect.ID > -1)
+            if (!String.IsNullOrEmpty(tile.Effect.ID))
                 tile.Effect.Revealed = true;
         }
     }
@@ -13211,7 +13213,7 @@ namespace PMDC.Dungeon
             if (tile == null)
                 yield break;
 
-            if (tile.Effect.ID > -1)
+            if (!String.IsNullOrEmpty(tile.Effect.ID))
             {
                 TileData entry = DataManager.Instance.GetTile(tile.Effect.GetID());
                 if (entry.StepType == TileData.TriggerType.Trap)
@@ -13388,7 +13390,7 @@ namespace PMDC.Dungeon
                     Loc hitLoc = context.User.CharLoc + context.User.CharDir.GetLoc();
 
                     Tile tile = ZoneManager.Instance.CurrentMap.GetTile(hitLoc);
-                    if (tile != null && tile.Effect.ID > -1)
+                    if (tile != null && !String.IsNullOrEmpty(tile.Effect.ID))
                     {
                         TileData tileData = DataManager.Instance.GetTile(tile.Effect.ID);
                         if (tileData.StepType == TileData.TriggerType.Unlockable)
@@ -13422,7 +13424,7 @@ namespace PMDC.Dungeon
             if (tile == null)
                 yield break;
 
-            if (tile.Effect.ID > -1)
+            if (!String.IsNullOrEmpty(tile.Effect.ID))
             {
                 TileData entry = DataManager.Instance.GetTile(tile.Effect.GetID());
                 if (entry.StepType == TileData.TriggerType.Unlockable)

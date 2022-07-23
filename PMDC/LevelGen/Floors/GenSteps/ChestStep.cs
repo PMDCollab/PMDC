@@ -144,7 +144,7 @@ namespace PMDC.LevelGen
             Loc loc = freeTiles[randIndex];
 
 
-            EffectTile spawnedChest = new EffectTile(37, true);
+            EffectTile spawnedChest = new EffectTile("chest_full", true);
             spawnedChest.TileStates.Set(new UnlockState(455));
 
             if (Ambush && MobThemes.CanPick)

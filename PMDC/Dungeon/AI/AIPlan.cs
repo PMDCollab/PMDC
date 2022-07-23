@@ -180,7 +180,7 @@ namespace PMDC.Dungeon
                 return false;
 
             Tile tile = ZoneManager.Instance.CurrentMap.GetTile(testLoc);
-            if (tile.Effect.ID > -1)
+            if (!String.IsNullOrEmpty(tile.Effect.ID))
             {
                 if (!tile.Effect.Revealed)
                     return true;
@@ -1766,7 +1766,7 @@ namespace PMDC.Dungeon
                     if (effect is SetTrapEvent)
                     {
                         Tile checkTile = ZoneManager.Instance.CurrentMap.Tiles[target.CharLoc.X][target.CharLoc.Y];
-                        if (checkTile.Effect.ID == -1)
+                        if (String.IsNullOrEmpty(checkTile.Effect.ID))
                             return -70;
                         return 0;
                     }

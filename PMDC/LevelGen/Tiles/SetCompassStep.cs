@@ -6,6 +6,7 @@ using RogueEssence.Dev;
 using RogueEssence.Data;
 using RogueEssence.Dungeon;
 using PMDC.Dungeon;
+using Newtonsoft.Json;
 
 namespace PMDC.LevelGen
 {
@@ -20,14 +21,15 @@ namespace PMDC.LevelGen
         /// <summary>
         /// Tile used as compass.
         /// </summary>
+        [JsonConverter(typeof(TileConverter))]
         [DataType(0, DataManager.DataType.Tile, false)]
-        public int CompassTile;
+        public string CompassTile;
 
         public SetCompassStep()
         {
         }
 
-        public SetCompassStep(int tile)
+        public SetCompassStep(string tile)
         {
             CompassTile = tile;
         }

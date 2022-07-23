@@ -7,6 +7,7 @@ using PMDC.Dungeon;
 using System.Collections.Generic;
 using RogueEssence.Dev;
 using RogueEssence.Data;
+using Newtonsoft.Json;
 
 namespace PMDC.LevelGen
 {
@@ -20,8 +21,9 @@ namespace PMDC.LevelGen
         /// <summary>
         /// The tile with which to lock the room with.
         /// </summary>
+        [JsonConverter(typeof(TileConverter))]
         [DataType(0, DataManager.DataType.Tile, false)]
-        public int LockedTile;
+        public string LockedTile;
 
         /// <summary>
         /// The item with which to unlock the room with.
@@ -32,7 +34,7 @@ namespace PMDC.LevelGen
         public KeyDetourStep()
         { }
 
-        public KeyDetourStep(int sealedTile, int keyItem) : this()
+        public KeyDetourStep(string sealedTile, int keyItem) : this()
         {
             LockedTile = sealedTile;
             KeyItem = keyItem;

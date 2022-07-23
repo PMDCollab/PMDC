@@ -5,6 +5,9 @@ using RogueEssence;
 using RogueEssence.LevelGen;
 using PMDC.Dungeon;
 using System.Collections.Generic;
+using Newtonsoft.Json;
+using RogueEssence.Dev;
+using RogueEssence.Data;
 
 namespace PMDC.LevelGen
 {
@@ -18,13 +21,17 @@ namespace PMDC.LevelGen
         /// <summary>
         /// The tile with which to lock the room with.
         /// </summary>
-        public int SealedTile;
+        [JsonConverter(typeof(TileConverter))]
+        [DataType(0, DataManager.DataType.Tile, false)]
+        public string SealedTile;
 
 
         /// <summary>
         /// The tile that serves as the switch to open the door.
         /// </summary>
-        public int SwitchTile;
+        [JsonConverter(typeof(TileConverter))]
+        [DataType(0, DataManager.DataType.Tile, false)]
+        public string SwitchTile;
 
         /// <summary>
         /// Determines if a time limit is triggered when pressing the switch.
@@ -39,7 +46,7 @@ namespace PMDC.LevelGen
         public SwitchDetourStep()
         { }
 
-        public SwitchDetourStep(int sealedTile, int switchTile, RandRange entranceCount, bool timeLimit) : this()
+        public SwitchDetourStep(string sealedTile, string switchTile, RandRange entranceCount, bool timeLimit) : this()
         {
             SealedTile = sealedTile;
             SwitchTile = switchTile;

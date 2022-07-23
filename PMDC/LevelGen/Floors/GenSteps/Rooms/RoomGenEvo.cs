@@ -79,7 +79,7 @@ namespace PMDC.LevelGen
             int platWidth = 3;
             int platHeight = 2;
             Loc platStart = Draw.Start + new Loc(2, ROOM_OFFSET);
-            map.PlaceItem(new Loc(platStart.X + 1, platStart.Y), new EffectTile(33, true));
+            map.PlaceItem(new Loc(platStart.X + 1, platStart.Y), new EffectTile("tile_evo", true));
             for (int x = 0; x < platWidth; x++)
             {
                 for (int y = 0; y < platHeight; y++)
@@ -163,7 +163,7 @@ namespace PMDC.LevelGen
             int platWidth = 3;
             int platHeight = 2;
             Loc platStart = Draw.Start + new Loc(1, 2);
-            map.PlaceItem(new Loc(platStart.X + 1, platStart.Y), new EffectTile(33, true));
+            map.PlaceItem(new Loc(platStart.X + 1, platStart.Y), new EffectTile("tile_evo", true));
             for (int x = 0; x < platWidth; x++)
             {
                 for (int y = 0; y < platHeight; y++)

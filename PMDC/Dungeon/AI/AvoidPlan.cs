@@ -220,7 +220,7 @@ namespace PMDC.Dungeon
                 if ((IQ & AIFlags.TrapAvoider) != AIFlags.None)
                 {
                     Tile tile = ZoneManager.Instance.CurrentMap.GetTile(testLoc);
-                    if (tile.Effect.ID > -1)
+                    if (!String.IsNullOrEmpty(tile.Effect.ID))
                     {
                         TileData entry = DataManager.Instance.GetTile(tile.Effect.ID);
                         if (entry.StepType == TileData.TriggerType.Trap || entry.StepType == TileData.TriggerType.Site || entry.StepType == TileData.TriggerType.Switch)

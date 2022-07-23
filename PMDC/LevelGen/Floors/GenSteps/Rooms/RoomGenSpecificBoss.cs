@@ -5,6 +5,8 @@ using RogueEssence.Dungeon;
 using PMDC.Dungeon;
 using RogueEssence.Dev;
 using RogueEssence.LevelGen;
+using Newtonsoft.Json;
+using RogueEssence.Data;
 
 namespace PMDC.LevelGen
 {
@@ -17,7 +19,9 @@ namespace PMDC.LevelGen
     public class RoomGenSpecificBoss<T> : RoomGenSpecific<T> where T : ListMapGenContext
     {
         public List<MobSpawn> Bosses;
-        public int TriggerTile;
+        [JsonConverter(typeof(TileConverter))]
+        [DataType(0, DataManager.DataType.Tile, false)]
+        public string TriggerTile;
         public Loc Trigger;
 
         [Music(0)]
@@ -33,7 +37,7 @@ namespace PMDC.LevelGen
             Bosses = new List<MobSpawn>();
         }
 
-        public RoomGenSpecificBoss(int width, int height, ITile roomTerrain, int triggerTile, Loc trigger, string song)
+        public RoomGenSpecificBoss(int width, int height, ITile roomTerrain, string triggerTile, Loc trigger, string song)
             : base(width, height, roomTerrain)
         {
             TriggerTile = triggerTile;

@@ -454,7 +454,7 @@ namespace PMDC.Dungeon
                 yield break;
 
             Tile tile = ZoneManager.Instance.CurrentMap.Tiles[character.CharLoc.X][character.CharLoc.Y];
-            if (tile.Effect.ID > -1)
+            if (!String.IsNullOrEmpty(tile.Effect.ID))
             {
                 TileData entry = DataManager.Instance.GetTile(tile.Effect.GetID());
                 if (entry.StepType == TileData.TriggerType.Trap)
@@ -1755,18 +1755,19 @@ namespace PMDC.Dungeon
         /// <summary>
         /// Tiles eligible to be pointed to.
         /// </summary>
+        [JsonConverter(typeof(TileListConverter))]
         [DataType(1, DataManager.DataType.Tile, false)]
-        public List<int> EligibleTiles;
+        public List<string> EligibleTiles;
 
         public CompassEvent()
         {
             Emitter = new EmptyFiniteEmitter();
-            EligibleTiles = new List<int>();
+            EligibleTiles = new List<string>();
         }
-        public CompassEvent(FiniteEmitter emitter, params int[] eligibles)
+        public CompassEvent(FiniteEmitter emitter, params string[] eligibles)
         {
             Emitter = emitter;
-            EligibleTiles = new List<int>();
+            EligibleTiles = new List<string>();
             EligibleTiles.AddRange(eligibles);
         }
         protected CompassEvent(CompassEvent other)
@@ -1851,7 +1852,7 @@ namespace PMDC.Dungeon
                         if (tile == null)
                             return false;
 
-                        if (tile.Effect.ID == 1 || tile.Effect.ID == 2)//TODO: remove this magic number
+                        if (tile.Effect.ID == "stairs_go_up" || tile.Effect.ID == "stairs_go_down")//TODO: remove this magic number
                             return true;
                         return false;
                     },
@@ -3452,7 +3453,7 @@ namespace PMDC.Dungeon
             if (character.MemberTeam is ExplorerTeam)
             {
                 Tile tile = ZoneManager.Instance.CurrentMap.Tiles[destTile.X][destTile.Y];
-                if (tile.Effect.ID > -1 && !tile.Effect.Revealed)
+                if (!String.IsNullOrEmpty(tile.Effect.ID) && !tile.Effect.Revealed)
                 {
                     tile.Effect.Revealed = true;
 
@@ -3479,7 +3480,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
             Tile tile = ZoneManager.Instance.CurrentMap.Tiles[character.CharLoc.X][character.CharLoc.Y];
-            if (tile.Effect.ID > -1)
+            if (!String.IsNullOrEmpty(tile.Effect.ID))
             {
                 DungeonScene.Instance.QueueTrap(character.CharLoc);
                 //yield return CoroutineManager.Instance.StartCoroutine(tile.Effect.InteractWithTile(character));
@@ -3900,7 +3901,7 @@ namespace PMDC.Dungeon
             //change the chest to open
             Tile tile = ZoneManager.Instance.CurrentMap.Tiles[baseLoc.X][baseLoc.Y];
             if (tile.Effect == owner)
-                tile.Effect = new EffectTile(36, true, tile.Effect.TileLoc);// magic number
+                tile.Effect = new EffectTile("chest_empty", true, tile.Effect.TileLoc);// magic number
 
             //spawn the items
             Rect bounds = ((EffectTile)owner).TileStates.GetWithDefault<BoundsState>().Bounds;
@@ -3911,7 +3912,7 @@ namespace PMDC.Dungeon
                 (Loc testLoc) =>
                 {
                     Tile testTile = ZoneManager.Instance.CurrentMap.GetTile(testLoc);
-                    if (testTile.Data.GetData().BlockType == TerrainData.Mobility.Passable && testTile.Effect.ID == -1)//hardcoded Walkable check
+                    if (testTile.Data.GetData().BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(testTile.Effect.ID))//hardcoded Walkable check
                     {
                         foreach (MapItem item in ZoneManager.Instance.CurrentMap.Items)
                         {
@@ -4938,11 +4939,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class InitShopPriceEvent : SingleCharEvent
     {
+        [JsonConverter(typeof(TileConverter))]
         [DataType(0, DataManager.DataType.Tile, false)]
-        public int ShopTile;
+        public string ShopTile;
 
         public InitShopPriceEvent() { }
-        public InitShopPriceEvent(int shopTile) { ShopTile = shopTile; }
+        public InitShopPriceEvent(string shopTile) { ShopTile = shopTile; }
         public InitShopPriceEvent(InitShopPriceEvent other) { ShopTile = other.ShopTile; }
         public override GameEvent Clone() { return new InitShopPriceEvent(this); }
 
@@ -4971,11 +4973,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class EndShopEvent : SingleCharEvent
     {
+        [JsonConverter(typeof(TileConverter))]
         [DataType(0, DataManager.DataType.Tile, false)]
-        public int ShopTile;
+        public string ShopTile;
 
         public EndShopEvent() { }
-        public EndShopEvent(int shopTile) { ShopTile = shopTile; }
+        public EndShopEvent(string shopTile) { ShopTile = shopTile; }
         public EndShopEvent(EndShopEvent other) { this.ShopTile = other.ShopTile; }
         public override GameEvent Clone() { return new EndShopEvent(this); }
 

@@ -7,6 +7,7 @@ using PMDC.Dungeon;
 using System.Collections.Generic;
 using RogueEssence.Dev;
 using RogueEssence.Data;
+using Newtonsoft.Json;
 
 namespace PMDC.LevelGen
 {
@@ -21,21 +22,23 @@ namespace PMDC.LevelGen
         /// <summary>
         /// The tile used to seal the room.
         /// </summary>
+        [JsonConverter(typeof(TileConverter))]
         [DataType(0, DataManager.DataType.Tile, false)]
-        public int SealedTile;
+        public string SealedTile;
 
         /// <summary>
         /// The tile used to summon the battle.
         /// </summary>
+        [JsonConverter(typeof(TileConverter))]
         [DataType(0, DataManager.DataType.Tile, false)]
-        public int BossTile;
+        public string BossTile;
 
         public BossSealStep()
         {
             BossFilters = new List<BaseRoomFilter>();
         }
 
-        public BossSealStep(int sealedTile, int bossTile) : base()
+        public BossSealStep(string sealedTile, string bossTile) : base()
         {
             SealedTile = sealedTile;
             BossTile = bossTile;

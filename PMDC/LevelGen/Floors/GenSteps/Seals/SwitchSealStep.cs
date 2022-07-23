@@ -5,6 +5,8 @@ using RogueEssence;
 using RogueEssence.LevelGen;
 using PMDC.Dungeon;
 using System.Collections.Generic;
+using Newtonsoft.Json;
+using RogueEssence.Dev;
 
 namespace PMDC.LevelGen
 {
@@ -21,12 +23,14 @@ namespace PMDC.LevelGen
         /// The tile that is used to block off the room.
         /// It is removed when the player pressed the switch.
         /// </summary>
-        public int SealedTile;
+        [JsonConverter(typeof(TileConverter))]
+        public string SealedTile;
 
         /// <summary>
         /// The switch tile that unlocked the vaults.
         /// </summary>
-        public int SwitchTile;
+        [JsonConverter(typeof(TileConverter))]
+        public string SwitchTile;
 
         /// <summary>
         /// Determines if a time limit is triggered when pressing the switch.
@@ -43,7 +47,7 @@ namespace PMDC.LevelGen
             SwitchFilters = new List<BaseRoomFilter>();
         }
 
-        public SwitchSealStep(int sealedTile, int switchTile, bool timeLimit) : base()
+        public SwitchSealStep(string sealedTile, string switchTile, bool timeLimit) : base()
         {
             SealedTile = sealedTile;
             SwitchTile = switchTile;
