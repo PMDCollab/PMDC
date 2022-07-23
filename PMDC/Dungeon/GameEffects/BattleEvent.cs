@@ -95,7 +95,7 @@ namespace PMDC.Dungeon
                 {
                     if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
                     {
-                        if (context.ActionType == BattleActionType.Skill && context.Data.ID > 0)
+                        if (context.ActionType == BattleActionType.Skill && context.Data.ID != DataManager.Instance.DefaultSkill)
                             context.Target.EXPMarked = true;
                         else if (context.ActionType == BattleActionType.Item)
                             context.Target.EXPMarked = true;
@@ -148,7 +148,9 @@ namespace PMDC.Dungeon
 
             SkillData entry = DataManager.Instance.GetSkill(usageIndex);
             context.Data = new BattleData(entry.Data);
-            context.Data.ID = usageIndex;
+
+            //TODO: String Assets
+            context.Data.ID = usageIndex.ToString();
             context.Explosion = new ExplosionData(entry.Explosion);
             context.HitboxAction = entry.HitboxAction.Clone();
             context.Item = new InvItem();
@@ -215,7 +217,7 @@ namespace PMDC.Dungeon
 
             ItemData entry = DataManager.Instance.GetItem(item.ID);
             context.Data = new BattleData(entry.UseEvent);
-            context.Data.ID = item.ID;
+            context.Data.ID = item.GetID();
             context.Explosion = new ExplosionData(entry.Explosion);
             context.Strikes = 1;
             context.Item = new InvItem(item);
@@ -318,7 +320,7 @@ namespace PMDC.Dungeon
             {
                 //these just do damage(create a custom effect in stead of the item's effect)
                 context.Data = new BattleData();
-                context.Data.ID = item.ID;
+                context.Data.ID = item.GetID();
 
                 context.Data.Category = BattleData.SkillCategory.Physical;
                 context.Data.SkillStates.Set(new BasePowerState(30));
@@ -327,7 +329,7 @@ namespace PMDC.Dungeon
             else
             {
                 context.Data = new BattleData(entry.UseEvent);
-                context.Data.ID = item.ID;
+                context.Data.ID = item.GetID();
             }
 
             if (catchable)
@@ -752,7 +754,8 @@ namespace PMDC.Dungeon
 
                 //fill effects
                 newContext.Data = new BattleData(entry.Data);
-                newContext.Data.ID = moveID;
+                //TODO: String Assets
+                newContext.Data.ID = moveID.ToString();
                 newContext.Explosion = new ExplosionData(entry.Explosion);
                 newContext.HitboxAction = entry.HitboxAction.Clone();
                 newContext.Strikes = entry.Strikes;
@@ -1360,7 +1363,7 @@ namespace PMDC.Dungeon
                 context.Explosion = new ExplosionData(Explosion);
 
                 //change move effects
-                int id = context.Data.ID;
+                string id = context.Data.ID;
                 context.Data = new BattleData(NewData);
                 context.Data.ID = id;
             }
@@ -1389,7 +1392,7 @@ namespace PMDC.Dungeon
             //different effects for allies
             if (DungeonScene.Instance.GetMatchup(context.User, context.Target) != Alignment.Foe)
             {
-                int id = context.Data.ID;
+                string id = context.Data.ID;
                 context.Data = new BattleData(NewData);
                 context.Data.ID = id;
             }
@@ -1438,7 +1441,7 @@ namespace PMDC.Dungeon
             }
 
             context.ContextStates.Set(new ItemCaught());
-            int id = context.Data.ID;
+            string id = context.Data.ID;
             context.Data = new BattleData(NewData);
             context.Data.ID = id;
         }
@@ -1563,7 +1566,7 @@ namespace PMDC.Dungeon
                 context.Explosion = new ExplosionData(StackPair[stack.Stack].Item2);
 
                 //change move effects
-                int id = context.Data.ID;
+                string id = context.Data.ID;
                 context.Data = new BattleData(StackPair[stack.Stack].Item3);
                 context.Data.ID = id;
             }
@@ -1597,7 +1600,7 @@ namespace PMDC.Dungeon
             {
                 if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(weather))
                 {
-                    int id = context.Data.ID;
+                    string id = context.Data.ID;
                     context.Data = new BattleData(WeatherPair[weather]);
                     context.Data.ID = id;
                     break;
@@ -1641,7 +1644,7 @@ namespace PMDC.Dungeon
             typeMatchup -= PreTypeEvent.NRM_2;
             if (typeMatchup > 0 && context.User != context.Target)
             {
-                int id = context.Data.ID;
+                string id = context.Data.ID;
                 BattleData newData = new BattleData();
                 newData.Element = context.Data.Element;
                 newData.Category = context.Data.Category;
@@ -1708,7 +1711,7 @@ namespace PMDC.Dungeon
         {
             if (context.Data.Element == AbsorbElement && context.User != context.Target)
             {
-                int id = context.Data.ID;
+                string id = context.Data.ID;
                 BattleData newData = new BattleData();
                 newData.Element = context.Data.Element;
                 newData.Category = context.Data.Category;
@@ -2844,7 +2847,8 @@ namespace PMDC.Dungeon
             StatusEffect repeatStatus = context.User.GetStatusEffect(MoveRepeatStatusID);
             if (moveStatus == null || repeatStatus == null)
                 yield break;
-            if (moveStatus.StatusStates.GetWithDefault<IndexState>().Index != context.Data.ID)
+            //TODO: String Assets
+            if (moveStatus.StatusStates.GetWithDefault<IndexState>().Index != int.Parse(context.Data.ID))
                 yield break;
             if (!repeatStatus.StatusStates.Contains<RecentState>())
                 yield break;
@@ -3577,7 +3581,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.ActionType == BattleActionType.Skill && context.Data.ID > 0)
+            if (context.ActionType == BattleActionType.Skill && context.Data.ID != DataManager.Instance.DefaultSkill)
             {
                 if (DungeonScene.Instance.GetMatchup(context.User, context.Target) == Alignment.Foe)
                 {
@@ -3598,7 +3602,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.ActionType == BattleActionType.Skill && context.Data.ID > 0)
+            if (context.ActionType == BattleActionType.Skill && context.Data.ID != DataManager.Instance.DefaultSkill)
             {
                 if (DungeonScene.Instance.GetMatchup(context.User, context.Target) == Alignment.Foe)
                 {
@@ -3629,7 +3633,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.ActionType == BattleActionType.Skill && context.Data.ID > 0)
+            if (context.ActionType == BattleActionType.Skill && context.Data.ID != DataManager.Instance.DefaultSkill)
             {
                 if (context.Target.GetStatusEffect(StatusID) != null && DungeonScene.Instance.GetMatchup(context.User, context.Target) == Alignment.Foe)
                 {
@@ -3791,7 +3795,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.ActionType == BattleActionType.Skill && context.Data.ID > 0)
+            if (context.ActionType == BattleActionType.Skill && context.Data.ID != DataManager.Instance.DefaultSkill)
             {
                 if (!ZoneManager.Instance.CurrentMap.InRange(context.StrikeStartTile, context.Target.CharLoc, 1) && context.Data.HitRate > -1)
                 {
@@ -4144,7 +4148,7 @@ namespace PMDC.Dungeon
                 {
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_INCINERATE").ToLocal(), context.Item.GetDisplayName()));
 
-                    int id = context.Data.ID;
+                    string id = context.Data.ID;
                     context.Data = new BattleData(NewData);
                     context.Data.ID = id;
 
@@ -5133,7 +5137,8 @@ namespace PMDC.Dungeon
 
             SkillData entry = DataManager.Instance.GetSkill(MoveIndex);
             context.Data = new BattleData(entry.Data);
-            context.Data.ID = MoveIndex;
+            //TODO: String Assets
+            context.Data.ID = MoveIndex.ToString();
             context.Explosion = new ExplosionData(entry.Explosion);
             context.HitboxAction = entry.HitboxAction.Clone();
             context.Item = new InvItem();
@@ -5374,12 +5379,13 @@ namespace PMDC.Dungeon
                         recentCritStatus.StatusStates.GetWithDefault<StackState>().Stack = recentCritStatus.StatusStates.GetWithDefault<StackState>().Stack + 1;
                 }
 
-                if (context.ActionType == BattleActionType.Skill && context.Data.ID > 0)
+                if (context.ActionType == BattleActionType.Skill && context.Data.ID != DataManager.Instance.DefaultSkill)
                 {
 
                     StatusEffect otherStatus = new StatusEffect(OtherHitStatusID);
                     otherStatus.LoadFromData();
-                    otherStatus.StatusStates.GetWithDefault<IndexState>().Index = context.Data.ID;
+                    //TODO: String Assets
+                    otherStatus.StatusStates.GetWithDefault<IndexState>().Index = int.Parse(context.Data.ID);
                     yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, otherStatus, null));
                 }
 
@@ -5439,7 +5445,8 @@ namespace PMDC.Dungeon
 
                 StatusEffect testStatus = context.User.GetStatusEffect(LastMoveStatusID);
                 StatusEffect repeatStatus = context.User.GetStatusEffect(RepeatStatusID);
-                if (lastSlotStatus != null && repeatStatus != null && testStatus.StatusStates.GetWithDefault<IndexState>().Index == context.Data.ID && repeatStatus.StatusStates.GetWithDefault<RecentState>() != null)
+                //TODO: String Assets
+                if (lastSlotStatus != null && repeatStatus != null && testStatus.StatusStates.GetWithDefault<IndexState>().Index == int.Parse(context.Data.ID) && repeatStatus.StatusStates.GetWithDefault<RecentState>() != null)
                 {
                     //increment repetition
                     repeatStatus.StatusStates.GetWithDefault<CountState>().Count++;
@@ -5456,7 +5463,8 @@ namespace PMDC.Dungeon
 
                 StatusEffect lastMoveStatus = new StatusEffect(LastMoveStatusID);
                 lastMoveStatus.LoadFromData();
-                lastMoveStatus.StatusStates.GetWithDefault<IndexState>().Index = context.Data.ID;
+                //TODO: String Assets
+                lastMoveStatus.StatusStates.GetWithDefault<IndexState>().Index = int.Parse(context.Data.ID);
                 yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, lastMoveStatus, null));
 
                 foreach (Character ally in ZoneManager.Instance.CurrentMap.IterateCharacters())
@@ -5465,7 +5473,8 @@ namespace PMDC.Dungeon
                     {
                         StatusEffect allyStatus = new StatusEffect(AllyStatusID);
                         allyStatus.LoadFromData();
-                        allyStatus.StatusStates.GetWithDefault<IndexState>().Index = context.Data.ID;
+                        //TODO: String Assets
+                        allyStatus.StatusStates.GetWithDefault<IndexState>().Index = int.Parse(context.Data.ID);
                         yield return CoroutineManager.Instance.StartCoroutine(ally.AddStatusEffect(context.User, allyStatus, null));
                     }
                 }
@@ -5785,7 +5794,8 @@ namespace PMDC.Dungeon
         {
             for (int ii = 0; ii < ExceptionMoves.Length; ii++)
             {
-                if (context.Data.ID == ExceptionMoves[ii])
+                //TODO: String Assets
+                if (int.Parse(context.Data.ID) == ExceptionMoves[ii])
                 {
                     context.Data.HitRate = -1;
                     yield break;
@@ -7541,7 +7551,7 @@ namespace PMDC.Dungeon
                 int power = context.Data.SkillStates.GetWithDefault<BasePowerState>().Power;
                 int damage = context.GetContextStateMult<DmgMult>().Multiply((context.GetContextStateInt<UserLevel>(0) / 3 + 6) * attackStat * power / defenseStat / 50 * DataManager.Instance.Save.Rand.Next(90, 101) / 100);
 
-                if (!(context.ActionType == BattleActionType.Skill && context.Data.ID == 0))
+                if (!(context.ActionType == BattleActionType.Skill && context.Data.ID == DataManager.Instance.DefaultSkill))
                     damage = Math.Max(1, damage);
 
                 return damage;
@@ -8212,7 +8222,7 @@ namespace PMDC.Dungeon
             if (context.UsageSlot == BattleContext.FORCED_SLOT)
                 yield break;
 
-            if (context.ActionType == BattleActionType.Skill && context.Data.ID > 0)
+            if (context.ActionType == BattleActionType.Skill && context.Data.ID != DataManager.Instance.DefaultSkill)
             {
                 foreach (BattleEvent battleEffect in BaseEvents)
                     yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
@@ -8442,7 +8452,8 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.ActionType == BattleActionType.Skill && AcceptedMoves.Contains(context.Data.ID))
+            //TODO: String Assets
+            if (context.ActionType == BattleActionType.Skill && AcceptedMoves.Contains(int.Parse(context.Data.ID)))
             {
                 yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, context));
             }
@@ -11399,7 +11410,7 @@ namespace PMDC.Dungeon
                 {
                     //these just do damage(create a custom effect instead of the item's effect)
                     newContext.Data = new BattleData();
-                    newContext.Data.ID = item.ID;
+                    newContext.Data.ID = item.GetID();
 
                     newContext.Data.Category = BattleData.SkillCategory.Physical;
                     newContext.Data.SkillStates.Set(new BasePowerState(40));
@@ -11408,7 +11419,7 @@ namespace PMDC.Dungeon
                 else
                 {
                     newContext.Data = new BattleData(entry.UseEvent);
-                    newContext.Data.ID = item.ID;
+                    newContext.Data.ID = item.GetID();
                 }
 
                 if (catchable)
@@ -12048,7 +12059,7 @@ namespace PMDC.Dungeon
 
                     newContext.StartDir = newContext.User.CharDir;
                     newContext.Data = new BattleData(entry.UseEvent);
-                    newContext.Data.ID = item.ID;
+                    newContext.Data.ID = item.GetID();
                     newContext.Explosion = new ExplosionData(entry.Explosion);
                     newContext.Strikes = 1;
                     newContext.Item = new InvItem(item);
@@ -13069,7 +13080,7 @@ namespace PMDC.Dungeon
                 TileData entry = DataManager.Instance.GetTile(tile.Effect.GetID());
                 if (entry.StepType == TileData.TriggerType.Trap)
                 {
-                    if (context.ActionType == BattleActionType.Skill && context.Data.ID == 0)
+                    if (context.ActionType == BattleActionType.Skill && context.Data.ID == DataManager.Instance.DefaultSkill)
                         tile.Effect.Revealed = true;
                     else if (tile.Effect.Owner != EffectTile.TileOwner.None && ZoneManager.Instance.CurrentMap.GetTileOwner(context.Target) == tile.Effect.Owner)
                     {
