@@ -6,6 +6,7 @@ using RogueEssence.Content;
 using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Dev;
+using Newtonsoft.Json;
 
 namespace PMDC.Dungeon
 {
@@ -549,12 +550,13 @@ namespace PMDC.Dungeon
     [Serializable]
     public class TypeCheck : StatusGivenEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int Element;
+        public string Element;
         public StringKey Message;
 
-        public TypeCheck() { }
-        public TypeCheck(int element, StringKey message)
+        public TypeCheck() { Element = ""; }
+        public TypeCheck(string element, StringKey message)
         {
             Element = element;
             Message = message;
@@ -1151,7 +1153,7 @@ namespace PMDC.Dungeon
             
             if (context.msg)
             {
-                int elementIndex = ((StatusEffect)owner).StatusStates.GetWithDefault<ElementState>().Element;
+                string elementIndex = ((StatusEffect)owner).StatusStates.GetWithDefault<ElementState>().Element;
                 ElementData elementData = DataManager.Instance.GetElement(elementIndex);
                 DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.Target.GetDisplayName(false), elementData.GetIconName()));
                 if (Delay)

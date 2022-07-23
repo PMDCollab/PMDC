@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using RogueElements;
 using RogueEssence;
 using RogueEssence.Dungeon;
@@ -14,7 +15,9 @@ namespace PMDC.Dungeon
 
         public int[] Effectiveness;
 
-        public ElementTableState() { TypeMatchup = new int[0][]; Effectiveness = new int[0]; }
+        public Dictionary<string, int> TypeMap;
+
+        public ElementTableState() { TypeMatchup = new int[0][]; Effectiveness = new int[0]; TypeMap = new Dictionary<string, int>(); }
         protected ElementTableState(ElementTableState other)
         {
             TypeMatchup = new int[other.TypeMatchup.Length][];
@@ -25,8 +28,18 @@ namespace PMDC.Dungeon
             }
             Effectiveness = new int[other.Effectiveness.Length];
             other.Effectiveness.CopyTo(Effectiveness, 0);
+            TypeMap = new Dictionary<string, int>();
+            foreach (string key in other.TypeMap.Keys)
+                TypeMap[key] = other.TypeMap[key];
         }
         public override GameplayState Clone() { return new ElementTableState(this); }
+
+        public int GetMatchup(string attacking, string defending)
+        {
+            int attackIdx = TypeMap[attacking];
+            int defendIdx = TypeMap[defending];
+            return TypeMatchup[attackIdx][defendIdx];
+        }
     }
 
     [Serializable]

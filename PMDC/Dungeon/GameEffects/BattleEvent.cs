@@ -638,25 +638,25 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            List<int> elements = new List<int>();
-            int element = 00;
-            for (int ii = 0; ii < DataManager.Instance.DataIndices[DataManager.DataType.Element].Count; ii++)
+            List<string> elements = new List<string>();
+            string element = DataManager.Instance.DefaultElement;
+            foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Element].Entries.Keys)
             {
-                int effectiveness = PreTypeEvent.CalculateTypeMatchup(context.Data.Element, ii);
+                int effectiveness = PreTypeEvent.CalculateTypeMatchup(context.Data.Element, key);
                 if (effectiveness == PreTypeEvent.N_E)
                 {
-                    element = ii;
+                    element = key;
                     break;
                 }
                 else if (effectiveness == PreTypeEvent.NVE)
-                    elements.Add(ii);
+                    elements.Add(key);
             }
 
-            if (element == 00 && elements.Count > 0)
+            if (element == DataManager.Instance.DefaultElement && elements.Count > 0)
                 element = elements[DataManager.Instance.Save.Rand.Next(0, elements.Count)];
 
-            if (element != 00)
-                yield return CoroutineManager.Instance.StartCoroutine(context.Target.ChangeElement(element, 00));
+            if (element != DataManager.Instance.DefaultElement)
+                yield return CoroutineManager.Instance.StartCoroutine(context.Target.ChangeElement(element, DataManager.Instance.DefaultElement));
         }
     }
     [Serializable]
@@ -681,10 +681,9 @@ namespace PMDC.Dungeon
             if (target.Dead)
                 yield break;
 
-            if (context.Data.Element != 00
-                && !(target.Element1 == context.Data.Element && target.Element2 == 00))
+            if (context.Data.Element != DataManager.Instance.DefaultElement && !(target.Element1 == context.Data.Element && target.Element2 == DataManager.Instance.DefaultElement))
             {
-                yield return CoroutineManager.Instance.StartCoroutine(target.ChangeElement(context.Data.Element, 00));
+                yield return CoroutineManager.Instance.StartCoroutine(target.ChangeElement(context.Data.Element, DataManager.Instance.DefaultElement));
             }
         }
     }
@@ -933,22 +932,22 @@ namespace PMDC.Dungeon
                 List<int> tryingMoves = new List<int>();
                 //enemy is weak to a type and can die from it?  use that type move, base it on your higher stat
                 //multiple enemies weak to the same type?  use that type move, base it on your higher stat
-                HashSet<int> availableWeaknesses = new HashSet<int>();
+                HashSet<string> availableWeaknesses = new HashSet<string>();
                 List<Character> seenFoes = context.User.GetSeenCharacters(Alignment.Foe);
                 foreach (Character chara in seenFoes)
                 {
-                    for (int ii = 0; ii < DataManager.Instance.DataIndices[DataManager.DataType.Element].Count; ii++)
+                    foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Element].Entries.Keys)
                     {
-                        if (PreTypeEvent.GetDualEffectiveness(context.User, chara, ii) > PreTypeEvent.NRM_2)
-                            availableWeaknesses.Add(ii);
+                        if (PreTypeEvent.GetDualEffectiveness(context.User, chara, key) > PreTypeEvent.NRM_2)
+                            availableWeaknesses.Add(key);
                     }
                 }
 
-                foreach (int ii in availableWeaknesses)
+                foreach (string ii in availableWeaknesses)
                 {
                     switch (ii)
                     {
-                        case 01://bug
+                        case "bug":
                             {
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 454);//attack order
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 404);//x-scissor
@@ -958,7 +957,7 @@ namespace PMDC.Dungeon
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 318);//silver wind
                             }
                             break;
-                        case 02://dark
+                        case "dark":
                             {
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 621);//hyperspace fury
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 539);//night daze
@@ -966,7 +965,7 @@ namespace PMDC.Dungeon
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 400);//night slash
                             }
                             break;
-                        case 03://dragon
+                        case "dragon":
                             {
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 459);//roar of time
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 434);//draco meteor
@@ -977,7 +976,7 @@ namespace PMDC.Dungeon
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 407);//dragon rush
                             }
                             break;
-                        case 04://electric
+                        case "electric":
                             {
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 435);//discharge
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 344);//volt tackle
@@ -988,7 +987,7 @@ namespace PMDC.Dungeon
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 570);//parabolic charge
                             }
                             break;
-                        case 05://fairy
+                        case "fairy":
                             {
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 617);//light of ruin
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 585);//moonblast
@@ -996,7 +995,7 @@ namespace PMDC.Dungeon
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 605);//dazzling gleam
                             }
                             break;
-                        case 06://fighting
+                        case "fighting":
                             {
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 136);//high jump kick
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 370);//close combat
@@ -1008,7 +1007,7 @@ namespace PMDC.Dungeon
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 409);//drain punch
                             }
                             break;
-                        case 07://fire
+                        case "fire":
                             {
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 557);//v-create
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 307);//blast burn
@@ -1025,7 +1024,7 @@ namespace PMDC.Dungeon
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 558);//fusion flare
                             }
                             break;
-                        case 08://flying
+                        case "flying":
                             {
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 413);//brave bird
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 620);//dragon ascent
@@ -1035,7 +1034,7 @@ namespace PMDC.Dungeon
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 143);//sky attack
                             }
                             break;
-                        case 09://ghost
+                        case "ghost":
                             {
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 467);//shadow force
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 247);//shadow ball
@@ -1043,7 +1042,7 @@ namespace PMDC.Dungeon
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 506);//hex
                             }
                             break;
-                        case 10://grass
+                        case "grass":
                             {
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 437);//leaf storm
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 338);//frenzy plant
@@ -1056,7 +1055,7 @@ namespace PMDC.Dungeon
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 202);//giga drain
                             }
                             break;
-                        case 11://ground
+                        case "ground":
                             {
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 619);//precipice blades
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 616);//land's wrath
@@ -1066,7 +1065,7 @@ namespace PMDC.Dungeon
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 615);//thousand waves
                             }
                             break;
-                        case 12://ice
+                        case "ice":
                             {
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 59);//blizzard
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 58);//ice beam
@@ -1076,7 +1075,7 @@ namespace PMDC.Dungeon
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 553);//freeze shock
                             }
                             break;
-                        case 13://normal
+                        case "normal":
                             {
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 304);//hyper voice
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 416);//giga impact
@@ -1084,7 +1083,7 @@ namespace PMDC.Dungeon
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 161);//tri-attack
                             }
                             break;
-                        case 14://poison
+                        case "poison":
                             {
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 441);//gunk shot
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 482);//sludge wave
@@ -1093,7 +1092,7 @@ namespace PMDC.Dungeon
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 474);//venoshock
                             }
                             break;
-                        case 15://psychic
+                        case "psychic":
                             {
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 94);//psychic
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 593);//hyperspace hole
@@ -1102,7 +1101,7 @@ namespace PMDC.Dungeon
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 428);//zen headbutt
                             }
                             break;
-                        case 16://rock
+                        case "rock":
                             {
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 457);//head smash
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 439);//rock wrecker
@@ -1113,7 +1112,7 @@ namespace PMDC.Dungeon
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 591);//diamond storm
                             }
                             break;
-                        case 17://steel
+                        case "steel":
                             {
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 309);//meteor mash
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 231);//iron tail
@@ -1122,7 +1121,7 @@ namespace PMDC.Dungeon
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 443);//magnet bomb
                             }
                             break;
-                        case 18://water
+                        case "water":
                             {
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 308);//hydro cannon
                                 tryAddTargetMove(context.User, seenFoes, tryingMoves, 56);//hydro pump
@@ -1207,15 +1206,16 @@ namespace PMDC.Dungeon
     public class NatureMoveEvent : InvokedMoveEvent
     {
         public Dictionary<int, int> TerrainPair;
-        //[DataType(1, DataManager.DataType.Element, false)]
-        public Dictionary<int, int> NaturePair;
+        [JsonConverter(typeof(ElementSkillDictConverter))]
+        [DataType(1, DataManager.DataType.Element, false)]
+        public Dictionary<string, int> NaturePair;
 
         public NatureMoveEvent()
         {
             TerrainPair = new Dictionary<int, int>();
-            NaturePair = new Dictionary<int, int>();
+            NaturePair = new Dictionary<string, int>();
         }
-        public NatureMoveEvent(Dictionary<int, int> terrain, Dictionary<int, int> moves)
+        public NatureMoveEvent(Dictionary<int, int> terrain, Dictionary<string, int> moves)
         {
             TerrainPair = terrain;
             NaturePair = moves;
@@ -1225,7 +1225,7 @@ namespace PMDC.Dungeon
         {
             foreach (int terrain in other.TerrainPair.Keys)
                 TerrainPair.Add(terrain, other.TerrainPair[terrain]);
-            foreach (int element in other.NaturePair.Keys)
+            foreach (string element in other.NaturePair.Keys)
                 NaturePair.Add(element, other.NaturePair[element]);
         }
         public override GameEvent Clone() { return new NatureMoveEvent(this); }
@@ -1326,15 +1326,16 @@ namespace PMDC.Dungeon
     [Serializable]
     public class ElementDifferentUseEvent : BattleEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int Element;
+        public string Element;
         //also need to somehow specify alternative animations/sounds
         public CombatAction HitboxAction;
         public ExplosionData Explosion;
         public BattleData NewData;
 
-        public ElementDifferentUseEvent() { }
-        public ElementDifferentUseEvent(int element, CombatAction action, ExplosionData explosion, BattleData moveData)
+        public ElementDifferentUseEvent() { Element = ""; }
+        public ElementDifferentUseEvent(string element, CombatAction action, ExplosionData explosion, BattleData moveData)
         {
             Element = element;
             HitboxAction = action;
@@ -1670,8 +1671,9 @@ namespace PMDC.Dungeon
     [Serializable]
     public class AbsorbElementEvent : BattleEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int AbsorbElement;
+        public string AbsorbElement;
         public bool SingleDraw;
         public bool GiveMsg;
         public List<BattleEvent> BaseEvents;
@@ -1680,12 +1682,12 @@ namespace PMDC.Dungeon
         [Sound(0)]
         public string Sound;
 
-        public AbsorbElementEvent() { BaseEvents = new List<BattleEvent>(); Emitter = new EmptyFiniteEmitter(); }
-        public AbsorbElementEvent(int element, params BattleEvent[] effects)
+        public AbsorbElementEvent() { BaseEvents = new List<BattleEvent>(); Emitter = new EmptyFiniteEmitter(); AbsorbElement = ""; }
+        public AbsorbElementEvent(string element, params BattleEvent[] effects)
             : this(element, false, effects) { }
-        public AbsorbElementEvent(int element, bool singleDraw, params BattleEvent[] effects)
+        public AbsorbElementEvent(string element, bool singleDraw, params BattleEvent[] effects)
             : this(element, false, false, new EmptyFiniteEmitter(), "", effects) { }
-        public AbsorbElementEvent(int element, bool singleDraw, bool giveMsg, FiniteEmitter emitter, string sound, params BattleEvent[] effects)
+        public AbsorbElementEvent(string element, bool singleDraw, bool giveMsg, FiniteEmitter emitter, string sound, params BattleEvent[] effects)
             : this()
         {
             AbsorbElement = element;
@@ -1794,8 +1796,9 @@ namespace PMDC.Dungeon
     [Serializable]
     public class MultiplyElementEvent : BattleEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int MultElement;
+        public string MultElement;
         public int Numerator;
         public int Denominator;
         public List<BattleAnimEvent> Anims;
@@ -1803,9 +1806,10 @@ namespace PMDC.Dungeon
 
         public MultiplyElementEvent()
         {
+            MultElement = "";
             Anims = new List<BattleAnimEvent>();
         }
-        public MultiplyElementEvent(int element, int numerator, int denominator, bool msg)
+        public MultiplyElementEvent(string element, int numerator, int denominator, bool msg)
         {
             MultElement = element;
             Numerator = numerator;
@@ -1813,7 +1817,7 @@ namespace PMDC.Dungeon
             Msg = msg;
             Anims = new List<BattleAnimEvent>();
         }
-        public MultiplyElementEvent(int element, int numerator, int denominator, bool msg, params BattleAnimEvent[] anims)
+        public MultiplyElementEvent(string element, int numerator, int denominator, bool msg, params BattleAnimEvent[] anims)
         {
             MultElement = element;
             Numerator = numerator;
@@ -1902,16 +1906,17 @@ namespace PMDC.Dungeon
     [Serializable]
     public class TeamReduceEvent : BattleEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int QualifyingElement;
+        public string QualifyingElement;
 
         public BattleEvent Tier1Event;
         public BattleEvent Tier2Event;
         public BattleEvent Tier3Event;
         public BattleEvent Tier4Event;
 
-        public TeamReduceEvent() { }
-        public TeamReduceEvent(int element, BattleEvent tier1, BattleEvent tier2, BattleEvent tier3, BattleEvent tier4)
+        public TeamReduceEvent() { QualifyingElement = ""; }
+        public TeamReduceEvent(string element, BattleEvent tier1, BattleEvent tier2, BattleEvent tier3, BattleEvent tier4)
         {
             QualifyingElement = element;
             Tier1Event = tier1;
@@ -1959,11 +1964,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class PinchEvent : BattleEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int PinchElement;
+        public string PinchElement;
 
-        public PinchEvent() { }
-        public PinchEvent(int element)
+        public PinchEvent() { PinchElement = ""; }
+        public PinchEvent(string element)
         {
             PinchElement = element;
         }
@@ -2131,11 +2137,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class PrepareJudgmentEvent : BattleEvent
     {
+        [JsonConverter(typeof(ItemElementDictConverter))]
         [DataType(2, DataManager.DataType.Element, false)]
-        public Dictionary<int, int> TypePair;
+        public Dictionary<int, string> TypePair;
 
-        public PrepareJudgmentEvent() { TypePair = new Dictionary<int, int>(); }
-        public PrepareJudgmentEvent(Dictionary<int, int> weather)
+        public PrepareJudgmentEvent() { TypePair = new Dictionary<int, string>(); }
+        public PrepareJudgmentEvent(Dictionary<int, string> weather)
         {
             TypePair = weather;
         }
@@ -2153,9 +2160,9 @@ namespace PMDC.Dungeon
             if (context.StrikesMade == 0)
             {
                 JudgmentContext judgment = new JudgmentContext();
-                int heldElement;
+                string heldElement;
                 if (!TypePair.TryGetValue(context.User.EquippedItem.ID, out heldElement))
-                    heldElement = 13;
+                    heldElement = "normal";
                 judgment.Elements.Add(heldElement);
 
                 if (context.User.MemberTeam is ExplorerTeam)
@@ -2164,7 +2171,7 @@ namespace PMDC.Dungeon
                     ExplorerTeam team = (ExplorerTeam)context.User.MemberTeam;
                     for (int ii = 0; ii < team.GetInvCount(); ii++)
                     {
-                        int element;
+                        string element;
                         if (TypePair.TryGetValue(team.GetInv(ii).ID, out element))
                         {
                             //check to see if it's not on the list already
@@ -2202,13 +2209,15 @@ namespace PMDC.Dungeon
     [Serializable]
     public class ChangeMoveElementEvent : BattleEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int ElementFrom;
+        public string ElementFrom;
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int ElementTo;
+        public string ElementTo;
 
-        public ChangeMoveElementEvent() { }
-        public ChangeMoveElementEvent(int elementFrom, int elementTo)
+        public ChangeMoveElementEvent() { ElementFrom = ""; ElementTo = ""; }
+        public ChangeMoveElementEvent(string elementFrom, string elementTo)
         {
             ElementFrom = elementFrom;
             ElementTo = elementTo;
@@ -2221,7 +2230,7 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new ChangeMoveElementEvent(this); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (ElementFrom == 00 || context.Data.Element == ElementFrom)
+            if (ElementFrom == DataManager.Instance.DefaultElement || context.Data.Element == ElementFrom)
                 context.Data.Element = ElementTo;
             yield break;
         }
@@ -2323,16 +2332,17 @@ namespace PMDC.Dungeon
     [Serializable]
     public class TypeSpecificMultCategoryEvent : BattleEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int Element;
+        public string Element;
         public ContextState NoDupeState;
         public BattleData.SkillCategory Category;
         public int NumeratorAdd;
         public int Denominator;
 
         public TypeSpecificMultCategoryEvent()
-        { }
-        public TypeSpecificMultCategoryEvent(int element, ContextState state, BattleData.SkillCategory category, int denominator, int numerator)
+        { Element = ""; }
+        public TypeSpecificMultCategoryEvent(string element, ContextState state, BattleData.SkillCategory category, int denominator, int numerator)
         {
             Element = element;
             NoDupeState = state;
@@ -2991,7 +3001,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             //typeless attacks bypass
-            if (context.Data.Element == 0)
+            if (context.Data.Element == DataManager.Instance.DefaultElement)
                 yield break;
 
             int typeMatchup = PreTypeEvent.GetDualEffectiveness(context.User, context.Target, context.Data);
@@ -4240,11 +4250,12 @@ namespace PMDC.Dungeon
     {
         public int Numerator;
         public int Denominator;
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int CounterElement;
+        public string CounterElement;
 
-        public CounterTypeEvent() { }
-        public CounterTypeEvent(int element, int numerator, int denominator)
+        public CounterTypeEvent() { CounterElement = ""; }
+        public CounterTypeEvent(string element, int numerator, int denominator)
         {
             CounterElement = element;
             Numerator = numerator;
@@ -4261,7 +4272,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             int damage = context.GetContextStateInt<DamageDealt>(0);
-            if (damage > 0 && context.ActionType == BattleActionType.Skill && (CounterElement == 00 || context.Data.Element == CounterElement) && DungeonScene.Instance.GetMatchup(context.User, context.Target) != Alignment.Self)
+            if (damage > 0 && context.ActionType == BattleActionType.Skill && (CounterElement == DataManager.Instance.DefaultElement || context.Data.Element == CounterElement) && DungeonScene.Instance.GetMatchup(context.User, context.Target) != Alignment.Self)
             {
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_REFLECT").ToLocal()));
 
@@ -4752,11 +4763,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class EndureElementEvent : BattleEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int Element;
+        public string Element;
 
-        public EndureElementEvent() { }
-        public EndureElementEvent(int element)
+        public EndureElementEvent() { Element = ""; }
+        public EndureElementEvent(string element)
         {
             Element = element;
         }
@@ -5171,7 +5183,7 @@ namespace PMDC.Dungeon
             if (!context.ContextStates.Contains<MoveCharge>())
             {
                 BattleData altMoveData = new BattleData();
-                altMoveData.Element = 00;
+                altMoveData.Element = DataManager.Instance.DefaultElement;
                 altMoveData.Category = BattleData.SkillCategory.None;
                 altMoveData.HitRate = -1;
                 altMoveData.OnHits.Add(0, new StatusBattleEvent(ChargeStatus, true, false));
@@ -5220,7 +5232,7 @@ namespace PMDC.Dungeon
             if (!context.ContextStates.Contains<MoveBide>())
             {
                 BattleData altMoveData = new BattleData();
-                altMoveData.Element = 00;
+                altMoveData.Element = DataManager.Instance.DefaultElement;
                 altMoveData.Category = BattleData.SkillCategory.None;
                 altMoveData.HitRate = -1;
                 altMoveData.OnHits.Add(0, new StatusBattleEvent(ChargeStatus, true, false));
@@ -5278,7 +5290,7 @@ namespace PMDC.Dungeon
             if (!context.ContextStates.Contains<FollowUp>())
             {
                 BattleData altMoveData = new BattleData();
-                altMoveData.Element = 00;
+                altMoveData.Element = DataManager.Instance.DefaultElement;
                 altMoveData.Category = BattleData.SkillCategory.None;
                 altMoveData.HitRate = -1;
                 altMoveData.OnHits.Add(0, new StatusBattleEvent(ChargeStatus, true, false));
@@ -5719,14 +5731,15 @@ namespace PMDC.Dungeon
     [Serializable]
     public class CheckImmunityBattleEvent : BattleEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int Element;
+        public string Element;
         public bool AffectTarget;
 
         public List<BattleEvent> BaseEvents;
 
-        public CheckImmunityBattleEvent() { BaseEvents = new List<BattleEvent>(); }
-        public CheckImmunityBattleEvent(int element, bool affectTarget, params BattleEvent[] effects)
+        public CheckImmunityBattleEvent() { BaseEvents = new List<BattleEvent>(); Element = ""; }
+        public CheckImmunityBattleEvent(string element, bool affectTarget, params BattleEvent[] effects)
         {
             Element = element;
             AffectTarget = affectTarget;
@@ -5994,7 +6007,7 @@ namespace PMDC.Dungeon
             if (context.UsageSlot == BattleContext.FORCED_SLOT)
                 yield break;
 
-            if (context.Data.Element == 07)
+            if (context.Data.Element == "fire")
             {
                 yield return CoroutineManager.Instance.StartCoroutine(context.User.RemoveStatusEffect(((StatusEffect)owner).ID));
                 yield break;
@@ -6016,7 +6029,7 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new ThawEvent(); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.Data.Element == 07)
+            if (context.Data.Element == "fire")
                 yield return CoroutineManager.Instance.StartCoroutine(context.Target.RemoveStatusEffect(((StatusEffect)owner).ID));
             else
             {
@@ -6119,11 +6132,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class GummiEvent : BattleEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int TargetElement;
+        public string TargetElement;
 
-        public GummiEvent() { }
-        public GummiEvent(int element)
+        public GummiEvent() { TargetElement = ""; }
+        public GummiEvent(string element)
         {
             TargetElement = element;
         }
@@ -6143,7 +6157,7 @@ namespace PMDC.Dungeon
 
             int heal = 5;
             List<Stat> stats = new List<Stat>();
-            if (TargetElement == 00 || context.Target.Element1 == TargetElement || context.Target.Element2 == TargetElement)
+            if (TargetElement == DataManager.Instance.DefaultElement || context.Target.Element1 == TargetElement || context.Target.Element2 == TargetElement)
             {
                 heal = 20;
                 stats.Add(Stat.HP);
@@ -6539,8 +6553,14 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            ulong elementID = 1 + (ZoneManager.Instance.CurrentMap.Rand.FirstSeed ^ (ulong)context.User.Discriminator) % (ulong)(DataManager.Instance.DataIndices[DataManager.DataType.Element].Count - 1);
-            context.Data.Element = (int)elementID;
+            List<string> possibleElements = new List<string>();
+            foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Element].Entries.Keys)
+            {
+                if (key != DataManager.Instance.DefaultElement)
+                    possibleElements.Add(key);
+            }
+            ulong elementID = 1 + (ZoneManager.Instance.CurrentMap.Rand.FirstSeed ^ (ulong)context.User.Discriminator) % (ulong)(possibleElements.Count);
+            context.Data.Element = possibleElements[(int)elementID];
             ElementData element = DataManager.Instance.GetElement(context.Data.Element);
             DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SKILL_TO_ELEMENT").ToLocal(), element.GetIconName()));
             yield break;
@@ -6563,11 +6583,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class ItemPowerEvent : BattleEvent
     {
+        [JsonConverter(typeof(ItemElementDictConverter))]
         [DataType(2, DataManager.DataType.Element, false)]
-        public Dictionary<int, int> ItemPair;
+        public Dictionary<int, string> ItemPair;
 
-        public ItemPowerEvent() { ItemPair = new Dictionary<int, int>(); }
-        public ItemPowerEvent(Dictionary<int, int> weather)
+        public ItemPowerEvent() { ItemPair = new Dictionary<int, string>(); }
+        public ItemPowerEvent(Dictionary<int, string> weather)
         {
             ItemPair = weather;
         }
@@ -6581,7 +6602,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            int element;
+            string element;
             if (ItemPair.TryGetValue(context.User.EquippedItem.ID, out element))
             {
                 context.Data.Element = element;
@@ -7089,8 +7110,8 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.User.Element1 != 00 && context.Target.HasElement(context.User.Element1)
-                || context.User.Element2 != 00 && context.Target.HasElement(context.User.Element2))
+            if (context.User.Element1 != DataManager.Instance.DefaultElement && context.Target.HasElement(context.User.Element1)
+                || context.User.Element2 != DataManager.Instance.DefaultElement && context.Target.HasElement(context.User.Element2))
             {
 
             }
@@ -8005,11 +8026,12 @@ namespace PMDC.Dungeon
     public class CharElementNeededEvent : BattleEvent
     {
         public List<BattleEvent> BaseEvents;
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int NeededElement;
+        public string NeededElement;
 
-        public CharElementNeededEvent() { BaseEvents = new List<BattleEvent>(); }
-        public CharElementNeededEvent(int element, params BattleEvent[] effects)
+        public CharElementNeededEvent() { BaseEvents = new List<BattleEvent>(); NeededElement = ""; }
+        public CharElementNeededEvent(string element, params BattleEvent[] effects)
             : this()
         {
             NeededElement = element;
@@ -8040,11 +8062,13 @@ namespace PMDC.Dungeon
     public class ElementNeededEvent : BattleEvent
     {
         public List<BattleEvent> BaseEvents;
-        [DataType(0, DataManager.DataType.Element, false)]
-        public int NeededElement;
 
-        public ElementNeededEvent() { BaseEvents = new List<BattleEvent>(); }
-        public ElementNeededEvent(int element, params BattleEvent[] effects)
+        [JsonConverter(typeof(ElementConverter))]
+        [DataType(0, DataManager.DataType.Element, false)]
+        public string NeededElement;
+
+        public ElementNeededEvent() { BaseEvents = new List<BattleEvent>(); NeededElement = ""; }
+        public ElementNeededEvent(string element, params BattleEvent[] effects)
             : this()
         {
             NeededElement = element;
@@ -8863,12 +8887,13 @@ namespace PMDC.Dungeon
     [Serializable]
     public class StatusElementBattleEvent : StatusBattleEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int Element;
+        public string Element;
 
-        public StatusElementBattleEvent() { }
-        public StatusElementBattleEvent(int statusID, bool affectTarget, bool silentCheck, int element) : this(statusID, affectTarget, silentCheck, false, element) { }
-        public StatusElementBattleEvent(int statusID, bool affectTarget, bool silentCheck, bool anonymous, int element)
+        public StatusElementBattleEvent() { Element = ""; }
+        public StatusElementBattleEvent(int statusID, bool affectTarget, bool silentCheck, string element) : this(statusID, affectTarget, silentCheck, false, element) { }
+        public StatusElementBattleEvent(int statusID, bool affectTarget, bool silentCheck, bool anonymous, string element)
             : base(statusID, affectTarget, silentCheck, anonymous)
         {
             Element = element;
@@ -9069,15 +9094,16 @@ namespace PMDC.Dungeon
     public class NatureSpecialEvent : BattleEvent
     {
         public Dictionary<int, BattleEvent> TerrainPair;
-        //[DataType(1, DataManager.DataType.Element, false)]
-        public Dictionary<int, BattleEvent> NaturePair;
+        [JsonConverter(typeof(ElementBattleEventDictConverter))]
+        [DataType(1, DataManager.DataType.Element, false)]
+        public Dictionary<string, BattleEvent> NaturePair;
 
         public NatureSpecialEvent()
         {
             TerrainPair = new Dictionary<int, BattleEvent>();
-            NaturePair = new Dictionary<int, BattleEvent>();
+            NaturePair = new Dictionary<string, BattleEvent>();
         }
-        public NatureSpecialEvent(Dictionary<int, BattleEvent> terrain, Dictionary<int, BattleEvent> moves)
+        public NatureSpecialEvent(Dictionary<int, BattleEvent> terrain, Dictionary<string, BattleEvent> moves)
         {
             TerrainPair = terrain;
             NaturePair = moves;
@@ -9087,7 +9113,7 @@ namespace PMDC.Dungeon
         {
             foreach (int terrain in other.TerrainPair.Keys)
                 TerrainPair.Add(terrain, (BattleEvent)other.TerrainPair[terrain].Clone());
-            foreach (int element in other.NaturePair.Keys)
+            foreach (string element in other.NaturePair.Keys)
                 NaturePair.Add(element, (BattleEvent)other.NaturePair[element].Clone());
         }
         public override GameEvent Clone() { return new NatureSpecialEvent(this); }
@@ -9214,18 +9240,19 @@ namespace PMDC.Dungeon
     [Serializable]
     public class TypeWeatherEvent : BattleEvent
     {
-        //[DataType(1, DataManager.DataType.Element, false)]
-        public Dictionary<int, int> WeatherPair;
+        [JsonConverter(typeof(ElementMapStatusDictConverter))]
+        [DataType(1, DataManager.DataType.Element, false)]
+        public Dictionary<string, int> WeatherPair;
 
-        public TypeWeatherEvent() { WeatherPair = new Dictionary<int, int>(); }
-        public TypeWeatherEvent(Dictionary<int, int> weather)
+        public TypeWeatherEvent() { WeatherPair = new Dictionary<string, int>(); }
+        public TypeWeatherEvent(Dictionary<string, int> weather)
         {
             WeatherPair = weather;
         }
         protected TypeWeatherEvent(TypeWeatherEvent other)
             : this()
         {
-            foreach (int element in other.WeatherPair.Keys)
+            foreach (string element in other.WeatherPair.Keys)
                 WeatherPair.Add(element, other.WeatherPair[element]);
         }
         public override GameEvent Clone() { return new TypeWeatherEvent(this); }
@@ -10285,12 +10312,13 @@ namespace PMDC.Dungeon
     [Serializable]
     public class IndirectElementDamageEvent : BattleEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int Element;
+        public string Element;
         public int HPFraction;
 
-        public IndirectElementDamageEvent() { }
-        public IndirectElementDamageEvent(int element, int hpFraction)
+        public IndirectElementDamageEvent() { Element = ""; }
+        public IndirectElementDamageEvent(string element, int hpFraction)
         {
             Element = element;
             HPFraction = hpFraction;
@@ -11119,18 +11147,19 @@ namespace PMDC.Dungeon
     [Serializable]
     public class PlateProtectEvent : BattleEvent
     {
-        //[DataType(1, DataManager.DataType.Element, false)]
-        public Dictionary<int, int> TypePair;
+        [JsonConverter(typeof(ElementItemDictConverter))]
+        [DataType(1, DataManager.DataType.Element, false)]
+        public Dictionary<string, int> TypePair;
 
-        public PlateProtectEvent() { TypePair = new Dictionary<int, int>(); }
-        public PlateProtectEvent(Dictionary<int, int> weather)
+        public PlateProtectEvent() { TypePair = new Dictionary<string, int>(); }
+        public PlateProtectEvent(Dictionary<string, int> weather)
         {
             TypePair = weather;
         }
         protected PlateProtectEvent(PlateProtectEvent other)
             : this()
         {
-            foreach (int element in other.TypePair.Keys)
+            foreach (string element in other.TypePair.Keys)
                 TypePair.Add(element, other.TypePair[element]);
         }
         public override GameEvent Clone() { return new PlateProtectEvent(this); }
@@ -12300,11 +12329,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class ChangeToElementEvent : BattleEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int TargetElement;
+        public string TargetElement;
 
-        public ChangeToElementEvent() { }
-        public ChangeToElementEvent(int element)
+        public ChangeToElementEvent() { TargetElement = ""; }
+        public ChangeToElementEvent(string element)
         {
             TargetElement = element;
         }
@@ -12316,8 +12346,8 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (!(TargetElement == context.Target.Element1 && context.Target.Element2 == 00))
-                yield return CoroutineManager.Instance.StartCoroutine(context.Target.ChangeElement(TargetElement, 00));
+            if (!(TargetElement == context.Target.Element1 && context.Target.Element2 == DataManager.Instance.DefaultElement))
+                yield return CoroutineManager.Instance.StartCoroutine(context.Target.ChangeElement(TargetElement, DataManager.Instance.DefaultElement));
             else
             {
                 ElementData typeData = DataManager.Instance.GetElement(TargetElement);
@@ -12329,11 +12359,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class AddElementEvent : BattleEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int TargetElement;
+        public string TargetElement;
 
-        public AddElementEvent() { }
-        public AddElementEvent(int element)
+        public AddElementEvent() { TargetElement = ""; }
+        public AddElementEvent(string element)
         {
             TargetElement = element;
         }
@@ -12358,11 +12389,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class RemoveElementEvent : BattleEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int TargetElement;
+        public string TargetElement;
 
-        public RemoveElementEvent() { }
-        public RemoveElementEvent(int element)
+        public RemoveElementEvent() { TargetElement = ""; }
+        public RemoveElementEvent(string element)
         {
             TargetElement = element;
         }
@@ -12375,9 +12407,9 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             if (context.Target.Element2 == TargetElement)
-                yield return CoroutineManager.Instance.StartCoroutine(context.Target.ChangeElement(context.Target.Element1, 00, true, false));
+                yield return CoroutineManager.Instance.StartCoroutine(context.Target.ChangeElement(context.Target.Element1, DataManager.Instance.DefaultElement, true, false));
             if (context.Target.Element1 == TargetElement)
-                yield return CoroutineManager.Instance.StartCoroutine(context.Target.ChangeElement(context.Target.Element2, 00, true, false));
+                yield return CoroutineManager.Instance.StartCoroutine(context.Target.ChangeElement(context.Target.Element2, DataManager.Instance.DefaultElement, true, false));
         }
     }
 
@@ -12396,14 +12428,15 @@ namespace PMDC.Dungeon
     [Serializable]
     public class NatureElementEvent : BattleEvent
     {
+        [JsonConverter(typeof(MapStatusElementDictConverter))]
         [DataType(2, DataManager.DataType.Element, false)]
-        public Dictionary<int, int> TerrainPair;
+        public Dictionary<int, string> TerrainPair;
 
         public NatureElementEvent()
         {
-            TerrainPair = new Dictionary<int, int>();
+            TerrainPair = new Dictionary<int, string>();
         }
-        public NatureElementEvent(Dictionary<int, int> terrain)
+        public NatureElementEvent(Dictionary<int, string> terrain)
         {
             TerrainPair = terrain;
         }
@@ -12421,13 +12454,13 @@ namespace PMDC.Dungeon
             {
                 if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(terrain))
                 {
-                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.ChangeElement(TerrainPair[terrain], 00));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.ChangeElement(TerrainPair[terrain], DataManager.Instance.DefaultElement));
                     yield break;
                 }
             }
 
-            if (ZoneManager.Instance.CurrentMap.Element != 00)
-                yield return CoroutineManager.Instance.StartCoroutine(context.Target.ChangeElement(ZoneManager.Instance.CurrentMap.Element, 00));
+            if (ZoneManager.Instance.CurrentMap.Element != DataManager.Instance.DefaultElement)
+                yield return CoroutineManager.Instance.StartCoroutine(context.Target.ChangeElement(ZoneManager.Instance.CurrentMap.Element, DataManager.Instance.DefaultElement));
         }
     }
 
@@ -14111,16 +14144,17 @@ namespace PMDC.Dungeon
     [Serializable]
     public class TypeRecruitmentEvent : RecruitBoostEvent
     {
+        [JsonConverter(typeof(ElementSetConverter))]
         [DataType(1, DataManager.DataType.Element, false)]
-        public HashSet<int> Elements;
+        public HashSet<string> Elements;
 
-        public TypeRecruitmentEvent() { Elements = new HashSet<int>(); }
-        public TypeRecruitmentEvent(int element) : this() { Elements.Add(element); }
-        public TypeRecruitmentEvent(HashSet<int> elements) { Elements = elements; }
+        public TypeRecruitmentEvent() { Elements = new HashSet<string>(); }
+        public TypeRecruitmentEvent(string element) : this() { Elements.Add(element); }
+        public TypeRecruitmentEvent(HashSet<string> elements) { Elements = elements; }
         protected TypeRecruitmentEvent(TypeRecruitmentEvent other)
             : this()
         {
-            foreach (int element in other.Elements)
+            foreach (string element in other.Elements)
                 Elements.Add(element);
         }
         public override GameEvent Clone() { return new TypeRecruitmentEvent(this); }

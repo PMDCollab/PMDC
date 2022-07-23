@@ -3,6 +3,7 @@ using RogueEssence.Data;
 using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Dev;
+using Newtonsoft.Json;
 
 namespace PMDC.Dungeon
 {
@@ -92,10 +93,11 @@ namespace PMDC.Dungeon
     [Serializable]
     public class ElementState : StatusState
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int Element;
+        public string Element;
         public ElementState() { }
-        public ElementState(int element) { Element = element; }
+        public ElementState(string element) { Element = element; }
         protected ElementState(ElementState other) { Element = other.Element; }
         public override GameplayState Clone() { return new ElementState(this); }
     }

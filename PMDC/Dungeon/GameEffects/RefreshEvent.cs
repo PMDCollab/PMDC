@@ -4,6 +4,7 @@ using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Dev;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace PMDC.Dungeon
 {
@@ -13,16 +14,16 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new RefreshPreEvent(); }
         public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (character.HasElement(18) || character.HasElement(08) || character.HasElement(03))
+            if (character.HasElement("water") || character.HasElement("flying") || character.HasElement("dragon"))
                 character.Mobility |= (1U << (int)TerrainData.Mobility.Water);
 
-            if (character.HasElement(07) || character.HasElement(08) || character.HasElement(03))
+            if (character.HasElement("fire") || character.HasElement("flying") || character.HasElement("dragon"))
                 character.Mobility |= (1U << (int)TerrainData.Mobility.Lava);
 
-            if (character.HasElement(08))
+            if (character.HasElement("flying"))
                 character.Mobility |= (1U << (int)TerrainData.Mobility.Abyss);
 
-            if (character.HasElement(09))
+            if (character.HasElement("ghost"))
                 character.Mobility |= (1U << (int)TerrainData.Mobility.Block);
 
         }
@@ -233,10 +234,11 @@ namespace PMDC.Dungeon
     public class AddTypeSpeedEvent : RefreshEvent
     {
         public CharState NoDupeEffect;
-        public int Element;
+        [JsonConverter(typeof(ElementConverter))]
+        public string Element;
         public int Speed;
-        public AddTypeSpeedEvent() { }
-        public AddTypeSpeedEvent(int element, int speed, CharState effect)
+        public AddTypeSpeedEvent() { Element = ""; }
+        public AddTypeSpeedEvent(string element, int speed, CharState effect)
         {
             Element = element;
             Speed = speed;

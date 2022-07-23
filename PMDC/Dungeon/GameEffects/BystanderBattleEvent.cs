@@ -6,6 +6,7 @@ using RogueEssence.Content;
 using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Dev;
+using Newtonsoft.Json;
 
 namespace PMDC.Dungeon
 {
@@ -245,11 +246,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class IsolateElementEvent : BattleEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int Element;
+        public string Element;
 
-        public IsolateElementEvent() { }
-        public IsolateElementEvent(int element)
+        public IsolateElementEvent() { Element = ""; }
+        public IsolateElementEvent(string element)
         {
             Element = element;
         }
@@ -261,7 +263,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (Element != 00 && context.Data.Element != Element)
+            if (Element != DataManager.Instance.DefaultElement && context.Data.Element != Element)
                 yield break;
 
             if (ZoneManager.Instance.CurrentMap.GetCharAtLoc(context.ExplosionTile) != ownerChar)
@@ -274,13 +276,14 @@ namespace PMDC.Dungeon
     [Serializable]
     public class DrawAttackEvent : BattleEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int Element;
+        public string Element;
         public Alignment DrawFrom;
         public StringKey Msg;
 
-        public DrawAttackEvent() { }
-        public DrawAttackEvent(Alignment drawFrom, int element, StringKey msg)
+        public DrawAttackEvent() { Element = ""; }
+        public DrawAttackEvent(Alignment drawFrom, string element, StringKey msg)
         {
             DrawFrom = drawFrom;
             Element = element;
@@ -302,7 +305,7 @@ namespace PMDC.Dungeon
             if (context.ActionType == BattleActionType.Trap || context.ActionType == BattleActionType.Item)
                 yield break;
 
-            if (Element != 00 && context.Data.Element != Element)
+            if (Element != DataManager.Instance.DefaultElement && context.Data.Element != Element)
                 yield break;
 
             Character targetChar = ZoneManager.Instance.CurrentMap.GetCharAtLoc(context.ExplosionTile);

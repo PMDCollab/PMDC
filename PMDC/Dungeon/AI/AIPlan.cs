@@ -192,9 +192,9 @@ namespace PMDC.Dungeon
                 }
             }
 
-            if (tile.Data.ID == "lava" && !controlledChar.HasElement(07))//check for lava; NOTE: specialized AI code!
+            if (tile.Data.ID == "lava" && !controlledChar.HasElement("fire"))//check for lava; NOTE: specialized AI code!
                 return true;
-            if (tile.Data.ID == "poison_water" && !controlledChar.HasElement(14) && !controlledChar.HasElement(17))//check for poison; NOTE: specialized AI code!
+            if (tile.Data.ID == "poison_water" && !controlledChar.HasElement("poison") && !controlledChar.HasElement("steel"))//check for poison; NOTE: specialized AI code!
                 return true;
             if (tile.Data.ID == DataManager.Instance.GenWall && controlledChar.MemberTeam is ExplorerTeam)//check for block; NOTE: specialized AI code!
             {
@@ -1299,7 +1299,7 @@ namespace PMDC.Dungeon
                     break;
                 case 174: // curse
                     {
-                        if (controlledChar.HasElement(09))
+                        if (controlledChar.HasElement("ghost"))
                         {
                             foreach (BattleEvent effect in entry.Data.OnActions.EnumerateInOrder())
                             {
@@ -2084,27 +2084,27 @@ namespace PMDC.Dungeon
                             }
                             else if (giveEffect.StatusID == 2 && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//burn NOTE: specialized code!
                             {
-                                if (!statusTarget.HasElement(07))
+                                if (!statusTarget.HasElement("fire"))
                                     addedWorth = 100;
                             }
                             else if (giveEffect.StatusID == 3 && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//freeze NOTE: specialized code!
                             {
-                                if (!statusTarget.HasElement(12))
+                                if (!statusTarget.HasElement("ice"))
                                     addedWorth = 100;
                             }
                             else if (giveEffect.StatusID == 4 && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//paralyze NOTE: specialized code!
                             {
-                                if (!statusTarget.HasElement(04))
+                                if (!statusTarget.HasElement("electric"))
                                     addedWorth = 100;
                             }
                             else if ((giveEffect.StatusID == 5 || giveEffect.StatusID == 6) && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//poison NOTE: specialized code!
                             {
-                                if (!statusTarget.HasElement(14) && !statusTarget.HasElement(17))
+                                if (!statusTarget.HasElement("poison") && !statusTarget.HasElement("steel"))
                                     addedWorth = 100;
                             }
                             else if (giveEffect.StatusID == 90 && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//immobilize NOTE: specialized code!
                             {
-                                if (!statusTarget.HasElement(09))
+                                if (!statusTarget.HasElement("ghost"))
                                     addedWorth = 100;
                             }
                             else if (giveEffect.StatusID == 60)//disable NOTE: specialized code!

@@ -2225,13 +2225,14 @@ namespace PMDC.Dungeon
     [Serializable]
     public class PlateElementEvent : SingleCharEvent
     {
+        [JsonConverter(typeof(ItemElementDictConverter))]
         [DataType(2, DataManager.DataType.Element, false)]
-        public Dictionary<int, int> TypePair;
+        public Dictionary<int, string> TypePair;
 
-        public PlateElementEvent() { TypePair = new Dictionary<int, int>(); }
-        public PlateElementEvent(Dictionary<int, int> weather)
+        public PlateElementEvent() { TypePair = new Dictionary<int, string>(); }
+        public PlateElementEvent(Dictionary<int, string> typePair)
         {
-            TypePair = weather;
+            TypePair = typePair;
         }
         protected PlateElementEvent(PlateElementEvent other)
             : this()
@@ -2243,12 +2244,12 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            int element;
+            string element;
             if (!TypePair.TryGetValue(character.EquippedItem.ID, out element))
-                element = 13;
+                element = "normal";
 
-            if (!(character.Element1 == element && character.Element2 == 00))
-                yield return CoroutineManager.Instance.StartCoroutine(character.ChangeElement(element, 00));
+            if (!(character.Element1 == element && character.Element2 == DataManager.Instance.DefaultElement))
+                yield return CoroutineManager.Instance.StartCoroutine(character.ChangeElement(element, DataManager.Instance.DefaultElement));
         }
     }
 
@@ -2341,23 +2342,24 @@ namespace PMDC.Dungeon
     {
         [StringTypeConstraint(1, typeof(CharState))]
         public List<FlagType> States;
+        [JsonConverter(typeof(ElementSetConverter))]
         [DataType(1, DataManager.DataType.Element, false)]
-        public HashSet<int> ExceptionElements;
+        public HashSet<string> ExceptionElements;
 
-        public WeatherDamageEvent() { States = new List<FlagType>(); ExceptionElements = new HashSet<int>(); }
-        public WeatherDamageEvent(Type[] state, params int[] elements)
+        public WeatherDamageEvent() { States = new List<FlagType>(); ExceptionElements = new HashSet<string>(); }
+        public WeatherDamageEvent(Type[] state, params string[] elements)
             : this()
         {
             foreach (Type stateType in state)
                 States.Add(new FlagType(stateType));
-            foreach (int element in elements)
+            foreach (string element in elements)
                 ExceptionElements.Add(element);
         }
         protected WeatherDamageEvent(WeatherDamageEvent other)
             : this()
         {
             States.AddRange(other.States);
-            foreach (int element in other.ExceptionElements)
+            foreach (string element in other.ExceptionElements)
                 ExceptionElements.Add(element);
         }
         public override GameEvent Clone() { return new WeatherDamageEvent(this); }
@@ -2372,7 +2374,7 @@ namespace PMDC.Dungeon
                         yield break;
                 }
 
-                foreach (int element in ExceptionElements)
+                foreach (string element in ExceptionElements)
                 {
                     if (character.HasElement(element))
                         yield break;
@@ -2387,20 +2389,21 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WeatherHealEvent : SingleCharEvent
     {
+        [JsonConverter(typeof(ElementSetConverter))]
         [DataType(1, DataManager.DataType.Element, false)]
-        public HashSet<int> ExceptionElements;
+        public HashSet<string> ExceptionElements;
 
-        public WeatherHealEvent() { ExceptionElements = new HashSet<int>(); }
-        public WeatherHealEvent(params int[] elements)
+        public WeatherHealEvent() { ExceptionElements = new HashSet<string>(); }
+        public WeatherHealEvent(params string[] elements)
             : this()
         {
-            foreach (int element in elements)
+            foreach (string element in elements)
                 ExceptionElements.Add(element);
         }
         protected WeatherHealEvent(WeatherHealEvent other)
             : this()
         {
-            foreach (int element in other.ExceptionElements)
+            foreach (string element in other.ExceptionElements)
                 ExceptionElements.Add(element);
         }
         public override GameEvent Clone() { return new WeatherHealEvent(this); }
@@ -2409,7 +2412,7 @@ namespace PMDC.Dungeon
         {
             if (character != null && ((MapStatus)owner).StatusStates.GetWithDefault<MapTickState>().Counter % 5 == 0)
             {
-                foreach (int element in ExceptionElements)
+                foreach (string element in ExceptionElements)
                 {
                     if (character.HasElement(element))
                         yield break;

@@ -7,6 +7,7 @@ using RogueEssence;
 using RogueEssence.LevelGen;
 using RogueEssence.Data;
 using PMDC.Data;
+using Newtonsoft.Json;
 
 namespace PMDC.LevelGen
 {
@@ -516,25 +517,26 @@ namespace PMDC.LevelGen
     [Serializable]
     public class MobThemeTypingChosen : MobThemeTyping
     {
+        [JsonConverter(typeof(ElementArrayConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int[] Types;
+        public string[] Types;
 
         public MobThemeTypingChosen() : base() { }
-        public MobThemeTypingChosen(EvoFlag allowance, RandRange amount, params int[] types) : base(allowance, amount)
+        public MobThemeTypingChosen(EvoFlag allowance, RandRange amount, params string[] types) : base(allowance, amount)
         {
             Types = types;
         }
         protected MobThemeTypingChosen(MobThemeTypingChosen other)  : base(other)
         {
-            Types = new int[other.Types.Length];
+            Types = new string[other.Types.Length];
             other.Types.CopyTo(Types, 0);
         }
         public override MobTheme Copy() { return new MobThemeTypingChosen(this); }
 
-        protected override List<int> GetTypes(BaseMapGenContext map, SpawnList<MobSpawn> specialMobs)
+        protected override List<string> GetTypes(BaseMapGenContext map, SpawnList<MobSpawn> specialMobs)
         {
-            List<int> result = new List<int>();
-            foreach (int type in Types)
+            List<string> result = new List<string>();
+            foreach (string type in Types)
                 result.Add(type);
             return result;
         }
@@ -549,9 +551,9 @@ namespace PMDC.LevelGen
         protected MobThemeTypingSeeded(MobThemeTypingSeeded other)  : base(other) { }
         public override MobTheme Copy() { return new MobThemeTypingSeeded(this); }
 
-        protected override List<int> GetTypes(BaseMapGenContext map, SpawnList<MobSpawn> specialMobs)
+        protected override List<string> GetTypes(BaseMapGenContext map, SpawnList<MobSpawn> specialMobs)
         {
-            Dictionary<int, int> elementFrequency = new Dictionary<int, int>();
+            Dictionary<string, int> elementFrequency = new Dictionary<string, int>();
 
             for (int ii = 0; ii < map.TeamSpawns.Count; ii++)
             {
@@ -561,9 +563,9 @@ namespace PMDC.LevelGen
                     MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
                     //TODO: String Assets
                     FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species.ToString()][Math.Max(0, spawn.BaseForm.Form)];
-                    if (baseData.Element1 != 00)
+                    if (baseData.Element1 != DataManager.Instance.DefaultElement)
                         MathUtils.AddToDictionary(elementFrequency, baseData.Element1, 1);
-                    if (baseData.Element2 != 00)
+                    if (baseData.Element2 != DataManager.Instance.DefaultElement)
                         MathUtils.AddToDictionary(elementFrequency, baseData.Element2, 1);
                 }
             }
@@ -576,20 +578,20 @@ namespace PMDC.LevelGen
                     MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
                     //TODO: String Assets
                     FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species.ToString()][Math.Max(0, spawn.BaseForm.Form)];
-                    if (baseData.Element1 != 00)
+                    if (baseData.Element1 != DataManager.Instance.DefaultElement)
                         MathUtils.AddToDictionary(elementFrequency, baseData.Element1, 1);
-                    if (baseData.Element2 != 00)
+                    if (baseData.Element2 != DataManager.Instance.DefaultElement)
                         MathUtils.AddToDictionary(elementFrequency, baseData.Element2, 1);
                 }
             }
 
-            List<int> result = new List<int>();
+            List<string> result = new List<string>();
 
             if (elementFrequency.Count > 0)
             {
                 //choose randomly from the top 3 types
-                List<(int, int)> elements = new List<(int, int)>();
-                foreach (int key in elementFrequency.Keys)
+                List<(string, int)> elements = new List<(string, int)>();
+                foreach (string key in elementFrequency.Keys)
                     elements.Add((key, elementFrequency[key]));
                 elements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
                 int max = elements[0].Item2;
@@ -617,7 +619,7 @@ namespace PMDC.LevelGen
         {
             int mobCount = Amount.Pick(map.Rand);
             List<MobSpawn> spawners = new List<MobSpawn>();
-            List<int> types = GetTypes(map, specialMobs);
+            List<string> types = GetTypes(map, specialMobs);
             SpawnList<MobSpawn> subList = new SpawnList<MobSpawn>();
             for (int ii = 0; ii < specialMobs.Count; ii++)
             {
@@ -645,15 +647,15 @@ namespace PMDC.LevelGen
             return spawners;
         }
 
-        protected abstract List<int> GetTypes(BaseMapGenContext map, SpawnList<MobSpawn> specialMobs);
+        protected abstract List<string> GetTypes(BaseMapGenContext map, SpawnList<MobSpawn> specialMobs);
 
-        protected bool CheckIfAllowed(BaseMapGenContext map, MobSpawn spawn, List<int> types)
+        protected bool CheckIfAllowed(BaseMapGenContext map, MobSpawn spawn, List<string> types)
         {
             MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
             //TODO: String Assets
             FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species.ToString()][Math.Max(0, spawn.BaseForm.Form)];
             bool matchesType = false;
-            foreach (int type in types)
+            foreach (string type in types)
             {
                 if (baseData.Element1 == type || baseData.Element2 == type)
                 {

@@ -6,6 +6,7 @@ using RogueElements;
 using RogueEssence;
 using RogueEssence.Data;
 using RogueEssence.Dev;
+using Newtonsoft.Json;
 
 namespace PMDC.Data
 {
@@ -210,8 +211,11 @@ namespace PMDC.Data
     [Serializable]
     public class EvoMoveElement : PromoteDetail
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int MoveElement;
+        public string MoveElement;
+
+        public EvoMoveElement() { MoveElement = ""; }
 
         public override string GetReqString()
         {
@@ -289,11 +293,12 @@ namespace PMDC.Data
     [Serializable]
     public class EvoLocation : PromoteDetail
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int TileElement;
+        public string TileElement;
 
-        public EvoLocation() { }
-        public EvoLocation(int element)
+        public EvoLocation() { TileElement = ""; }
+        public EvoLocation(string element)
         {
             TileElement = element;
         }
@@ -328,8 +333,11 @@ namespace PMDC.Data
     [Serializable]
     public class EvoPartnerElement : PromoteDetail
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int PartnerElement;
+        public string PartnerElement;
+
+        public EvoPartnerElement() { PartnerElement = ""; }
 
         public override string GetReqString()
         {

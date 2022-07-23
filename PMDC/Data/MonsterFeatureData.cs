@@ -27,8 +27,8 @@ namespace PMDC.Data
         public string Family;
         public EvoFlag Stage;
 
-        public int Element1;
-        public int Element2;
+        public string Element1;
+        public string Element2;
 
         public Stat BestStat;
         public Stat WorstStat;

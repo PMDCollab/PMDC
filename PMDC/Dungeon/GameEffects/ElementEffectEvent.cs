@@ -5,6 +5,7 @@ using RogueEssence.Dungeon;
 using RogueEssence.Dev;
 using System.Collections.Generic;
 using RogueElements;
+using Newtonsoft.Json;
 
 namespace PMDC.Dungeon
 {
@@ -38,10 +39,10 @@ namespace PMDC.Dungeon
                 return null;
         }
 
-        public static int CalculateTypeMatchup(int attackerType, int targetType)
+        public static int CalculateTypeMatchup(string attackerType, string targetType)
         {
             ElementTableState table = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<ElementTableState>();
-            return table.TypeMatchup[attackerType][targetType];
+            return table.GetMatchup(attackerType, targetType);
         }
 
         public static int GetEffectivenessMult(int effectiveness)
@@ -50,7 +51,7 @@ namespace PMDC.Dungeon
             return table.Effectiveness[effectiveness];
         }
 
-        public static int GetDualEffectiveness(Character attacker, Character target, int targetElement)
+        public static int GetDualEffectiveness(Character attacker, Character target, string targetElement)
         {
             return (DungeonScene.GetEffectiveness(attacker, target, targetElement, target.Element1) + DungeonScene.GetEffectiveness(attacker, target, targetElement, target.Element2));
         }
@@ -63,7 +64,7 @@ namespace PMDC.Dungeon
 
         public override GameEvent Clone() { return new PreTypeEvent(); }
 
-        public override void Apply(GameEventOwner owner, Character ownerChar, int moveType, int targetType, ref int effectiveness)
+        public override void Apply(GameEventOwner owner, Character ownerChar, string moveType, string targetType, ref int effectiveness)
         {
             effectiveness = CalculateTypeMatchup(moveType, targetType);
         }
@@ -82,7 +83,7 @@ namespace PMDC.Dungeon
         }
         public override GameEvent Clone() { return new FamilyMatchupEvent(this); }
 
-        public override void Apply(GameEventOwner owner, Character ownerChar, int moveType, int targetType, ref int effectiveness)
+        public override void Apply(GameEventOwner owner, Character ownerChar, string moveType, string targetType, ref int effectiveness)
         {
             ItemData entry = DataManager.Instance.GetItem(owner.GetID());
             FamilyState family;
@@ -97,15 +98,16 @@ namespace PMDC.Dungeon
     [Serializable]
     public class RemoveTypeMatchupEvent : ElementEffectEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int Element;
+        public string Element;
 
-        public RemoveTypeMatchupEvent() { }
-        public RemoveTypeMatchupEvent(int element) { Element = element; }
+        public RemoveTypeMatchupEvent() { Element = ""; }
+        public RemoveTypeMatchupEvent(string element) { Element = element; }
         protected RemoveTypeMatchupEvent(RemoveTypeMatchupEvent other) { Element = other.Element; }
         public override GameEvent Clone() { return new RemoveTypeMatchupEvent(this); }
 
-        public override void Apply(GameEventOwner owner, Character ownerChar, int moveType, int targetType, ref int effectiveness)
+        public override void Apply(GameEventOwner owner, Character ownerChar, string moveType, string targetType, ref int effectiveness)
         {
             if (targetType == Element)
                 effectiveness = PreTypeEvent.NRM;
@@ -114,15 +116,16 @@ namespace PMDC.Dungeon
     [Serializable]
     public class RemoveTypeWeaknessEvent : ElementEffectEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int Element;
+        public string Element;
 
-        public RemoveTypeWeaknessEvent() { }
-        public RemoveTypeWeaknessEvent(int element) { Element = element; }
+        public RemoveTypeWeaknessEvent() { Element = ""; }
+        public RemoveTypeWeaknessEvent(string element) { Element = element; }
         protected RemoveTypeWeaknessEvent(RemoveTypeWeaknessEvent other) { Element = other.Element; }
         public override GameEvent Clone() { return new RemoveTypeWeaknessEvent(this); }
 
-        public override void Apply(GameEventOwner owner, Character ownerChar, int moveType, int targetType, ref int effectiveness)
+        public override void Apply(GameEventOwner owner, Character ownerChar, string moveType, string targetType, ref int effectiveness)
         {
             if (targetType == Element && effectiveness > PreTypeEvent.NRM)
                 effectiveness = PreTypeEvent.NRM;
@@ -133,7 +136,7 @@ namespace PMDC.Dungeon
     {
         public override GameEvent Clone() { return new NoImmunityEvent(); }
 
-        public override void Apply(GameEventOwner owner, Character ownerChar, int moveType, int targetType, ref int effectiveness)
+        public override void Apply(GameEventOwner owner, Character ownerChar, string moveType, string targetType, ref int effectiveness)
         {
             if (effectiveness == PreTypeEvent.N_E)
                 effectiveness = PreTypeEvent.NRM;
@@ -142,15 +145,18 @@ namespace PMDC.Dungeon
     [Serializable]
     public class LessImmunityEvent : ElementEffectEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int AttackElement;
+        public string AttackElement;
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int TargetElement;
-        public LessImmunityEvent(int attackElement, int targetElement) { AttackElement = attackElement; TargetElement = targetElement; }
+        public string TargetElement;
+        public LessImmunityEvent() { AttackElement = ""; TargetElement = ""; }
+        public LessImmunityEvent(string attackElement, string targetElement) { AttackElement = attackElement; TargetElement = targetElement; }
         protected LessImmunityEvent(LessImmunityEvent other) { AttackElement = other.AttackElement; TargetElement = other.TargetElement; }
         public override GameEvent Clone() { return new LessImmunityEvent(this); }
 
-        public override void Apply(GameEventOwner owner, Character ownerChar, int moveType, int targetType, ref int effectiveness)
+        public override void Apply(GameEventOwner owner, Character ownerChar, string moveType, string targetType, ref int effectiveness)
         {
             if (effectiveness == PreTypeEvent.N_E && moveType == AttackElement && targetType == TargetElement)
                 effectiveness = PreTypeEvent.NVE;
@@ -161,7 +167,7 @@ namespace PMDC.Dungeon
     {
         public override GameEvent Clone() { return new NoResistanceEvent(); }
 
-        public override void Apply(GameEventOwner owner, Character ownerChar, int moveType, int targetType, ref int effectiveness)
+        public override void Apply(GameEventOwner owner, Character ownerChar, string moveType, string targetType, ref int effectiveness)
         {
             if (effectiveness == PreTypeEvent.NVE)
                 effectiveness = PreTypeEvent.NRM;
@@ -170,14 +176,15 @@ namespace PMDC.Dungeon
     [Serializable]
     public class TypeImmuneEvent : ElementEffectEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int Element;
+        public string Element;
 
-        public TypeImmuneEvent() { }
-        public TypeImmuneEvent(int element) { Element = element; }
+        public TypeImmuneEvent() { Element = ""; }
+        public TypeImmuneEvent(string element) { Element = element; }
         protected TypeImmuneEvent(TypeImmuneEvent other) { Element = other.Element; }
         public override GameEvent Clone() { return new TypeImmuneEvent(this); }
-        public override void Apply(GameEventOwner owner, Character ownerChar, int moveType, int targetType, ref int effectiveness)
+        public override void Apply(GameEventOwner owner, Character ownerChar, string moveType, string targetType, ref int effectiveness)
         {
             if (moveType == Element)
                 effectiveness = PreTypeEvent.N_E;
@@ -186,14 +193,15 @@ namespace PMDC.Dungeon
     [Serializable]
     public class TypeVulnerableEvent : ElementEffectEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int Element;
+        public string Element;
 
-        public TypeVulnerableEvent() { }
-        public TypeVulnerableEvent(int element) { Element = element; }
+        public TypeVulnerableEvent() { Element = ""; }
+        public TypeVulnerableEvent(string element) { Element = element; }
         protected TypeVulnerableEvent(TypeVulnerableEvent other) { Element = other.Element; }
         public override GameEvent Clone() { return new TypeVulnerableEvent(this); }
-        public override void Apply(GameEventOwner owner, Character ownerChar, int moveType, int targetType, ref int effectiveness)
+        public override void Apply(GameEventOwner owner, Character ownerChar, string moveType, string targetType, ref int effectiveness)
         {
             if (moveType == Element && effectiveness == 0)
                 effectiveness = PreTypeEvent.NRM;
@@ -202,16 +210,18 @@ namespace PMDC.Dungeon
     [Serializable]
     public class ScrappyEvent : ElementEffectEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int Element1;
+        public string Element1;
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int Element2;
+        public string Element2;
 
-        public ScrappyEvent() { }
-        public ScrappyEvent(int element1, int element2) { Element1 = element1; Element2 = element2; }
+        public ScrappyEvent() { Element1 = ""; Element2 = ""; }
+        public ScrappyEvent(string element1, string element2) { Element1 = element1; Element2 = element2; }
         protected ScrappyEvent(ScrappyEvent other) { Element1 = other.Element1; Element2 = other.Element2; }
         public override GameEvent Clone() { return new ScrappyEvent(this); }
-        public override void Apply(GameEventOwner owner, Character ownerChar, int moveType, int targetType, ref int effectiveness)
+        public override void Apply(GameEventOwner owner, Character ownerChar, string moveType, string targetType, ref int effectiveness)
         {
             if ((moveType == Element1 || moveType == Element2) && effectiveness == 0)
                 effectiveness = PreTypeEvent.NRM;
@@ -220,14 +230,15 @@ namespace PMDC.Dungeon
     [Serializable]
     public class TypeSuperEvent : ElementEffectEvent
     {
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public int Element;
+        public string Element;
 
-        public TypeSuperEvent() { }
-        public TypeSuperEvent(int element) { Element = element; }
+        public TypeSuperEvent() { Element = ""; }
+        public TypeSuperEvent(string element) { Element = element; }
         protected TypeSuperEvent(TypeSuperEvent other) { Element = other.Element; }
         public override GameEvent Clone() { return new TypeSuperEvent(this); }
-        public override void Apply(GameEventOwner owner, Character ownerChar, int moveType, int targetType, ref int effectiveness)
+        public override void Apply(GameEventOwner owner, Character ownerChar, string moveType, string targetType, ref int effectiveness)
         {
             if (targetType == Element)
                 effectiveness = PreTypeEvent.S_E;
@@ -237,7 +248,7 @@ namespace PMDC.Dungeon
     public class NormalizeEvent : ElementEffectEvent
     {
         public override GameEvent Clone() { return new NormalizeEvent(); }
-        public override void Apply(GameEventOwner owner, Character ownerChar, int moveType, int targetType, ref int effectiveness)
+        public override void Apply(GameEventOwner owner, Character ownerChar, string moveType, string targetType, ref int effectiveness)
         {
             effectiveness = PreTypeEvent.NRM;
         }
@@ -246,7 +257,7 @@ namespace PMDC.Dungeon
     public class InverseEvent : ElementEffectEvent
     {
         public override GameEvent Clone() { return new NormalizeEvent(); }
-        public override void Apply(GameEventOwner owner, Character ownerChar, int moveType, int targetType, ref int effectiveness)
+        public override void Apply(GameEventOwner owner, Character ownerChar, string moveType, string targetType, ref int effectiveness)
         {
             if (effectiveness == PreTypeEvent.N_E || effectiveness == PreTypeEvent.NVE)
                 effectiveness = PreTypeEvent.S_E;
@@ -261,7 +272,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public abstract class ShareEquipElementEvent : ElementEffectEvent
     {
-        public override void Apply(GameEventOwner owner, Character ownerChar, int moveType, int targetType, ref int effectiveness)
+        public override void Apply(GameEventOwner owner, Character ownerChar, string moveType, string targetType, ref int effectiveness)
         {
             if (ownerChar.EquippedItem.ID > -1)
             {

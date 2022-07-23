@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Data;
+using Newtonsoft.Json;
+using RogueEssence.Dev;
 
 namespace PMDC.Dungeon
 {
@@ -497,9 +499,10 @@ namespace PMDC.Dungeon
     [Serializable]
     public class JudgmentContext : ContextState
     {
-        public List<int> Elements;
-        public JudgmentContext() { Elements = new List<int>(); }
-        public JudgmentContext(List<int> elements) { Elements = elements; }
+        [JsonConverter(typeof(ElementListConverter))]
+        public List<string> Elements;
+        public JudgmentContext() { Elements = new List<string>(); }
+        public JudgmentContext(List<string> elements) { Elements = elements; }
         protected JudgmentContext(JudgmentContext other) : this()
         {
             Elements.AddRange(other.Elements);
