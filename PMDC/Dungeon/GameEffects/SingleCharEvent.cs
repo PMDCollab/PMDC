@@ -466,14 +466,15 @@ namespace PMDC.Dungeon
     [Serializable]
     public class SingleMapStatusExceptEvent : SingleCharEvent
     {
+        [JsonConverter(typeof(MapStatusListConverter))]
         [DataType(1, DataManager.DataType.MapStatus, false)]
-        public List<int> States;
+        public List<string> States;
 
         public SingleCharEvent BaseEvent;
 
 
-        public SingleMapStatusExceptEvent() { States = new List<int>(); }
-        public SingleMapStatusExceptEvent(int mapStatus, SingleCharEvent baseEvent) : this()
+        public SingleMapStatusExceptEvent() { States = new List<string>(); }
+        public SingleMapStatusExceptEvent(string mapStatus, SingleCharEvent baseEvent) : this()
         {
             States.Add(mapStatus);
             BaseEvent = baseEvent;
@@ -491,7 +492,7 @@ namespace PMDC.Dungeon
         {
             //check if the attacker has the right charstate
             bool hasState = false;
-            foreach (int state in States)
+            foreach (string state in States)
             {
                 if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(state))
                     hasState = true;
@@ -744,10 +745,12 @@ namespace PMDC.Dungeon
     {
         public int ReqSpecies;
         public int DefaultForme;
-        public Dictionary<int, int> WeatherPair;
+        [JsonConverter(typeof(MapStatusIntDictConverter))]
+        [DataType(1, DataManager.DataType.MapStatus, false)]
+        public Dictionary<string, int> WeatherPair;
 
-        public WeatherFormeEvent() { WeatherPair = new Dictionary<int, int>(); }
-        public WeatherFormeEvent(int reqSpecies, int defaultForme, Dictionary<int, int> weather)
+        public WeatherFormeEvent() { WeatherPair = new Dictionary<string, int>(); }
+        public WeatherFormeEvent(int reqSpecies, int defaultForme, Dictionary<string, int> weather)
         {
             ReqSpecies = reqSpecies;
             DefaultForme = defaultForme;
@@ -758,7 +761,7 @@ namespace PMDC.Dungeon
             ReqSpecies = other.ReqSpecies;
             DefaultForme = other.DefaultForme;
 
-            foreach (int weather in other.WeatherPair.Keys)
+            foreach (string weather in other.WeatherPair.Keys)
                 WeatherPair.Add(weather, other.WeatherPair[weather]);
         }
         public override GameEvent Clone() { return new WeatherFormeEvent(this); }
@@ -774,7 +777,7 @@ namespace PMDC.Dungeon
             //get the forme it should be in
             int forme = DefaultForme;
 
-            foreach (int weather in WeatherPair.Keys)
+            foreach (string weather in WeatherPair.Keys)
             {
                 if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(weather))
                 {
@@ -1559,11 +1562,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WeatherNeededSingleEvent : SingleCharEvent
     {
-        public int WeatherID;
+        [JsonConverter(typeof(MapStatusConverter))]
+        public string WeatherID;
         public SingleCharEvent BaseEvent;
 
-        public WeatherNeededSingleEvent() { }
-        public WeatherNeededSingleEvent(int id, SingleCharEvent baseEffect) { WeatherID = id; BaseEvent = baseEffect; }
+        public WeatherNeededSingleEvent() { WeatherID = ""; }
+        public WeatherNeededSingleEvent(string id, SingleCharEvent baseEffect) { WeatherID = id; BaseEvent = baseEffect; }
         protected WeatherNeededSingleEvent(WeatherNeededSingleEvent other)
         {
             WeatherID = other.WeatherID;
@@ -1820,15 +1824,17 @@ namespace PMDC.Dungeon
     [Serializable]
     public class StairSensorEvent : SingleCharEvent
     {
+        [JsonConverter(typeof(MapStatusConverter))]
         [DataType(0, DataManager.DataType.MapStatus, false)]
-        public int SniffedStatusID;
+        public string SniffedStatusID;
         public FiniteEmitter Emitter;
 
         public StairSensorEvent()
         {
             Emitter = new EmptyFiniteEmitter();
+            SniffedStatusID = "";
         }
-        public StairSensorEvent(int sniffedID, FiniteEmitter emitter)
+        public StairSensorEvent(string sniffedID, FiniteEmitter emitter)
         {
             SniffedStatusID = sniffedID;
             Emitter = emitter;
@@ -1885,15 +1891,17 @@ namespace PMDC.Dungeon
     [Serializable]
     public class AcuteSnifferEvent : SingleCharEvent
     {
+        [JsonConverter(typeof(MapStatusConverter))]
         [DataType(0, DataManager.DataType.MapStatus, false)]
-        public int SniffedStatusID;
+        public string SniffedStatusID;
         public List<AnimEvent> Anims;
 
         public AcuteSnifferEvent()
         {
             Anims = new List<AnimEvent>();
+            SniffedStatusID = "";
         }
-        public AcuteSnifferEvent(int sniffedID, params AnimEvent[] anims)
+        public AcuteSnifferEvent(string sniffedID, params AnimEvent[] anims)
         {
             SniffedStatusID = sniffedID;
             Anims = new List<AnimEvent>();
@@ -1929,13 +1937,14 @@ namespace PMDC.Dungeon
     [Serializable]
     public class MapSurveyorEvent : SingleCharEvent
     {
+        [JsonConverter(typeof(MapStatusConverter))]
         [DataType(0, DataManager.DataType.MapStatus, false)]
-        public int SniffedStatusID;
+        public string SniffedStatusID;
         public int Radius;
 
         public MapSurveyorEvent()
-        { }
-        public MapSurveyorEvent(int sniffedID, int radius)
+        { SniffedStatusID = ""; }
+        public MapSurveyorEvent(string sniffedID, int radius)
         {
             SniffedStatusID = sniffedID;
             Radius = radius;
@@ -2003,22 +2012,23 @@ namespace PMDC.Dungeon
     [Serializable]
     public class GiveMapStatusSingleEvent : SingleCharEvent
     {
+        [JsonConverter(typeof(MapStatusConverter))]
         [DataType(0, DataManager.DataType.MapStatus, false)]
-        public int StatusID;
+        public string StatusID;
         public int Counter;
         public StringKey MsgOverride;
 
-        public GiveMapStatusSingleEvent() { }
-        public GiveMapStatusSingleEvent(int id)
+        public GiveMapStatusSingleEvent() { StatusID = ""; }
+        public GiveMapStatusSingleEvent(string id)
         {
             StatusID = id;
         }
-        public GiveMapStatusSingleEvent(int id, int counter)
+        public GiveMapStatusSingleEvent(string id, int counter)
         {
             StatusID = id;
             Counter = counter;
         }
-        public GiveMapStatusSingleEvent(int id, int counter, StringKey msg)
+        public GiveMapStatusSingleEvent(string id, int counter, StringKey msg)
         {
             StatusID = id;
             Counter = counter;
@@ -2296,11 +2306,13 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WeatherAlignedEvent : SingleCharEvent
     {
-        public int BadWeatherID;
-        public int GoodWeatherID;
+        [JsonConverter(typeof(MapStatusConverter))]
+        public string BadWeatherID;
+        [JsonConverter(typeof(MapStatusConverter))]
+        public string GoodWeatherID;
 
-        public WeatherAlignedEvent() { }
-        public WeatherAlignedEvent(int badId, int goodId) { BadWeatherID = badId; GoodWeatherID = goodId; }
+        public WeatherAlignedEvent() { BadWeatherID = ""; GoodWeatherID = ""; }
+        public WeatherAlignedEvent(string badId, string goodId) { BadWeatherID = badId; GoodWeatherID = goodId; }
         protected WeatherAlignedEvent(WeatherAlignedEvent other)
         {
             BadWeatherID = other.BadWeatherID;
@@ -2467,10 +2479,10 @@ namespace PMDC.Dungeon
                 }
                 if (!hasWeather)
                 {
-                    MapIndexState weatherIndex = ((MapStatus)owner).StatusStates.GetWithDefault<MapIndexState>();
+                    MapIDState weatherIndex = ((MapStatus)owner).StatusStates.GetWithDefault<MapIDState>();
                     if (weatherIndex != null)
                     {
-                        MapStatus status = new MapStatus(weatherIndex.Index);
+                        MapStatus status = new MapStatus(weatherIndex.ID);
                         status.LoadFromData();
                         status.StatusStates.GetWithDefault<MapCountDownState>().Counter = -1;
                         yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
@@ -2491,18 +2503,18 @@ namespace PMDC.Dungeon
         {
             if (character == null)
             {
-                MapIndexState weatherIndex = ((MapStatus)owner).StatusStates.GetWithDefault<MapIndexState>();
+                MapIDState weatherIndex = ((MapStatus)owner).StatusStates.GetWithDefault<MapIDState>();
                 if (weatherIndex != null)
                 {
                     bool hasWeather = false;
                     foreach (MapStatus removeStatus in ZoneManager.Instance.CurrentMap.Status.Values)
                     {
-                        if (removeStatus.ID == weatherIndex.Index)
+                        if (removeStatus.ID == weatherIndex.ID)
                             hasWeather = true;
                     }
                     if (!hasWeather)
                     {
-                        MapStatus status = new MapStatus(weatherIndex.Index);
+                        MapStatus status = new MapStatus(weatherIndex.ID);
                         status.LoadFromData();
                         MapCountDownState countdown = status.StatusStates.GetWithDefault<MapCountDownState>();
                         if (countdown != null)
@@ -3364,11 +3376,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class BeginBattleEvent : SingleCharEvent
     {
+        [JsonConverter(typeof(MapStatusConverter))]
         [DataType(0, DataManager.DataType.MapStatus, false)]
-        public int CheckClearStatus;
+        public string CheckClearStatus;
 
-        public BeginBattleEvent() { }
-        public BeginBattleEvent(int checkClear) { CheckClearStatus = checkClear; }
+        public BeginBattleEvent() { CheckClearStatus = ""; }
+        public BeginBattleEvent(string checkClear) { CheckClearStatus = checkClear; }
         public BeginBattleEvent(BeginBattleEvent other)
         {
             CheckClearStatus = other.CheckClearStatus;
@@ -3426,10 +3439,10 @@ namespace PMDC.Dungeon
             DungeonScene.Instance.ResetTurns();
 
             //restore all and remove all map status
-            List<int> statusToRemove = new List<int>();
-            foreach (int status in ZoneManager.Instance.CurrentMap.Status.Keys)
+            List<string> statusToRemove = new List<string>();
+            foreach (string status in ZoneManager.Instance.CurrentMap.Status.Keys)
                 statusToRemove.Add(status);
-            foreach (int status in statusToRemove)
+            foreach (string status in statusToRemove)
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(status, false));
 
             foreach (Character character in DungeonScene.Instance.ActiveTeam.IterateMainByRank())
@@ -3694,7 +3707,9 @@ namespace PMDC.Dungeon
     [Serializable]
     public class OpenOtherPassageEvent : SingleCharEvent
     {
-        public int TimeLimitStatus;
+        [JsonConverter(typeof(MapStatusConverter))]
+        [DataType(0, DataManager.DataType.MapStatus, false)]
+        public string TimeLimitStatus;
         public FiniteEmitter Emitter;
         public string WarningBGM;
         public StringKey Warning;
@@ -3702,6 +3717,7 @@ namespace PMDC.Dungeon
 
         public OpenOtherPassageEvent()
         {
+            TimeLimitStatus = "";
             Emitter = new EmptyFiniteEmitter();
             WarningBGM = "";
             WarningSE = "";
@@ -3969,7 +3985,7 @@ namespace PMDC.Dungeon
 
             if (((EffectTile)owner).Danger)
             {
-                LockdownTileEvent lockdown = new LockdownTileEvent(34);// magic number
+                LockdownTileEvent lockdown = new LockdownTileEvent("map_clear_check");// magic number
                 MonsterHouseTileEvent monsterHouse = new MonsterHouseTileEvent();
                 yield return CoroutineManager.Instance.StartCoroutine(lockdown.Apply(owner, ownerChar, character));
                 yield return CoroutineManager.Instance.StartCoroutine(monsterHouse.Apply(owner, ownerChar, character));
@@ -3994,11 +4010,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public abstract class LockdownEvent : SingleCharEvent
     {
+        [JsonConverter(typeof(MapStatusConverter))]
         [DataType(0, DataManager.DataType.MapStatus, false)]
-        public int CheckClearStatus;
+        public string CheckClearStatus;
 
-        public LockdownEvent() { }
-        public LockdownEvent(int checkClearStatus) { CheckClearStatus = checkClearStatus; }
+        public LockdownEvent() { CheckClearStatus = ""; }
+        public LockdownEvent(string checkClearStatus) { CheckClearStatus = checkClearStatus; }
         public LockdownEvent(LockdownEvent other) { CheckClearStatus = other.CheckClearStatus; }
 
         protected abstract Rect GetBounds(GameEventOwner owner, Character ownerChar, Character character);
@@ -4156,7 +4173,7 @@ namespace PMDC.Dungeon
     {
         //activate by tiles; use the tile state variables
         public LockdownTileEvent() { }
-        public LockdownTileEvent(int checkClear) : base(checkClear) { }
+        public LockdownTileEvent(string checkClear) : base(checkClear) { }
         protected LockdownTileEvent(LockdownTileEvent other) : base(other)
         { }
         public override GameEvent Clone() { return new LockdownTileEvent(this); }
@@ -4186,7 +4203,7 @@ namespace PMDC.Dungeon
 
         public List<SingleCharEvent> ResultEvents;
         public LockdownMapEvent() { }
-        public LockdownMapEvent(int checkClear) : base(checkClear) { }
+        public LockdownMapEvent(string checkClear) : base(checkClear) { }
         protected LockdownMapEvent(LockdownMapEvent other) : base(other)
         {
             Bounds = other.Bounds;

@@ -3,6 +3,8 @@ using RogueElements;
 using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Data;
+using Newtonsoft.Json;
+using RogueEssence.Dev;
 
 namespace PMDC.Dungeon
 {
@@ -28,8 +30,9 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WaitUntilMapStatusPlan : AIPlan
     {
-        public int StatusIndex;
-        public WaitUntilMapStatusPlan(AIFlags iq, int status) : base(iq)
+        [JsonConverter(typeof(MapStatusConverter))]
+        public string StatusIndex;
+        public WaitUntilMapStatusPlan(AIFlags iq, string status) : base(iq)
         {
             StatusIndex = status;
         }

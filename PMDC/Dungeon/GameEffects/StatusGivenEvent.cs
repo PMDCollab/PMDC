@@ -953,12 +953,13 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WeatherNeededStatusEvent : StatusGivenEvent
     {
+        [JsonConverter(typeof(MapStatusConverter))]
         [DataType(0, DataManager.DataType.MapStatus, false)]
-        public int WeatherID;
+        public string WeatherID;
         public List<StatusGivenEvent> BaseEvents;
 
-        public WeatherNeededStatusEvent() { BaseEvents = new List<StatusGivenEvent>(); }
-        public WeatherNeededStatusEvent(int id, params StatusGivenEvent[] effects)
+        public WeatherNeededStatusEvent() { BaseEvents = new List<StatusGivenEvent>(); WeatherID = ""; }
+        public WeatherNeededStatusEvent(string id, params StatusGivenEvent[] effects)
             : this()
         {
             WeatherID = id;

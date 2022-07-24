@@ -7,6 +7,7 @@ using RogueEssence.LevelGen;
 using System.Text;
 using RogueEssence.Dev;
 using PMDC.Dungeon;
+using Newtonsoft.Json;
 
 namespace PMDC.LevelGen
 {
@@ -56,11 +57,11 @@ namespace PMDC.LevelGen
 
             if (TimeLimit > 0)
             {
-                MapStatus timeStatus = new MapStatus(22);
+                MapStatus timeStatus = new MapStatus("somethings_stirring");
                 timeStatus.LoadFromData();
                 MapCountDownState timeState = timeStatus.StatusStates.GetWithDefault<MapCountDownState>();
                 timeState.Counter = TimeLimit;
-                map.Map.Status.Add(22, timeStatus);
+                map.Map.Status.Add("somethings_stirring", timeStatus);
             }
 
 
@@ -86,20 +87,22 @@ namespace PMDC.LevelGen
         /// <summary>
         /// The map status used to set the default map status.
         /// </summary>
+        [JsonConverter(typeof(MapStatusConverter))]
         [DataType(0, DataManager.DataType.MapStatus, false)]
-        public int SetterID;
+        public string SetterID;
 
         /// <summary>
         /// The possible default map statuses.
         /// </summary>
+        [JsonConverter(typeof(MapStatusArrayConverter))]
         [DataType(1, DataManager.DataType.MapStatus, false)]
-        public int[] DefaultMapStatus;
+        public string[] DefaultMapStatus;
 
         public DefaultMapStatusStep()
         {
-            DefaultMapStatus = new int[1] { 0 };
+
         }
-        public DefaultMapStatusStep(int statusSetter, params int[] defaultStatus)
+        public DefaultMapStatusStep(string statusSetter, params string[] defaultStatus)
         {
             SetterID = statusSetter;
             DefaultMapStatus = defaultStatus;
@@ -107,11 +110,11 @@ namespace PMDC.LevelGen
 
         public override void Apply(T map)
         {
-            int chosenStatus = DefaultMapStatus[map.Rand.Next(DefaultMapStatus.Length)];
+            string chosenStatus = DefaultMapStatus[map.Rand.Next(DefaultMapStatus.Length)];
             MapStatus statusSetter = new MapStatus(SetterID);
             statusSetter.LoadFromData();
-            MapIndexState indexState = statusSetter.StatusStates.GetWithDefault<MapIndexState>();
-            indexState.Index = chosenStatus;
+            MapIDState indexState = statusSetter.StatusStates.GetWithDefault<MapIDState>();
+            indexState.ID = chosenStatus;
             map.Map.Status.Add(SetterID, statusSetter);
         }
 
@@ -133,14 +136,15 @@ namespace PMDC.LevelGen
     [Serializable]
     public class StateMapStatusStep<T> : GenStep<T> where T : BaseMapGenContext
     {
-        public int MapStatus;
+        [JsonConverter(typeof(MapStatusConverter))]
+        public string MapStatus;
         public StateCollection<MapStatusState> States;
 
         public StateMapStatusStep()
         {
             States = new StateCollection<MapStatusState>();
         }
-        public StateMapStatusStep(int mapStatus, MapStatusState state) : this()
+        public StateMapStatusStep(string mapStatus, MapStatusState state) : this()
         {
             MapStatus = mapStatus;
             States.Set(state);

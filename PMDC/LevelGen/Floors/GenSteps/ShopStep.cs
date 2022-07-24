@@ -5,6 +5,8 @@ using RogueEssence.Dungeon;
 using RogueEssence;
 using RogueEssence.LevelGen;
 using PMDC.Dungeon;
+using Newtonsoft.Json;
+using RogueEssence.Dev;
 
 namespace PMDC.LevelGen
 {
@@ -20,7 +22,8 @@ namespace PMDC.LevelGen
         /// <summary>
         /// The map status used to check for thievery.
         /// </summary>
-        public int SecurityStatus;
+        [JsonConverter(typeof(MapStatusConverter))]
+        public string SecurityStatus;
 
         /// <summary>
         /// The items that can be sold in the shop.
@@ -56,6 +59,7 @@ namespace PMDC.LevelGen
 
         public ShopStep() : base()
         {
+            SecurityStatus = "";
             Filters = new List<BaseRoomFilter>();
             Items = new SpawnList<MapItem>();
             ItemThemes = new SpawnList<ItemTheme>();

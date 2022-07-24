@@ -324,9 +324,11 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WeatherSpeedEvent : RefreshEvent
     {
-        public int WeatherID;
-        public WeatherSpeedEvent() { }
-        public WeatherSpeedEvent(int id) { WeatherID = id; }
+        [JsonConverter(typeof(MapStatusConverter))]
+        [DataType(0, DataManager.DataType.MapStatus, false)]
+        public string WeatherID;
+        public WeatherSpeedEvent() { WeatherID = ""; }
+        public WeatherSpeedEvent(string id) { WeatherID = id; }
         protected WeatherSpeedEvent(WeatherSpeedEvent other)
         {
             WeatherID = other.WeatherID;

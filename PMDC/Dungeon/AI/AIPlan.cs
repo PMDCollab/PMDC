@@ -1194,7 +1194,7 @@ namespace PMDC.Dungeon
             FamilyBattleEvent familyEffect = effect as FamilyBattleEvent;
             if (familyEffect != null)
             {
-                ItemData entry = DataManager.Instance.GetItem(passiveContext.Passive.ID);
+                ItemData entry = (ItemData)passiveContext.Passive.GetData();
                 FamilyState family;
                 if (!entry.ItemStates.TryGet<FamilyState>(out family))
                     return null;

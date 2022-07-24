@@ -119,7 +119,7 @@ namespace PMDC.LevelGen
                 RevealAllEvent reveal = new RevealAllEvent();
                 check.Effects.Add(reveal);
 
-                GiveMapStatusSingleEvent statusEvent = new GiveMapStatusSingleEvent(30, 0);
+                GiveMapStatusSingleEvent statusEvent = new GiveMapStatusSingleEvent("monster_mansion", 0);
                 check.Effects.Add(statusEvent);
 
                 MonsterHouseMapEvent house = new MonsterHouseMapEvent();

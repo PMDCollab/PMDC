@@ -75,7 +75,7 @@ namespace PMDC.LevelGen
                     check.Effects.Add(house);
                 }
 
-                int intrudeStatus = 33;
+                string intrudeStatus = "intrusion_check";
                 MapStatus status = new MapStatus(intrudeStatus);
                 status.LoadFromData();
                 MapCheckState checkState = status.StatusStates.GetWithDefault<MapCheckState>();

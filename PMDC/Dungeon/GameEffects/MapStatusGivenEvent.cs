@@ -6,6 +6,7 @@ using RogueEssence.Dungeon;
 using RogueEssence.Dev;
 using RogueEssence.LevelGen;
 using RogueElements;
+using Newtonsoft.Json;
 
 namespace PMDC.Dungeon
 {
@@ -41,10 +42,11 @@ namespace PMDC.Dungeon
     {
         public int ReqSpecies;
         public int DefaultForme;
-        public Dictionary<int, int> WeatherPair;
+        [JsonConverter(typeof(MapStatusIntDictConverter))]
+        public Dictionary<string, int> WeatherPair;
 
-        public WeatherFormeChangeEvent() { WeatherPair = new Dictionary<int, int>(); }
-        public WeatherFormeChangeEvent(int reqSpecies, int defaultForme, Dictionary<int, int> weather)
+        public WeatherFormeChangeEvent() { WeatherPair = new Dictionary<string, int>(); }
+        public WeatherFormeChangeEvent(int reqSpecies, int defaultForme, Dictionary<string, int> weather)
         {
             ReqSpecies = reqSpecies;
             DefaultForme = defaultForme;
@@ -55,7 +57,7 @@ namespace PMDC.Dungeon
             ReqSpecies = other.ReqSpecies;
             DefaultForme = other.DefaultForme;
 
-            foreach (int weather in other.WeatherPair.Keys)
+            foreach (string weather in other.WeatherPair.Keys)
                 WeatherPair.Add(weather, other.WeatherPair[weather]);
         }
         public override GameEvent Clone() { return new WeatherFormeChangeEvent(this); }
@@ -71,7 +73,7 @@ namespace PMDC.Dungeon
             //get the forme it should be in
             int forme = DefaultForme;
 
-            foreach (int weather in WeatherPair.Keys)
+            foreach (string weather in WeatherPair.Keys)
             {
                 if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(weather))
                 {
@@ -118,7 +120,7 @@ namespace PMDC.Dungeon
                 yield break;
 
             //remove all other weather effects
-            List<int> removingIDs = new List<int>();
+            List<string> removingIDs = new List<string>();
             foreach (MapStatus removeStatus in ZoneManager.Instance.CurrentMap.Status.Values)
             {
                 bool hasState = false;
@@ -131,7 +133,7 @@ namespace PMDC.Dungeon
                 if (hasState && removeStatus.ID != ((MapStatus)owner).ID)
                     removingIDs.Add(removeStatus.ID);
             }
-            foreach (int removeID in removingIDs)
+            foreach (string removeID in removingIDs)
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(removeID, Msg && msg));
             yield break;
         }

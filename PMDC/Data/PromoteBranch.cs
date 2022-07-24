@@ -118,8 +118,9 @@ namespace PMDC.Data
     [Serializable]
     public class EvoWeather : PromoteDetail
     {
+        [JsonConverter(typeof(MapStatusConverter))]
         [DataType(0, DataManager.DataType.MapStatus, false)]
-        public int Weather;
+        public string Weather;
 
         public override bool GetGroundReq(Character character) { return false; }
         public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_MAP").ToLocal(), DataManager.Instance.GetMapStatus(Weather).GetColoredName()); }

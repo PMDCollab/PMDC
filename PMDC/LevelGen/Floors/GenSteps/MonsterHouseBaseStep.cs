@@ -58,7 +58,7 @@ namespace PMDC.LevelGen
         protected void AddIntrudeStep(T map, CheckIntrudeBoundsEvent check)
         {
             //TODO: remove this magic number
-            int intrudeStatus = 33;
+            string intrudeStatus = "intrusion_check";
             MapStatus status;
             if (map.Map.Status.TryGetValue(intrudeStatus, out status))
             {

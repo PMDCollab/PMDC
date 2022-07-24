@@ -1205,17 +1205,19 @@ namespace PMDC.Dungeon
     [Serializable]
     public class NatureMoveEvent : InvokedMoveEvent
     {
-        public Dictionary<int, int> TerrainPair;
+        [JsonConverter(typeof(MapStatusSkillDictConverter))]
+        [DataType(1, DataManager.DataType.MapStatus, false)]
+        public Dictionary<string, int> TerrainPair;
         [JsonConverter(typeof(ElementSkillDictConverter))]
         [DataType(1, DataManager.DataType.Element, false)]
         public Dictionary<string, int> NaturePair;
 
         public NatureMoveEvent()
         {
-            TerrainPair = new Dictionary<int, int>();
+            TerrainPair = new Dictionary<string, int>();
             NaturePair = new Dictionary<string, int>();
         }
-        public NatureMoveEvent(Dictionary<int, int> terrain, Dictionary<string, int> moves)
+        public NatureMoveEvent(Dictionary<string, int> terrain, Dictionary<string, int> moves)
         {
             TerrainPair = terrain;
             NaturePair = moves;
@@ -1223,7 +1225,7 @@ namespace PMDC.Dungeon
         protected NatureMoveEvent(NatureMoveEvent other)
             : this()
         {
-            foreach (int terrain in other.TerrainPair.Keys)
+            foreach (string terrain in other.TerrainPair.Keys)
                 TerrainPair.Add(terrain, other.TerrainPair[terrain]);
             foreach (string element in other.NaturePair.Keys)
                 NaturePair.Add(element, other.NaturePair[element]);
@@ -1232,7 +1234,7 @@ namespace PMDC.Dungeon
 
         protected override int GetInvokedMove(GameEventOwner owner, BattleContext context)
         {
-            foreach (int terrain in TerrainPair.Keys)
+            foreach (string terrain in TerrainPair.Keys)
             {
                 if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(terrain))
                     return TerrainPair[terrain];
@@ -1580,24 +1582,25 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WeatherDifferentEvent : BattleEvent
     {
-        public Dictionary<int, BattleData> WeatherPair;
+        [JsonConverter(typeof(MapStatusBattleDataDictConverter))]
+        public Dictionary<string, BattleData> WeatherPair;
 
-        public WeatherDifferentEvent() { WeatherPair = new Dictionary<int, BattleData>(); }
-        public WeatherDifferentEvent(Dictionary<int, BattleData> weather)
+        public WeatherDifferentEvent() { WeatherPair = new Dictionary<string, BattleData>(); }
+        public WeatherDifferentEvent(Dictionary<string, BattleData> weather)
         {
             WeatherPair = weather;
         }
         protected WeatherDifferentEvent(WeatherDifferentEvent other)
             : this()
         {
-            foreach (int weather in other.WeatherPair.Keys)
+            foreach (string weather in other.WeatherPair.Keys)
                 WeatherPair.Add(weather, new BattleData(other.WeatherPair[weather]));
         }
         public override GameEvent Clone() { return new WeatherDifferentEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            foreach (int weather in WeatherPair.Keys)
+            foreach (string weather in WeatherPair.Keys)
             {
                 if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(weather))
                 {
@@ -2530,13 +2533,15 @@ namespace PMDC.Dungeon
     [Serializable]
     public class MultiplyCategoryInWeatherEvent : BattleEvent
     {
-        public int WeatherID;
+        [JsonConverter(typeof(MapStatusConverter))]
+        [DataType(0, DataManager.DataType.MapStatus, false)]
+        public string WeatherID;
         public BattleData.SkillCategory Category;
         public int Numerator;
         public int Denominator;
 
-        public MultiplyCategoryInWeatherEvent() { }
-        public MultiplyCategoryInWeatherEvent(int weatherId, BattleData.SkillCategory category, int numerator, int denominator)
+        public MultiplyCategoryInWeatherEvent() { WeatherID = ""; }
+        public MultiplyCategoryInWeatherEvent(string weatherId, BattleData.SkillCategory category, int numerator, int denominator)
         {
             WeatherID = weatherId;
             Category = category;
@@ -3299,12 +3304,13 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WeatherAddRangeEvent : BattleEvent
     {
+        [JsonConverter(typeof(MapStatusConverter))]
         [DataType(0, DataManager.DataType.MapStatus, false)]
-        public int WeatherID;
+        public string WeatherID;
         public int Range;
 
-        public WeatherAddRangeEvent() { }
-        public WeatherAddRangeEvent(int weatherId, int range)
+        public WeatherAddRangeEvent() { WeatherID = ""; }
+        public WeatherAddRangeEvent(string weatherId, int range)
         {
             WeatherID = weatherId;
             Range = range;
@@ -7961,12 +7967,13 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WeatherNeededEvent : BattleEvent
     {
+        [JsonConverter(typeof(MapStatusConverter))]
         [DataType(0, DataManager.DataType.MapStatus, false)]
-        public int WeatherID;
+        public string WeatherID;
         public List<BattleEvent> BaseEvents;
 
-        public WeatherNeededEvent() { BaseEvents = new List<BattleEvent>(); }
-        public WeatherNeededEvent(int id, params BattleEvent[] effects)
+        public WeatherNeededEvent() { BaseEvents = new List<BattleEvent>(); WeatherID = ""; }
+        public WeatherNeededEvent(string id, params BattleEvent[] effects)
             : this()
         {
             WeatherID = id;
@@ -9001,10 +9008,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WeatherStackEvent : StatusBattleEvent
     {
-        public int WeatherID;
+        [JsonConverter(typeof(MapStatusConverter))]
+        [DataType(0, DataManager.DataType.MapStatus, false)]
+        public string WeatherID;
 
-        public WeatherStackEvent() { }
-        public WeatherStackEvent(int statusID, bool affectTarget, bool silentCheck, int weatherID) : base(statusID, affectTarget, silentCheck, false)
+        public WeatherStackEvent() { WeatherID = ""; }
+        public WeatherStackEvent(int statusID, bool affectTarget, bool silentCheck, string weatherID) : base(statusID, affectTarget, silentCheck, false)
         {
             WeatherID = weatherID;
         }
@@ -9093,17 +9102,19 @@ namespace PMDC.Dungeon
     [Serializable]
     public class NatureSpecialEvent : BattleEvent
     {
-        public Dictionary<int, BattleEvent> TerrainPair;
+        [JsonConverter(typeof(MapStatusBattleEventDictConverter))]
+        [DataType(0, DataManager.DataType.MapStatus, false)]
+        public Dictionary<string, BattleEvent> TerrainPair;
         [JsonConverter(typeof(ElementBattleEventDictConverter))]
         [DataType(1, DataManager.DataType.Element, false)]
         public Dictionary<string, BattleEvent> NaturePair;
 
         public NatureSpecialEvent()
         {
-            TerrainPair = new Dictionary<int, BattleEvent>();
+            TerrainPair = new Dictionary<string, BattleEvent>();
             NaturePair = new Dictionary<string, BattleEvent>();
         }
-        public NatureSpecialEvent(Dictionary<int, BattleEvent> terrain, Dictionary<string, BattleEvent> moves)
+        public NatureSpecialEvent(Dictionary<string, BattleEvent> terrain, Dictionary<string, BattleEvent> moves)
         {
             TerrainPair = terrain;
             NaturePair = moves;
@@ -9111,7 +9122,7 @@ namespace PMDC.Dungeon
         protected NatureSpecialEvent(NatureSpecialEvent other)
             : this()
         {
-            foreach (int terrain in other.TerrainPair.Keys)
+            foreach (string terrain in other.TerrainPair.Keys)
                 TerrainPair.Add(terrain, (BattleEvent)other.TerrainPair[terrain].Clone());
             foreach (string element in other.NaturePair.Keys)
                 NaturePair.Add(element, (BattleEvent)other.NaturePair[element].Clone());
@@ -9120,7 +9131,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            foreach (int terrain in TerrainPair.Keys)
+            foreach (string terrain in TerrainPair.Keys)
             {
                 if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(terrain))
                 {
@@ -9141,34 +9152,35 @@ namespace PMDC.Dungeon
     [Serializable]
     public class GiveMapStatusEvent : BattleEvent
     {
+        [JsonConverter(typeof(MapStatusConverter))]
         [DataType(0, DataManager.DataType.MapStatus, false)]
-        public int StatusID;
+        public string StatusID;
         public int Counter;
         public StringKey MsgOverride;
 
         [StringTypeConstraint(1, typeof(CharState))]
         public List<FlagType> States;
 
-        public GiveMapStatusEvent() { States = new List<FlagType>(); }
-        public GiveMapStatusEvent(int id)
+        public GiveMapStatusEvent() { States = new List<FlagType>(); StatusID = ""; }
+        public GiveMapStatusEvent(string id)
         {
             States = new List<FlagType>();
             StatusID = id;
         }
-        public GiveMapStatusEvent(int id, int counter)
+        public GiveMapStatusEvent(string id, int counter)
         {
             States = new List<FlagType>();
             StatusID = id;
             Counter = counter;
         }
-        public GiveMapStatusEvent(int id, int counter, StringKey msg)
+        public GiveMapStatusEvent(string id, int counter, StringKey msg)
         {
             States = new List<FlagType>();
             StatusID = id;
             Counter = counter;
             MsgOverride = msg;
         }
-        public GiveMapStatusEvent(int id, int counter, StringKey msg, Type state)
+        public GiveMapStatusEvent(string id, int counter, StringKey msg, Type state)
         {
             States = new List<FlagType>();
             StatusID = id;
@@ -9225,13 +9237,13 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             //remove all other weather effects
-            List<int> removingIDs = new List<int>();
+            List<string> removingIDs = new List<string>();
             foreach (MapStatus removeStatus in ZoneManager.Instance.CurrentMap.Status.Values)
             {
                 if (removeStatus.StatusStates.Contains<MapWeatherState>())
                     removingIDs.Add(removeStatus.ID);
             }
-            foreach (int removeID in removingIDs)
+            foreach (string removeID in removingIDs)
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(removeID));
         }
     }
@@ -9242,10 +9254,11 @@ namespace PMDC.Dungeon
     {
         [JsonConverter(typeof(ElementMapStatusDictConverter))]
         [DataType(1, DataManager.DataType.Element, false)]
-        public Dictionary<string, int> WeatherPair;
+        [DataType(2, DataManager.DataType.MapStatus, false)]
+        public Dictionary<string, string> WeatherPair;
 
-        public TypeWeatherEvent() { WeatherPair = new Dictionary<string, int>(); }
-        public TypeWeatherEvent(Dictionary<string, int> weather)
+        public TypeWeatherEvent() { WeatherPair = new Dictionary<string, string>(); }
+        public TypeWeatherEvent(Dictionary<string, string> weather)
         {
             WeatherPair = weather;
         }
@@ -9259,7 +9272,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            int weather;
+            string weather;
             if (WeatherPair.TryGetValue(context.User.Element1, out weather))
             {
                 //add the map status
@@ -9283,7 +9296,7 @@ namespace PMDC.Dungeon
             else//clear weather
             {
                 //add the map status
-                MapStatus status = new MapStatus(0);
+                MapStatus status = new MapStatus(DataManager.Instance.DefaultMapStatus);
                 status.LoadFromData();
                 status.StatusStates.GetWithDefault<MapCountDownState>().Counter = -1;
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
@@ -9296,13 +9309,14 @@ namespace PMDC.Dungeon
     [Serializable]
     public class BanMoveEvent : BattleEvent
     {
+        [JsonConverter(typeof(MapStatusConverter))]
         [DataType(0, DataManager.DataType.MapStatus, false)]
-        public int BanStatusID;
+        public string BanStatusID;
         [DataType(0, DataManager.DataType.Status, false)]
         public int LastMoveStatusID;
 
-        public BanMoveEvent() { }
-        public BanMoveEvent(int banStatusID, int prevMoveID)
+        public BanMoveEvent() { BanStatusID = ""; }
+        public BanMoveEvent(string banStatusID, int prevMoveID)
         {
             BanStatusID = banStatusID;
             LastMoveStatusID = prevMoveID;
@@ -9324,6 +9338,7 @@ namespace PMDC.Dungeon
                 //add the map status
                 MapStatus status = new MapStatus(BanStatusID);
                 status.LoadFromData();
+                //TODO: String Assets
                 status.StatusStates.GetWithDefault<MapIndexState>().Index = lockedMove;
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
             }
@@ -9585,14 +9600,17 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WeatherHPEvent : BattleEvent, IHealEvent
     {
+        [JsonConverter(typeof(MapStatusBoolDictConverter))]
+        [DataType(1, DataManager.DataType.MapStatus, false)]
+        public Dictionary<string, bool> WeatherPair;
+
         public int HPDiv;
-        public Dictionary<int, bool> WeatherPair;
 
         public int HPNum { get { return HPDiv; } }
         public int HPDen { get { return 12; } }
 
-        public WeatherHPEvent() { WeatherPair = new Dictionary<int, bool>(); }
-        public WeatherHPEvent(int hpDiv, Dictionary<int, bool> weather)
+        public WeatherHPEvent() { WeatherPair = new Dictionary<string, bool>(); }
+        public WeatherHPEvent(int hpDiv, Dictionary<string, bool> weather)
         {
             HPDiv = hpDiv;
             WeatherPair = weather;
@@ -9600,7 +9618,7 @@ namespace PMDC.Dungeon
         protected WeatherHPEvent(WeatherHPEvent other) : this()
         {
             HPDiv = other.HPDiv;
-            foreach (int weather in other.WeatherPair.Keys)
+            foreach (string weather in other.WeatherPair.Keys)
                 WeatherPair.Add(weather, other.WeatherPair[weather]);
         }
         public override GameEvent Clone() { return new WeatherHPEvent(this); }
@@ -9609,7 +9627,7 @@ namespace PMDC.Dungeon
         {
             int numerator = HPDiv;
 
-            foreach (int weather in WeatherPair.Keys)
+            foreach (string weather in WeatherPair.Keys)
             {
                 if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(weather))
                 {
@@ -12429,28 +12447,29 @@ namespace PMDC.Dungeon
     public class NatureElementEvent : BattleEvent
     {
         [JsonConverter(typeof(MapStatusElementDictConverter))]
+        [DataType(1, DataManager.DataType.MapStatus, false)]
         [DataType(2, DataManager.DataType.Element, false)]
-        public Dictionary<int, string> TerrainPair;
+        public Dictionary<string, string> TerrainPair;
 
         public NatureElementEvent()
         {
-            TerrainPair = new Dictionary<int, string>();
+            TerrainPair = new Dictionary<string, string>();
         }
-        public NatureElementEvent(Dictionary<int, string> terrain)
+        public NatureElementEvent(Dictionary<string, string> terrain)
         {
             TerrainPair = terrain;
         }
         protected NatureElementEvent(NatureElementEvent other)
             : this()
         {
-            foreach (int terrain in other.TerrainPair.Keys)
+            foreach (string terrain in other.TerrainPair.Keys)
                 TerrainPair.Add(terrain, other.TerrainPair[terrain]);
         }
         public override GameEvent Clone() { return new NatureElementEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            foreach (int terrain in TerrainPair.Keys)
+            foreach (string terrain in TerrainPair.Keys)
             {
                 if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(terrain))
                 {
