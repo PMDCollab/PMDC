@@ -12486,14 +12486,16 @@ namespace PMDC.Dungeon
     [Serializable]
     public class ChangeToAbilityEvent : BattleEvent
     {
-        public int TargetAbility;
+        [JsonConverter(typeof(IntrinsicConverter))]
+        [DataType(0, DataManager.DataType.Intrinsic, false)]
+        public string TargetAbility;
         public bool AffectTarget;
         public bool SilentCheck;
 
-        public ChangeToAbilityEvent() { }
-        public ChangeToAbilityEvent(int ability, bool affectTarget) : this(ability, affectTarget, false)
+        public ChangeToAbilityEvent() { TargetAbility = ""; }
+        public ChangeToAbilityEvent(string ability, bool affectTarget) : this(ability, affectTarget, false)
         { }
-        public ChangeToAbilityEvent(int ability, bool affectTarget, bool silentCheck)
+        public ChangeToAbilityEvent(string ability, bool affectTarget, bool silentCheck)
         {
             TargetAbility = ability;
             AffectTarget = affectTarget;
@@ -12522,10 +12524,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class RemoveAbilityEvent : BattleEvent
     {
-        int TargetAbility;
+        [JsonConverter(typeof(IntrinsicConverter))]
+        [DataType(0, DataManager.DataType.Intrinsic, false)]
+        public string TargetAbility;
 
-        public RemoveAbilityEvent() { }
-        public RemoveAbilityEvent(int ability)
+        public RemoveAbilityEvent() { TargetAbility = ""; }
+        public RemoveAbilityEvent(string ability)
         {
             TargetAbility = ability;
         }
@@ -12538,7 +12542,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             if (TargetAbility == context.Target.Intrinsics[0].Element.ID)
-                yield return CoroutineManager.Instance.StartCoroutine(context.Target.ReplaceIntrinsic(0, 0, true, false));
+                yield return CoroutineManager.Instance.StartCoroutine(context.Target.ReplaceIntrinsic(0, DataManager.Instance.DefaultIntrinsic, true, false));
         }
     }
 
@@ -12579,7 +12583,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            List<int> abilities = new List<int>();
+            List<string> abilities = new List<string>();
             foreach (BackReference<Intrinsic> ability in context.Target.Intrinsics)
                 abilities.Add(ability.Element.ID);
 
@@ -13849,43 +13853,35 @@ namespace PMDC.Dungeon
             if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
             {
                 BaseMonsterForm entry = DataManager.Instance.GetMonster(context.User.BaseForm.Species).Forms[context.User.BaseForm.Form];
-                List<int> eligibleAbilities = new List<int>();
+                List<string> eligibleAbilities = new List<string>();
 
-                if (entry.Intrinsic1 != 0 && context.User.BaseIntrinsics[0] != entry.Intrinsic1)
+                if (entry.Intrinsic1 != DataManager.Instance.DefaultIntrinsic && context.User.BaseIntrinsics[0] != entry.Intrinsic1)
                     eligibleAbilities.Add(entry.Intrinsic1);
-                if (entry.Intrinsic2 != 0 && context.User.BaseIntrinsics[0] != entry.Intrinsic2)
+                if (entry.Intrinsic2 != DataManager.Instance.DefaultIntrinsic && context.User.BaseIntrinsics[0] != entry.Intrinsic2)
                     eligibleAbilities.Add(entry.Intrinsic2);
-                if (entry.Intrinsic3 != 0 && context.User.BaseIntrinsics[0] != entry.Intrinsic3)
+                if (entry.Intrinsic3 != DataManager.Instance.DefaultIntrinsic && context.User.BaseIntrinsics[0] != entry.Intrinsic3)
                     eligibleAbilities.Add(entry.Intrinsic3);
 
                 if (eligibleAbilities.Count > 0)
                 {
+                    int chosenSlot = -1;
                     if (DataManager.Instance.CurrentReplay != null) // this block of code will never evaluate to true AND have UI read back -1 (cancel) at the same time
-                    {
-                        AbilityLearnContext learn = new AbilityLearnContext();
-                        learn.AbilityLearn = DataManager.Instance.CurrentReplay.ReadUI();
-                        learn.ReplaceSlot = 0;
-                        context.ContextStates.Set(learn);
-                    }
+                        chosenSlot = DataManager.Instance.CurrentReplay.ReadUI();
                     else
                     {
-                        yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(new IntrinsicRecallMenu(context.User, eligibleAbilities.ToArray(), (int abilityNum) =>
-                        {
-                            AbilityLearnContext learn = new AbilityLearnContext();
-                            learn.AbilityLearn = abilityNum;
-                            learn.ReplaceSlot = 0;
-                            context.ContextStates.Set(learn);
-                        },
-                        () => { context.CancelState.Cancel = true; })));
+                        yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(new IntrinsicRecallMenu(context.User, eligibleAbilities.ToArray(),
+                            (int abilitySlot) => { chosenSlot = abilitySlot; }, () => { context.CancelState.Cancel = true; })));
 
-                        if (!context.CancelState.Cancel)
-                        {
-                            int abilityNum = -1;
-                            AbilityLearnContext learn = context.ContextStates.GetWithDefault<AbilityLearnContext>();
-                            if (learn != null)
-                                abilityNum = learn.AbilityLearn;
-                            DataManager.Instance.LogUIPlay(abilityNum);
-                        }
+                        if (chosenSlot > -1)
+                            DataManager.Instance.LogUIPlay(chosenSlot);
+                    }
+
+                    if (!context.CancelState.Cancel)
+                    {
+                        AbilityLearnContext learn = new AbilityLearnContext();
+                        learn.AbilityLearn = eligibleAbilities[chosenSlot];
+                        learn.ReplaceSlot = 0;
+                        context.ContextStates.Set(learn);
                     }
                 }
                 else
@@ -13908,7 +13904,7 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new AbilityLearnEvent(); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            int abilityNum = -1;
+            string abilityNum = "";
             int abilitySlot = -1;
             AbilityLearnContext learn = context.ContextStates.GetWithDefault<AbilityLearnContext>();
             if (learn != null)
@@ -13916,7 +13912,7 @@ namespace PMDC.Dungeon
                 abilityNum = learn.AbilityLearn;
                 abilitySlot = learn.ReplaceSlot;
             }
-            if (abilityNum > -1)
+            if (!String.IsNullOrEmpty(abilityNum))
             {
                 GameManager.Instance.SE("Fanfare/LearnSkill");
                 context.User.LearnIntrinsic(abilityNum, abilitySlot);
@@ -13938,7 +13934,7 @@ namespace PMDC.Dungeon
                 slot = delete.AbilityDelete;
             if (slot > -1)
             {
-                int abilityNum = context.User.BaseIntrinsics[slot];
+                string abilityNum = context.User.BaseIntrinsics[slot];
                 context.User.DeleteIntrinsic(slot);
 
                 yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(String.Format(new StringKey("DLG_FORGET_INTRINSIC").ToLocal(), context.User.GetDisplayName(false), DataManager.Instance.GetIntrinsic(abilityNum).GetColoredName()), context.User.MemberTeam));

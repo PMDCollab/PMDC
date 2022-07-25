@@ -983,9 +983,11 @@ namespace PMDC.Dungeon
     [Serializable]
     public class ImpostorReviveEvent : SingleCharEvent
     {
-        public int AbilityID;
-        public ImpostorReviveEvent() { }
-        public ImpostorReviveEvent(int abilityID) { AbilityID = abilityID; }
+        [JsonConverter(typeof(IntrinsicConverter))]
+        [DataType(0, DataManager.DataType.Intrinsic, false)]
+        public string AbilityID;
+        public ImpostorReviveEvent() { AbilityID = ""; }
+        public ImpostorReviveEvent(string abilityID) { AbilityID = abilityID; }
         protected ImpostorReviveEvent(ImpostorReviveEvent other) { this.AbilityID = other.AbilityID; }
         public override GameEvent Clone() { return new ImpostorReviveEvent(this); }
         
@@ -997,7 +999,7 @@ namespace PMDC.Dungeon
             if (character.CurrentForm.Species == character.BaseForm.Species)
                 yield break;
 
-            foreach (int id in character.BaseIntrinsics)
+            foreach (string id in character.BaseIntrinsics)
             {
                 if (id == AbilityID)
                 {

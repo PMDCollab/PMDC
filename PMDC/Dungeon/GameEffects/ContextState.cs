@@ -432,7 +432,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class AbilityLearnContext : ContextState
     {
-        public int AbilityLearn;
+        public string AbilityLearn;
         public int ReplaceSlot;
         public AbilityLearnContext() { }
         protected AbilityLearnContext(AbilityLearnContext other)

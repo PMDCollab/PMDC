@@ -242,13 +242,13 @@ namespace PMDC.Dev
         {
             List<string[]> stats = new List<string[]>();
             stats.Add(new string[3] { "###", "Name", "Description" });
-            for (int ii = 0; ii < DataManager.Instance.DataIndices[DataManager.DataType.Intrinsic].Count; ii++)
+            foreach(string key in DataManager.Instance.DataIndices[DataManager.DataType.Intrinsic].Entries.Keys)
             {
-                IntrinsicData entry = DataManager.Instance.GetIntrinsic(ii);
+                IntrinsicData entry = DataManager.Instance.GetIntrinsic(key);
                 if (entry.Released)
-                    stats.Add(new string[3] { ii.ToString("D3"), entry.Name.ToLocal(), entry.Desc.ToLocal() });
+                    stats.Add(new string[3] { key, entry.Name.ToLocal(), entry.Desc.ToLocal() });
                 else
-                    stats.Add(new string[3] { ii.ToString("D3"), entry.Name.ToLocal(), "NO DATA" });
+                    stats.Add(new string[3] { key, entry.Name.ToLocal(), "NO DATA" });
             }
 
             if (csv)

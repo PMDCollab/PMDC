@@ -242,11 +242,11 @@ namespace PMDC.Dev
             }
         }
 
-        public static List<MonsterID> FindMoveAbilityUsers(int ability, int[] moves)
+        public static List<MonsterID> FindMoveAbilityUsers(string ability, int[] moves)
         {
             List<MonsterID> results = new List<MonsterID>();
             //go through entire dex
-            for (int ii = 1; ii < 493; ii++)
+            for (int ii = 1; ii < 899; ii++)
             {
                 MonsterData dex = DataManager.Instance.GetMonster(ii);
                 for (int jj = 0; jj < dex.Forms.Count; jj++)
@@ -259,10 +259,10 @@ namespace PMDC.Dev
             return results;
         }
 
-        public static bool HasAbilityMoves(int ability, int[] moves, BaseMonsterForm entry)
+        public static bool HasAbilityMoves(string ability, int[] moves, BaseMonsterForm entry)
         {
             //check if form has ability given
-            if (ability > -1)
+            if (!String.IsNullOrEmpty(ability))
             {
                 if (entry.Intrinsic1 != ability && entry.Intrinsic2 != ability && entry.Intrinsic3 != ability)
                     return false;
@@ -306,18 +306,18 @@ namespace PMDC.Dev
                             if (name == "")
                                 continue;
 
-                            int ability = -1;
+                            string ability = "";
                             IntrinsicData entry = null;
-                            for (int ii = 0; ii < DataManager.Instance.DataIndices[DataManager.DataType.Intrinsic].Count; ii++)
+                            foreach(string key in DataManager.Instance.DataIndices[DataManager.DataType.Intrinsic].Entries.Keys)
                             {
-                                entry = DataManager.Instance.GetIntrinsic(ii);
+                                entry = DataManager.Instance.GetIntrinsic(key);
                                 if (entry.Name.ToLocal().ToLower() == name.ToLower())
                                 {
-                                    ability = ii;
+                                    ability = key;
                                     break;
                                 }
                             }
-                            if (ability == -1)
+                            if (ability == "")
                                 throw new Exception("Unknown Ability");
 
                             Debug.WriteLine(String.Format("{0:D3}: {1}", ability, entry.Name.ToLocal()));
@@ -372,7 +372,7 @@ namespace PMDC.Dev
                                 throw new Exception("Unknown Move");
 
                             Debug.WriteLine(String.Format("{0:D3}: {1}", move, entry.Name.ToLocal()));
-                            List<MonsterID> forms = FindMoveAbilityUsers(-1, new int[1] { move });
+                            List<MonsterID> forms = FindMoveAbilityUsers("", new int[1] { move });
                             for (int ii = 0; ii < forms.Count; ii++)
                             {
                                 MonsterData dex = DataManager.Instance.GetMonster(forms[ii].Species);

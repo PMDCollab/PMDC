@@ -120,13 +120,13 @@ namespace PMDC.Data
             return Gender.Genderless;
         }
 
-        public override int RollIntrinsic(IRandom rand, int bounds)
+        public override string RollIntrinsic(IRandom rand, int bounds)
         {
-            List<int> abilities = new List<int>();
+            List<string> abilities = new List<string>();
             abilities.Add(Intrinsic1);
-            if (Intrinsic2 != 0 && bounds > 1)
+            if (Intrinsic2 != DataManager.Instance.DefaultIntrinsic && bounds > 1)
                 abilities.Add(Intrinsic2);
-            if (Intrinsic3 != 0 && bounds > 2)
+            if (Intrinsic3 != DataManager.Instance.DefaultIntrinsic && bounds > 2)
                 abilities.Add(Intrinsic3);
 
             return abilities[rand.Next(abilities.Count)];
@@ -164,9 +164,9 @@ namespace PMDC.Data
 
             abilities.Add(0);
             //if intrinsic cannot be achieved, default to first intrinsic
-            if (Intrinsic2 > 0)
+            if (Intrinsic2 != DataManager.Instance.DefaultIntrinsic)
                 abilities.Add(1);
-            if (Intrinsic3 > 0)
+            if (Intrinsic3 != DataManager.Instance.DefaultIntrinsic)
                 abilities.Add(2);
 
             return abilities;

@@ -308,7 +308,7 @@ namespace MapGenTest
                                 rewriteLine(farthestPrint, nameString);
                                 farthestPrint++;
                                 rewriteLine(farthestPrint, String.Format("    @{0} *{1} ?{2}", character.EquippedItem.ID > -1 ? ((ItemData)character.EquippedItem.GetData()).Name.ToLocal() : "---",
-                                    character.Intrinsics[0].Element.ID > -1 ? ((IntrinsicData)character.Intrinsics[0].Element.GetData()).Name.ToLocal() : "---", character.Tactic.Name));
+                                    !String.IsNullOrEmpty(character.Intrinsics[0].Element.ID) ? ((IntrinsicData)character.Intrinsics[0].Element.GetData()).Name.ToLocal() : "---", character.Tactic.Name));
                                 farthestPrint++;
                                 rewriteLine(farthestPrint, String.Format("    {0}{1} {2}{3} {4}{5} {6}{7}",
                                     character.Skills[0].Element.Enabled ? "+" : "-", character.BaseSkills[0].SkillNum > -1 ? DataManager.Instance.GetSkill(character.Skills[0].Element.SkillNum).Name.ToLocal() : "---",

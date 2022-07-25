@@ -13,10 +13,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class SupportAbilityEvent : BattleEvent
     {
-        public int SupportAbility;
+        [JsonConverter(typeof(IntrinsicConverter))]
+        [DataType(0, DataManager.DataType.Intrinsic, false)]
+        public string SupportAbility;
 
-        public SupportAbilityEvent() { }
-        public SupportAbilityEvent(int supportAbility)
+        public SupportAbilityEvent() { SupportAbility = ""; }
+        public SupportAbilityEvent(string supportAbility)
         {
             SupportAbility = supportAbility;
         }
