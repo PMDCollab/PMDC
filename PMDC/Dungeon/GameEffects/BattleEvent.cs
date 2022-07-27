@@ -320,6 +320,7 @@ namespace PMDC.Dungeon
             {
                 //these just do damage(create a custom effect in stead of the item's effect)
                 context.Data = new BattleData();
+                context.Data.Element = DataManager.Instance.DefaultElement;
                 context.Data.ID = item.GetID();
 
                 context.Data.Category = BattleData.SkillCategory.Physical;
@@ -335,6 +336,7 @@ namespace PMDC.Dungeon
             if (catchable)
             {
                 BattleData catchData = new BattleData();
+                catchData.Element = DataManager.Instance.DefaultElement;
                 catchData.OnHits.Add(0, new CatchItemEvent());
                 catchData.HitFX.Sound = "DUN_Equip";
 
@@ -11558,6 +11560,7 @@ namespace PMDC.Dungeon
                 {
                     //these just do damage(create a custom effect instead of the item's effect)
                     newContext.Data = new BattleData();
+                    newContext.Data.Element = DataManager.Instance.DefaultElement;
                     newContext.Data.ID = item.GetID();
 
                     newContext.Data.Category = BattleData.SkillCategory.Physical;
@@ -11573,6 +11576,7 @@ namespace PMDC.Dungeon
                 if (catchable)
                 {
                     BattleData catchData = new BattleData();
+                    catchData.Element = DataManager.Instance.DefaultElement;
                     catchData.OnHits.Add(0, new CatchItemEvent());
                     catchData.HitFX.Sound = "DUN_Equip";
 
