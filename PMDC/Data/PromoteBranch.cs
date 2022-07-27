@@ -151,8 +151,9 @@ namespace PMDC.Data
     [Serializable]
     public class EvoCrits : PromoteDetail
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int CritStatus;
+        public string CritStatus;
         public int Stack;
 
         public override string GetReqString()
@@ -174,8 +175,9 @@ namespace PMDC.Data
     [Serializable]
     public class EvoStatBoost : PromoteDetail
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int StatBoostStatus;
+        public string StatBoostStatus;
 
         public override string GetReqString()
         {

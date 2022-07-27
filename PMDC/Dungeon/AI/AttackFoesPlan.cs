@@ -110,7 +110,7 @@ namespace PMDC.Dungeon
             {
                 //for dumb NPCs, if they have a status where they can't attack, treat it as a regular attack pattern so that they walk up to the player
                 //only cringe does this right now...
-                StatusEffect flinchStatus = controlledChar.GetStatusEffect(8); //NOTE: specialized AI code!
+                StatusEffect flinchStatus = controlledChar.GetStatusEffect("flinch"); //NOTE: specialized AI code!
                 if (flinchStatus != null)
                     positioning = PositionChoice.Approach;
             }

@@ -135,10 +135,10 @@ namespace PMDC.Dungeon
         /// <returns></returns>
         protected bool playerSensibleToAttack(Character seenChar)
         {
-            if (seenChar.GetStatusEffect(3) != null)//if they're frozen, do not attack; NOTE: specialized AI code!
+            if (seenChar.GetStatusEffect("freeze") != null)//if they're frozen, do not attack; NOTE: specialized AI code!
                 return false;
 
-            StatusEffect sleepStatus = seenChar.GetStatusEffect(1);
+            StatusEffect sleepStatus = seenChar.GetStatusEffect("sleep");
             if (sleepStatus != null)//if they're asleep and have one turn or less; NOTE: specialized AI code!
             {
                 CountDownState sleepState = sleepStatus.StatusStates.GetWithDefault<CountDownState>();
@@ -146,7 +146,7 @@ namespace PMDC.Dungeon
                     return false;
             }
 
-            if (seenChar.GetStatusEffect(25) == null)//last targeted by someone; NOTE: specialized AI code!
+            if (seenChar.GetStatusEffect("last_targeted_by") == null)//last targeted by someone; NOTE: specialized AI code!
             {
                 //don't attack certain kinds of foes that won't attack first
                 if (seenChar.Tactic.ID == "weird_tree")//weird tree; NOTE: specialized AI code!
@@ -155,7 +155,7 @@ namespace PMDC.Dungeon
                     return false;
             }
             
-            if (seenChar.GetStatusEffect(31) == null)
+            if (seenChar.GetStatusEffect("was_hurt_last_turn") == null)
             {
                 if (seenChar.Tactic.ID == "tit_for_tat")//tit for tat; NOTE: specialized AI code!
                     return false;
@@ -217,7 +217,7 @@ namespace PMDC.Dungeon
             List<Character> seenChars = controlledChar.GetSeenCharacters(Alignment.Foe);
             foreach (Character seenChar in seenChars)
             {
-                if (seenChar.Tactic.ID == "wait_attack" && ZoneManager.Instance.CurrentMap.InRange(seenChar.CharLoc, testLoc, 1) && seenChar.GetStatusEffect(25) == null)//do not approach silcoon/cascoon; NOTE: specialized AI code!
+                if (seenChar.Tactic.ID == "wait_attack" && ZoneManager.Instance.CurrentMap.InRange(seenChar.CharLoc, testLoc, 1) && seenChar.GetStatusEffect("last_targeted_by") == null)//do not approach silcoon/cascoon; NOTE: specialized AI code!
                     return true;
             }
             return false;
@@ -234,10 +234,10 @@ namespace PMDC.Dungeon
         private bool isIllusionStealth(Character controlledChar, Character seenChar)
         {
             //illusion check; NOTE: specialized AI code!
-            StatusEffect illusionEffect = seenChar.GetStatusEffect(111);
+            StatusEffect illusionEffect = seenChar.GetStatusEffect("illusion");
             if (illusionEffect != null)
             {
-                StatusEffect previouslyAttackedEffect = controlledChar.GetStatusEffect(25);//only be passive if not previously attacked
+                StatusEffect previouslyAttackedEffect = controlledChar.GetStatusEffect("last_targeted_by");//only be passive if not previously attacked
                 if (previouslyAttackedEffect == null)
                 {
                     MonsterIDState illusionMon = illusionEffect.StatusStates.GetWithDefault<MonsterIDState>();
@@ -524,7 +524,7 @@ namespace PMDC.Dungeon
             {
                 //for dumb NPCs, if they have a status where they can't attack, treat it as a regular attack pattern so that they walk up to the player
                 //only cringe does this right now...
-                StatusEffect flinchStatus = controlledChar.GetStatusEffect(8); //NOTE: specialized AI code!
+                StatusEffect flinchStatus = controlledChar.GetStatusEffect("flinch"); //NOTE: specialized AI code!
                 if (flinchStatus != null)
                     attackPattern = AttackChoice.StandardAttack;
 
@@ -817,7 +817,7 @@ namespace PMDC.Dungeon
             //check to see if currently under a force-move status
             //if so, aim a regular attack according to that move
             int forcedMove = -1;
-            foreach (int status in controlledChar.StatusEffects.Keys)
+            foreach (string status in controlledChar.StatusEffects.Keys)
             {
                 StatusData entry = DataManager.Instance.GetStatus(status);
                 foreach (BattleEvent effect in entry.BeforeTryActions.EnumerateInOrder())
@@ -1249,7 +1249,7 @@ namespace PMDC.Dungeon
                 case 274: // assist
                 case 383: // copycat
                     {
-                        int searchedStatus = -1;
+                        string searchedStatus = "";
                         foreach (BattleEvent effect in entry.Data.OnHits.EnumerateInOrder())
                         {
                             MirrorMoveEvent mirror = effect as MirrorMoveEvent;
@@ -1528,7 +1528,7 @@ namespace PMDC.Dungeon
                 if (teamPartner || wontDisturb)
                 {
                     //logic to not attack sleeping foes or foes with a certain AI
-                    StatusEffect sleepStatus = target.GetStatusEffect(1);
+                    StatusEffect sleepStatus = target.GetStatusEffect("sleep");
                     if (sleepStatus != null)
                     {
                         bool leaveSleeping = true;
@@ -1551,7 +1551,7 @@ namespace PMDC.Dungeon
                         if (leaveSleeping)
                             return 0;
                     }
-                    if (target.GetStatusEffect(3) != null)
+                    if (target.GetStatusEffect("freeze") != null)
                     {
                         //don't attack the frozen; it won't help
                         return 0;
@@ -1559,7 +1559,7 @@ namespace PMDC.Dungeon
                 }
                 if (teamPartner)
                 {
-                    if (target.GetStatusEffect(25) == null)//last targeted by someone; NOTE: specialized AI code!
+                    if (target.GetStatusEffect("last_targeted_by") == null)//last targeted by someone; NOTE: specialized AI code!
                     {
                         if (target.Tactic.ID == "weird_tree")//weird tree; NOTE: specialized AI code!
                             return 0;
@@ -1606,7 +1606,7 @@ namespace PMDC.Dungeon
             //special cases go here
             //TODO: move all NOTE codes into properly specialized code blocks
 
-            if (target.GetStatusEffect(3) != null/* && entry.SkillEffect.MoveType != 07*/)
+            if (target.GetStatusEffect("freeze") != null/* && entry.SkillEffect.MoveType != 07*/)
                 return 0;
 
             foreach (BattleEvent effect in entry.Data.OnActions.EnumerateInOrder())
@@ -1686,7 +1686,7 @@ namespace PMDC.Dungeon
             }
             else if (moveIndex == 68 && (IQ & AIFlags.KnowsMatchups) == AIFlags.None)//counter; do not use if mirror coat status exists and has more than 1 turn left; NOTE: specialized AI code!
             {
-                StatusEffect mutexStatus = controlledChar.GetStatusEffect(66);
+                StatusEffect mutexStatus = controlledChar.GetStatusEffect("mirror_coat");
                 if (mutexStatus != null)
                 {
                     CountDownState state = mutexStatus.StatusStates.Get<CountDownState>();
@@ -1696,7 +1696,7 @@ namespace PMDC.Dungeon
             }
             else if (moveIndex == 243 && (IQ & AIFlags.KnowsMatchups) == AIFlags.None)//Mirror coat; do not use if counter status exists and has more than 1 turn left; NOTE: specialized AI code!
             {
-                StatusEffect mutexStatus = controlledChar.GetStatusEffect(67);
+                StatusEffect mutexStatus = controlledChar.GetStatusEffect("counter");
                 if (mutexStatus != null)
                 {
                     CountDownState state = mutexStatus.StatusStates.Get<CountDownState>();
@@ -1706,7 +1706,7 @@ namespace PMDC.Dungeon
             }
             else if (moveIndex == 256)//swallow; use only if stockpiled and damaged; NOTE: specialized AI code!
             {
-                StatusEffect stockStatus = controlledChar.GetStatusEffect(53);
+                StatusEffect stockStatus = controlledChar.GetStatusEffect("stockpile");
                 if (stockStatus != null)
                 {
                     StackState stack = stockStatus.StatusStates.Get<StackState>();
@@ -2073,7 +2073,7 @@ namespace PMDC.Dungeon
                         else if (existingStatus == null)
                         {
                             //Not a stackable status, and it doesn't exist on the target yet
-                            if (giveEffect.StatusID == 21)//attract NOTE: Specialized code!
+                            if (giveEffect.StatusID == "in_love")//attract NOTE: Specialized code!
                             {
                                 if ((statusTarget.CurrentForm.Gender == Gender.Genderless) != (statusTarget.CurrentForm.Gender == controlledChar.CurrentForm.Gender))
                                 {
@@ -2082,37 +2082,37 @@ namespace PMDC.Dungeon
                                 else
                                     addedWorth = 100;
                             }
-                            else if (giveEffect.StatusID == 2 && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//burn NOTE: specialized code!
+                            else if (giveEffect.StatusID == "burn" && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//burn NOTE: specialized code!
                             {
                                 if (!statusTarget.HasElement("fire"))
                                     addedWorth = 100;
                             }
-                            else if (giveEffect.StatusID == 3 && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//freeze NOTE: specialized code!
+                            else if (giveEffect.StatusID == "freeze" && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//freeze NOTE: specialized code!
                             {
                                 if (!statusTarget.HasElement("ice"))
                                     addedWorth = 100;
                             }
-                            else if (giveEffect.StatusID == 4 && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//paralyze NOTE: specialized code!
+                            else if (giveEffect.StatusID == "paralyze" && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//paralyze NOTE: specialized code!
                             {
                                 if (!statusTarget.HasElement("electric"))
                                     addedWorth = 100;
                             }
-                            else if ((giveEffect.StatusID == 5 || giveEffect.StatusID == 6) && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//poison NOTE: specialized code!
+                            else if ((giveEffect.StatusID == "poison" || giveEffect.StatusID == "poison_toxic") && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//poison NOTE: specialized code!
                             {
                                 if (!statusTarget.HasElement("poison") && !statusTarget.HasElement("steel"))
                                     addedWorth = 100;
                             }
-                            else if (giveEffect.StatusID == 90 && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//immobilize NOTE: specialized code!
+                            else if (giveEffect.StatusID == "immobilized" && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//immobilize NOTE: specialized code!
                             {
                                 if (!statusTarget.HasElement("ghost"))
                                     addedWorth = 100;
                             }
-                            else if (giveEffect.StatusID == 60)//disable NOTE: specialized code!
+                            else if (giveEffect.StatusID == "disable")//disable NOTE: specialized code!
                             {
-                                if (statusTarget.StatusEffects.ContainsKey(26))
+                                if (statusTarget.StatusEffects.ContainsKey("last_used_move_slot"))
                                     addedWorth = 100;
                             }
-                            else if (giveEffect.StatusID == 112)//substitute; not necessarily a bad status, but treated like one
+                            else if (giveEffect.StatusID == "decoy")//substitute; not necessarily a bad status, but treated like one
                                 addedWorth = -100;
                             else
                                 addedWorth = 100;
@@ -2254,7 +2254,7 @@ namespace PMDC.Dungeon
             }
         }
 
-        private int calculateStatusStackWorth(int statusID, int stack, int existingStack)
+        private int calculateStatusStackWorth(string statusID, int stack, int existingStack)
         {
             int addedWorth = 64;
             StatusData statusEntry = DataManager.Instance.GetStatus(statusID);
@@ -2281,7 +2281,7 @@ namespace PMDC.Dungeon
             else if (stack < 0)
             {
                 //Speed drop below -1 is considered worthless for enemies. NOTE: specialized code!
-                if (statusID == 9 && (IQ & AIFlags.KnowsMatchups) == AIFlags.None)
+                if (statusID == "mod_speed" && (IQ & AIFlags.KnowsMatchups) == AIFlags.None)
                     minStack = -1;
 
                 //negative stack implies a negative effect

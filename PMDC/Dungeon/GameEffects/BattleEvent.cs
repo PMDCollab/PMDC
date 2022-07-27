@@ -1145,31 +1145,31 @@ namespace PMDC.Dungeon
             if (tryingCategories.Count == 0)
             {
                 List<int> tryingMoves = new List<int>();
-                if (!context.User.StatusEffects.ContainsKey(77))
+                if (!context.User.StatusEffects.ContainsKey("aqua_ring"))
                     tryAddMove(tryingMoves, 392);//aqua ring
-                if (!context.User.StatusEffects.ContainsKey(17))
+                if (!context.User.StatusEffects.ContainsKey("reflect"))
                     tryAddMove(tryingMoves, 115);//reflect
-                if (!context.User.StatusEffects.ContainsKey(18))
+                if (!context.User.StatusEffects.ContainsKey("light_screen"))
                     tryAddMove(tryingMoves, 113);//light screen
-                if (!context.User.StatusEffects.ContainsKey(57))
+                if (!context.User.StatusEffects.ContainsKey("wish"))
                     tryAddMove(tryingMoves, 273);//wish
-                if (!context.User.StatusEffects.ContainsKey(69))
+                if (!context.User.StatusEffects.ContainsKey("mist"))
                     tryAddMove(tryingMoves, 54);//mist
-                if (!context.User.StatusEffects.ContainsKey(68))
+                if (!context.User.StatusEffects.ContainsKey("safeguard"))
                     tryAddMove(tryingMoves, 219);//safeguard
-                if (!context.User.StatusEffects.ContainsKey(82))
+                if (!context.User.StatusEffects.ContainsKey("magic_coat"))
                     tryAddMove(tryingMoves, 277);//magic coat
-                if (!context.User.StatusEffects.ContainsKey(66))
+                if (!context.User.StatusEffects.ContainsKey("mirror_coat"))
                     tryAddMove(tryingMoves, 243);//mirror coat
-                if (!context.User.StatusEffects.ContainsKey(67))
+                if (!context.User.StatusEffects.ContainsKey("counter"))
                     tryAddMove(tryingMoves, 68);//counter
-                if (!context.User.StatusEffects.ContainsKey(83))
+                if (!context.User.StatusEffects.ContainsKey("metal_burst"))
                     tryAddMove(tryingMoves, 368);//metal burst
-                if (!context.User.StatusEffects.ContainsKey(76))
+                if (!context.User.StatusEffects.ContainsKey("lucky_chant"))
                     tryAddMove(tryingMoves, 381);//lucky chant
-                if (!context.User.StatusEffects.ContainsKey(78))
+                if (!context.User.StatusEffects.ContainsKey("focus_energy"))
                     tryAddMove(tryingMoves, 116);//focus energy
-                if (!context.User.StatusEffects.ContainsKey(98))
+                if (!context.User.StatusEffects.ContainsKey("sure_shot"))
                     tryAddMove(tryingMoves, 199);//lock-on
                 tryingCategories.Add(tryingMoves);
             }
@@ -1252,11 +1252,12 @@ namespace PMDC.Dungeon
     public class MirrorMoveEvent : InvokedMoveEvent
     {
         //Last Used Effect, Last Ally Effect, Last Effect Hit By Someone Else
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int MoveStatusID;
+        public string MoveStatusID;
 
-        public MirrorMoveEvent() { }
-        public MirrorMoveEvent(int prevMoveStatusID)
+        public MirrorMoveEvent() { MoveStatusID = ""; }
+        public MirrorMoveEvent(string prevMoveStatusID)
         {
             MoveStatusID = prevMoveStatusID;
         }
@@ -1528,13 +1529,14 @@ namespace PMDC.Dungeon
     [Serializable]
     public class StatusStackDifferentEvent : BattleEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int StatusID;
+        public string StatusID;
         public StringKey FailMsg;
         public Dictionary<int, Tuple<CombatAction, ExplosionData, BattleData>> StackPair;
 
-        public StatusStackDifferentEvent() { StackPair = new Dictionary<int, Tuple<CombatAction, ExplosionData, BattleData>>(); }
-        public StatusStackDifferentEvent(int statusID, StringKey failMsg, Dictionary<int, Tuple<CombatAction, ExplosionData, BattleData>> stack)
+        public StatusStackDifferentEvent() { StackPair = new Dictionary<int, Tuple<CombatAction, ExplosionData, BattleData>>(); StatusID = ""; }
+        public StatusStackDifferentEvent(string statusID, StringKey failMsg, Dictionary<int, Tuple<CombatAction, ExplosionData, BattleData>> stack)
         {
             StatusID = statusID;
             FailMsg = failMsg;
@@ -2101,13 +2103,15 @@ namespace PMDC.Dungeon
     [Serializable]
     public class BerryBoostEvent : BattleEvent
     {
-        public List<int> StatsToBoost;
+        [JsonConverter(typeof(StatusListConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public List<string> StatsToBoost;
 
-        public BerryBoostEvent() { StatsToBoost = new List<int>(); }
-        public BerryBoostEvent(params int[] effects)
+        public BerryBoostEvent() { StatsToBoost = new List<string>(); }
+        public BerryBoostEvent(params string[] effects)
         {
-            StatsToBoost = new List<int>();
-            foreach (int effect in effects)
+            StatsToBoost = new List<string>();
+            foreach (string effect in effects)
                 StatsToBoost.Add(effect);
         }
         protected BerryBoostEvent(BerryBoostEvent other)
@@ -2125,7 +2129,7 @@ namespace PMDC.Dungeon
                 ItemData itemData = DataManager.Instance.GetItem(context.Item.ID);
                 if (itemData.ItemStates.Contains<BerryState>())
                 {
-                    int statusID = StatsToBoost[DataManager.Instance.Save.Rand.Next(StatsToBoost.Count)];
+                    string statusID = StatsToBoost[DataManager.Instance.Save.Rand.Next(StatsToBoost.Count)];
 
                     StatusEffect setStatus = new StatusEffect(statusID);
                     setStatus.LoadFromData();
@@ -2380,7 +2384,9 @@ namespace PMDC.Dungeon
     [Serializable]
     public class BarrageGuardEvent : BattleEvent
     {
-        public int PrevHitID;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string PrevHitID;
         public int Numerator;
         public int Denominator;
         public List<BattleAnimEvent> Anims;
@@ -2388,15 +2394,16 @@ namespace PMDC.Dungeon
         public BarrageGuardEvent()
         {
             Anims = new List<BattleAnimEvent>();
+            PrevHitID = "";
         }
-        public BarrageGuardEvent(int prevHitID, int numerator, int denominator)
+        public BarrageGuardEvent(string prevHitID, int numerator, int denominator)
         {
             PrevHitID = prevHitID;
             Numerator = numerator;
             Denominator = denominator;
             Anims = new List<BattleAnimEvent>();
         }
-        public BarrageGuardEvent(int prevHitID, int numerator, int denominator, params BattleAnimEvent[] anims)
+        public BarrageGuardEvent(string prevHitID, int numerator, int denominator, params BattleAnimEvent[] anims)
         {
             PrevHitID = prevHitID;
             Numerator = numerator;
@@ -2614,15 +2621,16 @@ namespace PMDC.Dungeon
     [Serializable]
     public class MultiplyCategoryWithoutStatusEvent : BattleEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int StatusID;
+        public string StatusID;
         public BattleData.SkillCategory Category;
         public int Numerator;
         public int Denominator;
         public bool AffectTarget;
 
-        public MultiplyCategoryWithoutStatusEvent() { }
-        public MultiplyCategoryWithoutStatusEvent(int statusID, BattleData.SkillCategory category, int numerator, int denominator, bool affectTarget)
+        public MultiplyCategoryWithoutStatusEvent() { StatusID = ""; }
+        public MultiplyCategoryWithoutStatusEvent(string statusID, BattleData.SkillCategory category, int numerator, int denominator, bool affectTarget)
         {
             StatusID = statusID;
             Category = category;
@@ -2656,15 +2664,16 @@ namespace PMDC.Dungeon
     [Serializable]
     public class MultiplyCategoryInStatusEvent : BattleEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int StatusID;
+        public string StatusID;
         public BattleData.SkillCategory Category;
         public int Numerator;
         public int Denominator;
         public bool AffectTarget;
 
-        public MultiplyCategoryInStatusEvent() { }
-        public MultiplyCategoryInStatusEvent(int statusID, BattleData.SkillCategory category, int numerator, int denominator, bool affectTarget)
+        public MultiplyCategoryInStatusEvent() { StatusID = ""; }
+        public MultiplyCategoryInStatusEvent(string statusID, BattleData.SkillCategory category, int numerator, int denominator, bool affectTarget)
         {
             StatusID = statusID;
             Category = category;
@@ -2829,14 +2838,18 @@ namespace PMDC.Dungeon
     [Serializable]
     public class RepeatHitEvent : BattleEvent
     {
-        public int LastMoveStatusID;
-        public int MoveRepeatStatusID;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string LastMoveStatusID;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string MoveRepeatStatusID;
         public int Maximum;
         public int Denominator;
         public bool EveryTurn;
 
-        public RepeatHitEvent() { }
-        public RepeatHitEvent(int moveStatusID, int repeatStatusID, int maximum, int denominator, bool everyTurn)
+        public RepeatHitEvent() { LastMoveStatusID = ""; MoveRepeatStatusID = ""; }
+        public RepeatHitEvent(string moveStatusID, string repeatStatusID, int maximum, int denominator, bool everyTurn)
         {
             LastMoveStatusID = moveStatusID;
             MoveRepeatStatusID = repeatStatusID;
@@ -3514,14 +3527,15 @@ namespace PMDC.Dungeon
     [Serializable]
     public class MultWhenMissEvent : BattleEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int StatusID;
+        public string StatusID;
 
         public int Numerator;
         public int Denominator;
 
-        public MultWhenMissEvent() { }
-        public MultWhenMissEvent(int statusID, int numerator, int denominator)
+        public MultWhenMissEvent() { StatusID = ""; }
+        public MultWhenMissEvent(string statusID, int numerator, int denominator)
         {
             StatusID = statusID;
             Numerator = numerator;
@@ -3548,11 +3562,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class EvasiveWhenMissEvent : BattleEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int StatusID;
+        public string StatusID;
 
-        public EvasiveWhenMissEvent() { }
-        public EvasiveWhenMissEvent(int statusID)
+        public EvasiveWhenMissEvent() { StatusID = ""; }
+        public EvasiveWhenMissEvent(string statusID)
         {
             StatusID = statusID;
         }
@@ -3633,11 +3648,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class EvadeInStatusEvent : BattleEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int StatusID;
+        public string StatusID;
 
-        public EvadeInStatusEvent() { }
-        public EvadeInStatusEvent(int statusID)
+        public EvadeInStatusEvent() { StatusID = ""; }
+        public EvadeInStatusEvent(string statusID)
         {
             StatusID = statusID;
         }
@@ -5168,11 +5184,13 @@ namespace PMDC.Dungeon
     [Serializable]
     public class ChargeOrReleaseEvent : BattleEvent
     {
-        public int ChargeStatus;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string ChargeStatus;
         public CombatAction HitboxAction;
 
-        public ChargeOrReleaseEvent() { }
-        public ChargeOrReleaseEvent(int chargeStatus, CombatAction action)
+        public ChargeOrReleaseEvent() { ChargeStatus = ""; }
+        public ChargeOrReleaseEvent(string chargeStatus, CombatAction action)
         {
             ChargeStatus = chargeStatus;
             HitboxAction = action;
@@ -5213,13 +5231,15 @@ namespace PMDC.Dungeon
     [Serializable]
     public class BideOrReleaseEvent : BattleEvent
     {
-        public int ChargeStatus;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string ChargeStatus;
         public FiniteEmitter IntroEmitter;
         [Sound(0)]
         public string IntroSound;
 
-        public BideOrReleaseEvent() { }
-        public BideOrReleaseEvent(int chargeStatus, FiniteEmitter introEmitter, string introSound)
+        public BideOrReleaseEvent() { ChargeStatus = ""; }
+        public BideOrReleaseEvent(string chargeStatus, FiniteEmitter introEmitter, string introSound)
         {
             ChargeStatus = chargeStatus;
             IntroEmitter = introEmitter;
@@ -5271,13 +5291,15 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WatchOrStrikeEvent : BattleEvent
     {
-        public int ChargeStatus;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string ChargeStatus;
         public FiniteEmitter IntroEmitter;
         [Sound(0)]
         public string IntroSound;
 
-        public WatchOrStrikeEvent() { }
-        public WatchOrStrikeEvent(int chargeStatus, FiniteEmitter introEmitter, string introSound)
+        public WatchOrStrikeEvent() { ChargeStatus = ""; }
+        public WatchOrStrikeEvent(string chargeStatus, FiniteEmitter introEmitter, string introSound)
         {
             ChargeStatus = chargeStatus;
             IntroEmitter = introEmitter;
@@ -5327,17 +5349,27 @@ namespace PMDC.Dungeon
     [Serializable]
     public class HitPostEvent : BattleEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int RecentHitStatusID;
+        public string RecentHitStatusID;
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int OtherHitStatusID;
+        public string OtherHitStatusID;
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int TargetStatusID;
+        public string TargetStatusID;
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int CritStatusID;
+        public string CritStatusID;
 
-        public HitPostEvent() { }
-        public HitPostEvent(int recentHitStatusID, int otherHitStatusID, int targetStatusID, int critStatusID)
+        public HitPostEvent()
+        {
+            RecentHitStatusID = "";
+            OtherHitStatusID = "";
+            TargetStatusID = "";
+            CritStatusID = "";
+        }
+        public HitPostEvent(string recentHitStatusID, string otherHitStatusID, string targetStatusID, string critStatusID)
         {
             RecentHitStatusID = recentHitStatusID;
             OtherHitStatusID = otherHitStatusID;
@@ -5421,19 +5453,31 @@ namespace PMDC.Dungeon
     [Serializable]
     public class UsePostEvent : BattleEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int LastSlotStatusID;
+        public string LastSlotStatusID;
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int LastMoveStatusID;
+        public string LastMoveStatusID;
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int RepeatStatusID;
+        public string RepeatStatusID;
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int AllyStatusID;
+        public string AllyStatusID;
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int MissedAllID;
+        public string MissedAllID;
 
-        public UsePostEvent() { }
-        public UsePostEvent(int lastSlotStatusID, int lastMoveStatusID, int repeatStatusID, int allyStatusID, int missedAllID)
+        public UsePostEvent()
+        {
+            LastSlotStatusID = "";
+            LastMoveStatusID = "";
+            RepeatStatusID = "";
+            AllyStatusID = "";
+            MissedAllID = "";
+        }
+        public UsePostEvent(string lastSlotStatusID, string lastMoveStatusID, string repeatStatusID, string allyStatusID, string missedAllID)
         {
             LastSlotStatusID = lastSlotStatusID;
             LastMoveStatusID = lastMoveStatusID;
@@ -5522,15 +5566,29 @@ namespace PMDC.Dungeon
     public class AffectHighestStatBattleEvent : BattleEvent
     {
         public bool AffectTarget;
-        public int AtkStat;
-        public int DefStat;
-        public int SpAtkStat;
-        public int SpDefStat;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string AtkStat;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string DefStat;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string SpAtkStat;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string SpDefStat;
         public bool Anonymous;
         public int Stack;
 
-        public AffectHighestStatBattleEvent() { }
-        public AffectHighestStatBattleEvent(bool affectTarget, int atkStat, int defStat, int spAtkStat, int spDefStat, bool anonymous, int stack)
+        public AffectHighestStatBattleEvent()
+        {
+            AtkStat = "";
+            DefStat = "";
+            SpAtkStat = "";
+            SpDefStat = "";
+        }
+        public AffectHighestStatBattleEvent(bool affectTarget, string atkStat, string defStat, string spAtkStat, string spDefStat, bool anonymous, int stack)
         {
             AffectTarget = affectTarget;
             AtkStat = atkStat;
@@ -5559,9 +5617,9 @@ namespace PMDC.Dungeon
             if (target.Dead)
                 yield break;
 
-            int highestSpecial = SpAtkStat;
+            string highestSpecial = SpAtkStat;
             int highestSpecialValue = target.MAtk;
-            int highestPhysical = AtkStat;
+            string highestPhysical = AtkStat;
             int highestPhysicalValue = target.Atk;
             if (target.Def > target.Atk)
             {
@@ -5573,7 +5631,7 @@ namespace PMDC.Dungeon
                 highestSpecial = SpDefStat;
                 highestSpecialValue = target.MDef;
             }
-            int highestStat = highestPhysical;
+            string highestStat = highestPhysical;
             if (highestSpecialValue > highestPhysicalValue)
                 highestStat = highestSpecial;
 
@@ -5588,11 +5646,19 @@ namespace PMDC.Dungeon
     [Serializable]
     public class DownloadEvent : BattleEvent
     {
-        public int AtkStat;
-        public int SpAtkStat;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string AtkStat;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string SpAtkStat;
 
-        public DownloadEvent() { }
-        public DownloadEvent(int atkStat, int spAtkStat)
+        public DownloadEvent()
+        {
+            AtkStat = "";
+            SpAtkStat = "";
+        }
+        public DownloadEvent(string atkStat, string spAtkStat)
         {
             AtkStat = atkStat;
             SpAtkStat = spAtkStat;
@@ -5609,8 +5675,8 @@ namespace PMDC.Dungeon
             if (context.Target.Dead)
                 yield break;
 
-            int lowerStat = SpAtkStat;
-            int higherStat = AtkStat;
+            string lowerStat = SpAtkStat;
+            string higherStat = AtkStat;
             if (context.User.Def > context.User.MDef)
             {
                 lowerStat = AtkStat;
@@ -5638,12 +5704,21 @@ namespace PMDC.Dungeon
     {
         //physical ID will get dropped when the involved attack is physical
         //special ID will get dropped when the involved attack is special
-        public int RaiseID;
-        public int LowerID;
+
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string RaiseID;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string LowerID;
         public StringKey Message;
 
-        public RaiseOneLowerOneEvent() { }
-        public RaiseOneLowerOneEvent(int raiseID, int lowerID, StringKey msg)
+        public RaiseOneLowerOneEvent()
+        {
+            RaiseID = "";
+            LowerID = "";
+        }
+        public RaiseOneLowerOneEvent(string raiseID, string lowerID, StringKey msg)
         {
             RaiseID = raiseID;
             LowerID = lowerID;
@@ -5681,11 +5756,21 @@ namespace PMDC.Dungeon
     {
         //physical ID will get dropped when the involved attack is physical
         //special ID will get dropped when the involved attack is special
-        public int OnPhysicalID;
-        public int OnSpecialID;
 
-        public MoodyEvent() { }
-        public MoodyEvent(int onPhysical, int onSpecial)
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string OnPhysicalID;
+
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string OnSpecialID;
+
+        public MoodyEvent()
+        {
+            OnPhysicalID = "";
+            OnSpecialID = "";
+        }
+        public MoodyEvent(string onPhysical, string onSpecial)
         {
             OnPhysicalID = onPhysical;
             OnSpecialID = onSpecial;
@@ -5700,8 +5785,8 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            int raiseID = -1;
-            int dropID = -1;
+            string raiseID = "";
+            string dropID = "";
 
             if (context.Data.Category == BattleData.SkillCategory.Physical)
             {
@@ -5714,7 +5799,7 @@ namespace PMDC.Dungeon
                 dropID = OnPhysicalID;
             }
 
-            if (dropID > -1 && raiseID > -1)
+            if (!String.IsNullOrEmpty(dropID) && !String.IsNullOrEmpty(raiseID))
             {
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_MOODY").ToLocal(), context.User.GetDisplayName(false)));
 
@@ -6661,10 +6746,12 @@ namespace PMDC.Dungeon
     {
         public int AddedPower;
         public bool FromTarget;
-        public HashSet<int> StatChangeIDs;
+        [JsonConverter(typeof(StatusSetConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public HashSet<string> StatChangeIDs;
 
-        public StatBasePowerEvent() { StatChangeIDs = new HashSet<int>(); }
-        public StatBasePowerEvent(int addedPower, bool fromTarget, HashSet<int> statChangeIDs)
+        public StatBasePowerEvent() { StatChangeIDs = new HashSet<string>(); }
+        public StatBasePowerEvent(int addedPower, bool fromTarget, HashSet<string> statChangeIDs)
         {
             AddedPower = addedPower;
             FromTarget = fromTarget;
@@ -6674,7 +6761,7 @@ namespace PMDC.Dungeon
         {
             AddedPower = other.AddedPower;
             FromTarget = other.FromTarget;
-            foreach (int statID in other.StatChangeIDs)
+            foreach (string statID in other.StatChangeIDs)
                 StatChangeIDs.Add(statID);
         }
         public override GameEvent Clone() { return new StatBasePowerEvent(this); }
@@ -6687,7 +6774,7 @@ namespace PMDC.Dungeon
             {
                 int totalStacks = 0;
 
-                foreach (int statID in StatChangeIDs)
+                foreach (string statID in StatChangeIDs)
                 {
                     StatusEffect statChange = source.GetStatusEffect(statID);
                     if (statChange != null)
@@ -6918,15 +7005,16 @@ namespace PMDC.Dungeon
     [Serializable]
     public class RevengeEvent : BattleEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int TargetStatusID;
+        public string TargetStatusID;
         public int Numerator;
         public int Denominator;
         public bool AffectTarget;
         public bool Msg;
 
-        public RevengeEvent() { }
-        public RevengeEvent(int targetStatusID, int numerator, int denominator, bool affectTarget, bool msg)
+        public RevengeEvent() { TargetStatusID = ""; }
+        public RevengeEvent(string targetStatusID, int numerator, int denominator, bool affectTarget, bool msg)
         {
             TargetStatusID = targetStatusID;
             Numerator = numerator;
@@ -6969,13 +7057,14 @@ namespace PMDC.Dungeon
     [Serializable]
     public class TargetStatusNeededEvent : BattleEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int StatusID;
+        public string StatusID;
         public bool AffectTarget;
         public StringKey Message;
 
-        public TargetStatusNeededEvent() { }
-        public TargetStatusNeededEvent(int statusID, bool affectTarget, StringKey msg)
+        public TargetStatusNeededEvent() { StatusID = ""; }
+        public TargetStatusNeededEvent(string statusID, bool affectTarget, StringKey msg)
         {
             StatusID = statusID;
             AffectTarget = affectTarget;
@@ -7005,12 +7094,13 @@ namespace PMDC.Dungeon
     [Serializable]
     public class StatusNeededEvent : BattleEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int StatusID;
+        public string StatusID;
         public StringKey Message;
 
-        public StatusNeededEvent() { }
-        public StatusNeededEvent(int statusID, StringKey msg)
+        public StatusNeededEvent() { StatusID = ""; }
+        public StatusNeededEvent(string statusID, StringKey msg)
         {
             StatusID = statusID;
             Message = msg;
@@ -7073,12 +7163,13 @@ namespace PMDC.Dungeon
     [Serializable]
     public class StatusPowerEvent : BattleEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int StatusID;
+        public string StatusID;
         public bool AffectTarget;
 
-        public StatusPowerEvent() { }
-        public StatusPowerEvent(int statusID, bool affectTarget)
+        public StatusPowerEvent() { StatusID = ""; }
+        public StatusPowerEvent(string statusID, bool affectTarget)
         {
             StatusID = statusID;
             AffectTarget = affectTarget;
@@ -8328,12 +8419,13 @@ namespace PMDC.Dungeon
     [Serializable]
     public class GiveStatusNeededEvent : BattleEvent
     {
-        [DataType(0, DataManager.DataType.Status, false)]
-        public int[] Statuses;
+        [JsonConverter(typeof(StatusArrayConverter))]
+        [DataType(1, DataManager.DataType.Status, false)]
+        public string[] Statuses;
         public List<BattleEvent> BaseEvents;
 
         public GiveStatusNeededEvent() { BaseEvents = new List<BattleEvent>(); }
-        public GiveStatusNeededEvent(int[] statuses, params BattleEvent[] effects)
+        public GiveStatusNeededEvent(string[] statuses, params BattleEvent[] effects)
         {
             Statuses = statuses;
             BaseEvents = new List<BattleEvent>();
@@ -8343,7 +8435,7 @@ namespace PMDC.Dungeon
         protected GiveStatusNeededEvent(GiveStatusNeededEvent other)
             : this()
         {
-            Statuses = new int[other.Statuses.Length];
+            Statuses = new string[other.Statuses.Length];
             Array.Copy(other.Statuses, Statuses, Statuses.Length);
             foreach (BattleEvent battleEffect in other.BaseEvents)
                 BaseEvents.Add((BattleEvent)battleEffect.Clone());
@@ -8358,7 +8450,7 @@ namespace PMDC.Dungeon
                 StatusBattleEvent statusEvent = effect as StatusBattleEvent;
                 if (statusEvent != null)
                 {
-                    foreach (int status in Statuses)
+                    foreach (string status in Statuses)
                     {
                         if (statusEvent.StatusID == status)
                         {
@@ -8765,18 +8857,19 @@ namespace PMDC.Dungeon
     [Serializable]
     public class StatusBattleEvent : BattleEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int StatusID;
+        public string StatusID;
         public bool AffectTarget;
         public bool SilentCheck;
         public bool Anonymous;
         public StringKey TriggerMsg;
         public List<BattleAnimEvent> Anims;
 
-        public StatusBattleEvent() { Anims = new List<BattleAnimEvent>(); }
-        public StatusBattleEvent(int statusID, bool affectTarget, bool silentCheck)
+        public StatusBattleEvent() { Anims = new List<BattleAnimEvent>(); StatusID = ""; }
+        public StatusBattleEvent(string statusID, bool affectTarget, bool silentCheck)
          : this(statusID, affectTarget, silentCheck, false) { }
-        public StatusBattleEvent(int statusID, bool affectTarget, bool silentCheck, bool anonymous)
+        public StatusBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool anonymous)
         {
             StatusID = statusID;
             AffectTarget = affectTarget;
@@ -8784,7 +8877,7 @@ namespace PMDC.Dungeon
             Anonymous = anonymous;
             Anims = new List<BattleAnimEvent>();
         }
-        public StatusBattleEvent(int statusID, bool affectTarget, bool silentCheck, bool anonymous, StringKey trigger, params BattleAnimEvent[] anims)
+        public StatusBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool anonymous, StringKey trigger, params BattleAnimEvent[] anims)
         {
             StatusID = statusID;
             AffectTarget = affectTarget;
@@ -8865,13 +8958,13 @@ namespace PMDC.Dungeon
         public int Stack;
 
         public StatusStackBattleEvent() { }
-        public StatusStackBattleEvent(int statusID, bool affectTarget, bool silentCheck, int stack) : this(statusID, affectTarget, silentCheck, false, stack) { }
-        public StatusStackBattleEvent(int statusID, bool affectTarget, bool silentCheck, bool anonymous, int stack)
+        public StatusStackBattleEvent(string statusID, bool affectTarget, bool silentCheck, int stack) : this(statusID, affectTarget, silentCheck, false, stack) { }
+        public StatusStackBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool anonymous, int stack)
             : base(statusID, affectTarget, silentCheck, anonymous)
         {
             Stack = stack;
         }
-        public StatusStackBattleEvent(int statusID, bool affectTarget, bool silentCheck, bool anonymous, int stack, StringKey trigger)
+        public StatusStackBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool anonymous, int stack, StringKey trigger)
             : base(statusID, affectTarget, silentCheck, anonymous, trigger)
         {
             Stack = stack;
@@ -8899,8 +8992,8 @@ namespace PMDC.Dungeon
         public string Element;
 
         public StatusElementBattleEvent() { Element = ""; }
-        public StatusElementBattleEvent(int statusID, bool affectTarget, bool silentCheck, string element) : this(statusID, affectTarget, silentCheck, false, element) { }
-        public StatusElementBattleEvent(int statusID, bool affectTarget, bool silentCheck, bool anonymous, string element)
+        public StatusElementBattleEvent(string statusID, bool affectTarget, bool silentCheck, string element) : this(statusID, affectTarget, silentCheck, false, element) { }
+        public StatusElementBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool anonymous, string element)
             : base(statusID, affectTarget, silentCheck, anonymous)
         {
             Element = element;
@@ -8925,8 +9018,8 @@ namespace PMDC.Dungeon
         public StateCollection<StatusState> States;
 
         public StatusStateBattleEvent() { States = new StateCollection<StatusState>(); }
-        public StatusStateBattleEvent(int statusID, bool affectTarget, bool silentCheck, StateCollection<StatusState> states) : this(statusID, affectTarget, silentCheck, false, states) { }
-        public StatusStateBattleEvent(int statusID, bool affectTarget, bool silentCheck, bool anonymous, StateCollection<StatusState> states) : base(statusID, affectTarget, silentCheck, anonymous)
+        public StatusStateBattleEvent(string statusID, bool affectTarget, bool silentCheck, StateCollection<StatusState> states) : this(statusID, affectTarget, silentCheck, false, states) { }
+        public StatusStateBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool anonymous, StateCollection<StatusState> states) : base(statusID, affectTarget, silentCheck, anonymous)
         {
             States = states;
         }
@@ -8947,13 +9040,14 @@ namespace PMDC.Dungeon
     [Serializable]
     public class DisableBattleEvent : StatusBattleEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int LastSlotStatusID;
+        public string LastSlotStatusID;
 
-        public DisableBattleEvent() { }
-        public DisableBattleEvent(int statusID, int prevMoveID)
+        public DisableBattleEvent() { LastSlotStatusID = ""; }
+        public DisableBattleEvent(string statusID, string prevMoveID)
             : this(statusID, prevMoveID, false) { }
-        public DisableBattleEvent(int statusID, int prevMoveID, bool anonymous)
+        public DisableBattleEvent(string statusID, string prevMoveID, bool anonymous)
             : base(statusID, true, false, anonymous)
         {
             LastSlotStatusID = prevMoveID;
@@ -8986,8 +9080,8 @@ namespace PMDC.Dungeon
     public class CounterDisableBattleEvent : StatusBattleEvent
     {
         public CounterDisableBattleEvent() { }
-        public CounterDisableBattleEvent(int statusID) : base(statusID, false, true, false) { }
-        public CounterDisableBattleEvent(int statusID, StringKey trigger) : base(statusID, false, true, false, trigger) { }
+        public CounterDisableBattleEvent(string statusID) : base(statusID, false, true, false) { }
+        public CounterDisableBattleEvent(string statusID, StringKey trigger) : base(statusID, false, true, false, trigger) { }
         protected CounterDisableBattleEvent(CounterDisableBattleEvent other) : base(other) { }
         public override GameEvent Clone() { return new CounterDisableBattleEvent(this); }
 
@@ -9013,7 +9107,7 @@ namespace PMDC.Dungeon
         public string WeatherID;
 
         public WeatherStackEvent() { WeatherID = ""; }
-        public WeatherStackEvent(int statusID, bool affectTarget, bool silentCheck, string weatherID) : base(statusID, affectTarget, silentCheck, false)
+        public WeatherStackEvent(string statusID, bool affectTarget, bool silentCheck, string weatherID) : base(statusID, affectTarget, silentCheck, false)
         {
             WeatherID = weatherID;
         }
@@ -9040,7 +9134,7 @@ namespace PMDC.Dungeon
         public int HPFraction;
 
         public StatusHPBattleEvent() { }
-        public StatusHPBattleEvent(int statusID, bool affectTarget, bool silentCheck, bool anonymous, int hpFraction)
+        public StatusHPBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool anonymous, int hpFraction)
             : base(statusID, affectTarget, silentCheck, anonymous)
         {
             HPFraction = hpFraction;
@@ -9063,7 +9157,7 @@ namespace PMDC.Dungeon
     public class FutureAttackEvent : StatusBattleEvent
     {
         public FutureAttackEvent() { }
-        public FutureAttackEvent(int statusID, bool affectTarget, bool silentCheck, bool anonymous)
+        public FutureAttackEvent(string statusID, bool affectTarget, bool silentCheck, bool anonymous)
             : base(statusID, affectTarget, silentCheck, anonymous)
         { }
         protected FutureAttackEvent(FutureAttackEvent other)
@@ -9082,9 +9176,9 @@ namespace PMDC.Dungeon
     public class GiveContinuousDamageEvent : StatusBattleEvent
     {
         public GiveContinuousDamageEvent() { }
-        public GiveContinuousDamageEvent(int statusID, bool affectTarget, bool silentCheck)
+        public GiveContinuousDamageEvent(string statusID, bool affectTarget, bool silentCheck)
             : this(statusID, affectTarget, silentCheck, false) { }
-        public GiveContinuousDamageEvent(int statusID, bool affectTarget, bool silentCheck, bool anonymous)
+        public GiveContinuousDamageEvent(string statusID, bool affectTarget, bool silentCheck, bool anonymous)
             : base(statusID, affectTarget, silentCheck, anonymous) { }
         protected GiveContinuousDamageEvent(GiveContinuousDamageEvent other)
             : base(other) { }
@@ -9312,11 +9406,12 @@ namespace PMDC.Dungeon
         [JsonConverter(typeof(MapStatusConverter))]
         [DataType(0, DataManager.DataType.MapStatus, false)]
         public string BanStatusID;
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int LastMoveStatusID;
+        public string LastMoveStatusID;
 
-        public BanMoveEvent() { BanStatusID = ""; }
-        public BanMoveEvent(string banStatusID, int prevMoveID)
+        public BanMoveEvent() { BanStatusID = ""; LastMoveStatusID = ""; }
+        public BanMoveEvent(string banStatusID, string prevMoveID)
         {
             BanStatusID = banStatusID;
             LastMoveStatusID = prevMoveID;
@@ -9350,11 +9445,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class SketchBattleEvent : BattleEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int LastMoveStatusID;
+        public string LastMoveStatusID;
 
-        public SketchBattleEvent() { }
-        public SketchBattleEvent(int prevMoveID)
+        public SketchBattleEvent() { LastMoveStatusID = ""; }
+        public SketchBattleEvent(string prevMoveID)
         {
             LastMoveStatusID = prevMoveID;
         }
@@ -9369,7 +9465,7 @@ namespace PMDC.Dungeon
             if (context.Target.Dead)
                 yield break;
 
-            if (LastMoveStatusID == -1)
+            if (String.IsNullOrEmpty(LastMoveStatusID))
             {
                 bool learn = (context.ActionType == BattleActionType.Skill && context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS && context.User.Skills[context.UsageSlot].BackRef > -1);
                 for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
@@ -9417,11 +9513,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class MimicBattleEvent : BattleEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int LastMoveStatusID;
+        public string LastMoveStatusID;
 
-        public MimicBattleEvent() { }
-        public MimicBattleEvent(int prevMoveID)
+        public MimicBattleEvent() { LastMoveStatusID = ""; }
+        public MimicBattleEvent(string prevMoveID)
         {
             LastMoveStatusID = prevMoveID;
         }
@@ -9650,12 +9747,13 @@ namespace PMDC.Dungeon
     [Serializable]
     public class SpiteEvent : BattleEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int LastSlotStatusID;
+        public string LastSlotStatusID;
         public int PP;
 
-        public SpiteEvent() { }
-        public SpiteEvent(int statusID, int pp) { LastSlotStatusID = statusID; PP = pp; }
+        public SpiteEvent() { LastSlotStatusID = ""; }
+        public SpiteEvent(string statusID, int pp) { LastSlotStatusID = statusID; PP = pp; }
         protected SpiteEvent(SpiteEvent other)
         {
             LastSlotStatusID = other.LastSlotStatusID;
@@ -9806,12 +9904,13 @@ namespace PMDC.Dungeon
     [Serializable]
     public class RemoveStatusBattleEvent : BattleEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int StatusID;
+        public string StatusID;
         public bool AffectTarget;
 
-        public RemoveStatusBattleEvent() { }
-        public RemoveStatusBattleEvent(int statusID, bool affectTarget)
+        public RemoveStatusBattleEvent() { StatusID = ""; }
+        public RemoveStatusBattleEvent(string statusID, bool affectTarget)
         {
             StatusID = statusID;
             AffectTarget = affectTarget;
@@ -9836,13 +9935,15 @@ namespace PMDC.Dungeon
     [Serializable]
     public class RemoveStatusStackBattleEvent : BattleEvent
     {
-        public int StatusID;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string StatusID;
         public bool AffectTarget;
         public bool Negative;
         public bool Positive;
 
-        public RemoveStatusStackBattleEvent() { }
-        public RemoveStatusStackBattleEvent(int statusID, bool affectTarget, bool negative, bool positive)
+        public RemoveStatusStackBattleEvent() { StatusID = ""; }
+        public RemoveStatusStackBattleEvent(string statusID, bool affectTarget, bool negative, bool positive)
         {
             StatusID = statusID;
             AffectTarget = affectTarget;
@@ -9963,7 +10064,7 @@ namespace PMDC.Dungeon
             if (target.Dead)
                 yield break;
 
-            List<int> statuses = new List<int>();
+            List<string> statuses = new List<string>();
             foreach (StatusEffect status in target.IterateStatusEffects())
             {
                 bool hasState = false;
@@ -9985,7 +10086,7 @@ namespace PMDC.Dungeon
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
             }
 
-            foreach (int statusID in statuses)
+            foreach (string statusID in statuses)
                 yield return CoroutineManager.Instance.StartCoroutine(target.RemoveStatusEffect(statusID, false));
 
         }
@@ -10124,7 +10225,7 @@ namespace PMDC.Dungeon
             {
                 if (!target.Dead && context.User != target && ZoneManager.Instance.CurrentMap.InRange(context.User.CharLoc, target.CharLoc, 1))
                 {
-                    List<int> badStatuses = new List<int>();
+                    List<string> badStatuses = new List<string>();
                     foreach (StatusEffect status in target.IterateStatusEffects())
                     {
                         if (status.StatusStates.Contains<BadStatusState>())
@@ -10140,7 +10241,7 @@ namespace PMDC.Dungeon
 
                     }
 
-                    foreach (int statusID in badStatuses)
+                    foreach (string statusID in badStatuses)
                         yield return CoroutineManager.Instance.StartCoroutine(target.RemoveStatusEffect(statusID, false));
                 }
             }
@@ -12277,10 +12378,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class RestEvent : BattleEvent
     {
-        public int SleepID;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string SleepID;
 
-        public RestEvent() { }
-        public RestEvent(int sleepID)
+        public RestEvent() { SleepID = ""; }
+        public RestEvent(string sleepID)
         {
             SleepID = sleepID;
         }
@@ -12305,13 +12408,13 @@ namespace PMDC.Dungeon
                 yield break;
 
             //silently remove current nonvolatile status (if any), and silently give sleep status
-            List<int> badStatuses = new List<int>();
+            List<string> badStatuses = new List<string>();
             foreach (StatusEffect oldStatus in context.Target.IterateStatusEffects())
             {
                 if (oldStatus.StatusStates.Contains<MajorStatusState>())
                     badStatuses.Add(oldStatus.ID);
             }
-            foreach (int statusID in badStatuses)
+            foreach (string statusID in badStatuses)
                 yield return CoroutineManager.Instance.StartCoroutine(context.Target.RemoveStatusEffect(statusID, false));
 
             yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, status, context.ContextStates, false));
@@ -12681,24 +12784,26 @@ namespace PMDC.Dungeon
     [Serializable]
     public class ReflectStatsEvent : BattleEvent
     {
-        public HashSet<int> StatusIDs;
+        [JsonConverter(typeof(StatusSetConverter))]
+        [DataType(1, DataManager.DataType.Status, false)]
+        public HashSet<string> StatusIDs;
 
-        public ReflectStatsEvent() { StatusIDs = new HashSet<int>(); }
-        public ReflectStatsEvent(HashSet<int> statusIDs)
+        public ReflectStatsEvent() { StatusIDs = new HashSet<string>(); }
+        public ReflectStatsEvent(HashSet<string> statusIDs)
         {
             StatusIDs = statusIDs;
         }
         protected ReflectStatsEvent(ReflectStatsEvent other)
             : this()
         {
-            foreach (int statusID in other.StatusIDs)
+            foreach (string statusID in other.StatusIDs)
                 StatusIDs.Add(statusID);
         }
         public override GameEvent Clone() { return new ReflectStatsEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            foreach (int statusID in StatusIDs)
+            foreach (string statusID in StatusIDs)
             {
                 //silently remove all stat changes on the user
                 yield return CoroutineManager.Instance.StartCoroutine(context.User.RemoveStatusEffect(statusID, false));
@@ -12722,24 +12827,26 @@ namespace PMDC.Dungeon
     [Serializable]
     public class SwapStatsEvent : BattleEvent
     {
-        public HashSet<int> StatusIDs;
+        [JsonConverter(typeof(StatusSetConverter))]
+        [DataType(1, DataManager.DataType.Status, false)]
+        public HashSet<string> StatusIDs;
 
-        public SwapStatsEvent() { StatusIDs = new HashSet<int>(); }
-        public SwapStatsEvent(HashSet<int> statusIDs)
+        public SwapStatsEvent() { StatusIDs = new HashSet<string>(); }
+        public SwapStatsEvent(HashSet<string> statusIDs)
         {
             StatusIDs = statusIDs;
         }
         protected SwapStatsEvent(SwapStatsEvent other)
             : this()
         {
-            foreach (int statusID in other.StatusIDs)
+            foreach (string statusID in other.StatusIDs)
                 StatusIDs.Add(statusID);
         }
         public override GameEvent Clone() { return new SwapStatsEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            foreach (int statusID in StatusIDs)
+            foreach (string statusID in StatusIDs)
             {
                 //get the stat changes of both sides
                 StatusEffect userStatus = context.User.GetStatusEffect(statusID);

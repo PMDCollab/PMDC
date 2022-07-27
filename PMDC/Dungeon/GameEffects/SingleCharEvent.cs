@@ -547,8 +547,9 @@ namespace PMDC.Dungeon
     [Serializable]
     public class GiveStatusEvent : SingleCharEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int StatusID;
+        public string StatusID;
         public bool SilentCheck;
         [SubGroup]
         public StateCollection<StatusState> States;
@@ -557,9 +558,9 @@ namespace PMDC.Dungeon
         public string TriggerSound;
         public FiniteEmitter TriggerEmitter;
 
-        public GiveStatusEvent() { States = new StateCollection<StatusState>(); }
-        public GiveStatusEvent(int statusID, StateCollection<StatusState> states) : this(statusID, states, false) { }
-        public GiveStatusEvent(int statusID, StateCollection<StatusState> states, bool silentCheck)
+        public GiveStatusEvent() { States = new StateCollection<StatusState>(); StatusID = ""; }
+        public GiveStatusEvent(string statusID, StateCollection<StatusState> states) : this(statusID, states, false) { }
+        public GiveStatusEvent(string statusID, StateCollection<StatusState> states, bool silentCheck)
         {
             StatusID = statusID;
             States = states;
@@ -567,7 +568,7 @@ namespace PMDC.Dungeon
             TriggerSound = "";
             TriggerEmitter = new EmptyFiniteEmitter();
         }
-        public GiveStatusEvent(int statusID, StateCollection<StatusState> states, bool silentCheck, StringKey trigger)
+        public GiveStatusEvent(string statusID, StateCollection<StatusState> states, bool silentCheck, StringKey trigger)
         {
             StatusID = statusID;
             States = states;
@@ -575,7 +576,7 @@ namespace PMDC.Dungeon
             TriggerMsg = trigger;
             TriggerEmitter = new EmptyFiniteEmitter();
         }
-        public GiveStatusEvent(int statusID, StateCollection<StatusState> states, bool silentCheck, StringKey trigger, string triggerSound, FiniteEmitter emitter)
+        public GiveStatusEvent(string statusID, StateCollection<StatusState> states, bool silentCheck, StringKey trigger, string triggerSound, FiniteEmitter emitter)
         {
             StatusID = statusID;
             States = states;
@@ -632,11 +633,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class RemoveStatusEvent : SingleCharEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int StatusID;
+        public string StatusID;
 
-        public RemoveStatusEvent() { }
-        public RemoveStatusEvent(int statusID)
+        public RemoveStatusEvent() { StatusID = ""; }
+        public RemoveStatusEvent(string statusID)
         {
             StatusID = statusID;
         }
@@ -1354,7 +1356,9 @@ namespace PMDC.Dungeon
     [Serializable]
     public class NightmareEvent : SingleCharEvent
     {
-        public int SleepID;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string SleepID;
         public int Denominator;
         public StringKey Msg;
         public List<AnimEvent> Anims;
@@ -1362,8 +1366,9 @@ namespace PMDC.Dungeon
         public NightmareEvent()
         {
             Anims = new List<AnimEvent>();
+            SleepID = "";
         }
-        public NightmareEvent(int sleepID, int denominator, StringKey msg, params AnimEvent[] anims)
+        public NightmareEvent(string sleepID, int denominator, StringKey msg, params AnimEvent[] anims)
         {
             SleepID = sleepID;
             Denominator = denominator;
@@ -1492,9 +1497,11 @@ namespace PMDC.Dungeon
     [Serializable]
     public class EarlyBirdEvent : SingleCharEvent
     {
-        public int SleepID;
-        public EarlyBirdEvent() { }
-        public EarlyBirdEvent(int sleepID)
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string SleepID;
+        public EarlyBirdEvent() { SleepID = ""; }
+        public EarlyBirdEvent(string sleepID)
         {
             SleepID = sleepID;
         }
@@ -1688,7 +1695,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            List<int> badStatuses = new List<int>();
+            List<string> badStatuses = new List<string>();
             foreach (StatusEffect status in character.IterateStatusEffects())
             {
                 if (status.StatusStates.Contains<BadStatusState>())
@@ -1704,7 +1711,7 @@ namespace PMDC.Dungeon
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, character));
             }
 
-            foreach (int statusID in badStatuses)
+            foreach (string statusID in badStatuses)
                 yield return CoroutineManager.Instance.StartCoroutine(character.RemoveStatusEffect(statusID, false));
 
         }
@@ -2268,10 +2275,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class GiveIllusionEvent : SingleCharEvent
     {
-        public int IllusionID;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string IllusionID;
 
-        public GiveIllusionEvent() { }
-        public GiveIllusionEvent(int illusionID)
+        public GiveIllusionEvent() { IllusionID = ""; }
+        public GiveIllusionEvent(string illusionID)
         {
             IllusionID = illusionID;
         }
@@ -4569,11 +4578,11 @@ namespace PMDC.Dungeon
                 {
                     target.HP = target.MaxHP;
 
-                    List<int> statuses = new List<int>();
+                    List<string> statuses = new List<string>();
                     foreach (StatusEffect oldStatus in target.IterateStatusEffects())
                         statuses.Add(oldStatus.ID);
 
-                    foreach (int statusID in statuses)
+                    foreach (string statusID in statuses)
                         yield return CoroutineManager.Instance.StartCoroutine(target.RemoveStatusEffect(statusID, false));
 
                     switch (playerIndex)
@@ -4880,10 +4889,13 @@ namespace PMDC.Dungeon
     {
         public int Period;
         public int Maximum;
-        public int GuardStatus;
 
-        public PeriodicSpawnEntranceGuards() { }
-        public PeriodicSpawnEntranceGuards(int period, int maximum, int guardStatus) { Period = period; Maximum = maximum; GuardStatus = guardStatus; }
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string GuardStatus;
+
+        public PeriodicSpawnEntranceGuards() { GuardStatus = ""; }
+        public PeriodicSpawnEntranceGuards(int period, int maximum, string guardStatus) { Period = period; Maximum = maximum; GuardStatus = guardStatus; }
         public PeriodicSpawnEntranceGuards(PeriodicSpawnEntranceGuards other) { this.Period = other.Period; Maximum = other.Maximum; GuardStatus = other.GuardStatus; }
         public override GameEvent Clone() { return new PeriodicSpawnEntranceGuards(this); }
 
@@ -4930,7 +4942,7 @@ namespace PMDC.Dungeon
         }
 
 
-        public static IEnumerator<YieldInstruction> PlaceGuard(MobSpawn spawn, Loc dest, int guardStatusId)
+        public static IEnumerator<YieldInstruction> PlaceGuard(MobSpawn spawn, Loc dest, string guardStatusId)
         {
             ExplorerTeam team = new ExplorerTeam();
             team.SetRank("normal");

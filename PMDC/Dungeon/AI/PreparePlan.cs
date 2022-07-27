@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Data;
+using Newtonsoft.Json;
+using RogueEssence.Dev;
 
 namespace PMDC.Dungeon
 {
@@ -110,10 +112,11 @@ namespace PMDC.Dungeon
     [Serializable]
     public class PreBuffPlan : AIPlan
     {
-        public int FirstMoveStatus;
+        [JsonConverter(typeof(StatusConverter))]
+        public string FirstMoveStatus;
 
         public PreBuffPlan() { }
-        public PreBuffPlan(AIFlags iq, int firstMoveStatus) : base(iq)
+        public PreBuffPlan(AIFlags iq, string firstMoveStatus) : base(iq)
         {
             FirstMoveStatus = firstMoveStatus;
         }
@@ -154,10 +157,11 @@ namespace PMDC.Dungeon
     [Serializable]
     public class LeadSkillPlan : AIPlan
     {
-        public int FirstMoveStatus;
+        [JsonConverter(typeof(StatusConverter))]
+        public string FirstMoveStatus;
 
-        public LeadSkillPlan() { }
-        public LeadSkillPlan(AIFlags iq, int firstMoveStatus) : base(iq)
+        public LeadSkillPlan() { FirstMoveStatus = ""; }
+        public LeadSkillPlan(AIFlags iq, string firstMoveStatus) : base(iq)
         {
             FirstMoveStatus = firstMoveStatus;
         }

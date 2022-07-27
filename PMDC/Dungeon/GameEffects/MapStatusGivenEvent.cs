@@ -254,9 +254,11 @@ namespace PMDC.Dungeon
     [Serializable]
     public class MapStatusSpawnStartGuardsEvent : MapStatusGivenEvent
     {
-        public int GuardStatus;
-        public MapStatusSpawnStartGuardsEvent() { }
-        public MapStatusSpawnStartGuardsEvent(int guardStatus) { GuardStatus = guardStatus; }
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string GuardStatus;
+        public MapStatusSpawnStartGuardsEvent() { GuardStatus = ""; }
+        public MapStatusSpawnStartGuardsEvent(string guardStatus) { GuardStatus = guardStatus; }
         public MapStatusSpawnStartGuardsEvent(MapStatusSpawnStartGuardsEvent other) { GuardStatus = other.GuardStatus; }
         public override GameEvent Clone() { return new MapStatusSpawnStartGuardsEvent(); }
 

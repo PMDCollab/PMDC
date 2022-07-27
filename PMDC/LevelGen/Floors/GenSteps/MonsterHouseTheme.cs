@@ -518,7 +518,7 @@ namespace PMDC.LevelGen
     public class MobThemeTypingChosen : MobThemeTyping
     {
         [JsonConverter(typeof(ElementArrayConverter))]
-        [DataType(0, DataManager.DataType.Element, false)]
+        [DataType(1, DataManager.DataType.Element, false)]
         public string[] Types;
 
         public MobThemeTypingChosen() : base() { }

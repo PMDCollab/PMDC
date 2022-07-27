@@ -40,6 +40,15 @@ namespace PMDC.Dungeon
         public override GameplayState Clone() { return new IndexState(this); }
     }
     [Serializable]
+    public class IDState : StatusState
+    {
+        public string ID;
+        public IDState() { ID = ""; }
+        public IDState(string index) { ID = index; }
+        protected IDState(IDState other) { ID = other.ID; }
+        public override GameplayState Clone() { return new IDState(this); }
+    }
+    [Serializable]
     public class StatChangeState : StatusState
     {
         public Stat ChangeStat;

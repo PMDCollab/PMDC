@@ -11,8 +11,9 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WaitUntilAttackedPlan : AIPlan
     {
-        public int StatusIndex;
-        public WaitUntilAttackedPlan(AIFlags iq, int status) : base(iq)
+        [JsonConverter(typeof(StatusConverter))]
+        public string StatusIndex;
+        public WaitUntilAttackedPlan(AIFlags iq, string status) : base(iq)
         {
             StatusIndex = status;
         }

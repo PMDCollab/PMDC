@@ -258,7 +258,7 @@ namespace PMDC.Dungeon
             if (character.HasElement(Element) && character.CharStates.Contains(NoDupeEffect.GetType()))
             {
                 bool hasStatus = false;
-                foreach (int statusID in character.StatusEffects.Keys)
+                foreach (string statusID in character.StatusEffects.Keys)
                 {
                     if (character.StatusEffects[statusID].StatusStates.Contains<BadStatusState>())
                     {
@@ -470,11 +470,12 @@ namespace PMDC.Dungeon
     public class MoveLockEvent : RefreshEvent
     {
         public bool LockOthers;
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int LastSlotStatusID;
+        public string LastSlotStatusID;
 
-        public MoveLockEvent() { }
-        public MoveLockEvent(int statusID, bool lockOthers)
+        public MoveLockEvent() { LastSlotStatusID = ""; }
+        public MoveLockEvent(string statusID, bool lockOthers)
         {
             LastSlotStatusID = statusID;
             LockOthers = lockOthers;

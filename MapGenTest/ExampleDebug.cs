@@ -302,7 +302,7 @@ namespace MapGenTest
                                 rewriteLine(farthestPrint, String.Format("Monster:"));
                                 farthestPrint++;
                                 string nameString = String.Format("    Lv.{0} {1} ", character.Level, character.BaseName);
-                                foreach (int status in character.StatusEffects.Keys)
+                                foreach (string status in character.StatusEffects.Keys)
                                     nameString += String.Format("[{0}]", ((StatusData)character.StatusEffects[status].GetData()).Name.ToLocal());
 
                                 rewriteLine(farthestPrint, nameString);

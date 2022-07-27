@@ -585,8 +585,9 @@ namespace PMDC.Dungeon
     [Serializable]
     public class PreventStatusCheck : StatusGivenEvent
     {
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int StatusID;
+        public string StatusID;
         public StringKey Message;
 
         public List<StatusAnimEvent> Anims;
@@ -594,14 +595,15 @@ namespace PMDC.Dungeon
         public PreventStatusCheck()
         {
             Anims = new List<StatusAnimEvent>();
+            StatusID = "";
         }
-        public PreventStatusCheck(int statusID, StringKey message)
+        public PreventStatusCheck(string statusID, StringKey message)
         {
             StatusID = statusID;
             Message = message;
             Anims = new List<StatusAnimEvent>();
         }
-        public PreventStatusCheck(int statusID, StringKey message, params StatusAnimEvent[] anims)
+        public PreventStatusCheck(string statusID, StringKey message, params StatusAnimEvent[] anims)
         {
             StatusID = statusID;
             Message = message;
@@ -820,7 +822,7 @@ namespace PMDC.Dungeon
         {
             if (owner != context.Status)//can't check on self
             {
-                int index = ((StatusEffect)owner).StatusStates.GetWithDefault<IndexState>().Index;
+                string index = ((StatusEffect)owner).StatusStates.GetWithDefault<IDState>().ID;
                 if (index == context.Status.ID)
                 {
                     if (context.msg)
@@ -1191,7 +1193,7 @@ namespace PMDC.Dungeon
             
             if (context.msg)
             {
-                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.Target.GetDisplayName(false), DataManager.Instance.GetStatus(((StatusEffect)owner).StatusStates.GetWithDefault<IndexState>().Index).GetColoredName()));
+                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.Target.GetDisplayName(false), DataManager.Instance.GetStatus(((StatusEffect)owner).StatusStates.GetWithDefault<IDState>().ID).GetColoredName()));
                 if (Delay)
                     yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(10));
             }
@@ -1502,10 +1504,11 @@ namespace PMDC.Dungeon
     public class StatusSyncEvent : StatusGivenEvent
     {
         //destiny knot logic
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int StatusID;
-        public StatusSyncEvent() { }
-        public StatusSyncEvent(int statusID)
+        public string StatusID;
+        public StatusSyncEvent() { StatusID = ""; }
+        public StatusSyncEvent(string statusID)
         {
             StatusID = statusID;
         }
@@ -1725,12 +1728,13 @@ namespace PMDC.Dungeon
     public class StatusResponseEvent : StatusGivenEvent
     {
         //for steadfast, etc.
+        [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public int StatusID;
+        public string StatusID;
         public SingleCharEvent BaseEvent;
         
-        public StatusResponseEvent() { }
-        public StatusResponseEvent(int statusID, SingleCharEvent baseEffect)
+        public StatusResponseEvent() { StatusID = ""; }
+        public StatusResponseEvent(string statusID, SingleCharEvent baseEffect)
         {
             StatusID = statusID;
             BaseEvent = baseEffect;
