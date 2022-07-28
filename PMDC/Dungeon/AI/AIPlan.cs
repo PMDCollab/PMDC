@@ -1245,9 +1245,9 @@ namespace PMDC.Dungeon
             //check for moves that change range on conditions; NOTE: specialized AI code!
             switch (skillIndex)
             {
-                case 119: // mirror move
-                case 274: // assist
-                case 383: // copycat
+                case "mirror_move": // mirror move
+                case "assist": // assist
+                case "copycat": // copycat
                     {
                         string searchedStatus = "";
                         foreach (BattleEvent effect in entry.Data.OnHits.EnumerateInOrder())
@@ -1297,7 +1297,7 @@ namespace PMDC.Dungeon
                         }
                     }
                     break;
-                case 174: // curse
+                case "curse": // curse
                     {
                         if (controlledChar.HasElement("ghost"))
                         {
@@ -1314,17 +1314,17 @@ namespace PMDC.Dungeon
                         }
                     }
                     break;
-                case 267: // nature power
+                case "nature_power": // nature power
                     {
                         //TODO
                     }
                     break;
-                case 214: // sleep talk
+                case "sleep_talk": // sleep talk
                     {
                         //TODO
                     }
                     break;
-                case 255: // spit up
+                case "spit_up": // spit up
                     {
                         foreach (BattleEvent effect in entry.Data.OnActions.EnumerateInOrder())
                         {
@@ -1349,7 +1349,7 @@ namespace PMDC.Dungeon
                         }
                     }
                     break;
-                case 382: // me first
+                case "me_first": // me first
                     {
                         string calledMove = "";
                         HashSet<Loc> callTiles = new HashSet<Loc>();
@@ -1418,7 +1418,7 @@ namespace PMDC.Dungeon
         {
 
             //Dig/Fly/Dive/Phantom Force; NOTE: specialized AI code!
-            if (skillIndex == 91 || skillIndex == 19 || skillIndex == 291 || skillIndex == 566)
+            if (skillIndex == "dig" || skillIndex == "fly" || skillIndex == "dive" || skillIndex == "phantom_force")
             {
                 if (!controlledChar.CantInteract)//TODO: CantInteract doesn't always indicate forced attack, but this'll do for now.
                 {
@@ -1433,7 +1433,7 @@ namespace PMDC.Dungeon
                     }
                 }
             }
-            else if (skillIndex == 264)//Focus Punch;
+            else if (skillIndex == "focus_punch")//Focus Punch;
             {
                 //always activate if not already forced to attack
                 if (!controlledChar.CantInteract)//TODO: CantInteract doesn't always indicate forced attack, but this'll do for now.
@@ -1633,7 +1633,7 @@ namespace PMDC.Dungeon
                         return 0;
                 }
             }
-            if (moveIndex == 217)//Present; if an ally, use healing calculations; NOTE: specialized AI code!
+            if (moveIndex == "present")//Present; if an ally, use healing calculations; NOTE: specialized AI code!
             {
                 if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
                 {
@@ -1644,7 +1644,7 @@ namespace PMDC.Dungeon
                     return hpWorthHealing * 200 / healHP;
                 }
             }
-            else if (moveIndex == 275)//Ingrain; use it only if damaged, AND if enemies are close; NOTE: specialized AI code!
+            else if (moveIndex == "ingrain")//Ingrain; use it only if damaged, AND if enemies are close; NOTE: specialized AI code!
             {
                 bool nearEnemy = false;
                 foreach (Character character in seenChars)
@@ -1658,7 +1658,7 @@ namespace PMDC.Dungeon
                 if (target.HP * 4 / 3 > target.MaxHP && !nearEnemy)
                     return 0;
             }
-            else if (moveIndex == 150)//Splash; use it only if enemies are close; NOTE: specialized AI code!
+            else if (moveIndex == "splash")//Splash; use it only if enemies are close; NOTE: specialized AI code!
             {
                 bool nearEnemy = false;
                 foreach (Character character in seenChars)
@@ -1674,17 +1674,17 @@ namespace PMDC.Dungeon
                 //always use on self; considered good on self
                 return 100;
             }
-            else if (moveIndex == 195)//perish song; don't care if it hits self or allies; NOTE: specialized AI code!
+            else if (moveIndex == "perish_song")//perish song; don't care if it hits self or allies; NOTE: specialized AI code!
             {
                 if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
                     return 0;
             }
-            else if (moveIndex == 392)//aqua ring; use only if damaged; NOTE: specialized AI code!
+            else if (moveIndex == "aqua_ring")//aqua ring; use only if damaged; NOTE: specialized AI code!
             {
                 if (target.HP * 4 / 3 > target.MaxHP)
                     return 0;
             }
-            else if (moveIndex == 68 && (IQ & AIFlags.KnowsMatchups) == AIFlags.None)//counter; do not use if mirror coat status exists and has more than 1 turn left; NOTE: specialized AI code!
+            else if (moveIndex == "counter" && (IQ & AIFlags.KnowsMatchups) == AIFlags.None)//counter; do not use if mirror coat status exists and has more than 1 turn left; NOTE: specialized AI code!
             {
                 StatusEffect mutexStatus = controlledChar.GetStatusEffect("mirror_coat");
                 if (mutexStatus != null)
@@ -1694,7 +1694,7 @@ namespace PMDC.Dungeon
                         return 0;
                 }
             }
-            else if (moveIndex == 243 && (IQ & AIFlags.KnowsMatchups) == AIFlags.None)//Mirror coat; do not use if counter status exists and has more than 1 turn left; NOTE: specialized AI code!
+            else if (moveIndex == "mirror_coat" && (IQ & AIFlags.KnowsMatchups) == AIFlags.None)//Mirror coat; do not use if counter status exists and has more than 1 turn left; NOTE: specialized AI code!
             {
                 StatusEffect mutexStatus = controlledChar.GetStatusEffect("counter");
                 if (mutexStatus != null)
@@ -1704,7 +1704,7 @@ namespace PMDC.Dungeon
                         return 0;
                 }
             }
-            else if (moveIndex == 256)//swallow; use only if stockpiled and damaged; NOTE: specialized AI code!
+            else if (moveIndex == "swallow")//swallow; use only if stockpiled and damaged; NOTE: specialized AI code!
             {
                 StatusEffect stockStatus = controlledChar.GetStatusEffect("stockpile");
                 if (stockStatus != null)
@@ -1718,13 +1718,13 @@ namespace PMDC.Dungeon
                 }
                 return 0;
             }
-            else if (moveIndex == 516)//Bestow; use only if you have an item to give; NOTE: specialized AI code!
+            else if (moveIndex == "bestow")//Bestow; use only if you have an item to give; NOTE: specialized AI code!
             {
                 if (controlledChar.EquippedItem.ID > -1)//let's assume the item is always bad
                     return -100;
                 return 0;
             }
-            else if (moveIndex == 281)//yawn; use only if the target is OK; NOTE: specialized AI code!
+            else if (moveIndex == "yawn")//yawn; use only if the target is OK; NOTE: specialized AI code!
             {
                 foreach (StatusEffect status in target.IterateStatusEffects())
                 {
@@ -1732,7 +1732,7 @@ namespace PMDC.Dungeon
                         return 0;
                 }
             }
-            else if (moveIndex == 100)//teleport; never use here if we attack to escape; handle it elsewhere; NOTE: specialized AI code!
+            else if (moveIndex == "teleport")//teleport; never use here if we attack to escape; handle it elsewhere; NOTE: specialized AI code!
             {
                 if ((IQ & AIFlags.AttackToEscape) != AIFlags.None)
                 {

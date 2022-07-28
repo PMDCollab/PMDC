@@ -311,10 +311,10 @@ namespace MapGenTest
                                     !String.IsNullOrEmpty(character.Intrinsics[0].Element.ID) ? ((IntrinsicData)character.Intrinsics[0].Element.GetData()).Name.ToLocal() : "---", character.Tactic.Name));
                                 farthestPrint++;
                                 rewriteLine(farthestPrint, String.Format("    {0}{1} {2}{3} {4}{5} {6}{7}",
-                                    character.Skills[0].Element.Enabled ? "+" : "-", character.BaseSkills[0].SkillNum > -1 ? DataManager.Instance.GetSkill(character.Skills[0].Element.SkillNum).Name.ToLocal() : "---",
-                                    character.Skills[1].Element.Enabled ? "+" : "-", character.BaseSkills[1].SkillNum > -1 ? DataManager.Instance.GetSkill(character.Skills[1].Element.SkillNum).Name.ToLocal() : "---",
-                                    character.Skills[2].Element.Enabled ? "+" : "-", character.BaseSkills[2].SkillNum > -1 ? DataManager.Instance.GetSkill(character.Skills[2].Element.SkillNum).Name.ToLocal() : "---",
-                                    character.Skills[3].Element.Enabled ? "+" : "-", character.BaseSkills[3].SkillNum > -1 ? DataManager.Instance.GetSkill(character.Skills[3].Element.SkillNum).Name.ToLocal() : "---"));
+                                    character.Skills[0].Element.Enabled ? "+" : "-", !string.IsNullOrEmpty(character.BaseSkills[0].SkillNum) ? DataManager.Instance.GetSkill(character.Skills[0].Element.SkillNum).Name.ToLocal() : "---",
+                                    character.Skills[1].Element.Enabled ? "+" : "-", !string.IsNullOrEmpty(character.BaseSkills[1].SkillNum) ? DataManager.Instance.GetSkill(character.Skills[1].Element.SkillNum).Name.ToLocal() : "---",
+                                    character.Skills[2].Element.Enabled ? "+" : "-", !string.IsNullOrEmpty(character.BaseSkills[2].SkillNum) ? DataManager.Instance.GetSkill(character.Skills[2].Element.SkillNum).Name.ToLocal() : "---",
+                                    character.Skills[3].Element.Enabled ? "+" : "-", !string.IsNullOrEmpty(character.BaseSkills[3].SkillNum) ? DataManager.Instance.GetSkill(character.Skills[3].Element.SkillNum).Name.ToLocal() : "---"));
                                 farthestPrint++;
                             }
                         }
