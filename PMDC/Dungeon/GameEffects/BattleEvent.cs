@@ -2882,8 +2882,7 @@ namespace PMDC.Dungeon
             StatusEffect repeatStatus = context.User.GetStatusEffect(MoveRepeatStatusID);
             if (moveStatus == null || repeatStatus == null)
                 yield break;
-            //TODO: String Assets
-            if (moveStatus.StatusStates.GetWithDefault<IndexState>().Index != int.Parse(context.Data.ID))
+            if (moveStatus.StatusStates.GetWithDefault<IDState>().ID != context.Data.ID)
                 yield break;
             if (!repeatStatus.StatusStates.Contains<RecentState>())
                 yield break;
@@ -5442,8 +5441,7 @@ namespace PMDC.Dungeon
 
                     StatusEffect otherStatus = new StatusEffect(OtherHitStatusID);
                     otherStatus.LoadFromData();
-                    //TODO: String Assets
-                    otherStatus.StatusStates.GetWithDefault<IndexState>().Index = int.Parse(context.Data.ID);
+                    otherStatus.StatusStates.GetWithDefault<IDState>().ID = context.Data.ID;
                     yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, otherStatus, null));
                 }
 
@@ -5515,8 +5513,7 @@ namespace PMDC.Dungeon
 
                 StatusEffect testStatus = context.User.GetStatusEffect(LastMoveStatusID);
                 StatusEffect repeatStatus = context.User.GetStatusEffect(RepeatStatusID);
-                //TODO: String Assets
-                if (lastSlotStatus != null && repeatStatus != null && testStatus.StatusStates.GetWithDefault<IndexState>().Index == int.Parse(context.Data.ID) && repeatStatus.StatusStates.GetWithDefault<RecentState>() != null)
+                if (lastSlotStatus != null && repeatStatus != null && testStatus.StatusStates.GetWithDefault<IDState>().ID == context.Data.ID && repeatStatus.StatusStates.GetWithDefault<RecentState>() != null)
                 {
                     //increment repetition
                     repeatStatus.StatusStates.GetWithDefault<CountState>().Count++;
@@ -5533,8 +5530,7 @@ namespace PMDC.Dungeon
 
                 StatusEffect lastMoveStatus = new StatusEffect(LastMoveStatusID);
                 lastMoveStatus.LoadFromData();
-                //TODO: String Assets
-                lastMoveStatus.StatusStates.GetWithDefault<IndexState>().Index = int.Parse(context.Data.ID);
+                lastMoveStatus.StatusStates.GetWithDefault<IDState>().ID = context.Data.ID;
                 yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, lastMoveStatus, null));
 
                 foreach (Character ally in ZoneManager.Instance.CurrentMap.IterateCharacters())
@@ -5543,8 +5539,7 @@ namespace PMDC.Dungeon
                     {
                         StatusEffect allyStatus = new StatusEffect(AllyStatusID);
                         allyStatus.LoadFromData();
-                        //TODO: String Assets
-                        allyStatus.StatusStates.GetWithDefault<IndexState>().Index = int.Parse(context.Data.ID);
+                        allyStatus.StatusStates.GetWithDefault<IDState>().ID = context.Data.ID;
                         yield return CoroutineManager.Instance.StartCoroutine(ally.AddStatusEffect(context.User, allyStatus, null));
                     }
                 }
@@ -5885,19 +5880,21 @@ namespace PMDC.Dungeon
     [Serializable]
     public class SemiInvulEvent : BattleEvent
     {
-        public int[] ExceptionMoves;
+        [JsonConverter(typeof(SkillArrayConverter))]
+        [DataType(1, DataManager.DataType.Skill, false)]
+        public string[] ExceptionMoves;
 
         public SemiInvulEvent()
         {
-            ExceptionMoves = new int[0];
+            ExceptionMoves = new string[0];
         }
-        public SemiInvulEvent(int[] exceptionMoves)
+        public SemiInvulEvent(string[] exceptionMoves)
         {
             ExceptionMoves = exceptionMoves;
         }
         protected SemiInvulEvent(SemiInvulEvent other)
         {
-            ExceptionMoves = new int[other.ExceptionMoves.Length];
+            ExceptionMoves = new string[other.ExceptionMoves.Length];
             other.ExceptionMoves.CopyTo(ExceptionMoves, 0);
         }
         public override GameEvent Clone() { return new SemiInvulEvent(this); }
@@ -5906,8 +5903,7 @@ namespace PMDC.Dungeon
         {
             for (int ii = 0; ii < ExceptionMoves.Length; ii++)
             {
-                //TODO: String Assets
-                if (int.Parse(context.Data.ID) == ExceptionMoves[ii])
+                if (context.Data.ID == ExceptionMoves[ii])
                 {
                     context.Data.HitRate = -1;
                     yield break;
@@ -8562,11 +8558,12 @@ namespace PMDC.Dungeon
     {
         //can be used for hit-consequence effects
         public BattleEvent BaseEvent;
+        [JsonConverter(typeof(SkillListConverter))]
         [DataType(1, DataManager.DataType.Skill, false)]
-        public List<int> AcceptedMoves;
+        public List<string> AcceptedMoves;
 
-        public SpecificSkillNeededEvent() { AcceptedMoves = new List<int>(); }
-        public SpecificSkillNeededEvent(BattleEvent effect, params int[] acceptableMoves)
+        public SpecificSkillNeededEvent() { AcceptedMoves = new List<string>(); }
+        public SpecificSkillNeededEvent(BattleEvent effect, params string[] acceptableMoves)
             : this()
         {
             BaseEvent = effect;
@@ -8583,8 +8580,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            //TODO: String Assets
-            if (context.ActionType == BattleActionType.Skill && AcceptedMoves.Contains(int.Parse(context.Data.ID)))
+            if (context.ActionType == BattleActionType.Skill && AcceptedMoves.Contains(context.Data.ID))
             {
                 yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, context));
             }
