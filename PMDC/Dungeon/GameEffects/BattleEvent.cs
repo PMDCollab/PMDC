@@ -866,17 +866,17 @@ namespace PMDC.Dungeon
 
             List<Character> seenAllies = context.User.GetSeenCharacters(Alignment.Friend);
 
-            List<List<string>> tryingCategories = new List<List<int>>();
+            List<List<string>> tryingCategories = new List<List<string>>();
             //conditions:
             //are you wounded?
             bool needHeal = false;
             if (context.User.HP < context.User.MaxHP * 2 / 3)
             {
-                List<string> tryingMoves = new List<int>();
-                tryAddMove(tryingMoves, 105);//recover
-                tryAddMove(tryingMoves, 235);//synthesis
-                tryAddMove(tryingMoves, 355);//roost
-                tryAddMove(tryingMoves, 303);//slack off
+                List<string> tryingMoves = new List<string>();
+                tryAddMove(tryingMoves, "recover");//recover
+                tryAddMove(tryingMoves, "synthesis");//synthesis
+                tryAddMove(tryingMoves, "roost");//roost
+                tryAddMove(tryingMoves, "slack_off");//slack off
                 tryingCategories.Add(tryingMoves);
                 if (context.User.HP < context.User.MaxHP / 3)
                     needHeal = true;
@@ -896,9 +896,9 @@ namespace PMDC.Dungeon
             if (woundedAllies >= 2)
             {
                 List<string> tryingMoves = new List<string>();
-                tryAddMove(tryingMoves, 236);//moonlight
-                tryAddMove(tryingMoves, 234);//morning sun
-                tryAddMove(tryingMoves, 208);//milk drink
+                tryAddMove(tryingMoves, "moonlight");//moonlight
+                tryAddMove(tryingMoves, "morning_sun");//morning sun
+                tryAddMove(tryingMoves, "milk_drink");//milk drink
                 tryingCategories.Add(tryingMoves);
             }
 
@@ -924,8 +924,8 @@ namespace PMDC.Dungeon
             if (badStates > 2)
             {
                 List<string> tryingMoves = new List<string>();
-                tryAddMove(tryingMoves, 215);//heal bell
-                tryAddMove(tryingMoves, 287);//refresh
+                tryAddMove(tryingMoves, "heal_bell");//heal bell
+                tryAddMove(tryingMoves, "refresh");//refresh
                 tryingCategories.Add(tryingMoves);
             }
 
@@ -951,188 +951,188 @@ namespace PMDC.Dungeon
                     {
                         case "bug":
                             {
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 454);//attack order
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 404);//x-scissor
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 224);//megahorn
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 405);//bug buzz
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 324);//signal beam
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 318);//silver wind
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "attack_order");//attack order
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "x_scissor");//x-scissor
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "megahorn");//megahorn
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "bug_buzz");//bug buzz
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "signal_beam");//signal beam
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "silver_wind");//silver wind
                             }
                             break;
                         case "dark":
                             {
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 621);//hyperspace fury
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 539);//night daze
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 372);//assurance
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 400);//night slash
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "hyperspace_fury");//hyperspace fury
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "night_daze");//night daze
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "assurance");//assurance
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "night_slash");//night slash
                             }
                             break;
                         case "dragon":
                             {
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 459);//roar of time
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 434);//draco meteor
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 460);//spacial rend
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 200);//outrage
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 337);//dragon claw
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 525);//dragon tail
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 407);//dragon rush
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "roar_of_time");//roar of time
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "draco_meteor");//draco meteor
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "spacial_rend");//spacial rend
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "outrage");//outrage
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "dragon_claw");//dragon claw
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "dragon_tail");//dragon tail
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "dragon_rush");//dragon rush
                             }
                             break;
                         case "electric":
                             {
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 435);//discharge
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 344);//volt tackle
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 192);//zap cannon
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 87);//thunder
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 550);//bolt strike
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 559);//fusion bolt
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 570);//parabolic charge
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "discharge");//discharge
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "volt_tackle");//volt tackle
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "zap_cannon");//zap cannon
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "thunder");//thunder
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "bolt_strike");//bolt strike
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "fusion_bolt");//fusion bolt
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "parabolic_charge");//parabolic charge
                             }
                             break;
                         case "fairy":
                             {
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 617);//light of ruin
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 585);//moonblast
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 583);//play rough
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 605);//dazzling gleam
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "light_of_ruin");//light of ruin
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "moonblast");//moonblast
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "play_rough");//play rough
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "dazzling_gleam");//dazzling gleam
                             }
                             break;
                         case "fighting":
                             {
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 136);//high jump kick
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 370);//close combat
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 411);//focus blast
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 238);//cross chop
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 533);//sacred sword
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 396);//aura sphere
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 548);//secret sword
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 409);//drain punch
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "high_jump_kick");//high jump kick
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "close_combat");//close combat
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "focus_blast");//focus blast
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "cross_chop");//cross chop
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "sacred_sword");//sacred sword
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "aura_sphere");//aura sphere
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "secret_sword");//secret sword
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "drain_punch");//drain punch
                             }
                             break;
                         case "fire":
                             {
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 557);//v-create
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 307);//blast burn
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 284);//eruption
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 221);//sacred fire
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 394);//flare blitz
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 551);//blue flare
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 126);//fire blast
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 463);//magma storm
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 517);//inferno
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 257);//heat wave
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 545);//searing shot
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 552);//fiery dance
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 558);//fusion flare
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "v_create");//v-create
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "blast_burn");//blast burn
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "eruption");//eruption
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "sacred_fire");//sacred fire
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "flare_blitz");//flare blitz
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "blue_flare");//blue flare
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "fire_blast");//fire blast
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "magma_storm");//magma storm
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "inferno");//inferno
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "heat_wave");//heat wave
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "searing_shot");//searing shot
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "fiery_dance");//fiery dance
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "fusion_flare");//fusion flare
                             }
                             break;
                         case "flying":
                             {
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 413);//brave bird
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 620);//dragon ascent
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 542);//hurricane
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 177);//aeroblast
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 613);//oblivion wing
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 143);//sky attack
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "brave_bird");//brave bird
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "dragon_ascent");//dragon ascent
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "hurricane");//hurricane
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "aeroblast");//aeroblast
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "oblivion_wing");//oblivion wing
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "sky_attack");//sky attack
                             }
                             break;
                         case "ghost":
                             {
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 467);//shadow force
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 247);//shadow ball
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 466);//ominous wind
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 506);//hex
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "shadow_force");//shadow force
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "shadow_ball");//shadow ball
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "ominous_wind");//ominous wind
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "hex");//hex
                             }
                             break;
                         case "grass":
                             {
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 437);//leaf storm
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 338);//frenzy plant
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 438);//power whip
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 452);//wood hammer
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 412);//energy ball
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 572);//petal blizzard
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 402);//seed bomb
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 76);//solar beam
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 202);//giga drain
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "leaf_storm");//leaf storm
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "frenzy_plant");//frenzy plant
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "power_whip");//power whip
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "wood_hammer");//wood hammer
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "energy_ball");//energy ball
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "petal_blizzard");//petal blizzard
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "seed_bomb");//seed bomb
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "solar_beam");//solar beam
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "giga_drain");//giga drain
                             }
                             break;
                         case "ground":
                             {
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 619);//precipice blades
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 616);//land's wrath
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 414);//earth power
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 529);//drill run
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 614);//thousand arrows
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 615);//thousand waves
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "precipice_blades");//precipice blades
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "lands_wrath");//land's wrath
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "earth_power");//earth power
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "drill_run");//drill run
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "thousand_arrows");//thousand arrows
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "thousand_waves");//thousand waves
                             }
                             break;
                         case "ice":
                             {
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 59);//blizzard
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 58);//ice beam
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 556);//icicle crash
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 333);//icicle spear
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 554);//ice burn
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 553);//freeze shock
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "blizzard");//blizzard
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "ice_beam");//ice beam
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "icicle_crash");//icicle crash
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "icicle_spear");//icicle spear
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "ice_burn");//ice burn
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "freeze_shock");//freeze shock
                             }
                             break;
                         case "normal":
                             {
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 304);//hyper voice
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 416);//giga impact
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 38);//double-edge
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 161);//tri-attack
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "hyper_voice");//hyper voice
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "giga_impact");//giga impact
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "double_edge");//double-edge
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "tri_attack");//tri-attack
                             }
                             break;
                         case "poison":
                             {
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 441);//gunk shot
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 482);//sludge wave
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 188);//sludge bomb
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 440);//cross poison
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 474);//venoshock
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "gunk_shot");//gunk shot
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "sludge_wave");//sludge wave
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "sludge_bomb");//sludge bomb
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "cross_poison");//cross poison
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "venoshock");//venoshock
                             }
                             break;
                         case "psychic":
                             {
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 94);//psychic
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 593);//hyperspace hole
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 354);//psycho boost
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 540);//psystrike
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 428);//zen headbutt
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "psychic");//psychic
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "hyperspace_hole");//hyperspace hole
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "psycho_boost");//psycho boost
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "psystrike");//psystrike
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "zen_headbutt");//zen headbutt
                             }
                             break;
                         case "rock":
                             {
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 457);//head smash
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 439);//rock wrecker
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 350);//rock blast
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 408);//power gem
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 246);//ancient power
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 205);//rollout
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 591);//diamond storm
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "head_smash");//head smash
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "rock_wrecker");//rock wrecker
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "rock_blast");//rock blast
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "power_gem");//power gem
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "ancient_power");//ancient power
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "rollout");//rollout
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "diamond_storm");//diamond storm
                             }
                             break;
                         case "steel":
                             {
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 309);//meteor mash
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 231);//iron tail
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 430);//flash cannon
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 442);//iron head
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 443);//magnet bomb
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "meteor_mash");//meteor mash
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "iron_tail");//iron tail
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "flash_cannon");//flash cannon
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "iron_head");//iron head
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "magnet_bomb");//magnet bomb
                             }
                             break;
                         case "water":
                             {
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 308);//hydro cannon
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 56);//hydro pump
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 618);//origin pulse
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 323);//water spout
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 592);//steam eruption
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 152);//crabhammer
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 401);//aqua tail
-                                tryAddTargetMove(context.User, seenFoes, tryingMoves, 127);//waterfall
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "hydro_cannon");//hydro cannon
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "hydro_pump");//hydro pump
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "origin_pulse");//origin pulse
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "water_spout");//water spout
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "steam_eruption");//steam eruption
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "crabhammer");//crabhammer
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "aqua_tail");//aqua tail
+                                tryAddTargetMove(context.User, seenFoes, tryingMoves, "waterfall");//waterfall
                             }
                             break;
                     }
@@ -1148,31 +1148,31 @@ namespace PMDC.Dungeon
             {
                 List<string> tryingMoves = new List<string>();
                 if (!context.User.StatusEffects.ContainsKey("aqua_ring"))
-                    tryAddMove(tryingMoves, 392);//aqua ring
+                    tryAddMove(tryingMoves, "aqua_ring");//aqua ring
                 if (!context.User.StatusEffects.ContainsKey("reflect"))
-                    tryAddMove(tryingMoves, 115);//reflect
+                    tryAddMove(tryingMoves, "reflect");//reflect
                 if (!context.User.StatusEffects.ContainsKey("light_screen"))
-                    tryAddMove(tryingMoves, 113);//light screen
+                    tryAddMove(tryingMoves, "light_screen");//light screen
                 if (!context.User.StatusEffects.ContainsKey("wish"))
-                    tryAddMove(tryingMoves, 273);//wish
+                    tryAddMove(tryingMoves, "wish");//wish
                 if (!context.User.StatusEffects.ContainsKey("mist"))
-                    tryAddMove(tryingMoves, 54);//mist
+                    tryAddMove(tryingMoves, "mist");//mist
                 if (!context.User.StatusEffects.ContainsKey("safeguard"))
-                    tryAddMove(tryingMoves, 219);//safeguard
+                    tryAddMove(tryingMoves, "safeguard");//safeguard
                 if (!context.User.StatusEffects.ContainsKey("magic_coat"))
-                    tryAddMove(tryingMoves, 277);//magic coat
+                    tryAddMove(tryingMoves, "magic_coat");//magic coat
                 if (!context.User.StatusEffects.ContainsKey("mirror_coat"))
-                    tryAddMove(tryingMoves, 243);//mirror coat
+                    tryAddMove(tryingMoves, "mirror_coat");//mirror coat
                 if (!context.User.StatusEffects.ContainsKey("counter"))
-                    tryAddMove(tryingMoves, 68);//counter
+                    tryAddMove(tryingMoves, "counter");//counter
                 if (!context.User.StatusEffects.ContainsKey("metal_burst"))
-                    tryAddMove(tryingMoves, 368);//metal burst
+                    tryAddMove(tryingMoves, "metal_burst");//metal burst
                 if (!context.User.StatusEffects.ContainsKey("lucky_chant"))
-                    tryAddMove(tryingMoves, 381);//lucky chant
+                    tryAddMove(tryingMoves, "lucky_chant");//lucky chant
                 if (!context.User.StatusEffects.ContainsKey("focus_energy"))
-                    tryAddMove(tryingMoves, 116);//focus energy
+                    tryAddMove(tryingMoves, "focus_energy");//focus energy
                 if (!context.User.StatusEffects.ContainsKey("sure_shot"))
-                    tryAddMove(tryingMoves, 199);//lock-on
+                    tryAddMove(tryingMoves, "lock_on");//lock-on
                 tryingCategories.Add(tryingMoves);
             }
 
@@ -1214,17 +1214,17 @@ namespace PMDC.Dungeon
     {
         [JsonConverter(typeof(MapStatusSkillDictConverter))]
         [DataType(1, DataManager.DataType.MapStatus, false)]
-        public Dictionary<string, int> TerrainPair;
+        public Dictionary<string, string> TerrainPair;
         [JsonConverter(typeof(ElementSkillDictConverter))]
         [DataType(1, DataManager.DataType.Element, false)]
-        public Dictionary<string, int> NaturePair;
+        public Dictionary<string, string> NaturePair;
 
         public NatureMoveEvent()
         {
-            TerrainPair = new Dictionary<string, int>();
-            NaturePair = new Dictionary<string, int>();
+            TerrainPair = new Dictionary<string, string>();
+            NaturePair = new Dictionary<string, string>();
         }
-        public NatureMoveEvent(Dictionary<string, int> terrain, Dictionary<string, int> moves)
+        public NatureMoveEvent(Dictionary<string, string> terrain, Dictionary<string, string> moves)
         {
             TerrainPair = terrain;
             NaturePair = moves;
@@ -1239,7 +1239,7 @@ namespace PMDC.Dungeon
         }
         public override GameEvent Clone() { return new NatureMoveEvent(this); }
 
-        protected override int GetInvokedMove(GameEventOwner owner, BattleContext context)
+        protected override string GetInvokedMove(GameEventOwner owner, BattleContext context)
         {
             foreach (string terrain in TerrainPair.Keys)
             {
@@ -1247,11 +1247,11 @@ namespace PMDC.Dungeon
                     return TerrainPair[terrain];
             }
 
-            int moveNum;
+            string moveNum;
             if (NaturePair.TryGetValue(ZoneManager.Instance.CurrentMap.Element, out moveNum))
                 return moveNum;
             else
-                return -1;
+                return "";
         }
     }
 
@@ -1274,13 +1274,13 @@ namespace PMDC.Dungeon
         }
         public override GameEvent Clone() { return new MirrorMoveEvent(this); }
 
-        protected override int GetInvokedMove(GameEventOwner owner, BattleContext context)
+        protected override string GetInvokedMove(GameEventOwner owner, BattleContext context)
         {
             StatusEffect status = context.Target.GetStatusEffect(MoveStatusID);
             if (status != null)
-                return status.StatusStates.GetWithDefault<IndexState>().Index;
+                return status.StatusStates.GetWithDefault<IDState>().ID;
             else
-                return -1;
+                return "";
         }
     }
 

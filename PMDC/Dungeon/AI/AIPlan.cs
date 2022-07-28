@@ -555,7 +555,7 @@ namespace PMDC.Dungeon
 
         public bool IsSkillUsable(Character controlledChar, int ii)
         {
-            if (controlledChar.Skills[ii].Element.SkillNum > -1 && controlledChar.Skills[ii].Element.Charges > 0 && !controlledChar.Skills[ii].Element.Sealed && controlledChar.Skills[ii].Element.Enabled)
+            if (!String.IsNullOrEmpty(controlledChar.Skills[ii].Element.SkillNum) && controlledChar.Skills[ii].Element.Charges > 0 && !controlledChar.Skills[ii].Element.Sealed && controlledChar.Skills[ii].Element.Enabled)
                 return true;
             return false;
         }
@@ -603,7 +603,7 @@ namespace PMDC.Dungeon
             //default on attacking if no moves are to be found
             {
                 HitValue[] attackDirs = new HitValue[8];
-                GetActionValues(controlledChar, seenChars, closestThreat, 0, attackDirs, false);
+                GetActionValues(controlledChar, seenChars, closestThreat, DataManager.Instance.DefaultSkill, attackDirs, false);
                 UpdateTotalIndices(rand, backupIndices, new GameAction(GameAction.ActionType.Attack, Dir8.None), attackDirs);
             }
 
@@ -648,7 +648,7 @@ namespace PMDC.Dungeon
             //default on attacking if no moves are to be found
             {
                 HitValue[] attackDirs = new HitValue[8];
-                GetActionValues(controlledChar, seenChars, closestThreat, 0, attackDirs, true);
+                GetActionValues(controlledChar, seenChars, closestThreat, DataManager.Instance.DefaultSkill, attackDirs, true);
                 for (int ii = 0; ii < attackDirs.Length; ii++)
                     attackDirs[ii].Value = attackDirs[ii].Value * 2;
                 UpdateTotalIndices(rand, moveIndices, new GameAction(GameAction.ActionType.Attack, Dir8.None), attackDirs);
@@ -816,7 +816,7 @@ namespace PMDC.Dungeon
         {
             //check to see if currently under a force-move status
             //if so, aim a regular attack according to that move
-            int forcedMove = -1;
+            string forcedMove = "";
             foreach (string status in controlledChar.StatusEffects.Keys)
             {
                 StatusData entry = DataManager.Instance.GetStatus(status);
@@ -828,15 +828,15 @@ namespace PMDC.Dungeon
                         break;
                     }
                 }
-                if (forcedMove > -1)
+                if (!String.IsNullOrEmpty(forcedMove))
                     break;
             }
 
 
             List<ActionDirValue> highestIndices = new List<ActionDirValue>();
 
-            if (forcedMove < 0) // default to regular attack if no moves are to be found
-                forcedMove = 0;
+            if (String.IsNullOrEmpty(forcedMove)) // default to regular attack if no moves are to be found
+                forcedMove = DataManager.Instance.DefaultSkill;
 
             HitValue[] moveDirs = new HitValue[8];
             GetActionValues(controlledChar, seenChars, closestThreat, forcedMove, moveDirs, false);
@@ -925,7 +925,7 @@ namespace PMDC.Dungeon
         /// <param name="moveIndex"></param>
         /// <param name="dirs"></param>
         /// <param name="includeImagined">Whether or not we want to consider hypothetical hit weights.</param>
-        protected void GetActionValues(Character controlledChar, List<Character> seenChars, Character closestThreat, int moveIndex, HitValue[] dirs, bool includeImagined)
+        protected void GetActionValues(Character controlledChar, List<Character> seenChars, Character closestThreat, string moveIndex, HitValue[] dirs, bool includeImagined)
         {
             SkillData entry = DataManager.Instance.GetSkill(moveIndex);
 
@@ -988,7 +988,7 @@ namespace PMDC.Dungeon
                 defaultDir = ZoneManager.Instance.CurrentMap.ApproximateClosestDir8(controlledChar.CharLoc, closestThreat.CharLoc);
             if (defaultDir == Dir8.None)
                 defaultDir = controlledChar.CharDir;
-            HitValue highestVal = GetActionDirValue(-1, null, entry.UseAction, entry.Explosion, entry.UseEvent, 0, controlledChar, seenChars, defaultDir);
+            HitValue highestVal = GetActionDirValue("", null, entry.UseAction, entry.Explosion, entry.UseEvent, 0, controlledChar, seenChars, defaultDir);
             dirs[(int)defaultDir] = highestVal;
         }
 
@@ -1029,7 +1029,7 @@ namespace PMDC.Dungeon
             for (int ii = 0; ii < DirExt.DIR8_COUNT; ii++)
             {
                 Dir8 dir = (Dir8)ii;
-                vals[ii] = GetActionDirValue(-1, null, hitboxAction, testExplosion, entry.UseEvent, 0, controlledChar, seenChars, dir);
+                vals[ii] = GetActionDirValue("", null, hitboxAction, testExplosion, entry.UseEvent, 0, controlledChar, seenChars, dir);
                 if (vals[ii].CompareTo(highestVal) > 0)
                     highestVal = vals[ii];
             }
@@ -1056,7 +1056,7 @@ namespace PMDC.Dungeon
             {
                 foreach (int skillSlot in iterateUsableSkillIndices(controlledChar))
                 {
-                    int skillIndex = controlledChar.Skills[skillSlot].Element.SkillNum;
+                    string skillIndex = controlledChar.Skills[skillSlot].Element.SkillNum;
                     SkillData entry = DataManager.Instance.GetSkill(skillIndex);
 
                     int rangeMod = 0;
@@ -1205,7 +1205,7 @@ namespace PMDC.Dungeon
             return null;
         }
 
-        private void modifyActionHitboxes(Character controlledChar, List<Character> seenChars, Dir8 dir, ref int skillIndex, ref SkillData entry, ref  int rangeMod, ref CombatAction hitboxAction, ref ExplosionData explosion)
+        private void modifyActionHitboxes(Character controlledChar, List<Character> seenChars, Dir8 dir, ref string skillIndex, ref SkillData entry, ref  int rangeMod, ref CombatAction hitboxAction, ref ExplosionData explosion)
         {
             //check for passives that modify range; NOTE: specialized AI code!
             foreach (PassiveContext passive in controlledChar.IteratePassives(GameEventPriority.USER_PORT_PRIORITY))
@@ -1237,7 +1237,7 @@ namespace PMDC.Dungeon
                 }
             }
             //check for moves that want to wait until within range
-            if (skillIndex == 13)//wait until enemy is wihin two tiles of razor wind's hitbox, to prevent immediate walk-away; NOTE: specialized AI code!
+            if (skillIndex == "razor_wind")//wait until enemy is wihin two tiles of razor wind's hitbox, to prevent immediate walk-away; NOTE: specialized AI code!
                 rangeMod--;
 
             rangeMod = Math.Min(Math.Max(-3, rangeMod), 3);
@@ -1260,7 +1260,7 @@ namespace PMDC.Dungeon
                             }
                         }
 
-                        int calledMove = -1;
+                        string calledMove = "";
                         HashSet<Loc> callTiles = new HashSet<Loc>();
                         foreach (Loc loc in hitboxAction.GetPreTargets(controlledChar, dir, rangeMod))
                         {
@@ -1275,13 +1275,13 @@ namespace PMDC.Dungeon
                                 StatusEffect moveEffect;
                                 if (target.StatusEffects.TryGetValue(searchedStatus, out moveEffect))
                                 {
-                                    calledMove = moveEffect.StatusStates.Get<IndexState>().Index;
+                                    calledMove = moveEffect.StatusStates.Get<IDState>().ID;
                                     break;
                                 }
                             }
                         }
                         skillIndex = calledMove;
-                        if (calledMove == -1)
+                        if (String.IsNullOrEmpty(calledMove))
                         {
                             entry = null;
                             hitboxAction = null;
@@ -1351,7 +1351,7 @@ namespace PMDC.Dungeon
                     break;
                 case 382: // me first
                     {
-                        int calledMove = -1;
+                        string calledMove = "";
                         HashSet<Loc> callTiles = new HashSet<Loc>();
                         foreach (Loc loc in hitboxAction.GetPreTargets(controlledChar, dir, rangeMod))
                         {
@@ -1367,7 +1367,7 @@ namespace PMDC.Dungeon
                                 int recordPower = -1;
                                 for (int ii = 0; ii < target.Skills.Count; ii++)
                                 {
-                                    if (target.Skills[ii].Element.SkillNum > -1)
+                                    if (!String.IsNullOrEmpty(target.Skills[ii].Element.SkillNum))
                                     {
                                         SkillData testEntry = DataManager.Instance.GetSkill(target.Skills[ii].Element.SkillNum);
 
@@ -1395,7 +1395,7 @@ namespace PMDC.Dungeon
                         }
 
                         skillIndex = calledMove;
-                        if (calledMove == -1)
+                        if (String.IsNullOrEmpty(calledMove))
                         {
                             entry = null;
                             hitboxAction = null;
@@ -1414,7 +1414,7 @@ namespace PMDC.Dungeon
             }
         }
 
-        protected HitValue GetAttackDirValue(int skillIndex, SkillData entry, Character controlledChar, List<Character> seenChars, Dir8 dir)
+        protected HitValue GetAttackDirValue(string skillIndex, SkillData entry, Character controlledChar, List<Character> seenChars, Dir8 dir)
         {
 
             //Dig/Fly/Dive/Phantom Force; NOTE: specialized AI code!
@@ -1450,7 +1450,7 @@ namespace PMDC.Dungeon
             return GetActionDirValue(skillIndex, entry, hitboxAction, explosion, entry?.Data, rangeMod, controlledChar, seenChars, dir);
         }
 
-        protected HitValue GetActionDirValue(int skillIndex, SkillData entry, CombatAction hitboxAction, ExplosionData explosion, BattleData data, int rangeMod, Character controlledChar, List<Character> seenChars, Dir8 dir)
+        protected HitValue GetActionDirValue(string skillIndex, SkillData entry, CombatAction hitboxAction, ExplosionData explosion, BattleData data, int rangeMod, Character controlledChar, List<Character> seenChars, Dir8 dir)
         {
             if (hitboxAction == null)
                 return new HitValue(0, false);
@@ -1503,7 +1503,7 @@ namespace PMDC.Dungeon
                 return new HitValue(maxValue, directHit);
         }
 
-        protected int GetAttackValue(Character controlledChar, int moveIndex, SkillData entry, List<Character> seenChars, Character target, int rangeMod)
+        protected int GetAttackValue(Character controlledChar, string moveIndex, SkillData entry, List<Character> seenChars, Character target, int rangeMod)
         {
             int delta = GetTargetEffect(controlledChar, moveIndex, entry, seenChars, target, rangeMod);
 
@@ -1592,7 +1592,7 @@ namespace PMDC.Dungeon
         /// <param name="target"></param>
         /// <param name="rangeMod"></param>
         /// <returns>Positive number means a positive effect for the target, negative number means a negative effect for the target.</returns>
-        protected int GetTargetEffect(Character controlledChar, int moveIndex, SkillData entry, List<Character> seenChars, Character target, int rangeMod)
+        protected int GetTargetEffect(Character controlledChar, string moveIndex, SkillData entry, List<Character> seenChars, Character target, int rangeMod)
         {
             //when trying to attack an enemy, first check for getting in range of any attack, and use that attack if possible
             //check against all possible enemies before trying to move
