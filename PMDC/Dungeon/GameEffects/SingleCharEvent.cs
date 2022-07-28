@@ -695,6 +695,7 @@ namespace PMDC.Dungeon
             //change move effects
             newContext.Data = new BattleData(NewData);
             newContext.Data.ID = owner.GetID();
+            newContext.Data.DataType = DataManager.DataType.Intrinsic;
 
             newContext.Explosion = new ExplosionData(Explosion);
             newContext.HitboxAction = HitboxAction.Clone();
@@ -3574,6 +3575,7 @@ namespace PMDC.Dungeon
             //change move effects
             newContext.Data = new BattleData(NewData);
             newContext.Data.ID = owner.GetID();
+            newContext.Data.DataType = DataManager.DataType.Tile;
 
             newContext.Explosion = new ExplosionData(Explosion);
             newContext.HitboxAction = HitboxAction.Clone();

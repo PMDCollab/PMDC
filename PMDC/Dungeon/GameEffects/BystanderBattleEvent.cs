@@ -493,6 +493,7 @@ namespace PMDC.Dungeon
                 //fill effects
                 newContext.Data = new BattleData(entry.Data);
                 newContext.Data.ID = InvokedMove;
+                newContext.Data.DataType = DataManager.DataType.Skill;
                 newContext.Explosion = new ExplosionData(entry.Explosion);
                 newContext.HitboxAction = entry.HitboxAction.Clone();
                 //make the attack *autotarget*; set the offset to the space between the front loc and the target

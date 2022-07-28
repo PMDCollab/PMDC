@@ -150,6 +150,7 @@ namespace PMDC.Dungeon
             context.Data = new BattleData(entry.Data);
 
             context.Data.ID = usageIndex;
+            context.Data.DataType = DataManager.DataType.Skill;
             context.Explosion = new ExplosionData(entry.Explosion);
             context.HitboxAction = entry.HitboxAction.Clone();
             context.Item = new InvItem();
@@ -217,6 +218,7 @@ namespace PMDC.Dungeon
             ItemData entry = DataManager.Instance.GetItem(item.ID);
             context.Data = new BattleData(entry.UseEvent);
             context.Data.ID = item.GetID();
+            context.Data.DataType = DataManager.DataType.Item;
             context.Explosion = new ExplosionData(entry.Explosion);
             context.Strikes = 1;
             context.Item = new InvItem(item);
@@ -321,6 +323,7 @@ namespace PMDC.Dungeon
                 context.Data = new BattleData();
                 context.Data.Element = DataManager.Instance.DefaultElement;
                 context.Data.ID = item.GetID();
+                context.Data.DataType = DataManager.DataType.Item;
 
                 context.Data.Category = BattleData.SkillCategory.Physical;
                 context.Data.SkillStates.Set(new BasePowerState(30));
@@ -330,6 +333,7 @@ namespace PMDC.Dungeon
             {
                 context.Data = new BattleData(entry.UseEvent);
                 context.Data.ID = item.GetID();
+                context.Data.DataType = DataManager.DataType.Item;
             }
 
             if (catchable)
@@ -754,8 +758,9 @@ namespace PMDC.Dungeon
 
                 //fill effects
                 newContext.Data = new BattleData(entry.Data);
-                //TODO: String Assets
-                newContext.Data.ID = moveID.ToString();
+                
+                newContext.Data.ID = moveID;
+                newContext.Data.DataType = DataManager.DataType.Skill;
                 newContext.Explosion = new ExplosionData(entry.Explosion);
                 newContext.HitboxAction = entry.HitboxAction.Clone();
                 newContext.Strikes = entry.Strikes;
@@ -1320,6 +1325,7 @@ namespace PMDC.Dungeon
             //change move effects
             newContext.Data = new BattleData(NewData);
             newContext.Data.ID = context.Data.ID;
+            newContext.Data.DataType = context.Data.DataType;
 
             newContext.Explosion = new ExplosionData(Explosion);
             newContext.HitboxAction = HitboxAction.Clone();
@@ -1375,8 +1381,10 @@ namespace PMDC.Dungeon
 
                 //change move effects
                 string id = context.Data.ID;
+                DataManager.DataType dataType = context.Data.DataType;
                 context.Data = new BattleData(NewData);
                 context.Data.ID = id;
+                context.Data.DataType = dataType;
             }
             yield break;
         }
@@ -1404,8 +1412,10 @@ namespace PMDC.Dungeon
             if (DungeonScene.Instance.GetMatchup(context.User, context.Target) != Alignment.Foe)
             {
                 string id = context.Data.ID;
+                DataManager.DataType dataType = context.Data.DataType;
                 context.Data = new BattleData(NewData);
                 context.Data.ID = id;
+                context.Data.DataType = dataType;
             }
             yield break;
         }
@@ -1452,9 +1462,12 @@ namespace PMDC.Dungeon
             }
 
             context.ContextStates.Set(new ItemCaught());
+
             string id = context.Data.ID;
+            DataManager.DataType dataType = context.Data.DataType;
             context.Data = new BattleData(NewData);
             context.Data.ID = id;
+            context.Data.DataType = dataType;
         }
     }
 
@@ -1579,8 +1592,10 @@ namespace PMDC.Dungeon
 
                 //change move effects
                 string id = context.Data.ID;
+                DataManager.DataType dataType = context.Data.DataType;
                 context.Data = new BattleData(StackPair[stack.Stack].Item3);
                 context.Data.ID = id;
+                context.Data.DataType = dataType;
             }
             else
                 DungeonScene.Instance.LogMsg(String.Format(FailMsg.ToLocal(), context.User.GetDisplayName(false)));
@@ -1614,8 +1629,10 @@ namespace PMDC.Dungeon
                 if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(weather))
                 {
                     string id = context.Data.ID;
+                    DataManager.DataType dataType = context.Data.DataType;
                     context.Data = new BattleData(WeatherPair[weather]);
                     context.Data.ID = id;
+                    context.Data.DataType = dataType;
                     break;
                 }
             }
@@ -1658,6 +1675,7 @@ namespace PMDC.Dungeon
             if (typeMatchup > 0 && context.User != context.Target)
             {
                 string id = context.Data.ID;
+                DataManager.DataType dataType = context.Data.DataType;
                 BattleData newData = new BattleData();
                 newData.Element = context.Data.Element;
                 newData.Category = context.Data.Category;
@@ -1675,6 +1693,7 @@ namespace PMDC.Dungeon
                 newData.HitFX = new BattleFX(context.Data.HitFX);
                 context.Data = newData;
                 context.Data.ID = id;
+                context.Data.DataType = dataType;
             }
             yield break;
         }
@@ -1726,6 +1745,7 @@ namespace PMDC.Dungeon
             if (context.Data.Element == AbsorbElement && context.User != context.Target)
             {
                 string id = context.Data.ID;
+                DataManager.DataType dataType = context.Data.DataType;
                 BattleData newData = new BattleData();
                 newData.Element = context.Data.Element;
                 newData.Category = context.Data.Category;
@@ -1749,6 +1769,7 @@ namespace PMDC.Dungeon
                 newData.HitFX = new BattleFX(context.Data.HitFX);
                 context.Data = newData;
                 context.Data.ID = id;
+                context.Data.DataType = dataType;
             }
             yield break;
         }
@@ -4187,8 +4208,10 @@ namespace PMDC.Dungeon
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_INCINERATE").ToLocal(), context.Item.GetDisplayName()));
 
                     string id = context.Data.ID;
+                    DataManager.DataType dataType = context.Data.DataType;
                     context.Data = new BattleData(NewData);
                     context.Data.ID = id;
+                    context.Data.DataType = dataType;
 
                     context.GlobalContextStates.Set(new ItemDestroyed());
                 }
@@ -5180,6 +5203,7 @@ namespace PMDC.Dungeon
             SkillData entry = DataManager.Instance.GetSkill(MoveIndex);
             context.Data = new BattleData(entry.Data);
             context.Data.ID = MoveIndex;
+            context.Data.DataType = DataManager.DataType.Skill;
             context.Explosion = new ExplosionData(entry.Explosion);
             context.HitboxAction = entry.HitboxAction.Clone();
             context.Item = new InvItem();
@@ -5219,6 +5243,7 @@ namespace PMDC.Dungeon
                 altMoveData.HitRate = -1;
                 altMoveData.OnHits.Add(0, new StatusBattleEvent(ChargeStatus, true, false));
                 altMoveData.ID = context.Data.ID;
+                altMoveData.DataType = context.Data.DataType;
                 context.Data = new BattleData(altMoveData);
 
                 ExplosionData altExplosion = new ExplosionData();
@@ -5270,6 +5295,7 @@ namespace PMDC.Dungeon
                 altMoveData.HitRate = -1;
                 altMoveData.OnHits.Add(0, new StatusBattleEvent(ChargeStatus, true, false));
                 altMoveData.ID = context.Data.ID;
+                altMoveData.DataType = context.Data.DataType;
                 context.Data = new BattleData(altMoveData);
 
                 ExplosionData altExplosion = new ExplosionData();
@@ -5330,6 +5356,7 @@ namespace PMDC.Dungeon
                 altMoveData.HitRate = -1;
                 altMoveData.OnHits.Add(0, new StatusBattleEvent(ChargeStatus, true, false));
                 altMoveData.ID = context.Data.ID;
+                altMoveData.DataType = context.Data.DataType;
                 context.Data = new BattleData(altMoveData);
 
                 ExplosionData altExplosion = new ExplosionData();
@@ -11564,6 +11591,7 @@ namespace PMDC.Dungeon
                     newContext.Data = new BattleData();
                     newContext.Data.Element = DataManager.Instance.DefaultElement;
                     newContext.Data.ID = item.GetID();
+                    newContext.Data.DataType = DataManager.DataType.Item;
 
                     newContext.Data.Category = BattleData.SkillCategory.Physical;
                     newContext.Data.SkillStates.Set(new BasePowerState(40));
@@ -11573,6 +11601,7 @@ namespace PMDC.Dungeon
                 {
                     newContext.Data = new BattleData(entry.UseEvent);
                     newContext.Data.ID = item.GetID();
+                    newContext.Data.DataType = DataManager.DataType.Item;
                 }
 
                 if (catchable)
@@ -12214,6 +12243,7 @@ namespace PMDC.Dungeon
                     newContext.StartDir = newContext.User.CharDir;
                     newContext.Data = new BattleData(entry.UseEvent);
                     newContext.Data.ID = item.GetID();
+                    newContext.Data.DataType = DataManager.DataType.Item;
                     newContext.Explosion = new ExplosionData(entry.Explosion);
                     newContext.Strikes = 1;
                     newContext.Item = new InvItem(item);
