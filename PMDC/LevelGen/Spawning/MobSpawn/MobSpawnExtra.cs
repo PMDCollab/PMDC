@@ -27,7 +27,7 @@ namespace PMDC.LevelGen
             newChar.Fullness = 35;
             for (int ii = 0; ii < newChar.Skills.Count; ii++)
             {
-                if (newChar.Skills[ii].Element.SkillNum > -1)
+                if (!String.IsNullOrEmpty(newChar.Skills[ii].Element.SkillNum))
                 {
                     SkillData data = DataManager.Instance.GetSkill(newChar.Skills[ii].Element.SkillNum);
                     newChar.SetSkillCharges(ii, MathUtils.DivUp(data.BaseCharges, 2));

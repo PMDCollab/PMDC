@@ -18,7 +18,7 @@ namespace PMDC.Dungeon
             //need attack action check
             for (int ii = 0; ii < controlledChar.Skills.Count; ii++)
             {
-                if (controlledChar.Skills[ii].Element.SkillNum > -1 && controlledChar.Skills[ii].Element.Charges > 0 && !controlledChar.Skills[ii].Element.Sealed && controlledChar.Skills[ii].Element.Enabled)
+                if (!String.IsNullOrEmpty(controlledChar.Skills[ii].Element.SkillNum) && controlledChar.Skills[ii].Element.Charges > 0 && !controlledChar.Skills[ii].Element.Sealed && controlledChar.Skills[ii].Element.Enabled)
                     return new GameAction(GameAction.ActionType.UseSkill, Dir8.None, ii);
             }
             return null;

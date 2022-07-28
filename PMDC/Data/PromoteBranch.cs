@@ -198,7 +198,9 @@ namespace PMDC.Data
     [Serializable]
     public class EvoMove : PromoteDetail
     {
-        public int MoveNum;
+        [JsonConverter(typeof(SkillConverter))]
+        [DataType(0, DataManager.DataType.Skill, false)]
+        public string MoveNum;
 
         public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_SKILL").ToLocal(), DataManager.Instance.GetSkill(MoveNum).GetColoredName()); }
         public override bool GetReq(Character character)
@@ -229,7 +231,7 @@ namespace PMDC.Data
         {
             foreach (SlotSkill move in character.BaseSkills)
             {
-                if (move.SkillNum > -1)
+                if (!String.IsNullOrEmpty(move.SkillNum))
                 {
                     SkillData data = DataManager.Instance.GetSkill(move.SkillNum);
                     if (data.Data.Element == MoveElement)
@@ -408,7 +410,7 @@ namespace PMDC.Data
             Character player = new Character(newChar);
             foreach (BackReference<Skill> move in player.Skills)
             {
-                if (move.Element.SkillNum > -1)
+                if (!String.IsNullOrEmpty(move.Element.SkillNum))
                 {
                     SkillData entry = DataManager.Instance.GetSkill(move.Element.SkillNum);
                     move.Element.Enabled = (entry.Data.Category == BattleData.SkillCategory.Physical || entry.Data.Category == BattleData.SkillCategory.Magical);

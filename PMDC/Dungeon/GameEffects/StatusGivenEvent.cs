@@ -506,7 +506,7 @@ namespace PMDC.Dungeon
             if (context.Status == owner)//this check is done BY the pending status only
             {
                 int slot = context.Status.StatusStates.GetWithDefault<SlotState>().Slot;
-                if (context.Target.Skills[slot].Element.SkillNum == -1)
+                if (String.IsNullOrEmpty(context.Target.Skills[slot].Element.SkillNum))
                 {
                     if (context.msg && Message.IsValid())
                         DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.Target.GetDisplayName(false)));

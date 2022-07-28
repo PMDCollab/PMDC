@@ -20,7 +20,7 @@ namespace PMDC.Dungeon
                 //at half health, unlock the all moves
                 for (int ii = 0; ii < controlledChar.Skills.Count; ii++)
                 {
-                    if (controlledChar.Skills[ii].Element.SkillNum > -1)
+                    if (!String.IsNullOrEmpty(controlledChar.Skills[ii].Element.SkillNum))
                         controlledChar.Skills[ii].Element.Enabled = true;
                 }
             }

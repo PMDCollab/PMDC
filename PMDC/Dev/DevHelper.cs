@@ -190,59 +190,59 @@ namespace PMDC.Dev
         /// </summary>
         public static void PrintAllUnfinishedMoves()
         {
-            Dictionary<int, HashSet<(string, ZoneLoc)>> foundSpecies = GetAllAppearingMonsters(false);
-            //check against the regional dex for inconsistencies
-            for (int ii = 1; ii < DataManager.Instance.DataIndices[DataManager.DataType.Monster].Count; ii++)
-            {
-                //bool hasDex = false;
-                //for (int jj = 0; jj < MonsterInfo.DEX_MAP.Length; jj++)
-                //{
-                //    if (MonsterInfo.DEX_MAP[jj] == ii)
-                //        hasDex = true;
-                //}
-                //if (hasDex != foundSpecies.ContainsKey(ii))
-                //    Debug.WriteLine(String.Format("{0:D3}: Dex:{1} != Search:{2}", ii, hasDex, foundSpecies[ii]));
-            }
+            //Dictionary<int, HashSet<(string, ZoneLoc)>> foundSpecies = GetAllAppearingMonsters(false);
+            ////check against the regional dex for inconsistencies
+            //for (int ii = 1; ii < DataManager.Instance.DataIndices[DataManager.DataType.Monster].Count; ii++)
+            //{
+            //    //bool hasDex = false;
+            //    //for (int jj = 0; jj < MonsterInfo.DEX_MAP.Length; jj++)
+            //    //{
+            //    //    if (MonsterInfo.DEX_MAP[jj] == ii)
+            //    //        hasDex = true;
+            //    //}
+            //    //if (hasDex != foundSpecies.ContainsKey(ii))
+            //    //    Debug.WriteLine(String.Format("{0:D3}: Dex:{1} != Search:{2}", ii, hasDex, foundSpecies[ii]));
+            //}
 
-            //get all learnable moves, keeping a hit count (make it a table mapping move index to number of distinct mons that learn this move)
-            List<string>[] moveHits = new List<string>[DataManager.Instance.DataIndices[DataManager.DataType.Skill].Count];
-            for (int ii = 0; ii < DataManager.Instance.DataIndices[DataManager.DataType.Skill].Count; ii++)
-                moveHits[ii] = new List<string>();
+            ////get all learnable moves, keeping a hit count (make it a table mapping move index to number of distinct mons that learn this move)
+            //List<string>[] moveHits = new List<string>[DataManager.Instance.DataIndices[DataManager.DataType.Skill].Count];
+            //for (int ii = 0; ii < DataManager.Instance.DataIndices[DataManager.DataType.Skill].Count; ii++)
+            //    moveHits[ii] = new List<string>();
 
-            for (int ii = 1; ii < DataManager.Instance.DataIndices[DataManager.DataType.Monster].Count; ii++)
-            {
-                if (foundSpecies.ContainsKey(ii))
-                {
-                    MonsterData data = DataManager.Instance.GetMonster(ii);
-                    for (int jj = 0; jj < data.Forms.Count; jj++)
-                    {
-                        BaseMonsterForm form = data.Forms[jj];
-                        for (int kk = 0; kk < form.LevelSkills.Count; kk++)
-                            moveHits[form.LevelSkills[kk].Skill].Add(form.FormName.ToLocal());
-                    }
-                }
-            }
-            Debug.WriteLine("");
-            //go through the table, print the moves that are "unfinished"
-            for (int ii = 0; ii < moveHits.Length; ii++)
-            {
-                SkillData skill = DataManager.Instance.GetSkill(ii);
-                if (moveHits[ii].Count > 0 /*&& (skill.Name.DefaultText.StartsWith("-") || skill.Name.DefaultText.StartsWith("="))*/)
-                {
-                    if (moveHits[ii].Count > 4)
-                        Debug.WriteLine(String.Format("{1}({0}):\t{2}", ii, skill.Name.ToLocal(), "x" + moveHits[ii].Count));
-                    else
-                    {
-                        string nameList = "";
-                        for (int jj = 0; jj < moveHits[ii].Count; jj++)
-                            nameList += (moveHits[ii][jj] + " ");
-                        Debug.WriteLine(String.Format("{1}({0}):\t{2}", ii, skill.Name.ToLocal(), nameList));
-                    }
-                }
-            }
+            //for (int ii = 1; ii < DataManager.Instance.DataIndices[DataManager.DataType.Monster].Count; ii++)
+            //{
+            //    if (foundSpecies.ContainsKey(ii))
+            //    {
+            //        MonsterData data = DataManager.Instance.GetMonster(ii);
+            //        for (int jj = 0; jj < data.Forms.Count; jj++)
+            //        {
+            //            BaseMonsterForm form = data.Forms[jj];
+            //            for (int kk = 0; kk < form.LevelSkills.Count; kk++)
+            //                moveHits[form.LevelSkills[kk].Skill].Add(form.FormName.ToLocal());
+            //        }
+            //    }
+            //}
+            //Debug.WriteLine("");
+            ////go through the table, print the moves that are "unfinished"
+            //for (int ii = 0; ii < moveHits.Length; ii++)
+            //{
+            //    SkillData skill = DataManager.Instance.GetSkill(ii);
+            //    if (moveHits[ii].Count > 0 /*&& (skill.Name.DefaultText.StartsWith("-") || skill.Name.DefaultText.StartsWith("="))*/)
+            //    {
+            //        if (moveHits[ii].Count > 4)
+            //            Debug.WriteLine(String.Format("{1}({0}):\t{2}", ii, skill.Name.ToLocal(), "x" + moveHits[ii].Count));
+            //        else
+            //        {
+            //            string nameList = "";
+            //            for (int jj = 0; jj < moveHits[ii].Count; jj++)
+            //                nameList += (moveHits[ii][jj] + " ");
+            //            Debug.WriteLine(String.Format("{1}({0}):\t{2}", ii, skill.Name.ToLocal(), nameList));
+            //        }
+            //    }
+            //}
         }
 
-        public static List<MonsterID> FindMoveAbilityUsers(string ability, int[] moves)
+        public static List<MonsterID> FindMoveAbilityUsers(string ability, string[] moves)
         {
             List<MonsterID> results = new List<MonsterID>();
             //go through entire dex
@@ -259,7 +259,7 @@ namespace PMDC.Dev
             return results;
         }
 
-        public static bool HasAbilityMoves(string ability, int[] moves, BaseMonsterForm entry)
+        public static bool HasAbilityMoves(string ability, string[] moves, BaseMonsterForm entry)
         {
             //check if form has ability given
             if (!String.IsNullOrEmpty(ability))
@@ -269,7 +269,7 @@ namespace PMDC.Dev
             }
 
             //check if form has all moves given
-            foreach (int reqMove in moves)
+            foreach (string reqMove in moves)
             {
                 bool foundMove = false;
                 foreach (LevelUpSkill move in entry.LevelSkills)
@@ -321,7 +321,7 @@ namespace PMDC.Dev
                                 throw new Exception("Unknown Ability");
 
                             Debug.WriteLine(String.Format("{0:D3}: {1}", ability, entry.Name.ToLocal()));
-                            List<MonsterID> forms = FindMoveAbilityUsers(ability, new int[0]);
+                            List<MonsterID> forms = FindMoveAbilityUsers(ability, new string[0]);
                             for (int ii = 0; ii < forms.Count; ii++)
                             {
                                 MonsterData dex = DataManager.Instance.GetMonster(forms[ii].Species);
@@ -345,49 +345,49 @@ namespace PMDC.Dev
         /// <param name="path"></param>
         public static void PrintMoveUsers(string path)
         {
-            try
-            {
-                using (StreamReader s = new StreamReader(path))
-                {
-                    while (!s.EndOfStream)
-                    {
-                        string[] names = s.ReadLine().Split('/');
-                        foreach (string name in names)
-                        {
-                            if (name == "")
-                                continue;
+            //try
+            //{
+            //    using (StreamReader s = new StreamReader(path))
+            //    {
+            //        while (!s.EndOfStream)
+            //        {
+            //            string[] names = s.ReadLine().Split('/');
+            //            foreach (string name in names)
+            //            {
+            //                if (name == "")
+            //                    continue;
 
-                            int move = -1;
-                            SkillData entry = null;
-                            for (int ii = 0; ii < DataManager.Instance.DataIndices[DataManager.DataType.Skill].Count; ii++)
-                            {
-                                entry = DataManager.Instance.GetSkill(ii);
-                                if (entry.Name.DefaultText.ToLower() == name.ToLower())
-                                {
-                                    move = ii;
-                                    break;
-                                }
-                            }
-                            if (move == -1)
-                                throw new Exception("Unknown Move");
+            //                int move = -1;
+            //                SkillData entry = null;
+            //                for (int ii = 0; ii < DataManager.Instance.DataIndices[DataManager.DataType.Skill].Count; ii++)
+            //                {
+            //                    entry = DataManager.Instance.GetSkill(ii);
+            //                    if (entry.Name.DefaultText.ToLower() == name.ToLower())
+            //                    {
+            //                        move = ii;
+            //                        break;
+            //                    }
+            //                }
+            //                if (move == -1)
+            //                    throw new Exception("Unknown Move");
 
-                            Debug.WriteLine(String.Format("{0:D3}: {1}", move, entry.Name.ToLocal()));
-                            List<MonsterID> forms = FindMoveAbilityUsers("", new int[1] { move });
-                            for (int ii = 0; ii < forms.Count; ii++)
-                            {
-                                MonsterData dex = DataManager.Instance.GetMonster(forms[ii].Species);
-                                Debug.WriteLine(String.Format("    {0:D3}: {1}  {2}", forms[ii].Species, dex.Name.ToLocal(),
-                                    (dex.Forms[forms[ii].Form].FormName.DefaultText == dex.Name.DefaultText) ? "" : "(" + dex.Forms[forms[ii].Form].FormName.ToLocal() + ")"));
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine("The file could not be read:");
-                Debug.WriteLine(e.Message);
-            }
+            //                Debug.WriteLine(String.Format("{0:D3}: {1}", move, entry.Name.ToLocal()));
+            //                List<MonsterID> forms = FindMoveAbilityUsers("", new int[1] { move });
+            //                for (int ii = 0; ii < forms.Count; ii++)
+            //                {
+            //                    MonsterData dex = DataManager.Instance.GetMonster(forms[ii].Species);
+            //                    Debug.WriteLine(String.Format("    {0:D3}: {1}  {2}", forms[ii].Species, dex.Name.ToLocal(),
+            //                        (dex.Forms[forms[ii].Form].FormName.DefaultText == dex.Name.DefaultText) ? "" : "(" + dex.Forms[forms[ii].Form].FormName.ToLocal() + ")"));
+            //                }
+            //            }
+            //        }
+            //    }
+            //}
+            //catch (Exception e)
+            //{
+            //    Debug.WriteLine("The file could not be read:");
+            //    Debug.WriteLine(e.Message);
+            //}
         }
 
     }

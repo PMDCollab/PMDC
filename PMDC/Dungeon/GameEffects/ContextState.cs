@@ -418,7 +418,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class MoveLearnContext : ContextState
     {
-        public int MoveLearn;
+        public string MoveLearn;
         public int ReplaceSlot;
         public MoveLearnContext() { }
         protected MoveLearnContext(MoveLearnContext other)

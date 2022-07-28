@@ -495,7 +495,7 @@ namespace PMDC.Dungeon
                 int slot = status.StatusStates.GetWithDefault<SlotState>().Slot;
                 for (int ii = 0; ii < character.Skills.Count; ii++)
                 {
-                    if (character.Skills[ii].Element.SkillNum > -1 && ((ii == slot) != LockOthers))
+                    if (!String.IsNullOrEmpty(character.Skills[ii].Element.SkillNum) && ((ii == slot) != LockOthers))
                         character.Skills[ii].Element.Sealed = true;
                 }
             }
@@ -509,7 +509,7 @@ namespace PMDC.Dungeon
         {
             for (int ii = 0; ii < character.Skills.Count; ii++)
             {
-                if (character.Skills[ii].Element.SkillNum > -1 && DataManager.Instance.GetSkill(character.Skills[ii].Element.SkillNum).Data.Category == BattleData.SkillCategory.Status)
+                if (!String.IsNullOrEmpty(character.Skills[ii].Element.SkillNum) && DataManager.Instance.GetSkill(character.Skills[ii].Element.SkillNum).Data.Category == BattleData.SkillCategory.Status)
                     character.Skills[ii].Element.Sealed = true;
             }
         }
@@ -545,7 +545,7 @@ namespace PMDC.Dungeon
         {
             for (int ii = 0; ii < character.Skills.Count; ii++)
             {
-                if (character.Skills[ii].Element.SkillNum > -1)
+                if (!String.IsNullOrEmpty(character.Skills[ii].Element.SkillNum))
                     character.Skills[ii].Element.Sealed = false;
             }
         }
@@ -558,7 +558,7 @@ namespace PMDC.Dungeon
         {
             for (int ii = 0; ii < character.Skills.Count; ii++)
             {
-                if (character.Skills[ii].Element.SkillNum == ((MapStatus)owner).StatusStates.GetWithDefault<MapIndexState>().Index)
+                if (character.Skills[ii].Element.SkillNum == ((MapStatus)owner).StatusStates.GetWithDefault<MapIDState>().ID)
                     character.Skills[ii].Element.Sealed = true;
             }
         }

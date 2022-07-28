@@ -142,15 +142,14 @@ namespace PMDC.Dungeon
             if (context.UsageSlot == BattleContext.FORCED_SLOT)
                 yield break;
 
-            int usageIndex = 0;
+            string usageIndex = DataManager.Instance.DefaultSkill;
             if (context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS)
                 usageIndex = context.User.Skills[context.UsageSlot].Element.SkillNum;
 
             SkillData entry = DataManager.Instance.GetSkill(usageIndex);
             context.Data = new BattleData(entry.Data);
 
-            //TODO: String Assets
-            context.Data.ID = usageIndex.ToString();
+            context.Data.ID = usageIndex;
             context.Explosion = new ExplosionData(entry.Explosion);
             context.HitboxAction = entry.HitboxAction.Clone();
             context.Item = new InvItem();
@@ -159,11 +158,11 @@ namespace PMDC.Dungeon
             context.StartDir = context.User.CharDir;
 
 
-            if (usageIndex > 0)
-                context.SetActionMsg(String.Format(new StringKey("MSG_SKILL_USE").ToLocal(), context.User.GetDisplayName(false), entry.GetIconName()));
-            else
+            if (usageIndex == DataManager.Instance.DefaultSkill)
                 context.SetActionMsg(String.Format(new StringKey("MSG_ATTACK_USE").ToLocal(), context.User.GetDisplayName(false)), true);
-
+            else
+                context.SetActionMsg(String.Format(new StringKey("MSG_SKILL_USE").ToLocal(), context.User.GetDisplayName(false), entry.GetIconName()));
+            
             if (context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS)
             {
                 if (context.User.Skills[context.UsageSlot].Element.Charges <= 0)
@@ -727,15 +726,15 @@ namespace PMDC.Dungeon
     [Serializable]
     public abstract class InvokedMoveEvent : InvokeBattleEvent
     {
-        protected abstract int GetInvokedMove(GameEventOwner owner, BattleContext context);
+        protected abstract string GetInvokedMove(GameEventOwner owner, BattleContext context);
         protected override BattleContext CreateContext(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            int moveID = -1;
+            string moveID = "";
 
             if (context.UsageSlot != BattleContext.FORCED_SLOT)
                 moveID = GetInvokedMove(owner, context);
 
-            if (moveID > -1)
+            if (!String.IsNullOrEmpty(moveID))
             {
                 SkillData entry = DataManager.Instance.GetSkill(moveID);
 
@@ -777,13 +776,13 @@ namespace PMDC.Dungeon
     {
         public override GameEvent Clone() { return new StrongestMoveEvent(); }
 
-        protected override int GetInvokedMove(GameEventOwner owner, BattleContext context)
+        protected override string GetInvokedMove(GameEventOwner owner, BattleContext context)
         {
             int recordSlot = -1;
             int recordPower = -1;
             for (int ii = 0; ii < context.Target.Skills.Count; ii++)
             {
-                if (context.Target.Skills[ii].Element.SkillNum > -1)
+                if (!String.IsNullOrEmpty(context.Target.Skills[ii].Element.SkillNum))
                 {
                     SkillData entry = DataManager.Instance.GetSkill(context.Target.Skills[ii].Element.SkillNum);
 
@@ -807,7 +806,7 @@ namespace PMDC.Dungeon
             if (recordSlot > -1)
                 return context.Target.Skills[recordSlot].Element.SkillNum;
             else
-                return -1;
+                return "";
         }
     }
 
@@ -816,15 +815,17 @@ namespace PMDC.Dungeon
     {
         public override GameEvent Clone() { return new RandomMoveEvent(); }
 
-        protected override int GetInvokedMove(GameEventOwner owner, BattleContext context)
+        protected override string GetInvokedMove(GameEventOwner owner, BattleContext context)
         {
-            List<int> releasedMoves = new List<int>();
-            for (int ii = 1; ii < DataManager.Instance.DataIndices[DataManager.DataType.Skill].Count; ii++)
+            List<string> releasedMoves = new List<string>();
+            foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Skill].Entries.Keys)
             {
-                //TODO: String Assets
-                if (DataManager.Instance.DataIndices[DataManager.DataType.Skill].Entries[ii.ToString()].Released)
-                    releasedMoves.Add(ii);
+                if (key == DataManager.Instance.DefaultSkill)
+                    continue;
+                if (DataManager.Instance.DataIndices[DataManager.DataType.Skill].Entries[key].Released)
+                    releasedMoves.Add(key);
             }
+
             int randIndex = DataManager.Instance.Save.Rand.Next(releasedMoves.Count);
             return releasedMoves[randIndex];
         }
@@ -835,15 +836,14 @@ namespace PMDC.Dungeon
     {
         public override GameEvent Clone() { return new NeededMoveEvent(); }
 
-        private void tryAddMove(List<int> moves, int move)
+        private void tryAddMove(List<string> moves, string move)
         {
-            //TODO: String Assets
-            if (DataManager.Instance.DataIndices[DataManager.DataType.Skill].Entries[move.ToString()].Released)
+            if (DataManager.Instance.DataIndices[DataManager.DataType.Skill].Entries[move].Released)
                 moves.Add(move);
         }
 
 
-        private void tryAddTargetMove(Character user, List<Character> seenChars, List<int> moves, int move)
+        private void tryAddTargetMove(Character user, List<Character> seenChars, List<string> moves, string move)
         {
             int effectiveness = 0;
             SkillData skill = DataManager.Instance.GetSkill(move);
@@ -860,19 +860,19 @@ namespace PMDC.Dungeon
                 tryAddMove(moves, move);
         }
 
-        protected override int GetInvokedMove(GameEventOwner owner, BattleContext context)
+        protected override string GetInvokedMove(GameEventOwner owner, BattleContext context)
         {
             // scroll of need style move choice
 
             List<Character> seenAllies = context.User.GetSeenCharacters(Alignment.Friend);
 
-            List<List<int>> tryingCategories = new List<List<int>>();
+            List<List<string>> tryingCategories = new List<List<int>>();
             //conditions:
             //are you wounded?
             bool needHeal = false;
             if (context.User.HP < context.User.MaxHP * 2 / 3)
             {
-                List<int> tryingMoves = new List<int>();
+                List<string> tryingMoves = new List<int>();
                 tryAddMove(tryingMoves, 105);//recover
                 tryAddMove(tryingMoves, 235);//synthesis
                 tryAddMove(tryingMoves, 355);//roost
@@ -895,7 +895,7 @@ namespace PMDC.Dungeon
             }
             if (woundedAllies >= 2)
             {
-                List<int> tryingMoves = new List<int>();
+                List<string> tryingMoves = new List<string>();
                 tryAddMove(tryingMoves, 236);//moonlight
                 tryAddMove(tryingMoves, 234);//morning sun
                 tryAddMove(tryingMoves, 208);//milk drink
@@ -923,7 +923,7 @@ namespace PMDC.Dungeon
             }
             if (badStates > 2)
             {
-                List<int> tryingMoves = new List<int>();
+                List<string> tryingMoves = new List<string>();
                 tryAddMove(tryingMoves, 215);//heal bell
                 tryAddMove(tryingMoves, 287);//refresh
                 tryingCategories.Add(tryingMoves);
@@ -931,7 +931,7 @@ namespace PMDC.Dungeon
 
             if (!needHeal)
             {
-                List<int> tryingMoves = new List<int>();
+                List<string> tryingMoves = new List<string>();
                 //enemy is weak to a type and can die from it?  use that type move, base it on your higher stat
                 //multiple enemies weak to the same type?  use that type move, base it on your higher stat
                 HashSet<string> availableWeaknesses = new HashSet<string>();
@@ -1146,7 +1146,7 @@ namespace PMDC.Dungeon
             //otherwise?  give a random buff attack
             if (tryingCategories.Count == 0)
             {
-                List<int> tryingMoves = new List<int>();
+                List<string> tryingMoves = new List<string>();
                 if (!context.User.StatusEffects.ContainsKey("aqua_ring"))
                     tryAddMove(tryingMoves, 392);//aqua ring
                 if (!context.User.StatusEffects.ContainsKey("reflect"))
@@ -1189,16 +1189,21 @@ namespace PMDC.Dungeon
             if (tryingCategories.Count > 0)
             {
                 //75% chance of picking a good move
-                if (DataManager.Instance.Save.Rand.Next(100) < 80)
+                if (DataManager.Instance.Save.Rand.Next(100) < 75)
                 {
-                    List<int> tryingMoves = tryingCategories[DataManager.Instance.Save.Rand.Next(tryingCategories.Count)];
+                    List<string> tryingMoves = tryingCategories[DataManager.Instance.Save.Rand.Next(tryingCategories.Count)];
                     return tryingMoves[DataManager.Instance.Save.Rand.Next(tryingMoves.Count)];
                 }
             }
 
-            List<int> releasedMoves = new List<int>();
-            for (int ii = 1; ii < DataManager.Instance.DataIndices[DataManager.DataType.Skill].Count; ii++)
-                tryAddMove(releasedMoves, ii);
+            List<string> releasedMoves = new List<string>();
+            foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Skill].Entries.Keys)
+            {
+                if (key == DataManager.Instance.DefaultSkill)
+                    continue;
+                if (DataManager.Instance.DataIndices[DataManager.DataType.Skill].Entries[key].Released)
+                    releasedMoves.Add(key);
+            }
             int randIndex = DataManager.Instance.Save.Rand.Next(releasedMoves.Count);
             return releasedMoves[randIndex];
         }
@@ -2717,7 +2722,7 @@ namespace PMDC.Dungeon
             if (context.ActionType == BattleActionType.Skill && context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS)
             {
                 Skill move = context.User.Skills[context.UsageSlot].Element;
-                if (move.SkillNum > -1 && move.Charges == 0)
+                if (!String.IsNullOrEmpty(move.SkillNum) && move.Charges == 0)
                 {
                     context.Data.HitRate = -1;
                     context.AddContextStateInt<CritLevel>(4);
@@ -3695,7 +3700,7 @@ namespace PMDC.Dungeon
                 int recordPower = -1;
                 for (int ii = 0; ii < context.User.Skills.Count; ii++)
                 {
-                    if (context.User.Skills[ii].Element.SkillNum > -1)
+                    if (!String.IsNullOrEmpty(context.User.Skills[ii].Element.SkillNum))
                     {
                         SkillData entry = DataManager.Instance.GetSkill(context.User.Skills[ii].Element.SkillNum);
 
@@ -3739,7 +3744,7 @@ namespace PMDC.Dungeon
                 int recordPower = -1;
                 for (int ii = 0; ii < context.User.Skills.Count; ii++)
                 {
-                    if (context.User.Skills[ii].Element.SkillNum > -1)
+                    if (!String.IsNullOrEmpty(context.User.Skills[ii].Element.SkillNum))
                     {
                         SkillData entry = DataManager.Instance.GetSkill(context.User.Skills[ii].Element.SkillNum);
 
@@ -5151,10 +5156,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class ForceMoveEvent : BattleEvent
     {
-        public int MoveIndex;
+        [JsonConverter(typeof(SkillConverter))]
+        [DataType(0, DataManager.DataType.Skill, false)]
+        public string MoveIndex;
 
-        public ForceMoveEvent() { }
-        public ForceMoveEvent(int moveIndex)
+        public ForceMoveEvent() { MoveIndex = ""; }
+        public ForceMoveEvent(string moveIndex)
         {
             MoveIndex = moveIndex;
         }
@@ -5173,8 +5180,7 @@ namespace PMDC.Dungeon
 
             SkillData entry = DataManager.Instance.GetSkill(MoveIndex);
             context.Data = new BattleData(entry.Data);
-            //TODO: String Assets
-            context.Data.ID = MoveIndex.ToString();
+            context.Data.ID = MoveIndex;
             context.Explosion = new ExplosionData(entry.Explosion);
             context.HitboxAction = entry.HitboxAction.Clone();
             context.Item = new InvItem();
@@ -6853,7 +6859,7 @@ namespace PMDC.Dungeon
             if (context.ActionType == BattleActionType.Skill && context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS)
             {
                 Skill move = context.User.Skills[context.UsageSlot].Element;
-                if (move.SkillNum > -1)
+                if (!String.IsNullOrEmpty(move.SkillNum))
                 {
                     slot = context.UsageSlot;
                     SkillData data = DataManager.Instance.GetSkill(move.SkillNum);
@@ -6868,7 +6874,7 @@ namespace PMDC.Dungeon
                 for (int ii = 0; ii < context.User.Skills.Count; ii++)
                 {
                     Skill move = context.User.Skills[ii].Element;
-                    if (ii != slot && move.SkillNum > -1)
+                    if (ii != slot && !String.IsNullOrEmpty(move.SkillNum))
                     {
                         SkillData data = DataManager.Instance.GetSkill(move.SkillNum);
                         int localMax = data.BaseCharges + context.User.ChargeBoost;
@@ -9480,7 +9486,7 @@ namespace PMDC.Dungeon
                 StatusEffect testStatus = context.Target.GetStatusEffect(LastMoveStatusID);
                 if (testStatus != null && context.ActionType == BattleActionType.Skill && context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS)
                 {
-                    sketchMove(context, testStatus.StatusStates.GetWithDefault<IndexState>().Index, context.UsageSlot, context.User.Skills[context.UsageSlot].BackRef > -1, false);
+                    sketchMove(context, testStatus.StatusStates.GetWithDefault<IDState>().ID, context.UsageSlot, context.User.Skills[context.UsageSlot].BackRef > -1, false);
                     yield break;
                 }
             }
@@ -9488,7 +9494,7 @@ namespace PMDC.Dungeon
             DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SKETCH_FAIL").ToLocal(), context.Target.GetDisplayName(false)));
         }
 
-        private void sketchMove(BattleContext context, int moveIndex, int moveSlot, bool learn, bool group)
+        private void sketchMove(BattleContext context, string moveIndex, int moveSlot, bool learn, bool group)
         {
             SkillData entry = DataManager.Instance.GetSkill(moveIndex);
 
@@ -9538,7 +9544,7 @@ namespace PMDC.Dungeon
             StatusEffect testStatus = context.Target.GetStatusEffect(LastMoveStatusID);
             if (testStatus != null && context.ActionType == BattleActionType.Skill && context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS)
             {
-                int chosenMove = testStatus.StatusStates.GetWithDefault<IndexState>().Index;
+                string chosenMove = testStatus.StatusStates.GetWithDefault<IDState>().ID;
 
                 SkillData entry = DataManager.Instance.GetSkill(chosenMove);
 
@@ -10575,7 +10581,7 @@ namespace PMDC.Dungeon
 
             for (int ii = 0; ii < target.Skills.Count; ii++)
             {
-                if (target.Skills[ii].Element.SkillNum > -1)
+                if (!String.IsNullOrEmpty(target.Skills[ii].Element.SkillNum))
                     target.SetSkillCharges(ii, 1);
             }
 
@@ -13062,13 +13068,13 @@ namespace PMDC.Dungeon
                 MonsterData dex = DataManager.Instance.GetMonster(context.Target.CurrentForm.Species);
                 BaseMonsterForm forme = dex.Forms[context.Target.CurrentForm.Form];
                 //moves
-                List<int> final_moves = forme.RollLatestSkills(context.Target.Level * 1 / 2 + 1, new List<int>());
+                List<string> final_moves = forme.RollLatestSkills(context.Target.Level * 1 / 2 + 1, new List<string>());
                 for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
                 {
                     if (ii < final_moves.Count)
                         context.Target.ChangeSkill(ii, final_moves[ii]);
                     else
-                        context.Target.ChangeSkill(ii, -1);
+                        context.Target.ChangeSkill(ii, "");
                 }
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_DEVOLVE").ToLocal(), prevName, dex.GetColoredName()));
 
@@ -13623,10 +13629,10 @@ namespace PMDC.Dungeon
         {
             BaseMonsterForm entry = DataManager.Instance.GetMonster(context.User.BaseForm.Species).Forms[context.User.BaseForm.Form];
             ItemData item = DataManager.Instance.GetItem(owner.GetID());
-            int moveIndex = -1;
-            ItemIndexState state = item.ItemStates.GetWithDefault<ItemIndexState>();
+            string moveIndex = "";
+            ItemIDState state = item.ItemStates.GetWithDefault<ItemIDState>();
             if (state != null)
-                moveIndex = state.Index;
+                moveIndex = state.ID;
 
             if (!entry.CanLearnSkill(moveIndex))
             {
@@ -13807,13 +13813,15 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new LinkBoxEvent(); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
+            List<string> forgottenMoves = context.User.GetRelearnableSkills();
+
             if (DataManager.Instance.CurrentReplay != null)// this block of code will never evaluate to true AND have UI read back -1 (cancel)
             {
                 int action = DataManager.Instance.CurrentReplay.ReadUI();
                 if (action == 0)
                 {
                     MoveLearnContext learn = new MoveLearnContext();
-                    learn.MoveLearn = DataManager.Instance.CurrentReplay.ReadUI();
+                    learn.MoveLearn = forgottenMoves[DataManager.Instance.CurrentReplay.ReadUI()];
                     learn.ReplaceSlot = DataManager.Instance.CurrentReplay.ReadUI();
                     context.ContextStates.Set(learn);
                 }
@@ -13827,7 +13835,7 @@ namespace PMDC.Dungeon
             }
             else
             {
-                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(createLinkBoxDialog(context)));
+                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(createLinkBoxDialog(context, forgottenMoves)));
 
                 if (!context.CancelState.Cancel)
                 {
@@ -13836,7 +13844,7 @@ namespace PMDC.Dungeon
                     if (delete != null)
                         deleteSlot = delete.MoveDelete;
 
-                    int moveLearn = -1;
+                    string moveLearn = "";
                     int learnSlot = -1;
                     MoveLearnContext learn = context.ContextStates.GetWithDefault<MoveLearnContext>();
                     if (learn != null)
@@ -13845,9 +13853,9 @@ namespace PMDC.Dungeon
                         learnSlot = learn.ReplaceSlot;
                     }
 
-                    if (moveLearn > -1)
+                    if (!String.IsNullOrEmpty(moveLearn))
                     {
-                        DataManager.Instance.LogUIPlay(0, moveLearn, learnSlot);
+                        DataManager.Instance.LogUIPlay(0, forgottenMoves.IndexOf(moveLearn), learnSlot);
                     }
                     else if (deleteSlot > -1)
                     {
@@ -13860,26 +13868,26 @@ namespace PMDC.Dungeon
         }
 
 
-        private DialogueBox createLinkBoxDialog(BattleContext context)
+        private DialogueBox createLinkBoxDialog(BattleContext context, List<string> forgottenMoves)
         {
             List<DialogueChoice> choices = new List<DialogueChoice>();
-            choices.Add(new DialogueChoice(String.Format(new StringKey("MENU_RECALL_SKILL").ToLocal()), () => { MenuManager.Instance.AddMenu(createRememberDialog(context), false); }));
+            choices.Add(new DialogueChoice(String.Format(new StringKey("MENU_RECALL_SKILL").ToLocal()), () => { MenuManager.Instance.AddMenu(createRememberDialog(context, forgottenMoves), false); }));
             choices.Add(new DialogueChoice(String.Format(new StringKey("MENU_FORGET_SKILL").ToLocal()), () =>
             {
                 int totalMoves = 0;
                 foreach (SlotSkill move in context.User.BaseSkills)
                 {
-                    if (move.SkillNum > -1)
+                    if (!String.IsNullOrEmpty(move.SkillNum))
                         totalMoves++;
                 }
                 if (totalMoves > 1)
                 {
                     MenuManager.Instance.AddMenu(new SkillForgetMenu(context.User,
                         (int slot) => { context.ContextStates.Set(new MoveDeleteContext(slot)); },
-                        () => { MenuManager.Instance.AddMenu(createLinkBoxDialog(context), false); }), false);
+                        () => { MenuManager.Instance.AddMenu(createLinkBoxDialog(context, forgottenMoves), false); }), false);
                 }
                 else
-                    MenuManager.Instance.AddMenu(MenuManager.Instance.CreateDialogue(() => { MenuManager.Instance.AddMenu(createLinkBoxDialog(context), false); },
+                    MenuManager.Instance.AddMenu(MenuManager.Instance.CreateDialogue(() => { MenuManager.Instance.AddMenu(createLinkBoxDialog(context, forgottenMoves), false); },
                     String.Format(new StringKey("DLG_CANT_FORGET_SKILL").ToLocal(), context.User.GetDisplayName(true))), false);
 
             }));
@@ -13887,14 +13895,13 @@ namespace PMDC.Dungeon
             return MenuManager.Instance.CreateMultiQuestion(Text.FormatKey("DLG_WHAT_DO"), true, choices, 0, 2);
         }
 
-        private IInteractable createRememberDialog(BattleContext context)
+        private IInteractable createRememberDialog(BattleContext context, List<string> forgottenMoves)
         {
-            List<int> forgottenMoves = context.User.GetRelearnableSkills();
-
             if (forgottenMoves.Count > 0)
             {
-                return new SkillRecallMenu(context.User, forgottenMoves.ToArray(), (int moveNum) =>
+                return new SkillRecallMenu(context.User, forgottenMoves.ToArray(), (int moveSlot) =>
                 {
+                    string moveNum = forgottenMoves[moveSlot];
                     MenuManager.Instance.NextAction = DungeonScene.TryLearnSkill(context.User, moveNum,
                         (int slot) =>
                         {
@@ -13903,11 +13910,11 @@ namespace PMDC.Dungeon
                             learn.ReplaceSlot = slot;
                             context.ContextStates.Set(learn);
                         },
-                        () => { MenuManager.Instance.AddMenu(createRememberDialog(context), false); });
-                }, () => { MenuManager.Instance.AddMenu(createLinkBoxDialog(context), false); });
+                        () => { MenuManager.Instance.AddMenu(createRememberDialog(context, forgottenMoves), false); });
+                }, () => { MenuManager.Instance.AddMenu(createLinkBoxDialog(context, forgottenMoves), false); });
             }
             else
-                return MenuManager.Instance.CreateDialogue(() => { MenuManager.Instance.AddMenu(createLinkBoxDialog(context), false); },
+                return MenuManager.Instance.CreateDialogue(() => { MenuManager.Instance.AddMenu(createLinkBoxDialog(context, forgottenMoves), false); },
                     String.Format(new StringKey("DLG_CANT_RECALL_SKILL").ToLocal(), context.User.GetDisplayName(true)));
 
         }
@@ -13921,7 +13928,7 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new MoveLearnEvent(); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            int moveNum = -1;
+            string moveNum = "";
             int moveSlot = -1;
             MoveLearnContext learn = context.ContextStates.GetWithDefault<MoveLearnContext>();
             if (learn != null)
@@ -13929,7 +13936,7 @@ namespace PMDC.Dungeon
                 moveNum = learn.MoveLearn;
                 moveSlot = learn.ReplaceSlot;
             }
-            if (moveNum > -1 && moveSlot > -1)
+            if (!String.IsNullOrEmpty(moveNum) && moveSlot > -1)
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.LearnSkillWithFanfare(context.User, moveNum, moveSlot));
         }
     }
@@ -13946,7 +13953,7 @@ namespace PMDC.Dungeon
                 slot = delete.MoveDelete;
             if (slot > -1)
             {
-                int moveNum = context.User.BaseSkills[slot].SkillNum;
+                string moveNum = context.User.BaseSkills[slot].SkillNum;
                 context.User.DeleteSkill(slot);
                 yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(String.Format(new StringKey("DLG_FORGET_SKILL").ToLocal(), context.User.GetDisplayName(false), DataManager.Instance.GetSkill(moveNum).GetIconName()), context.User.MemberTeam));
             }

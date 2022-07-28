@@ -2208,7 +2208,7 @@ namespace PMDC.Dungeon
             bool canRecover = false;
             for (int ii = 0; ii < character.Skills.Count; ii++)
             {
-                if (character.Skills[ii].Element.SkillNum > -1)
+                if (!String.IsNullOrEmpty(character.Skills[ii].Element.SkillNum))
                 {
                     SkillData data = DataManager.Instance.GetSkill(character.Skills[ii].Element.SkillNum);
                     if (character.Skills[ii].Element.Charges < data.BaseCharges + character.ChargeBoost)

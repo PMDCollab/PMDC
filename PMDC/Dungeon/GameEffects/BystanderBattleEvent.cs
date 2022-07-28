@@ -445,13 +445,15 @@ namespace PMDC.Dungeon
     [Serializable]
     public class FollowUpEvent : InvokeBattleEvent
     {
-        public int InvokedMove;
+        [JsonConverter(typeof(SkillConverter))]
+        [DataType(0, DataManager.DataType.Skill, false)]
+        public string InvokedMove;
         public bool AffectTarget;
         public int FrontOffset;
         public StringKey Msg;
 
-        public FollowUpEvent() { }
-        public FollowUpEvent(int invokedMove, bool affectTarget, int frontOffset, StringKey msg)
+        public FollowUpEvent() { InvokedMove = ""; }
+        public FollowUpEvent(string invokedMove, bool affectTarget, int frontOffset, StringKey msg)
         {
             InvokedMove = invokedMove;
             AffectTarget = affectTarget;
@@ -490,8 +492,7 @@ namespace PMDC.Dungeon
 
                 //fill effects
                 newContext.Data = new BattleData(entry.Data);
-                //TODO: String Assets
-                newContext.Data.ID = InvokedMove.ToString();
+                newContext.Data.ID = InvokedMove;
                 newContext.Explosion = new ExplosionData(entry.Explosion);
                 newContext.HitboxAction = entry.HitboxAction.Clone();
                 //make the attack *autotarget*; set the offset to the space between the front loc and the target

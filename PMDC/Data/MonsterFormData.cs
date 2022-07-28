@@ -267,7 +267,7 @@ namespace PMDC.Data
         }
 
 
-        public override bool CanLearnSkill(int skill)
+        public override bool CanLearnSkill(string skill)
         {
             if (LevelSkills.FindIndex(a => a.Skill == skill) > -1)
                 return true;

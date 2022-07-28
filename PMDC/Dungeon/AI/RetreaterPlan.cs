@@ -32,9 +32,9 @@ namespace PMDC.Dungeon
                 {
                     for (int ii = 0; ii < controlledChar.Skills.Count; ii++)
                     {
-                        if (controlledChar.Skills[ii].Element.SkillNum > -1 && controlledChar.Skills[ii].Element.Charges > 0 && !controlledChar.Skills[ii].Element.Sealed && controlledChar.Skills[ii].Element.Enabled)
+                        if (!String.IsNullOrEmpty(controlledChar.Skills[ii].Element.SkillNum) && controlledChar.Skills[ii].Element.Charges > 0 && !controlledChar.Skills[ii].Element.Sealed && controlledChar.Skills[ii].Element.Enabled)
                         {
-                            if (controlledChar.Skills[ii].Element.SkillNum == 100)//Teleport; NOTE: specialized AI code!
+                            if (controlledChar.Skills[ii].Element.SkillNum == "teleport")//Teleport; NOTE: specialized AI code!
                                 return new GameAction(GameAction.ActionType.UseSkill, Dir8.None, ii);
                         }
                     }
