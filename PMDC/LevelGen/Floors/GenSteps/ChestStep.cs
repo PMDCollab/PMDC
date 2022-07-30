@@ -164,7 +164,7 @@ namespace PMDC.LevelGen
                 {
                     MobSpawn copyMob = mob.Copy();
                     if (map.Rand.Next(ALT_COLOR_ODDS) == 0)
-                        copyMob.BaseForm.Skin = 1;
+                        copyMob.BaseForm.Skin = "shiny";
                     mobSpawn.Spawns.Add(copyMob);
                 }
                 spawnedChest.TileStates.Set(mobSpawn);

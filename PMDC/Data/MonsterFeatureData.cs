@@ -79,14 +79,14 @@ namespace PMDC.Data
             Dictionary<int, FormFeatureSummary> formFeatureData = new Dictionary<int, FormFeatureSummary>();
             string family = num;
             MonsterData preEvo = data;
-            while (preEvo.PromoteFrom > -1)
+            while (!String.IsNullOrEmpty(preEvo.PromoteFrom))
             {
                 family = preEvo.PromoteFrom.ToString();
                 string preDir = PathMod.ModPath(dataPath + family + DataManager.DATA_EXT);
                 preEvo = DataManager.LoadData<MonsterData>(preDir);
             }
             EvoFlag stage = EvoFlag.NoEvo;
-            bool evolvedFrom = (data.PromoteFrom > -1);
+            bool evolvedFrom = !String.IsNullOrEmpty(data.PromoteFrom);
             bool evolves = (data.Promotions.Count > 0);
             if (evolvedFrom && evolves)
                 stage = EvoFlag.MidEvo;

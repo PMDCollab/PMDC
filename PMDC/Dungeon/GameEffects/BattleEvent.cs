@@ -13084,7 +13084,7 @@ namespace PMDC.Dungeon
 
             MonsterData candidateDex = DataManager.Instance.GetMonster(context.Target.CurrentForm.Species);
 
-            if (candidateDex.PromoteFrom > -1)
+            if (!String.IsNullOrEmpty(candidateDex.PromoteFrom))
             {
                 string prevName = context.Target.GetDisplayName(false);
                 MonsterID prevoData = context.Target.CurrentForm;
@@ -13703,10 +13703,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class FormChoiceEvent : BattleEvent
     {
-        public int Species;
+        [JsonConverter(typeof(MonsterConverter))]
+        [DataType(0, DataManager.DataType.Monster, false)]
+        public string Species;
 
-        public FormChoiceEvent() { }
-        public FormChoiceEvent(int species) { Species = species; }
+        public FormChoiceEvent() { Species = ""; }
+        public FormChoiceEvent(string species) { Species = species; }
         public FormChoiceEvent(FormChoiceEvent other) { Species = other.Species; }
         public override GameEvent Clone() { return new FormChoiceEvent(this); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)

@@ -94,12 +94,12 @@ namespace PMDC.Data
             return Math.Max(1, curStat + bonus * statDiff / MonsterFormData.MAX_STAT_BOOST);
         }
 
-        public override int RollSkin(IRandom rand)
+        public override string RollSkin(IRandom rand)
         {
             SkinTableState table = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<SkinTableState>();
             if (table.AltColorOdds == 0)
-                return 0;
-            return (rand.Next(table.AltColorOdds) == 0) ? 1 : 0;
+                return DataManager.Instance.DefaultSkin;
+            return (rand.Next(table.AltColorOdds) == 0) ? table.AltColor : DataManager.Instance.DefaultSkin;
         }
 
         public override int GetPersonalityType(int discriminator)
@@ -148,12 +148,13 @@ namespace PMDC.Data
         }
 
 
-        public override List<int> GetPossibleSkins()
+        public override List<string> GetPossibleSkins()
         {
-            List<int> colors = new List<int>();
+            List<string> colors = new List<string>();
 
-            colors.Add(0);
-            colors.Add(2);
+            SkinTableState table = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<SkinTableState>();
+            colors.Add(DataManager.Instance.DefaultSkin);
+            colors.Add(table.Challenge);
 
             return colors;
         }

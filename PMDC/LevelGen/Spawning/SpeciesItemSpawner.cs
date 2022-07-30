@@ -30,7 +30,7 @@ namespace PMDC.LevelGen
 
         public RandRange Amount { get; set; }
 
-        public abstract IEnumerable<int> GetPossibleSpecies(TGenContext map);
+        public abstract IEnumerable<string> GetPossibleSpecies(TGenContext map);
 
         public List<MapItem> GetSpawns(TGenContext map)
         {
@@ -38,12 +38,12 @@ namespace PMDC.LevelGen
 
             RarityData rarity = DataManager.Instance.UniversalData.Get<RarityData>();
             List<string> possibleItems = new List<string>();
-            foreach (int baseSpecies in GetPossibleSpecies(map))
+            foreach (string baseSpecies in GetPossibleSpecies(map))
             {
                 for (int ii = Rarity.Min; ii < Rarity.Max; ii++)
                 {
                     Dictionary<int, List<string>> rarityTable;
-                    if (rarity.RarityMap.TryGetValue(baseSpecies.ToString(), out rarityTable))
+                    if (rarity.RarityMap.TryGetValue(baseSpecies, out rarityTable))
                     {
                         if (rarityTable.ContainsKey(ii))
                             possibleItems.AddRange(rarityTable[ii]);

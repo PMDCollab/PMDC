@@ -7,6 +7,8 @@ using RogueEssence.LevelGen;
 using RogueEssence;
 using RogueEssence.Data;
 using System.Xml;
+using Newtonsoft.Json;
+using RogueEssence.Dev;
 
 namespace PMDC.LevelGen
 {
@@ -19,16 +21,18 @@ namespace PMDC.LevelGen
         {
         }
 
-        public SpeciesItemListSpawner(IntRange rarity, RandRange amount, params int[] species) : base(rarity, amount)
+        public SpeciesItemListSpawner(IntRange rarity, RandRange amount, params string[] species) : base(rarity, amount)
         {
             this.Species.AddRange(species);
         }
 
-        public List<int> Species { get; set; }
+        [JsonConverter(typeof(MonsterListConverter))]
+        [DataType(1, DataManager.DataType.Monster, false)]
+        public List<string> Species { get; set; }
 
-        public override IEnumerable<int> GetPossibleSpecies(TGenContext map)
+        public override IEnumerable<string> GetPossibleSpecies(TGenContext map)
         {
-            foreach (int baseSpecies in Species)
+            foreach (string baseSpecies in Species)
                 yield return baseSpecies;
         }
     }

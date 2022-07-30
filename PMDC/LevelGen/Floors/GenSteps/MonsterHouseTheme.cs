@@ -424,11 +424,10 @@ namespace PMDC.LevelGen
             MobSpawn baseMob = GetSeedChar(map, specialMobs);
             if (baseMob != null)
             {
-                int earliestBaseStage = baseMob.BaseForm.Species;
+                string earliestBaseStage = baseMob.BaseForm.Species;
 
                 MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
-                //TODO: String Assets
-                FormFeatureSummary baseData = featureIndex.FeatureData[earliestBaseStage.ToString()][0];
+                FormFeatureSummary baseData = featureIndex.FeatureData[earliestBaseStage][0];
                 yield return baseData.Family;
             }
         }
@@ -501,8 +500,7 @@ namespace PMDC.LevelGen
         protected bool CheckIfAllowed(BaseMapGenContext map, MobSpawn spawn, IEnumerable<string> species)
         {
             MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
-            //TODO: String Assets
-            FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species.ToString()][0];
+            FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species][0];
 
             foreach (string baseStage in species)
             {
@@ -561,8 +559,7 @@ namespace PMDC.LevelGen
                 foreach (MobSpawn spawn in mobSpawns.EnumerateOutcomes())
                 {
                     MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
-                    //TODO: String Assets
-                    FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species.ToString()][Math.Max(0, spawn.BaseForm.Form)];
+                    FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species][Math.Max(0, spawn.BaseForm.Form)];
                     if (baseData.Element1 != DataManager.Instance.DefaultElement)
                         MathUtils.AddToDictionary(elementFrequency, baseData.Element1, 1);
                     if (baseData.Element2 != DataManager.Instance.DefaultElement)
@@ -576,8 +573,7 @@ namespace PMDC.LevelGen
                 {
                     MobSpawn spawn = specialMobs.GetSpawn(ii);
                     MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
-                    //TODO: String Assets
-                    FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species.ToString()][Math.Max(0, spawn.BaseForm.Form)];
+                    FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species][Math.Max(0, spawn.BaseForm.Form)];
                     if (baseData.Element1 != DataManager.Instance.DefaultElement)
                         MathUtils.AddToDictionary(elementFrequency, baseData.Element1, 1);
                     if (baseData.Element2 != DataManager.Instance.DefaultElement)
@@ -652,8 +648,7 @@ namespace PMDC.LevelGen
         protected bool CheckIfAllowed(BaseMapGenContext map, MobSpawn spawn, List<string> types)
         {
             MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
-            //TODO: String Assets
-            FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species.ToString()][Math.Max(0, spawn.BaseForm.Form)];
+            FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species][Math.Max(0, spawn.BaseForm.Form)];
             bool matchesType = false;
             foreach (string type in types)
             {
@@ -727,8 +722,7 @@ namespace PMDC.LevelGen
         protected bool CheckIfAllowed(MobSpawn spawn)
         {
             MonsterFeatureData featureIndex = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
-            //TODO: String Assets
-            FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species.ToString()][Math.Max(0, spawn.BaseForm.Form)];
+            FormFeatureSummary baseData = featureIndex.FeatureData[spawn.BaseForm.Species][Math.Max(0, spawn.BaseForm.Form)];
 
             Stat spawnStat = Weakness ? baseData.WorstStat : baseData.BestStat;
 

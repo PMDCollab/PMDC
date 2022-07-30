@@ -573,12 +573,12 @@ namespace MapGenTest
             try
             {
                 List<Dictionary<int, int>> generatedItems = new List<Dictionary<int, int>>();
-                List<Dictionary<int, int>> generatedEnemies = new List<Dictionary<int, int>>();
+                List<Dictionary<string, int>> generatedEnemies = new List<Dictionary<string, int>>();
                 Dictionary<string, List<TimeSpan>> generationTimes = new Dictionary<string, List<TimeSpan>>();
                 for (int ii = 0; ii < structure.FloorCount; ii++)
                 {
                     generatedItems.Add(new Dictionary<int, int>());
-                    generatedEnemies.Add(new Dictionary<int, int>());
+                    generatedEnemies.Add(new Dictionary<string, int>());
                     generationTimes[ii.ToString("D3")] = new List<TimeSpan>();
                 }
 
@@ -607,7 +607,7 @@ namespace MapGenTest
 
 
                 Dictionary<int, int> totalGeneratedItems = new Dictionary<int, int>();
-                Dictionary<int, int> totalGeneratedEnemies = new Dictionary<int, int>();
+                Dictionary<string, int> totalGeneratedEnemies = new Dictionary<string, int>();
                 for (int ii = 0; ii < structure.FloorCount; ii++)
                 {
                     Debug.WriteLine("F"+ii+":");
@@ -616,8 +616,8 @@ namespace MapGenTest
                     foreach(int key in generatedItems[ii].Keys)
                         MathUtils.AddToDictionary<int>(totalGeneratedItems, key, generatedItems[ii][key]);
 
-                    foreach (int key in generatedEnemies[ii].Keys)
-                        MathUtils.AddToDictionary<int>(totalGeneratedEnemies, key, generatedEnemies[ii][key]);
+                    foreach (string key in generatedEnemies[ii].Keys)
+                        MathUtils.AddToDictionary<string>(totalGeneratedEnemies, key, generatedEnemies[ii][key]);
                 }
 
                 Debug.WriteLine("Overall:");
@@ -644,7 +644,7 @@ namespace MapGenTest
             try
             {
                 Dictionary<int, int> generatedItems = new Dictionary<int, int>();
-                Dictionary<int, int> generatedEnemies = new Dictionary<int, int>();
+                Dictionary<string, int> generatedEnemies = new Dictionary<string, int>();
                 List<TimeSpan> generationTimes = new List<TimeSpan>();
                 Stopwatch watch = new Stopwatch();
 
@@ -674,7 +674,7 @@ namespace MapGenTest
             }
         }
 
-        public static void TestFloor(Stopwatch watch, GameProgress save, ZoneSegmentBase structure, ZoneGenContext zoneContext, Dictionary<int, int> generatedItems, Dictionary<int, int> generatedEnemies, List<TimeSpan> generationTimes)
+        public static void TestFloor(Stopwatch watch, GameProgress save, ZoneSegmentBase structure, ZoneGenContext zoneContext, Dictionary<int, int> generatedItems, Dictionary<string, int> generatedEnemies, List<TimeSpan> generationTimes)
         {
             DataManager.Instance.SetProgress(save);
 
@@ -709,12 +709,12 @@ namespace MapGenTest
                 foreach (Team team in mapContext.Map.MapTeams)
                 {
                     foreach (Character character in team.Players)
-                        MathUtils.AddToDictionary<int>(generatedEnemies, character.BaseForm.Species, 1);
+                        MathUtils.AddToDictionary<string>(generatedEnemies, character.BaseForm.Species, 1);
                 }
             }
         }
 
-        public static void PrintContentAnalysis(Dictionary<int, int> GeneratedItems, Dictionary<int, int> GeneratedEnemies)
+        public static void PrintContentAnalysis(Dictionary<int, int> GeneratedItems, Dictionary<string, int> GeneratedEnemies)
         {
             StringBuilder finalString = new StringBuilder();
 
@@ -745,7 +745,7 @@ namespace MapGenTest
             finalString.Append("\n");
 
             finalString.Append("Species:" + "\n");
-            foreach (int key in GeneratedEnemies.Keys)
+            foreach (string key in GeneratedEnemies.Keys)
             {
                 MonsterData data = DataManager.Instance.GetMonster(key);
                 finalString.Append(String.Format("    {0:D5} #{1:000} {2}", GeneratedEnemies[key], key, data.Name) + "\n");

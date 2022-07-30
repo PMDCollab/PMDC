@@ -40,13 +40,15 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WeatherFormeChangeEvent : MapStatusGivenEvent
     {
-        public int ReqSpecies;
+        [JsonConverter(typeof(MonsterConverter))]
+        [DataType(0, DataManager.DataType.Monster, false)]
+        public string ReqSpecies;
         public int DefaultForme;
         [JsonConverter(typeof(MapStatusIntDictConverter))]
         public Dictionary<string, int> WeatherPair;
 
-        public WeatherFormeChangeEvent() { WeatherPair = new Dictionary<string, int>(); }
-        public WeatherFormeChangeEvent(int reqSpecies, int defaultForme, Dictionary<string, int> weather)
+        public WeatherFormeChangeEvent() { WeatherPair = new Dictionary<string, int>(); ReqSpecies = ""; }
+        public WeatherFormeChangeEvent(string reqSpecies, int defaultForme, Dictionary<string, int> weather)
         {
             ReqSpecies = reqSpecies;
             DefaultForme = defaultForme;

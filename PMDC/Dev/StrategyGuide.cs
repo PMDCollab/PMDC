@@ -295,7 +295,7 @@ namespace PMDC.Dev
 
         public static void PrintEncounterGuide(bool csv)
         {
-            Dictionary<int, HashSet<(string, ZoneLoc)>> foundSpecies = DevHelper.GetAllAppearingMonsters(true);
+            Dictionary<string, HashSet<(string, ZoneLoc)>> foundSpecies = DevHelper.GetAllAppearingMonsters(true);
 
             foreach ((MonsterID mon, string name) startchar in DataManager.Instance.StartChars)
                 DevHelper.AddEvoFamily(foundSpecies, startchar.mon.Species, "STARTER", ZoneLoc.Invalid);
@@ -303,14 +303,16 @@ namespace PMDC.Dev
             List<string[]> stats = new List<string[]>();
             stats.Add(new string[4] { "###", "Name", "Join %", "Found In" });
 
-            for (int ii = 1; ii < DataManager.Instance.DataIndices[DataManager.DataType.Monster].Count; ii++)
-            { //TODO: String Assets
-                if (DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[ii.ToString()].Released)
+            List<string> monsterKeys = DataManager.Instance.DataIndices[DataManager.DataType.Monster].GetOrderedKeys(true);
+            foreach (string key in monsterKeys)
+            {
+                EntrySummary summary = DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[key];
+                if (summary.Released)
                 {
-                    MonsterData data = DataManager.Instance.GetMonster(ii);
+                    MonsterData data = DataManager.Instance.GetMonster(key);
 
                     string encounterStr = "UNKNOWN";
-                    if (foundSpecies.ContainsKey(ii))
+                    if (foundSpecies.ContainsKey(key))
                     {
                         bool evolve = false;
                         bool starter = false;
@@ -318,7 +320,7 @@ namespace PMDC.Dev
                         // = new Dictionary<int, Dictionary<int, HashSet<int>>>();
                         Dictionary<string, (Dictionary<string, HashSet<int>> specialDict, Dictionary<string, Dictionary<int, HashSet<int>>> floorDict)> foundDict = new Dictionary<string, (Dictionary<string, HashSet<int>> specialDict, Dictionary<string, Dictionary<int, HashSet<int>>> floorDict)>();
 
-                        foreach ((string tag, ZoneLoc encounter) in foundSpecies[ii])
+                        foreach ((string tag, ZoneLoc encounter) in foundSpecies[key])
                         {
                             if (!foundDict.ContainsKey(tag))
                                 foundDict[tag] = (new Dictionary<string, HashSet<int>>(), new Dictionary<string, Dictionary<int, HashSet<int>>>());
@@ -403,11 +405,11 @@ namespace PMDC.Dev
 
                         if (encounterMsg.Count > 0)
                             encounterStr = String.Join(", ", encounterMsg.ToArray());
-                    } //TODO: String Assets
-                    stats.Add(new string[4] { ii.ToString("D3"), DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[ii.ToString()].Name.ToLocal(), data.JoinRate.ToString() + "%", encounterStr });
+                    }
+                    stats.Add(new string[4] { summary.GetSortOrder().ToString("D3"), DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[key].Name.ToLocal(), data.JoinRate.ToString() + "%", encounterStr });
                 }
-                else //TODO: String Assets
-                    stats.Add(new string[4] { ii.ToString("D3"), DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[ii.ToString()].Name.ToLocal(), "--%", "NO DATA" });
+                else
+                    stats.Add(new string[4] { summary.GetSortOrder().ToString("D3"), DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[key].Name.ToLocal(), "--%", "NO DATA" });
             }
             if (csv)
                 writeCSVGuide("Encounters", stats);

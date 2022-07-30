@@ -10,6 +10,7 @@ using RogueEssence.Dev;
 using RogueEssence.Script;
 using NLua;
 using System.Linq;
+using PMDC.Dungeon;
 
 namespace PMDC.LevelGen
 {
@@ -66,7 +67,10 @@ namespace PMDC.LevelGen
         public override void ApplyFeature(IMobSpawnMap map, Character newChar)
         {
             if (map.Rand.Next(Odds) == 0)
-                newChar.BaseForm.Skin = 1;
+            {
+                SkinTableState table = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<SkinTableState>();
+                newChar.BaseForm.Skin = table.AltColor;
+            }
         }
 
         public override string ToString()
@@ -425,7 +429,7 @@ namespace PMDC.LevelGen
         {
             if (newChar.MemberTeam is MonsterTeam)
                 ((MonsterTeam)newChar.MemberTeam).Unrecruitable = true;
-            newChar.BaseForm.Skin = 0;
+            newChar.BaseForm.Skin = DataManager.Instance.DefaultSkin;
         }
 
         public override string ToString()

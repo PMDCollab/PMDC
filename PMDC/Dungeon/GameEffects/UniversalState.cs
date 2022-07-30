@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using RogueElements;
 using RogueEssence;
+using RogueEssence.Data;
+using RogueEssence.Dev;
 using RogueEssence.Dungeon;
 using RogueEssence.LevelGen;
 
@@ -168,14 +171,31 @@ namespace PMDC.Dungeon
     public class SkinTableState : UniversalState
     {
         public int AltColorOdds;
+        [DataType(0, DataManager.DataType.Skin, false)]
+        public string AltColor;
+        [DataType(0, DataManager.DataType.Skin, false)]
+        public string Challenge;
 
-        public SkinTableState() { }
-        public SkinTableState(int odds) { AltColorOdds = odds; }
+        public SkinTableState() { AltColor = ""; Challenge = ""; }
+        public SkinTableState(int odds, string altColor, string challenge) { AltColorOdds = odds; AltColor = altColor; Challenge = challenge; }
         protected SkinTableState(SkinTableState other)
         {
             AltColorOdds = other.AltColorOdds;
+            AltColor = other.AltColor;
+            Challenge = other.Challenge;
         }
         public override GameplayState Clone() { return new SkinTableState(this); }
+
+
+
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            if (String.IsNullOrEmpty(AltColor))
+                AltColor = "shiny";
+            if (String.IsNullOrEmpty(Challenge))
+                Challenge = "shiny_square";
+        }
     }
 
 }

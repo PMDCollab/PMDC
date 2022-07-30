@@ -96,7 +96,7 @@ namespace PMDC.Data
                 if (ally != character)
                 {
                     MonsterData data = DataManager.Instance.GetMonster(ally.BaseForm.Species);
-                    if (data.PromoteFrom > -1)
+                    if (!String.IsNullOrEmpty(data.PromoteFrom))
                         count++;
                 }
             }
@@ -322,7 +322,9 @@ namespace PMDC.Data
     [Serializable]
     public class EvoPartner : PromoteDetail
     {
-        public int Species;
+        [JsonConverter(typeof(MonsterConverter))]
+        [DataType(0, DataManager.DataType.Monster, false)]
+        public string Species;
 
         public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_ALLY_SPECIES").ToLocal(), DataManager.Instance.GetMonster(Species).GetColoredName()); }
         public override bool GetReq(Character character)
@@ -363,7 +365,9 @@ namespace PMDC.Data
     [Serializable]
     public class EvoShed : PromoteDetail
     {
-        public int ShedSpecies;
+        [JsonConverter(typeof(MonsterConverter))]
+        [DataType(0, DataManager.DataType.Monster, false)]
+        public string ShedSpecies;
 
         public override void OnGroundPromote(Character character)
         {

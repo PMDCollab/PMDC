@@ -25,7 +25,7 @@ namespace PMDC.Dev
 
         public delegate IEntryData GetNamedData(int ii);
 
-        public static void AddEvoFamily(Dictionary<int, HashSet<(string, ZoneLoc)>> found, int index, string tag, ZoneLoc encounter)
+        public static void AddEvoFamily(Dictionary<string, HashSet<(string, ZoneLoc)>> found, string index, string tag, ZoneLoc encounter)
         {
             addMonster(found, index, tag, encounter);
             //also add all the evos
@@ -33,14 +33,14 @@ namespace PMDC.Dev
             findEvos(found, data);
         }
 
-        private static void addMonster(Dictionary<int, HashSet<(string, ZoneLoc)>> found, int index, string tag, ZoneLoc encounter)
+        private static void addMonster(Dictionary<string, HashSet<(string, ZoneLoc)>> found, string index, string tag, ZoneLoc encounter)
         {
             if (!found.ContainsKey(index))
                 found[index] = new HashSet<(string, ZoneLoc)>();
             found[index].Add((tag, encounter));
         }
 
-        private static void findEvos(Dictionary<int, HashSet<(string, ZoneLoc)>> found, MonsterData data)
+        private static void findEvos(Dictionary<string, HashSet<(string, ZoneLoc)>> found, MonsterData data)
         {
             foreach (PromoteBranch evo in data.Promotions)
             {
@@ -50,7 +50,7 @@ namespace PMDC.Dev
             }
         }
 
-        private static void extractMobSpawnFromObject(Dictionary<int, HashSet<(string, ZoneLoc)>> foundSpecies, object member, bool recruitableOnly, string tag, ZoneLoc encounter)
+        private static void extractMobSpawnFromObject(Dictionary<string, HashSet<(string, ZoneLoc)>> foundSpecies, object member, bool recruitableOnly, string tag, ZoneLoc encounter)
         {
             Type type = member.GetType();
 
@@ -123,7 +123,7 @@ namespace PMDC.Dev
             }
         }
 
-        private static void extractMobSpawnsFromClass(Dictionary<int, HashSet<(string, ZoneLoc)>> foundSpecies, object obj, bool recruitableOnly, string tag, ZoneLoc encounter)
+        private static void extractMobSpawnsFromClass(Dictionary<string, HashSet<(string, ZoneLoc)>> foundSpecies, object obj, bool recruitableOnly, string tag, ZoneLoc encounter)
         {
             //go through all members and add for them
             //control starts off clean; this is the control that will have all member controls on it
@@ -152,11 +152,11 @@ namespace PMDC.Dev
             }
         }
 
-        public static Dictionary<int, HashSet<(string, ZoneLoc)>> GetAllAppearingMonsters(bool recruitableOnly)
+        public static Dictionary<string, HashSet<(string, ZoneLoc)>> GetAllAppearingMonsters(bool recruitableOnly)
         {
             //go through all dungeons
             //get all potential spawns in the dungeons (make it a table of bools mapping dex num to boolean)
-            Dictionary<int, HashSet<(string, ZoneLoc)>> foundSpecies = new Dictionary<int, HashSet<(string, ZoneLoc)>>();
+            Dictionary<string, HashSet<(string, ZoneLoc)>> foundSpecies = new Dictionary<string, HashSet<(string, ZoneLoc)>>();
             
             //check all structures
             foreach(string zz in DataManager.Instance.DataIndices[DataManager.DataType.Zone].Entries.Keys)
@@ -246,13 +246,13 @@ namespace PMDC.Dev
         {
             List<MonsterID> results = new List<MonsterID>();
             //go through entire dex
-            for (int ii = 1; ii < 899; ii++)
+            foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries.Keys)
             {
-                MonsterData dex = DataManager.Instance.GetMonster(ii);
+                MonsterData dex = DataManager.Instance.GetMonster(key);
                 for (int jj = 0; jj < dex.Forms.Count; jj++)
                 {
                     if (HasAbilityMoves(ability, moves, dex.Forms[jj]))
-                        results.Add(new MonsterID(ii, jj, 0, Gender.Genderless));
+                        results.Add(new MonsterID(key, jj, DataManager.Instance.DefaultSkin, Gender.Genderless));
                 }
             }
 

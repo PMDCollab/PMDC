@@ -5,6 +5,7 @@ using RogueEssence.Dungeon;
 using RogueEssence;
 using RogueEssence.LevelGen;
 using PMDC.Dungeon;
+using RogueEssence.Data;
 
 namespace PMDC.LevelGen
 {
@@ -279,7 +280,10 @@ namespace PMDC.LevelGen
                     MobSpawn copyMob = chosenMobs[chosenMobs.Count - 1];
                     chosenMobs.RemoveAt(chosenMobs.Count - 1);
                     if (map.Rand.Next(ALT_COLOR_ODDS) == 0)
-                        copyMob.BaseForm.Skin = 1;
+                    {
+                        SkinTableState table = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<SkinTableState>();
+                        copyMob.BaseForm.Skin = table.AltColor;
+                    }
                     phaseList.Add(copyMob);
                 }
                 phasedMobs.Add(phaseList);

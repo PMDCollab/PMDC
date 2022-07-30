@@ -5,6 +5,7 @@ using RogueEssence.Dungeon;
 using RogueEssence;
 using RogueEssence.LevelGen;
 using PMDC.Dungeon;
+using RogueEssence.Data;
 
 namespace PMDC.LevelGen
 {
@@ -129,7 +130,10 @@ namespace PMDC.LevelGen
                 {
                     MobSpawn copyMob = mob.Copy();
                     if (map.Rand.Next(ALT_COLOR_ODDS) == 0)
-                        copyMob.BaseForm.Skin = 1;
+                    {
+                        SkinTableState table = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<SkinTableState>();
+                        copyMob.BaseForm.Skin = table.AltColor;
+                    }
                     house.Mobs.Add(copyMob);
                 }
                 check.Effects.Add(house);

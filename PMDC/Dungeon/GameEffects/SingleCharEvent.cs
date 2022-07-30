@@ -746,14 +746,16 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WeatherFormeEvent : SingleCharEvent
     {
-        public int ReqSpecies;
+        [JsonConverter(typeof(MonsterConverter))]
+        [DataType(0, DataManager.DataType.Monster, false)]
+        public string ReqSpecies;
         public int DefaultForme;
         [JsonConverter(typeof(MapStatusIntDictConverter))]
         [DataType(1, DataManager.DataType.MapStatus, false)]
         public Dictionary<string, int> WeatherPair;
 
-        public WeatherFormeEvent() { WeatherPair = new Dictionary<string, int>(); }
-        public WeatherFormeEvent(int reqSpecies, int defaultForme, Dictionary<string, int> weather)
+        public WeatherFormeEvent() { WeatherPair = new Dictionary<string, int>(); ReqSpecies = ""; }
+        public WeatherFormeEvent(string reqSpecies, int defaultForme, Dictionary<string, int> weather)
         {
             ReqSpecies = reqSpecies;
             DefaultForme = defaultForme;
@@ -2304,7 +2306,7 @@ namespace PMDC.Dungeon
                     status.LoadFromData();
                     MonsterID id = candidateSpecies[DataManager.Instance.Save.Rand.Next(candidateSpecies.Count)].BaseForm;
                     id.Form = Math.Max(0, id.Form);
-                    id.Skin = Math.Max(0, id.Skin);
+                    id.Skin = String.IsNullOrEmpty(id.Skin) ? DataManager.Instance.DefaultSkin : id.Skin;
                     id.Gender = (Gender)Math.Max(0, (int)id.Gender);
                     status.StatusStates.Set(new MonsterIDState(id));
                     if (character.MemberTeam == DungeonScene.Instance.ActiveTeam)
