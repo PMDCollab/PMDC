@@ -1445,7 +1445,7 @@ namespace PMDC.Dungeon
                 yield break;
 
             //can't catch when holding
-            if (context.Target.EquippedItem.ID > -1)
+            if (!String.IsNullOrEmpty(context.Target.EquippedItem.ID))
                 yield break;
 
             //can't catch when inv full
@@ -2173,18 +2173,19 @@ namespace PMDC.Dungeon
     public class PrepareJudgmentEvent : BattleEvent
     {
         [JsonConverter(typeof(ItemElementDictConverter))]
+        [DataType(1, DataManager.DataType.Item, false)]
         [DataType(2, DataManager.DataType.Element, false)]
-        public Dictionary<int, string> TypePair;
+        public Dictionary<string, string> TypePair;
 
-        public PrepareJudgmentEvent() { TypePair = new Dictionary<int, string>(); }
-        public PrepareJudgmentEvent(Dictionary<int, string> weather)
+        public PrepareJudgmentEvent() { TypePair = new Dictionary<string, string>(); }
+        public PrepareJudgmentEvent(Dictionary<string, string> typePair)
         {
-            TypePair = weather;
+            TypePair = typePair;
         }
         protected PrepareJudgmentEvent(PrepareJudgmentEvent other)
             : this()
         {
-            foreach (int plate in other.TypePair.Keys)
+            foreach (string plate in other.TypePair.Keys)
                 TypePair.Add(plate, other.TypePair[plate]);
         }
         public override GameEvent Clone() { return new PrepareJudgmentEvent(this); }
@@ -5067,21 +5068,22 @@ namespace PMDC.Dungeon
     [Serializable]
     public class PreventItemIndexEvent : BattleEvent
     {
+        [JsonConverter(typeof(ItemListConverter))]
         [DataType(1, DataManager.DataType.Item, false)]
-        public List<int> UseTypes;
+        public List<string> UseTypes;
         public StringKey Message;
 
-        public PreventItemIndexEvent() { UseTypes = new List<int>(); }
-        public PreventItemIndexEvent(StringKey message, params int[] useTypes)
+        public PreventItemIndexEvent() { UseTypes = new List<string>(); }
+        public PreventItemIndexEvent(StringKey message, params string[] useTypes)
         {
             Message = message;
-            UseTypes = new List<int>();
+            UseTypes = new List<string>();
             UseTypes.AddRange(useTypes);
         }
         protected PreventItemIndexEvent(PreventItemIndexEvent other) : this()
         {
             Message = other.Message;
-            foreach (int useType in other.UseTypes)
+            foreach (string useType in other.UseTypes)
                 UseTypes.Add(useType);
         }
         public override GameEvent Clone() { return new PreventItemIndexEvent(this); }
@@ -6706,18 +6708,19 @@ namespace PMDC.Dungeon
     public class ItemPowerEvent : BattleEvent
     {
         [JsonConverter(typeof(ItemElementDictConverter))]
+        [DataType(1, DataManager.DataType.Item, false)]
         [DataType(2, DataManager.DataType.Element, false)]
-        public Dictionary<int, string> ItemPair;
+        public Dictionary<string, string> ItemPair;
 
-        public ItemPowerEvent() { ItemPair = new Dictionary<int, string>(); }
-        public ItemPowerEvent(Dictionary<int, string> weather)
+        public ItemPowerEvent() { ItemPair = new Dictionary<string, string>(); }
+        public ItemPowerEvent(Dictionary<string, string> weather)
         {
             ItemPair = weather;
         }
         protected ItemPowerEvent(ItemPowerEvent other)
             : this()
         {
-            foreach (int item in other.ItemPair.Keys)
+            foreach (string item in other.ItemPair.Keys)
                 ItemPair.Add(item, other.ItemPair[item]);
         }
         public override GameEvent Clone() { return new ItemPowerEvent(this); }
@@ -7284,7 +7287,7 @@ namespace PMDC.Dungeon
             BasePowerState basePower = context.Data.SkillStates.GetWithDefault<BasePowerState>();
             if (basePower != null)
             {
-                if (context.User.EquippedItem.ID == -1)
+                if (String.IsNullOrEmpty(context.User.EquippedItem.ID))
                 {
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_DMG_BOOST_NO_ITEM").ToLocal()));
                     basePower.Power *= 2;
@@ -8648,11 +8651,13 @@ namespace PMDC.Dungeon
     public class WandAttackNeededEvent : BattleEvent
     {
         //can be used for hit-consequence effects
-        public List<int> ExceptItems;
+        [JsonConverter(typeof(ItemListConverter))]
+        [DataType(1, DataManager.DataType.Item, false)]
+        public List<string> ExceptItems;
         public BattleEvent BaseEvent;
 
-        public WandAttackNeededEvent() { }
-        public WandAttackNeededEvent(List<int> exceptions, BattleEvent effect)
+        public WandAttackNeededEvent() { ExceptItems = new List<string>(); }
+        public WandAttackNeededEvent(List<string> exceptions, BattleEvent effect)
             : this()
         {
             ExceptItems = exceptions;
@@ -11224,12 +11229,18 @@ namespace PMDC.Dungeon
     public class ItemRestoreEvent : BattleEvent
     {
         public bool HeldOnly;
-        public int ItemIndex;
-        public List<int> DefaultItems;
+
+        [JsonConverter(typeof(ItemConverter))]
+        [DataType(0, DataManager.DataType.Item, false)]
+        public string ItemIndex;
+
+        [JsonConverter(typeof(ItemListConverter))]
+        [DataType(1, DataManager.DataType.Item, false)]
+        public List<string> DefaultItems;
         public StringKey SuccessMsg;
 
-        public ItemRestoreEvent() { DefaultItems = new List<int>(); }
-        public ItemRestoreEvent(bool heldOnly, int itemIndex, List<int> defaultItems, StringKey successMsg)
+        public ItemRestoreEvent() { DefaultItems = new List<string>(); }
+        public ItemRestoreEvent(bool heldOnly, string itemIndex, List<string> defaultItems, StringKey successMsg)
         {
             HeldOnly = heldOnly;
             ItemIndex = itemIndex;
@@ -11248,12 +11259,13 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             //if target has a held item, and it's eligible, use it
-            if (context.Target.EquippedItem.ID > -1 && context.Target.EquippedItem.ID == ItemIndex)
+            if (!String.IsNullOrEmpty(context.Target.EquippedItem.ID) && context.Target.EquippedItem.ID == ItemIndex)
             {
                 InvItem item = context.Target.EquippedItem;
 
-                int newItem = item.HiddenValue;
-                if (newItem == 0)
+                //TODO: String Assets
+                string newItem = item.HiddenValue.ToString();
+                if (String.IsNullOrEmpty(newItem))
                     newItem = DefaultItems[DataManager.Instance.Save.Rand.Next(DefaultItems.Count)];
 
                 context.Target.DequipItem();
@@ -11276,8 +11288,9 @@ namespace PMDC.Dungeon
                     InvItem item = team.GetInv(ii);
                     if (item.ID == ItemIndex)
                     {
-                        int newItem = item.HiddenValue;
-                        if (newItem == 0)
+                        //TODO: String Assets
+                        string newItem = item.HiddenValue.ToString();
+                        if (String.IsNullOrEmpty(newItem))
                             newItem = DefaultItems[DataManager.Instance.Save.Rand.Next(DefaultItems.Count)];
 
                         InvItem oldItem = new InvItem(item);
@@ -11299,10 +11312,11 @@ namespace PMDC.Dungeon
     {
         [JsonConverter(typeof(ElementItemDictConverter))]
         [DataType(1, DataManager.DataType.Element, false)]
-        public Dictionary<string, int> TypePair;
+        [DataType(2, DataManager.DataType.Item, false)]
+        public Dictionary<string, string> TypePair;
 
-        public PlateProtectEvent() { TypePair = new Dictionary<string, int>(); }
-        public PlateProtectEvent(Dictionary<string, int> weather)
+        public PlateProtectEvent() { TypePair = new Dictionary<string, string>(); }
+        public PlateProtectEvent(Dictionary<string, string> weather)
         {
             TypePair = weather;
         }
@@ -11318,7 +11332,7 @@ namespace PMDC.Dungeon
         {
             if (context.Target.MemberTeam is ExplorerTeam)
             {
-                int reqItem;
+                string reqItem;
                 if (TypePair.TryGetValue(context.Data.Element, out reqItem))
                 {
                     //make sure not already protected
@@ -11346,12 +11360,15 @@ namespace PMDC.Dungeon
     {
         public bool TopDown;
         public bool HeldOnly;
-        public int PriorityItem;
+
+        [JsonConverter(typeof(ItemConverter))]
+        [DataType(0, DataManager.DataType.Item, false)]
+        public string PriorityItem;
         [StringTypeConstraint(1, typeof(ItemState))]
         public HashSet<FlagType> States;
 
-        public ItemMetaEvent() { States = new HashSet<FlagType>(); }
-        public ItemMetaEvent(bool topDown, bool heldOnly, int priorityItem, HashSet<FlagType> eligibles)
+        public ItemMetaEvent() { States = new HashSet<FlagType>(); PriorityItem = ""; }
+        public ItemMetaEvent(bool topDown, bool heldOnly, string priorityItem, HashSet<FlagType> eligibles)
         {
             TopDown = topDown;
             HeldOnly = heldOnly;
@@ -11391,7 +11408,7 @@ namespace PMDC.Dungeon
         protected int SelectItemTarget(Character targetChar)
         {
             //first check priority item
-            if (PriorityItem > -1)
+            if (!String.IsNullOrEmpty(PriorityItem))
             {
                 if (targetChar.EquippedItem.ID == PriorityItem && ItemEligible(targetChar.EquippedItem))
                     return -1;
@@ -11407,7 +11424,7 @@ namespace PMDC.Dungeon
             }
 
             //if target has a held item, and it's eligible, choose it
-            if (targetChar.EquippedItem.ID > -1 && ItemEligible(targetChar.EquippedItem))
+            if (!String.IsNullOrEmpty(targetChar.EquippedItem.ID) && ItemEligible(targetChar.EquippedItem))
                 return -1;
 
             if (!HeldOnly && targetChar.MemberTeam is ExplorerTeam)
@@ -11446,7 +11463,7 @@ namespace PMDC.Dungeon
         public bool SilentCheck;
 
         public MugItemEvent() { }
-        public MugItemEvent(bool topDown, bool heldOnly, int priorityItem, HashSet<FlagType> eligibles, StringKey msg, bool silentCheck) : base(topDown, heldOnly, priorityItem, eligibles)
+        public MugItemEvent(bool topDown, bool heldOnly, string priorityItem, HashSet<FlagType> eligibles, StringKey msg, bool silentCheck) : base(topDown, heldOnly, priorityItem, eligibles)
         {
             Message = msg;
             SilentCheck = silentCheck;
@@ -11499,7 +11516,7 @@ namespace PMDC.Dungeon
         public bool SilentCheck;
 
         public DropItemEvent() { }
-        public DropItemEvent(bool topDown, bool heldOnly, int priorityItem, HashSet<FlagType> eligibles, StringKey msg, bool silentCheck) : base(topDown, heldOnly, priorityItem, eligibles)
+        public DropItemEvent(bool topDown, bool heldOnly, string priorityItem, HashSet<FlagType> eligibles, StringKey msg, bool silentCheck) : base(topDown, heldOnly, priorityItem, eligibles)
         {
             Message = msg;
             SilentCheck = silentCheck;
@@ -11543,7 +11560,7 @@ namespace PMDC.Dungeon
     public class KnockItemEvent : ItemMetaEvent
     {
         public KnockItemEvent() { }
-        public KnockItemEvent(bool topDown, bool heldOnly, int priorityItem, HashSet<FlagType> eligibles) : base(topDown, heldOnly, priorityItem, eligibles) { }
+        public KnockItemEvent(bool topDown, bool heldOnly, string priorityItem, HashSet<FlagType> eligibles) : base(topDown, heldOnly, priorityItem, eligibles) { }
         protected KnockItemEvent(KnockItemEvent other) : base(other) { }
         public override GameEvent Clone() { return new KnockItemEvent(this); }
 
@@ -11672,10 +11689,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class TransformItemEvent : ItemMetaEvent
     {
-        public int NewItem;
+        [JsonConverter(typeof(ItemConverter))]
+        [DataType(0, DataManager.DataType.Item, false)]
+        public string NewItem;
 
-        public TransformItemEvent() { }
-        public TransformItemEvent(bool topDown, bool heldOnly, int priorityItem, int newItem, HashSet<FlagType> eligibles)
+        public TransformItemEvent() { NewItem = ""; }
+        public TransformItemEvent(bool topDown, bool heldOnly, string priorityItem, string newItem, HashSet<FlagType> eligibles)
             : base(topDown, heldOnly, priorityItem, eligibles)
         {
             NewItem = newItem;
@@ -11707,7 +11726,8 @@ namespace PMDC.Dungeon
                     //change the item to a different number index, set that item's hidden value to the previous item
                     if (itemIndex > -1)
                     {
-                        item.HiddenValue = item.ID;
+                        //TODO: String Assets
+                        item.HiddenValue = int.Parse(item.ID);
                         item.ID = NewItem;
                         DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRANSFORM_ITEM").ToLocal(), context.Target.GetDisplayName(false),
                             oldItem.GetDisplayName(), item.GetDisplayName()));
@@ -11715,8 +11735,9 @@ namespace PMDC.Dungeon
                     }
                     else
                     {
+                        //TODO: String Assets
                         context.Target.DequipItem();
-                        item.HiddenValue = item.ID;
+                        item.HiddenValue = int.Parse(item.ID);
                         item.ID = NewItem;
                         DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRANSFORM_HELD_ITEM").ToLocal(), context.Target.GetDisplayName(false),
                             oldItem.GetDisplayName(), item.GetDisplayName()));
@@ -11732,10 +11753,10 @@ namespace PMDC.Dungeon
     [Serializable]
     public class SetItemStickyEvent : ItemMetaEvent
     {
-        bool Sticky;
+        public bool Sticky;
 
         public SetItemStickyEvent() { }
-        public SetItemStickyEvent(bool topDown, bool heldOnly, int priorityItem, bool sticky, HashSet<FlagType> eligibles)
+        public SetItemStickyEvent(bool topDown, bool heldOnly, string priorityItem, bool sticky, HashSet<FlagType> eligibles)
             : base(topDown, heldOnly, priorityItem, eligibles)
         {
             Sticky = sticky;
@@ -11805,7 +11826,7 @@ namespace PMDC.Dungeon
     public class DestroyItemEvent : ItemMetaEvent
     {
         public DestroyItemEvent() { }
-        public DestroyItemEvent(bool topDown, bool heldOnly, int priorityItem, HashSet<FlagType> eligibles) : base(topDown, heldOnly, priorityItem, eligibles) { }
+        public DestroyItemEvent(bool topDown, bool heldOnly, string priorityItem, HashSet<FlagType> eligibles) : base(topDown, heldOnly, priorityItem, eligibles) { }
         protected DestroyItemEvent(DestroyItemEvent other) : base(other) { }
         public override GameEvent Clone() { return new DestroyItemEvent(this); }
 
@@ -11840,7 +11861,7 @@ namespace PMDC.Dungeon
         public bool SilentCheck;
 
         public StealItemEvent() { }
-        public StealItemEvent(bool topDown, bool heldOnly, int priorityItem, HashSet<FlagType> eligibles, StringKey msg, bool affectTarget, bool silentCheck)
+        public StealItemEvent(bool topDown, bool heldOnly, string priorityItem, HashSet<FlagType> eligibles, StringKey msg, bool affectTarget, bool silentCheck)
             : base(topDown, heldOnly, priorityItem, eligibles)
         {
             Message = msg;
@@ -11902,7 +11923,7 @@ namespace PMDC.Dungeon
                         if (((ExplorerTeam)origin.MemberTeam).GetInvCount() < ((ExplorerTeam)origin.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone))
                         {
                             //attackers already holding an item will have the item returned to the bag
-                            if (origin.EquippedItem.ID > -1)
+                            if (!String.IsNullOrEmpty(origin.EquippedItem.ID))
                             {
                                 InvItem attackerItem = origin.EquippedItem;
                                 origin.DequipItem();
@@ -11921,7 +11942,7 @@ namespace PMDC.Dungeon
                     }
                     else
                     {
-                        if (origin.EquippedItem.ID > -1)
+                        if (!String.IsNullOrEmpty(origin.EquippedItem.ID))
                         {
                             InvItem attackerItem = origin.EquippedItem;
                             origin.DequipItem();
@@ -11954,7 +11975,7 @@ namespace PMDC.Dungeon
     public class BegItemEvent : ItemMetaEvent
     {
         public BegItemEvent() { }
-        public BegItemEvent(bool topDown, bool heldOnly, int priorityItem, HashSet<FlagType> eligibles)
+        public BegItemEvent(bool topDown, bool heldOnly, string priorityItem, HashSet<FlagType> eligibles)
             : base(topDown, heldOnly, priorityItem, eligibles) { }
         protected BegItemEvent(BegItemEvent other)
             : base(other) { }
@@ -12011,7 +12032,7 @@ namespace PMDC.Dungeon
                             if (((ExplorerTeam)origin.MemberTeam).GetInvCount() < ((ExplorerTeam)origin.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone))
                             {
                                 //attackers already holding an item will have the item returned to the bag
-                                if (origin.EquippedItem.ID > -1)
+                                if (!String.IsNullOrEmpty(origin.EquippedItem.ID))
                                 {
                                     InvItem attackerItem = origin.EquippedItem;
                                     origin.DequipItem();
@@ -12030,7 +12051,7 @@ namespace PMDC.Dungeon
                         }
                         else
                         {
-                            if (origin.EquippedItem.ID > -1)
+                            if (!String.IsNullOrEmpty(origin.EquippedItem.ID))
                             {
                                 InvItem attackerItem = origin.EquippedItem;
                                 origin.DequipItem();
@@ -12061,7 +12082,7 @@ namespace PMDC.Dungeon
     public class TrickItemEvent : ItemMetaEvent
     {
         public TrickItemEvent() { }
-        public TrickItemEvent(bool topDown, bool heldOnly, int priorityItem, HashSet<FlagType> eligibles) : base(topDown, heldOnly, priorityItem, eligibles) { }
+        public TrickItemEvent(bool topDown, bool heldOnly, string priorityItem, HashSet<FlagType> eligibles) : base(topDown, heldOnly, priorityItem, eligibles) { }
         protected TrickItemEvent(TrickItemEvent other) : base(other) { }
         public override GameEvent Clone() { return new TrickItemEvent(this); }
 
@@ -12122,7 +12143,7 @@ namespace PMDC.Dungeon
             //cleanse
             foreach (Character character in context.Target.MemberTeam.EnumerateChars())
             {
-                if (character.EquippedItem.ID > -1 && character.EquippedItem.Cursed)
+                if (!String.IsNullOrEmpty(character.EquippedItem.ID) && character.EquippedItem.Cursed)
                     character.EquippedItem.Cursed = false;
             }
 
@@ -12156,23 +12177,23 @@ namespace PMDC.Dungeon
             InvItem attackerItem = context.User.EquippedItem;
             InvItem targetItem = context.Target.EquippedItem;
 
-            if (attackerItem.ID > -1 || targetItem.ID > -1)
+            if (!String.IsNullOrEmpty(attackerItem.ID) || !String.IsNullOrEmpty(targetItem.ID))
             {
                 //if it's an explorer, and their inv is full, and they're not holding anything, they cannot be given an item by the other party
-                if (attackerItem.ID == -1 && context.User.MemberTeam is ExplorerTeam && ((ExplorerTeam)context.User.MemberTeam).GetInvCount() >= ((ExplorerTeam)context.User.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone))
+                if (String.IsNullOrEmpty(attackerItem.ID) && context.User.MemberTeam is ExplorerTeam && ((ExplorerTeam)context.User.MemberTeam).GetInvCount() >= ((ExplorerTeam)context.User.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone))
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_INV_FULL").ToLocal(), context.User.GetDisplayName(false), targetItem.GetDisplayName()));
-                else if (targetItem.ID == -1 && context.Target.MemberTeam is ExplorerTeam && ((ExplorerTeam)context.Target.MemberTeam).GetInvCount() >= ((ExplorerTeam)context.Target.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone))
+                else if (String.IsNullOrEmpty(targetItem.ID) && context.Target.MemberTeam is ExplorerTeam && ((ExplorerTeam)context.Target.MemberTeam).GetInvCount() >= ((ExplorerTeam)context.Target.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone))
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_INV_FULL").ToLocal(), context.Target.GetDisplayName(false), attackerItem.GetDisplayName()));
                 else
                 {
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_EXCHANGE_HELD_ITEM").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
 
                     context.Target.DequipItem();
-                    if (attackerItem.ID > -1)
+                    if (!String.IsNullOrEmpty(attackerItem.ID))
                         context.Target.EquipItem(attackerItem);
 
                     context.User.DequipItem();
-                    if (targetItem.ID > -1)
+                    if (!String.IsNullOrEmpty(targetItem.ID))
                         context.User.EquipItem(targetItem);
                 }
             }
@@ -12188,7 +12209,7 @@ namespace PMDC.Dungeon
         public bool SilentCheck;
 
         public UseFoeItemEvent() { }
-        public UseFoeItemEvent(bool topDown, bool heldOnly, int priorityItem, HashSet<FlagType> eligibles, bool affectTarget, bool silentCheck)
+        public UseFoeItemEvent(bool topDown, bool heldOnly, string priorityItem, HashSet<FlagType> eligibles, bool affectTarget, bool silentCheck)
             : base(topDown, heldOnly, priorityItem, eligibles)
         {
             AffectTarget = affectTarget;
@@ -12326,7 +12347,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.User.EquippedItem.ID > -1)
+            if (!String.IsNullOrEmpty(context.User.EquippedItem.ID))
             {
                 context.Item = context.User.EquippedItem;
                 context.User.DequipItem();
@@ -12349,7 +12370,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.Target.EquippedItem.ID > -1 && context.Target.CharStates.Contains<StickyHoldState>())
+            if (!String.IsNullOrEmpty(context.Target.EquippedItem.ID) && context.Target.CharStates.Contains<StickyHoldState>())
             {
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STICKY_HOLD").ToLocal(), context.Target.GetDisplayName(false)));
 
@@ -12357,11 +12378,11 @@ namespace PMDC.Dungeon
                 Loc endLoc = context.Target.CharLoc + context.User.CharDir.GetLoc() * 2;
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(context.Item, endLoc, context.Target.CharLoc));
             }
-            else if (context.Item.ID > -1)
+            else if (!String.IsNullOrEmpty(context.Item.ID))
             {
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_BESTOW_ITEM").ToLocal(), context.Target.GetDisplayName(false), context.Item.GetDisplayName()));
 
-                if (context.Target.EquippedItem.ID > -1)
+                if (!String.IsNullOrEmpty(context.Target.EquippedItem.ID))
                 {
                     //held item slides off
                     InvItem heldItem = context.Target.EquippedItem;
@@ -12400,7 +12421,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.Item.ID > -1)
+            if (!String.IsNullOrEmpty(context.Item.ID))
             {
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CATCH_ITEM").ToLocal(), context.Target.GetDisplayName(false), context.Item.GetDisplayName()));
                 //give the target the item
@@ -14098,9 +14119,9 @@ namespace PMDC.Dungeon
             if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
             {
                 bool hasItems = (DungeonScene.Instance.ActiveTeam.BoxStorage.Count > 0);
-                for (int ii = 0; ii < DungeonScene.Instance.ActiveTeam.Storage.Length; ii++)
+                foreach(string key in DungeonScene.Instance.ActiveTeam.Storage.Keys)
                 {
-                    if (DungeonScene.Instance.ActiveTeam.Storage[ii] > 0)
+                    if (DungeonScene.Instance.ActiveTeam.Storage[key] > 0)
                     {
                         hasItems = true;
                         break;
@@ -14121,7 +14142,7 @@ namespace PMDC.Dungeon
                     if (DataManager.Instance.CurrentReplay != null) // this block of code will never evaluate to true AND have UI read back -1 (cancel) at the same time
                     {
                         bool isBox = DataManager.Instance.CurrentReplay.ReadUI() != 0;
-                        int id = DataManager.Instance.CurrentReplay.ReadUI();
+                        string id = DataManager.Instance.CurrentReplay.ReadUIString();
                         int slot = DataManager.Instance.CurrentReplay.ReadUI();
                         context.ContextStates.Set(new WithdrawStorageContext(new WithdrawSlot(isBox, id, slot)));
                     }
@@ -14139,7 +14160,7 @@ namespace PMDC.Dungeon
                             if (withdraw != null)
                             {
                                 DataManager.Instance.LogUIPlay(withdraw.WithdrawSlot.IsBox ? 1 : 0);
-                                DataManager.Instance.LogUIPlay(withdraw.WithdrawSlot.ItemID);
+                                DataManager.Instance.LogUIStringPlay(withdraw.WithdrawSlot.ItemID);
                                 DataManager.Instance.LogUIPlay(withdraw.WithdrawSlot.BoxSlot);
                             }
                         }
@@ -14453,7 +14474,7 @@ namespace PMDC.Dungeon
                         yield return new WaitForFrames(40);
 
                         //check against inventory capacity violation
-                        if (context.Target.EquippedItem.ID > -1 && DungeonScene.Instance.ActiveTeam.MaxInv == DungeonScene.Instance.ActiveTeam.GetInvCount())
+                        if (!String.IsNullOrEmpty(context.Target.EquippedItem.ID) && DungeonScene.Instance.ActiveTeam.MaxInv == DungeonScene.Instance.ActiveTeam.GetInvCount())
                         {
                             InvItem item = context.Target.EquippedItem;
                             context.Target.DequipItem();
@@ -14623,7 +14644,7 @@ namespace PMDC.Dungeon
     {
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (ownerChar.EquippedItem.ID > -1)
+            if (!String.IsNullOrEmpty(ownerChar.EquippedItem.ID))
             {
                 ItemData entry = (ItemData)ownerChar.EquippedItem.GetData();
                 if (CheckEquipPassValidityEvent.CanItemEffectBePassed(entry))

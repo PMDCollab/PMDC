@@ -51,7 +51,7 @@ namespace PMDC.Dungeon
 
         public override void Apply(GameEventOwner owner, Character ownerChar, ItemCheckContext context)
         {
-            if (context.User.EquippedItem.ID > -1)
+            if (!String.IsNullOrEmpty(context.User.EquippedItem.ID))
             {
                 ItemData entry = (ItemData)context.User.EquippedItem.GetData();
 

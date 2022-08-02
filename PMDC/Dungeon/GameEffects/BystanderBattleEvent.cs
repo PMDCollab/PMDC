@@ -215,7 +215,7 @@ namespace PMDC.Dungeon
                 {
 
                     //can't catch when holding
-                    if (targetChar.EquippedItem.ID > -1)
+                    if (!String.IsNullOrEmpty(targetChar.EquippedItem.ID))
                         yield break;
 
                     ItemData entry = DataManager.Instance.GetItem(context.Item.ID);

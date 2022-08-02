@@ -317,14 +317,17 @@ namespace PMDC.LevelGen
     [Serializable]
     public class ItemThemeRange : ItemTheme
     {
-        public IntRange Range;
+        [JsonConverter(typeof(ItemRangeToListConverter))]
+        [DataType(0, DataManager.DataType.Item, false)]
+        public List<string> Range;
         public bool UseMapItems;
         public bool UseSpecialItems;
 
-        public ItemThemeRange() { }
-        public ItemThemeRange(IntRange range, bool mapItems, bool specialItems, RandRange amount) : base(amount)
+        public ItemThemeRange() { Range = new List<string>(); }
+        public ItemThemeRange(bool mapItems, bool specialItems, RandRange amount, string[] range) : base(amount)
         {
-            Range = range;
+            Range = new List<string>();
+            Range.AddRange(range);
             UseMapItems = mapItems;
             UseSpecialItems = specialItems;
         }
@@ -349,7 +352,7 @@ namespace PMDC.LevelGen
                     MapItem spawn = specialItems.GetSpawn(ii);
                     if (!spawn.IsMoney)
                     {
-                        if (Range.Min <= spawn.Value && spawn.Value < Range.Max)
+                        if (Range.Contains(spawn.Value))
                             subList.Add(spawn, specialItems.GetSpawnRate(ii));
                     }
                 }
@@ -365,7 +368,7 @@ namespace PMDC.LevelGen
                         //TODO: spawn rate is somewhat distorted here
                         InvItem spawn = spawns.GetSpawn(ii);
                         //ItemData data = DataManager.Instance.GetItem(spawn.ID);
-                        if (Range.Min <= spawn.ID && spawn.ID < Range.Max)
+                        if (Range.Contains(spawn.ID))
                             subList.Add(new MapItem(spawn), spawns.GetSpawnRate(ii));
                     }
                 }

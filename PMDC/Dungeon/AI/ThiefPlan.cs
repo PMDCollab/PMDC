@@ -17,10 +17,10 @@ namespace PMDC.Dungeon
     {
         //for thieves and switcheroo thieves
         [NonSerialized]
-        private int origItem;
+        private string origItem;
         public ThiefPlan(AIFlags iq) : base(iq)
         {
-            origItem = -1;
+            origItem = "";
         }
         protected ThiefPlan(ThiefPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new ThiefPlan(this); }
@@ -37,7 +37,7 @@ namespace PMDC.Dungeon
 
         public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
-            if (controlledChar.EquippedItem.ID != origItem && controlledChar.EquippedItem.ID > -1)//we have a held item that is different now
+            if (controlledChar.EquippedItem.ID != origItem && !String.IsNullOrEmpty(controlledChar.EquippedItem.ID))//we have a held item that is different now
                 return base.Think(controlledChar, preThink, rand);
 
             return null;

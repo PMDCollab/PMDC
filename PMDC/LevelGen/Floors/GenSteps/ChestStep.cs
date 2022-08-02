@@ -145,7 +145,7 @@ namespace PMDC.LevelGen
 
 
             EffectTile spawnedChest = new EffectTile("chest_full", true);
-            spawnedChest.TileStates.Set(new UnlockState(455));
+            spawnedChest.TileStates.Set(new UnlockState("key"));
 
             if (Ambush && MobThemes.CanPick)
             {

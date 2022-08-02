@@ -239,7 +239,7 @@ namespace PMDC.LevelGen
         {
             Items = new SpawnList<InvItem>();
         }
-        public MobSpawnItem(bool startOnly, params int[] itemNum) : this()
+        public MobSpawnItem(bool startOnly, params string[] itemNum) : this()
         {
             MapStartOnly = startOnly;
             for(int ii = 0; ii < itemNum.Length; ii++)
@@ -297,7 +297,7 @@ namespace PMDC.LevelGen
         {
             Items = new List<InvItem>();
         }
-        public MobSpawnInv(bool startOnly, params int[] itemNum) : this()
+        public MobSpawnInv(bool startOnly, params string[] itemNum) : this()
         {
             MapStartOnly = startOnly;
             for (int ii = 0; ii < itemNum.Length; ii++)

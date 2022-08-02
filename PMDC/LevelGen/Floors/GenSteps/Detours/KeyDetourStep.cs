@@ -28,13 +28,14 @@ namespace PMDC.LevelGen
         /// <summary>
         /// The item with which to unlock the room with.
         /// </summary>
+        [JsonConverter(typeof(ItemConverter))]
         [DataType(0, DataManager.DataType.Item, false)]
-        public int KeyItem;
+        public string KeyItem;
 
         public KeyDetourStep()
-        { }
+        { KeyItem = ""; }
 
-        public KeyDetourStep(string sealedTile, int keyItem) : this()
+        public KeyDetourStep(string sealedTile, string keyItem) : this()
         {
             LockedTile = sealedTile;
             KeyItem = keyItem;

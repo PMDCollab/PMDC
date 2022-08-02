@@ -572,12 +572,12 @@ namespace MapGenTest
             int floor = 0;
             try
             {
-                List<Dictionary<int, int>> generatedItems = new List<Dictionary<int, int>>();
+                List<Dictionary<string, int>> generatedItems = new List<Dictionary<string, int>>();
                 List<Dictionary<string, int>> generatedEnemies = new List<Dictionary<string, int>>();
                 Dictionary<string, List<TimeSpan>> generationTimes = new Dictionary<string, List<TimeSpan>>();
                 for (int ii = 0; ii < structure.FloorCount; ii++)
                 {
-                    generatedItems.Add(new Dictionary<int, int>());
+                    generatedItems.Add(new Dictionary<string, int>());
                     generatedEnemies.Add(new Dictionary<string, int>());
                     generationTimes[ii.ToString("D3")] = new List<TimeSpan>();
                 }
@@ -606,15 +606,15 @@ namespace MapGenTest
                 }
 
 
-                Dictionary<int, int> totalGeneratedItems = new Dictionary<int, int>();
+                Dictionary<string, int> totalGeneratedItems = new Dictionary<string, int>();
                 Dictionary<string, int> totalGeneratedEnemies = new Dictionary<string, int>();
                 for (int ii = 0; ii < structure.FloorCount; ii++)
                 {
                     Debug.WriteLine("F"+ii+":");
                     PrintContentAnalysis(generatedItems[ii], generatedEnemies[ii]);
                     
-                    foreach(int key in generatedItems[ii].Keys)
-                        MathUtils.AddToDictionary<int>(totalGeneratedItems, key, generatedItems[ii][key]);
+                    foreach(string key in generatedItems[ii].Keys)
+                        MathUtils.AddToDictionary<string>(totalGeneratedItems, key, generatedItems[ii][key]);
 
                     foreach (string key in generatedEnemies[ii].Keys)
                         MathUtils.AddToDictionary<string>(totalGeneratedEnemies, key, generatedEnemies[ii][key]);
@@ -643,7 +643,7 @@ namespace MapGenTest
             ulong zoneSeed = 0;
             try
             {
-                Dictionary<int, int> generatedItems = new Dictionary<int, int>();
+                Dictionary<string, int> generatedItems = new Dictionary<string, int>();
                 Dictionary<string, int> generatedEnemies = new Dictionary<string, int>();
                 List<TimeSpan> generationTimes = new List<TimeSpan>();
                 Stopwatch watch = new Stopwatch();
@@ -674,7 +674,7 @@ namespace MapGenTest
             }
         }
 
-        public static void TestFloor(Stopwatch watch, GameProgress save, ZoneSegmentBase structure, ZoneGenContext zoneContext, Dictionary<int, int> generatedItems, Dictionary<string, int> generatedEnemies, List<TimeSpan> generationTimes)
+        public static void TestFloor(Stopwatch watch, GameProgress save, ZoneSegmentBase structure, ZoneGenContext zoneContext, Dictionary<string, int> generatedItems, Dictionary<string, int> generatedEnemies, List<TimeSpan> generationTimes)
         {
             DataManager.Instance.SetProgress(save);
 
@@ -697,11 +697,11 @@ namespace MapGenTest
                 {
                     if (mapItem.IsMoney)
                     {
-                        MathUtils.AddToDictionary<int>(generatedItems, -1, mapItem.HiddenValue);
-                        MathUtils.AddToDictionary<int>(generatedItems, 0, 1);
+                        MathUtils.AddToDictionary<string>(generatedItems, null, mapItem.HiddenValue);
+                        MathUtils.AddToDictionary<string>(generatedItems, "", 1);
                     }
                     else
-                        MathUtils.AddToDictionary<int>(generatedItems, mapItem.Value, 1);
+                        MathUtils.AddToDictionary<string>(generatedItems, mapItem.Value, 1);
                 }
             }
             if (generatedEnemies != null)
@@ -714,26 +714,26 @@ namespace MapGenTest
             }
         }
 
-        public static void PrintContentAnalysis(Dictionary<int, int> GeneratedItems, Dictionary<string, int> GeneratedEnemies)
+        public static void PrintContentAnalysis(Dictionary<string, int> GeneratedItems, Dictionary<string, int> GeneratedEnemies)
         {
             StringBuilder finalString = new StringBuilder();
 
             finalString.Append(String.Format("Items:") + "\n");
             List<string> printout = new List<string>();
             int total = 0;
-            foreach (int key in GeneratedItems.Keys)
+            foreach (string key in GeneratedItems.Keys)
             {
-                if (key > -1)
+                if (!String.IsNullOrEmpty(key))
                     total += GeneratedItems[key];
             }
-            foreach (int key in GeneratedItems.Keys)
+            foreach (string key in GeneratedItems.Keys)
             {
-                if (key > 0)
+                if (!String.IsNullOrEmpty(key))
                 {
                     ItemData entry = DataManager.Instance.GetItem(key);
                     printout.Add(String.Format("    {0:D5} {1:F5} #{2:0000} {3}", GeneratedItems[key], ((float)GeneratedItems[key] / total), key, entry.Name.DefaultText));
                 }
-                else if (key == 0)
+                else if (key == "")
                     printout.Add(String.Format("    {0:D5} {1:F5} {2}", GeneratedItems[key], ((float)GeneratedItems[key] / total), "Money Spawns"));
                 else
                     finalString.Append(String.Format("Money: {0}", GeneratedItems[key]) + "\n");

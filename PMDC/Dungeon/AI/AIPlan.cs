@@ -628,7 +628,7 @@ namespace PMDC.Dungeon
                 UpdateTotalIndices(rand, moveIndices, new GameAction(GameAction.ActionType.UseSkill, Dir8.None, ii), moveDirs);
             }
 
-            if (controlledChar.EquippedItem.ID > -1 && (IQ & AIFlags.ItemMaster) != AIFlags.None)
+            if (!String.IsNullOrEmpty(controlledChar.EquippedItem.ID) && (IQ & AIFlags.ItemMaster) != AIFlags.None)
             {
                 //check item use
                 {
@@ -722,7 +722,7 @@ namespace PMDC.Dungeon
                 }
             }
 
-            if (controlledChar.EquippedItem.ID > -1 && (IQ & AIFlags.ItemMaster) != AIFlags.None)
+            if (!String.IsNullOrEmpty(controlledChar.EquippedItem.ID) && (IQ & AIFlags.ItemMaster) != AIFlags.None)
             {
                 //check item use
                 {
@@ -785,7 +785,7 @@ namespace PMDC.Dungeon
                     UpdateHighestIndices(highestIndices, new GameAction(GameAction.ActionType.UseSkill, Dir8.None, ii), moveDirs);
             }
 
-            if (controlledChar.EquippedItem.ID > -1 && (IQ & AIFlags.ItemMaster) != AIFlags.None)
+            if (!String.IsNullOrEmpty(controlledChar.EquippedItem.ID) && (IQ & AIFlags.ItemMaster) != AIFlags.None)
             {
                 //check item use
                 {
@@ -977,7 +977,7 @@ namespace PMDC.Dungeon
             }
         }
 
-        protected void GetItemUseValues(Character controlledChar, List<Character> seenChars, Character closestThreat, int itemIndex, HitValue[] dirs)
+        protected void GetItemUseValues(Character controlledChar, List<Character> seenChars, Character closestThreat, string itemIndex, HitValue[] dirs)
         {
             ItemData entry = DataManager.Instance.GetItem(itemIndex);
             if (!entry.ItemStates.Contains<BerryState>() && !entry.ItemStates.Contains<SeedState>() && !entry.ItemStates.Contains<WandState>())
@@ -992,7 +992,7 @@ namespace PMDC.Dungeon
             dirs[(int)defaultDir] = highestVal;
         }
 
-        protected void GetItemThrowValues(Character controlledChar, List<Character> seenChars, Character closestThreat, int itemIndex, HitValue[] dirs)
+        protected void GetItemThrowValues(Character controlledChar, List<Character> seenChars, Character closestThreat, string itemIndex, HitValue[] dirs)
         {
             ItemData entry = DataManager.Instance.GetItem(itemIndex);
 
@@ -1720,7 +1720,7 @@ namespace PMDC.Dungeon
             }
             else if (moveIndex == "bestow")//Bestow; use only if you have an item to give; NOTE: specialized AI code!
             {
-                if (controlledChar.EquippedItem.ID > -1)//let's assume the item is always bad
+                if (!String.IsNullOrEmpty(controlledChar.EquippedItem.ID))//let's assume the item is always bad
                     return -100;
                 return 0;
             }
@@ -1906,7 +1906,7 @@ namespace PMDC.Dungeon
                     }
                     else if (effect is SetItemStickyEvent)
                     {
-                        if (target.EquippedItem.ID > -1)
+                        if (!String.IsNullOrEmpty(target.EquippedItem.ID))
                         {
                             if (target.EquippedItem.Cursed)
                                 return 0;
@@ -1932,7 +1932,7 @@ namespace PMDC.Dungeon
                     }
                     else if (effect is BegItemEvent)
                     {
-                        if (target.EquippedItem.ID > -1)
+                        if (!String.IsNullOrEmpty(target.EquippedItem.ID))
                         {
                             if (target.EquippedItem.Cursed)
                                 return 0;
@@ -1978,7 +1978,7 @@ namespace PMDC.Dungeon
                     {
                         //assume always pointed at foe, always detrimental
                         //if both parties aren't holding an item, cancel
-                        if (target.EquippedItem.ID == -1 && controlledChar.EquippedItem.ID == -1)
+                        if (String.IsNullOrEmpty(target.EquippedItem.ID) && String.IsNullOrEmpty(controlledChar.EquippedItem.ID))
                             return 0;
                         //don't trade an uncursed item for a cursed one
                         if (target.EquippedItem.Cursed && !controlledChar.EquippedItem.Cursed)

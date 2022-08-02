@@ -1095,10 +1095,14 @@ namespace PMDC.Dungeon
     public class AutoReviveEvent : SingleCharEvent
     {
         public bool AskToUse;
-        public int ChangeTo;
 
-        public AutoReviveEvent() { }
-        public AutoReviveEvent(bool askToUse, int changeTo)
+
+        [JsonConverter(typeof(ItemConverter))]
+        [DataType(0, DataManager.DataType.Item, false)]
+        public string ChangeTo;
+
+        public AutoReviveEvent() { ChangeTo = ""; }
+        public AutoReviveEvent(bool askToUse, string changeTo)
         {
             AskToUse = askToUse;
             ChangeTo = changeTo;
@@ -1110,7 +1114,7 @@ namespace PMDC.Dungeon
         }
         public override GameEvent Clone() { return new AutoReviveEvent(this); }
 
-        private bool isAutoReviveItem(int itemId)
+        private bool isAutoReviveItem(string itemId)
         {
             ItemData entry = DataManager.Instance.GetItem(itemId);
 
@@ -1130,17 +1134,21 @@ namespace PMDC.Dungeon
             if (!character.Dead)
                 yield break;
 
-            int useIndex = -1;
-            int useSlot = -1;
+            string useIndex = "";
+            int useSlot = BattleContext.NO_ITEM_SLOT;
 
             if (character.MemberTeam is ExplorerTeam)
             {
                 ExplorerTeam team = character.MemberTeam as ExplorerTeam;
-                Dictionary<int, int> candidateItems = new Dictionary<int, int>();
-                if (character.EquippedItem.ID > -1 && !character.EquippedItem.Cursed)
+                List<string> candKeys = new List<string>();
+                Dictionary<string, int> candidateItems = new Dictionary<string, int>();
+                if (!String.IsNullOrEmpty(character.EquippedItem.ID) && !character.EquippedItem.Cursed)
                 {
                     if (isAutoReviveItem(character.EquippedItem.ID))
+                    {
+                        candKeys.Add(character.EquippedItem.ID);
                         candidateItems.Add(character.EquippedItem.ID, BattleContext.EQUIP_ITEM_SLOT);
+                    }
                 }
 
                 //iterate over the inventory, get a list of the lowest/highest-costing eligible items
@@ -1150,7 +1158,10 @@ namespace PMDC.Dungeon
                     if (!candidateItems.ContainsKey(item.ID))
                     {
                         if (isAutoReviveItem(item.ID) && !item.Cursed)
+                        {
+                            candKeys.Add(item.ID);
                             candidateItems.Add(item.ID, ii);
+                        }
                     }
                 }
 
@@ -1160,31 +1171,39 @@ namespace PMDC.Dungeon
                     {
                         if (DataManager.Instance.CurrentReplay != null)
                         {
-                            useIndex = DataManager.Instance.CurrentReplay.ReadUI();
-                            if (useIndex > -1)
+                            int uiIndex = DataManager.Instance.CurrentReplay.ReadUI();
+                            if (uiIndex > -1)
+                            {
+                                useIndex = candKeys[uiIndex];
                                 useSlot = candidateItems[useIndex];
+                            }
                         }
                         else
                         {
+                            int uiIndex = -1;
                             List<DialogueChoice> choices = new List<DialogueChoice>();
-                            foreach (int itemId in candidateItems.Keys)
+                            for (int ii = 0; ii < candKeys.Count; ii++)
                             {
+                                int idx = ii;
+                                string itemId = candKeys[ii];
                                 ItemData entry = DataManager.Instance.GetItem(itemId);
                                 choices.Add(new DialogueChoice(entry.GetIconName(), () =>
                                 {
+                                    uiIndex = idx;
                                     useIndex = itemId;
                                     useSlot = candidateItems[itemId];
                                 }));
                             }
                             choices.Add(new DialogueChoice(Text.FormatKey("MENU_CANCEL"), () =>
                             {
-                                useIndex = -1;
+                                uiIndex = -1;
+                                useIndex = "";
                                 useSlot = -1;
                             }));
 
                             yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(MenuManager.Instance.CreateMultiQuestion(String.Format(new StringKey("DLG_ASK_REVIVE").ToLocal()), true, choices, 0, choices.Count - 1)));
 
-                            DataManager.Instance.LogUIPlay(useIndex);
+                            DataManager.Instance.LogUIPlay(uiIndex);
                         }
                     }
                 }
@@ -1194,7 +1213,7 @@ namespace PMDC.Dungeon
                     AIPlan plan = (AIPlan)character.Tactic.Plans[0];
                     if (!AskToUse || (plan.IQ & AIFlags.ItemMaster) != AIFlags.None)
                     {
-                        foreach (int itemId in candidateItems.Keys)
+                        foreach (string itemId in candidateItems.Keys)
                         {
                             useIndex = itemId;
                             useSlot = candidateItems[itemId];
@@ -1208,7 +1227,7 @@ namespace PMDC.Dungeon
                 AIPlan plan = (AIPlan)character.Tactic.Plans[0];
                 if (!AskToUse || (plan.IQ & AIFlags.ItemMaster) != AIFlags.None)
                 {
-                    if (character.EquippedItem.ID > -1 && !character.EquippedItem.Cursed)
+                    if (!String.IsNullOrEmpty(character.EquippedItem.ID) && !character.EquippedItem.Cursed)
                     {
                         if (isAutoReviveItem(character.EquippedItem.ID))
                         {
@@ -1219,7 +1238,7 @@ namespace PMDC.Dungeon
                 }
             }
 
-            if (useIndex > -1)
+            if (!String.IsNullOrEmpty(useIndex))
             {
                 character.OnRemove();
                 character.HP = character.MaxHP;
@@ -1237,7 +1256,7 @@ namespace PMDC.Dungeon
 
                 ItemData entry = DataManager.Instance.GetItem(useIndex);
 
-                int changeTo = -1;
+                string changeTo = "";
                 foreach (SingleCharEvent effect in entry.OnDeaths.EnumerateInOrder())
                 {
                     if (effect is AutoReviveEvent)
@@ -1252,7 +1271,7 @@ namespace PMDC.Dungeon
                 //if target has a held item, and it's eligible, use it
                 if (useSlot == BattleContext.EQUIP_ITEM_SLOT)
                 {
-                    if (changeTo > -1)
+                    if (!String.IsNullOrEmpty(changeTo))
                     {
                         character.EquippedItem.ID = ChangeTo;
                         character.EquipItem(character.EquippedItem);
@@ -1263,7 +1282,7 @@ namespace PMDC.Dungeon
                 else if (character.MemberTeam is ExplorerTeam)
                 {
                     ExplorerTeam team = (ExplorerTeam)character.MemberTeam;
-                    if (changeTo > -1)
+                    if (!String.IsNullOrEmpty(changeTo))
                     {
                         InvItem oldItem = new InvItem(team.GetInv(useSlot).ID);
                         team.GetInv(useSlot).ID = ChangeTo;
@@ -2105,7 +2124,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
             //do not activate if already holding an item
-            if (character.EquippedItem.ID != -1)
+            if (!String.IsNullOrEmpty(character.EquippedItem.ID))
                 yield break;
 
             //do not activate if inv is full
@@ -2139,15 +2158,18 @@ namespace PMDC.Dungeon
     [Serializable]
     public class GatherEvent : SingleCharEvent
     {
-        public int GatherItem;
+        [JsonConverter(typeof(ItemConverter))]
+        [DataType(0, DataManager.DataType.Item, false)]
+        public string GatherItem;
         public int Chance;
         public List<AnimEvent> Anims;
 
         public GatherEvent()
         {
             Anims = new List<AnimEvent>();
+            GatherItem = "";
         }
-        public GatherEvent(int gatherItem, int chance, params AnimEvent[] anims)
+        public GatherEvent(string gatherItem, int chance, params AnimEvent[] anims)
         {
             GatherItem = gatherItem;
             Chance = chance;
@@ -2167,7 +2189,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
             //do not activate if already holding an item
-            if (character.EquippedItem.ID != -1)
+            if (!String.IsNullOrEmpty(character.EquippedItem.ID))
                 yield break;
 
             //do not activate if inv is full
@@ -2248,18 +2270,19 @@ namespace PMDC.Dungeon
     public class PlateElementEvent : SingleCharEvent
     {
         [JsonConverter(typeof(ItemElementDictConverter))]
+        [DataType(1, DataManager.DataType.Item, false)]
         [DataType(2, DataManager.DataType.Element, false)]
-        public Dictionary<int, string> TypePair;
+        public Dictionary<string, string> TypePair;
 
-        public PlateElementEvent() { TypePair = new Dictionary<int, string>(); }
-        public PlateElementEvent(Dictionary<int, string> typePair)
+        public PlateElementEvent() { TypePair = new Dictionary<string, string>(); }
+        public PlateElementEvent(Dictionary<string, string> typePair)
         {
             TypePair = typePair;
         }
         protected PlateElementEvent(PlateElementEvent other)
             : this()
         {
-            foreach (int plate in other.TypePair.Keys)
+            foreach (string plate in other.TypePair.Keys)
                 TypePair.Add(plate, other.TypePair[plate]);
         }
         public override GameEvent Clone() { return new PlateElementEvent(this); }
@@ -2857,10 +2880,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class AskEvoEvent : SingleCharEvent
     {
-        public int ExceptionItem;
+        [JsonConverter(typeof(ItemConverter))]
+        [DataType(0, DataManager.DataType.Item, false)]
+        public string ExceptionItem;
 
-        public AskEvoEvent() { }
-        public AskEvoEvent(int exceptItem) { ExceptionItem = exceptItem; }
+        public AskEvoEvent() { ExceptionItem = ""; }
+        public AskEvoEvent(string exceptItem) { ExceptionItem = exceptItem; }
         public AskEvoEvent(AskEvoEvent other) { ExceptionItem = other.ExceptionItem; }
         public override GameEvent Clone() { return new AskEvoEvent(this); }
 
@@ -2971,10 +2996,10 @@ namespace PMDC.Dungeon
             MonsterData entry = DataManager.Instance.GetMonster(character.BaseForm.Species);
             PromoteBranch branch = entry.Promotions[branchIndex];
             bool bypass = character.EquippedItem.ID == ExceptionItem;
-            int evoItem = -1;
+            string evoItem = "";
             foreach (PromoteDetail detail in branch.Details)
             {
-                if (detail.GiveItem > -1)
+                if (!String.IsNullOrEmpty(detail.GiveItem))
                 {
                     evoItem = detail.GiveItem;
                     break;
@@ -2983,7 +3008,7 @@ namespace PMDC.Dungeon
             //factor in exception item to this question
             if (bypass)
                 evoItem = ExceptionItem;
-            string question = (evoItem > -1) ? String.Format(new StringKey("DLG_EVO_CONFIRM_ITEM").ToLocal(), character.GetDisplayName(true), DataManager.Instance.GetItem(evoItem).GetIconName(), DataManager.Instance.GetMonster(branch.Result).GetColoredName()) : String.Format(new StringKey("DLG_EVO_CONFIRM").ToLocal(), character.GetDisplayName(true), DataManager.Instance.GetMonster(branch.Result).GetColoredName());
+            string question = !String.IsNullOrEmpty(evoItem) ? String.Format(new StringKey("DLG_EVO_CONFIRM_ITEM").ToLocal(), character.GetDisplayName(true), DataManager.Instance.GetItem(evoItem).GetIconName(), DataManager.Instance.GetMonster(branch.Result).GetColoredName()) : String.Format(new StringKey("DLG_EVO_CONFIRM").ToLocal(), character.GetDisplayName(true), DataManager.Instance.GetMonster(branch.Result).GetColoredName());
             return MenuManager.Instance.CreateQuestion(question, () => { action(branchIndex); }, () => { });
         }
 
@@ -5089,7 +5114,7 @@ namespace PMDC.Dungeon
     {
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (ownerChar.EquippedItem.ID > -1)
+            if (!String.IsNullOrEmpty(ownerChar.EquippedItem.ID))
             {
                 ItemData entry = (ItemData)ownerChar.EquippedItem.GetData();
                 if (CheckEquipPassValidityEvent.CanItemEffectBePassed(entry))

@@ -1796,7 +1796,7 @@ namespace PMDC.Dungeon
     {
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, StatusCheckContext context)
         {
-            if (ownerChar.EquippedItem.ID > -1)
+            if (!String.IsNullOrEmpty(ownerChar.EquippedItem.ID))
             {
                 ItemData entry = (ItemData)ownerChar.EquippedItem.GetData();
                 if (CheckEquipPassValidityEvent.CanItemEffectBePassed(entry))

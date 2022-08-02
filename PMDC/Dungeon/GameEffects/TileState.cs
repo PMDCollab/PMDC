@@ -5,6 +5,7 @@ using RogueElements;
 using RogueEssence;
 using RogueEssence.Dev;
 using RogueEssence.Dungeon;
+using Newtonsoft.Json;
 
 namespace PMDC.Dungeon
 {
@@ -39,10 +40,11 @@ namespace PMDC.Dungeon
     [Serializable]
     public class UnlockState : TileState
     {
+        [JsonConverter(typeof(ItemConverter))]
         [DataType(0, RogueEssence.Data.DataManager.DataType.Item, false)]
-        public int UnlockItem;
-        public UnlockState() { }
-        public UnlockState(int unlockItem) { UnlockItem = unlockItem; }
+        public string UnlockItem;
+        public UnlockState() { UnlockItem = ""; }
+        public UnlockState(string unlockItem) { UnlockItem = unlockItem; }
         protected UnlockState(UnlockState other) { UnlockItem = other.UnlockItem; }
         public override GameplayState Clone() { return new UnlockState(this); }
     }

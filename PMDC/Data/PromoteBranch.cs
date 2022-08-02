@@ -24,9 +24,11 @@ namespace PMDC.Data
     [Serializable]
     public class EvoItem : PromoteDetail
     {
-        public int ItemNum;
+        [JsonConverter(typeof(ItemConverter))]
+        [DataType(0, DataManager.DataType.Item, false)]
+        public string ItemNum;
 
-        public override int GiveItem { get { return ItemNum; } }
+        public override string GiveItem { get { return ItemNum; } }
         public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_ITEM").ToLocal(), DataManager.Instance.GetItem(ItemNum).GetColoredName()); }
         public override bool GetGroundReq(Character character)
         {

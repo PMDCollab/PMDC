@@ -57,8 +57,7 @@ namespace PMDC.LevelGen
                 for (int ii = 0; ii < chosenAmount; ii++)
                 {
                     string chosenItem = possibleItems[map.Rand.Next(possibleItems.Count)];
-                    //TODO: String Assets
-                    results.Add(new MapItem(Int32.Parse(chosenItem)));
+                    results.Add(new MapItem(chosenItem));
                 }
             }
 

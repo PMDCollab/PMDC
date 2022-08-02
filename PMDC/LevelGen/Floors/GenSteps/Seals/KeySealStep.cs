@@ -37,14 +37,16 @@ namespace PMDC.LevelGen
         /// <summary>
         /// The item to be used as a key to unlock the vault.
         /// </summary>
+        [JsonConverter(typeof(ItemConverter))]
         [DataType(0, DataManager.DataType.Item, false)]
-        public int KeyItem;
+        public string KeyItem;
 
         public KeySealStep()
         {
+            KeyItem = "";
         }
 
-        public KeySealStep(string sealedTile, string keyTile, int keyItem) : base()
+        public KeySealStep(string sealedTile, string keyTile, string keyItem) : base()
         {
             LockedTile = sealedTile;
             KeyTile = keyTile;

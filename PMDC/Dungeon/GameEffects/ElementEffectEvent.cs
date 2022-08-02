@@ -274,7 +274,7 @@ namespace PMDC.Dungeon
     {
         public override void Apply(GameEventOwner owner, Character ownerChar, string moveType, string targetType, ref int effectiveness)
         {
-            if (ownerChar.EquippedItem.ID > -1)
+            if (!String.IsNullOrEmpty(ownerChar.EquippedItem.ID))
             {
                 ItemData entry = (ItemData)ownerChar.EquippedItem.GetData();
                 if (CheckEquipPassValidityEvent.CanItemEffectBePassed(entry))

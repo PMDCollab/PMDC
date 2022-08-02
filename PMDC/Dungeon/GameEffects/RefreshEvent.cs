@@ -317,7 +317,7 @@ namespace PMDC.Dungeon
 
         public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (character.EquippedItem.ID == -1)
+            if (String.IsNullOrEmpty(character.EquippedItem.ID))
                 character.MovementSpeed += 1;
         }
     }

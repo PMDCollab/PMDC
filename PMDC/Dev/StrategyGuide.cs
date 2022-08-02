@@ -194,11 +194,12 @@ namespace PMDC.Dev
         {
             List<string[]> stats = new List<string[]>();
             stats.Add(new string[5] { "###", "Name", "Type", "Price", "Description" });
-            for (int ii = 0; ii < DataManager.Instance.DataIndices[DataManager.DataType.Item].Count; ii++)
+            List<string> itemKeys = DataManager.Instance.DataIndices[DataManager.DataType.Item].GetOrderedKeys(true);
+            foreach (string key in itemKeys)
             {
-                ItemData entry = DataManager.Instance.GetItem(ii);
+                ItemData entry = DataManager.Instance.GetItem(key);
                 if (entry.Released)
-                    stats.Add(new string[5] { ii.ToString("D4"), entry.Name.ToLocal(), entry.UsageType.ToString(), entry.Price.ToString(), entry.Desc.ToLocal() });
+                    stats.Add(new string[5] { key, entry.Name.ToLocal(), entry.UsageType.ToString(), entry.Price.ToString(), entry.Desc.ToLocal() });
             }
 
             if (csv)
