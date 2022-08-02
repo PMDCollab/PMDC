@@ -324,7 +324,7 @@ namespace PMDC.LevelGen
         public bool UseSpecialItems;
 
         public ItemThemeRange() { Range = new List<string>(); }
-        public ItemThemeRange(bool mapItems, bool specialItems, RandRange amount, string[] range) : base(amount)
+        public ItemThemeRange(bool mapItems, bool specialItems, RandRange amount, params string[] range) : base(amount)
         {
             Range = new List<string>();
             Range.AddRange(range);
