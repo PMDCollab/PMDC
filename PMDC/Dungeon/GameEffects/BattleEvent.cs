@@ -223,7 +223,7 @@ namespace PMDC.Dungeon
             context.Strikes = 1;
             context.Item = new InvItem(item);
             if (entry.MaxStack > 1)
-                context.Item.HiddenValue = 1;
+                context.Item.Amount = 1;
             context.HitboxAction = entry.UseAction.Clone();
             switch (entry.UsageType)
             {
@@ -349,7 +349,7 @@ namespace PMDC.Dungeon
             context.Data.AfterActions.Add(-1, new LandItemEvent());
             context.Item = new InvItem(item);
             if (entry.MaxStack > 1)
-                context.Item.HiddenValue = 1;
+                context.Item.Amount = 1;
             context.Strikes = 1;
             //create the action from scratch
             if (entry.ArcThrow)
@@ -5054,7 +5054,7 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new CheckItemActiveEvent(); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.Item.HiddenValue != 0)
+            if (!String.IsNullOrEmpty(context.Item.HiddenValue))
             {
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ITEM_CANT_USE_NOW").ToLocal()));
                 context.CancelState.Cancel = true;
@@ -11272,7 +11272,7 @@ namespace PMDC.Dungeon
 
                 //restore this item
                 item.ID = newItem;
-                item.HiddenValue = 0;
+                item.HiddenValue = "";
                 context.Target.EquipItem(item);
                 DungeonScene.Instance.LogMsg(String.Format(SuccessMsg.ToLocal(), context.Target.GetDisplayName(false), oldName, item.GetDisplayName()));
             }
@@ -11286,15 +11286,14 @@ namespace PMDC.Dungeon
                     InvItem item = team.GetInv(ii);
                     if (item.ID == ItemIndex)
                     {
-                        //TODO: String Assets
-                        string newItem = item.HiddenValue.ToString();
+                        string newItem = item.HiddenValue;
                         if (String.IsNullOrEmpty(newItem))
                             newItem = DefaultItems[DataManager.Instance.Save.Rand.Next(DefaultItems.Count)];
 
                         InvItem oldItem = new InvItem(item);
 
                         item.ID = newItem;
-                        item.HiddenValue = 0;
+                        item.HiddenValue = "";
                         team.UpdateInv(oldItem, item);
                         DungeonScene.Instance.LogMsg(String.Format(SuccessMsg.ToLocal(), context.Target.GetDisplayName(false), oldItem.GetDisplayName(), item.GetDisplayName()));
                     }
@@ -11724,8 +11723,7 @@ namespace PMDC.Dungeon
                     //change the item to a different number index, set that item's hidden value to the previous item
                     if (itemIndex > -1)
                     {
-                        //TODO: String Assets
-                        item.HiddenValue = int.Parse(item.ID);
+                        item.HiddenValue = item.ID;
                         item.ID = NewItem;
                         DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRANSFORM_ITEM").ToLocal(), context.Target.GetDisplayName(false),
                             oldItem.GetDisplayName(), item.GetDisplayName()));
@@ -11733,9 +11731,8 @@ namespace PMDC.Dungeon
                     }
                     else
                     {
-                        //TODO: String Assets
                         context.Target.DequipItem();
-                        item.HiddenValue = int.Parse(item.ID);
+                        item.HiddenValue = item.ID;
                         item.ID = NewItem;
                         DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRANSFORM_HELD_ITEM").ToLocal(), context.Target.GetDisplayName(false),
                             oldItem.GetDisplayName(), item.GetDisplayName()));
@@ -13816,18 +13813,18 @@ namespace PMDC.Dungeon
             if (context.UsageSlot > BattleContext.EQUIP_ITEM_SLOT)//item in inventory
             {
                 InvItem item = ((ExplorerTeam)context.User.MemberTeam).GetInv(context.UsageSlot);
-                item.HiddenValue = 1;
+                item.HiddenValue = item.ID;
             }
             else if (context.UsageSlot == BattleContext.EQUIP_ITEM_SLOT)
             {
                 InvItem item = context.User.EquippedItem;
-                item.HiddenValue = 1;
+                item.HiddenValue = item.ID;
             }
             else if (context.UsageSlot == BattleContext.FLOOR_ITEM_SLOT)
             {
                 int mapSlot = ZoneManager.Instance.CurrentMap.GetItem(context.User.CharLoc);
                 MapItem mapItem = ZoneManager.Instance.CurrentMap.Items[mapSlot];
-                mapItem.HiddenValue = 1;
+                mapItem.HiddenValue = mapItem.Value;
             }
             yield break;
         }

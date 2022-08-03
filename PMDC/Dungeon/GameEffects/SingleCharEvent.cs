@@ -3406,7 +3406,7 @@ namespace PMDC.Dungeon
             {
                 ItemData entry = DataManager.Instance.GetItem(item.ID);
                 if (entry.MaxStack < 0 && entry.UsageType != ItemData.UseType.Box)
-                    item.HiddenValue = 0;
+                    item.HiddenValue = "";
             }
         }
     }
