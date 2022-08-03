@@ -399,7 +399,6 @@ namespace PMDC
             DataEditor.AddEditor(new AnimDataEditor());
             DataEditor.AddEditor(new SoundEditor());
             DataEditor.AddEditor(new MusicEditor());
-            DataEditor.AddEditor(new EntryDataIntEditor());
             DataEditor.AddEditor(new EntryDataEditor());
             DataEditor.AddEditor(new FrameTypeEditor());
             DataEditor.AddEditor(new MapItemEditor());

@@ -117,8 +117,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character, MapStatus status, bool msg)
         {
             //the owner must not be the newly added status
-            //TODO: String Assets owner.GetID()
-            if (status.ID != ((MapStatus)owner).ID || character != null)
+            if (status.ID != owner.GetID() || character != null)
                 yield break;
 
             //remove all other weather effects
@@ -131,8 +130,7 @@ namespace PMDC.Dungeon
                     if (removeStatus.StatusStates.Contains(state.FullType))
                         hasState = true;
                 }
-                //TODO: String Assets owner.GetID()
-                if (hasState && removeStatus.ID != ((MapStatus)owner).ID)
+                if (hasState && removeStatus.ID != owner.GetID())
                     removingIDs.Add(removeStatus.ID);
             }
             foreach (string removeID in removingIDs)

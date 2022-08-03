@@ -196,6 +196,18 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class EquipState : ItemState
+    {
+        public override GameplayState Clone() { return new EquipState(); }
+    }
+
+    [Serializable]
+    public class EvoState : ItemState
+    {
+        public override GameplayState Clone() { return new EvoState(); }
+    }
+
+    [Serializable]
     public class MachineState : ItemState
     {
         public override GameplayState Clone() { return new MachineState(); }

@@ -60,8 +60,7 @@ namespace PMDC.Dungeon
             FamilyState family;
             if (!entry.ItemStates.TryGet<FamilyState>(out family))
                 yield break;
-            //TODO: String Assets
-            if (family.Members.Contains(ownerChar.BaseForm.Species.ToString()))
+            if (family.Members.Contains(ownerChar.BaseForm.Species))
                 yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, context));
         }
     }
@@ -1495,8 +1494,8 @@ namespace PMDC.Dungeon
             if (context.Status != owner)
                 yield break;
 
-            if (((StatusEffect)owner).StatusStates.GetWithDefault<StackState>().Stack == 0)//TODO: String Assets owner.GetID()
-                yield return CoroutineManager.Instance.StartCoroutine(context.Target.RemoveStatusEffect(((StatusEffect)owner).ID, false));
+            if (((StatusEffect)owner).StatusStates.GetWithDefault<StackState>().Stack == 0)
+                yield return CoroutineManager.Instance.StartCoroutine(context.Target.RemoveStatusEffect(owner.GetID(), false));
         }
     }
 

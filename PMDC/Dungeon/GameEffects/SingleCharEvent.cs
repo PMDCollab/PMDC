@@ -69,8 +69,7 @@ namespace PMDC.Dungeon
             FamilyState family;
             if (!entry.ItemStates.TryGet<FamilyState>(out family))
                 yield break;
-            //TODO: String Assets
-            if (family.Members.Contains(ownerChar.BaseForm.Species.ToString()))
+            if (family.Members.Contains(ownerChar.BaseForm.Species))
                 yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, character));
         }
     }
@@ -2577,8 +2576,8 @@ namespace PMDC.Dungeon
                 if (countdown != null && countdown.Counter > -1)
                 {
                     countdown.Counter--;
-                    if (countdown.Counter <= 0)//TODO: String Assets owner.GetID()
-                        yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(((MapStatus)owner).ID));
+                    if (countdown.Counter <= 0)
+                        yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(owner.GetID()));
                 }
             }
         }
@@ -2710,8 +2709,7 @@ namespace PMDC.Dungeon
                     }
                     else if (countdown.Counter <= 0)
                     {
-                        //TODO: String Assets owner.GetID()
-                        yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(((MapStatus)owner).ID));
+                        yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(owner.GetID()));
                         DungeonScene.Instance.LogMsg(String.Format(TimeOut.ToLocal()));
 
                         FiniteEmitter endEmitter = (FiniteEmitter)Emitter.Clone();
@@ -2867,11 +2865,12 @@ namespace PMDC.Dungeon
 
         public IEnumerator<YieldInstruction> PromptTileCheck(GameEventOwner owner)
         {
-            Loc baseLoc = ((EffectTile)owner).TileLoc;
-            if (DungeonScene.Instance.ActiveTeam.Leader.CharLoc == baseLoc && ZoneManager.Instance.CurrentMap.Tiles[baseLoc.X][baseLoc.Y].Effect == owner)
+            EffectTile tile = (EffectTile)owner;
+            Loc baseLoc = tile.TileLoc;
+            if (DungeonScene.Instance.ActiveTeam.Leader.CharLoc == baseLoc && ZoneManager.Instance.CurrentMap.Tiles[baseLoc.X][baseLoc.Y].Effect == tile)
             {
-                GameManager.Instance.SE("Menu/Confirm");//TODO: String Assets owner.GetID()
-                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(new TileUnderfootMenu(((EffectTile)owner).ID, ((EffectTile)owner).Danger)));
+                GameManager.Instance.SE("Menu/Confirm");
+                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(new TileUnderfootMenu(tile.ID, tile.Danger)));
 
             }
         }
@@ -5051,8 +5050,8 @@ namespace PMDC.Dungeon
 
             if (tile.Effect.ID != ShopTile)
             {
-                GameManager.Instance.BGM(ZoneManager.Instance.CurrentMap.Music, true);//TODO: String Assets owner.GetID()
-                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(((MapStatus)owner).ID));
+                GameManager.Instance.BGM(ZoneManager.Instance.CurrentMap.Music, true);
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(owner.GetID()));
             }
         }
     }

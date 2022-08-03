@@ -267,8 +267,8 @@ namespace PMDC.LevelGen
             if (Items.Count != 1)
                 return string.Format("{0}[{1}]", this.GetType().Name, Items.Count.ToString());
             else
-            {//TODO: String Assets
-                EntrySummary summary = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[Items.GetSpawn(0).ID.ToString()];
+            {
+                EntrySummary summary = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[Items.GetSpawn(0).ID];
                 return string.Format("{0}: {1}", this.GetType().Name, summary.Name.ToLocal());
             }
         }

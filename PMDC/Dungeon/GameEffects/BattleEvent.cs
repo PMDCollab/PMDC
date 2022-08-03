@@ -2359,8 +2359,7 @@ namespace PMDC.Dungeon
             if (!entry.ItemStates.TryGet<FamilyState>(out family))
                 yield break;
 
-            //TODO: String Assets
-            if (family.Members.Contains(ownerChar.BaseForm.Species.ToString()))
+            if (family.Members.Contains(ownerChar.BaseForm.Species))
                 yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, context));
         }
     }
@@ -9465,12 +9464,11 @@ namespace PMDC.Dungeon
             if (testStatus != null)
             {
                 //add disable move based on the last move used
-                int lockedMove = testStatus.StatusStates.GetWithDefault<IndexState>().Index;
+                string lockedMove = testStatus.StatusStates.GetWithDefault<IDState>().ID;
                 //add the map status
                 MapStatus status = new MapStatus(BanStatusID);
                 status.LoadFromData();
-                //TODO: String Assets
-                status.StatusStates.GetWithDefault<MapIndexState>().Index = lockedMove;
+                status.StatusStates.GetWithDefault<MapIDState>().ID = lockedMove;
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
             }
             else
