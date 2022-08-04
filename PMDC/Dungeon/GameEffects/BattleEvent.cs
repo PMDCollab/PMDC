@@ -11261,8 +11261,7 @@ namespace PMDC.Dungeon
             {
                 InvItem item = context.Target.EquippedItem;
 
-                //TODO: String Assets
-                string newItem = item.HiddenValue.ToString();
+                string newItem = item.HiddenValue;
                 if (String.IsNullOrEmpty(newItem))
                     newItem = DefaultItems[DataManager.Instance.Save.Rand.Next(DefaultItems.Count)];
 
