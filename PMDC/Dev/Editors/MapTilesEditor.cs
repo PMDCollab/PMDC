@@ -31,7 +31,7 @@ namespace RogueEssence.Dev
             Tile wall = new Tile("wall");
             Tile water = new Tile("water");
             Tile lava = new Tile("lava");
-            Tile pit = new Tile("abyss");
+            Tile pit = new Tile("pit");
             if (member != null && member.Length > 0)
             {
                 for (int yy = 0; yy < member[0].Length; yy++)
@@ -87,7 +87,7 @@ namespace RogueEssence.Dev
                     else if (level[yy][xx] == '^')
                         tiles[xx][yy] = new Tile("lava");
                     else if (level[yy][xx] == '_')
-                        tiles[xx][yy] = new Tile("abyss");
+                        tiles[xx][yy] = new Tile("pit");
                     else
                         tiles[xx][yy] = new Tile(DataManager.Instance.GenFloor);
                 }
