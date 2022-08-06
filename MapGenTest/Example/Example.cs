@@ -25,6 +25,19 @@ namespace MapGenTest
             return zone;
         }
 
+        private static T getRegValueOrDefault<T>(string key, T defaultVal)
+        {
+            try
+            {
+                return (T)Registry.GetValue(DiagManager.REG_PATH, key, defaultVal);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+            return defaultVal;
+        }
+
         public static void Run()
         {
             loadedZones = new Dictionary<string, ZoneData>();
@@ -67,7 +80,7 @@ namespace MapGenTest
                         Console.WriteLine(String.Format(choiceStr, choiceList.ToArray()));
                     }
 
-                    string zoneIndex = (string)Registry.GetValue(DiagManager.REG_PATH, "ZoneChoice", "");
+                    string zoneIndex = getRegValueOrDefault<string>("ZoneChoice", "");
                     if (String.IsNullOrEmpty(zoneIndex))
                     {
                         ConsoleKeyInfo key = Console.ReadKey();
@@ -162,7 +175,7 @@ namespace MapGenTest
                         Console.WriteLine(String.Format(choiceStr, choiceList.ToArray()));
                     }
 
-                    int structureIndex = (int)Registry.GetValue(DiagManager.REG_PATH, "StructChoice", -1);
+                    int structureIndex = getRegValueOrDefault<int>("StructChoice", -1);
                     if (structureIndex == -1)
                     {
                         ConsoleKeyInfo key = Console.ReadKey();
@@ -227,7 +240,7 @@ namespace MapGenTest
                     Console.WriteLine(state);
                     Console.WriteLine("Choose a Floor: 0-{0}|ESC=Back|F2=Stress Test", (structure.FloorCount - 1).ToString());
 
-                    int floorNum = (int)Registry.GetValue(DiagManager.REG_PATH, "FloorChoice", -1);
+                    int floorNum = getRegValueOrDefault<int>("FloorChoice", -1);
                     if (floorNum == -1)
                     {
                         floorNum = GetInt(true);
@@ -284,7 +297,7 @@ namespace MapGenTest
             try
             {
                 ulong newSeed;
-                if (UInt64.TryParse((string)Registry.GetValue(DiagManager.REG_PATH, "SeedChoice", ""), out newSeed))
+                if (UInt64.TryParse(getRegValueOrDefault<string>("SeedChoice", ""), out newSeed))
                     zoneSeed = newSeed;
 
                 Registry.SetValue(DiagManager.REG_PATH, "SeedChoice", zoneSeed.ToString());
