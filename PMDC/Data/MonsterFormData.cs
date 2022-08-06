@@ -281,29 +281,6 @@ namespace PMDC.Data
             return false;
         }
 
-
-
-        //TODO: Created v0.5.10, delete on v0.6.1
-        [OnDeserialized]
-        internal void OnDeserializedMethod(StreamingContext context)
-        {
-            if (Serializer.OldVersion <= new Version(0, 5, 9, 0))
-            {
-                if (Ratio == -1)
-                {
-                    GenderlessWeight = 1;
-                    MaleWeight = 0;
-                    FemaleWeight = 0;
-                }
-                else
-                {
-                    GenderlessWeight = 0;
-                    MaleWeight = 8 - Ratio;
-                    FemaleWeight = Ratio;
-                }
-            }
-        }
-
     }
 
 

@@ -143,13 +143,5 @@ namespace PMDC.LevelGen
 
             queue.Enqueue(Priority, monsterHouseStep);
         }
-
-        //TODO: Created v0.5.2, delete on v0.6.1
-        [OnDeserialized]
-        internal void OnDeserializedMethod(StreamingContext context)
-        {
-            if (ModStates == null)
-                ModStates = new List<FlagType>();
-        }
     }
 }
