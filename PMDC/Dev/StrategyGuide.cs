@@ -407,10 +407,10 @@ namespace PMDC.Dev
                         if (encounterMsg.Count > 0)
                             encounterStr = String.Join(", ", encounterMsg.ToArray());
                     }
-                    stats.Add(new string[4] { summary.GetSortOrder().ToString("D3"), DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[key].Name.ToLocal(), data.JoinRate.ToString() + "%", encounterStr });
+                    stats.Add(new string[4] { summary.SortOrder.ToString("D3"), DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[key].Name.ToLocal(), data.JoinRate.ToString() + "%", encounterStr });
                 }
                 else
-                    stats.Add(new string[4] { summary.GetSortOrder().ToString("D3"), DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[key].Name.ToLocal(), "--%", "NO DATA" });
+                    stats.Add(new string[4] { summary.SortOrder.ToString("D3"), DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[key].Name.ToLocal(), "--%", "NO DATA" });
             }
             if (csv)
                 writeCSVGuide("Encounters", stats);
