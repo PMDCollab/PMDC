@@ -297,6 +297,9 @@ namespace PMDC
 
                     DataManager.InitDataDirs(PathMod.ModPath(""));
                     RogueEssence.Dev.DevHelper.ConvertAssetNames();
+
+                    //load conversions a second time because it mightve changed
+                    DataManager.Instance.LoadConversions();
                     RogueEssence.Dev.DevHelper.ReserializeBase();
                     DiagManager.Instance.LogInfo("Reserializing main data");
                     RogueEssence.Dev.DevHelper.Reserialize(reserializeIndices);
@@ -308,6 +311,9 @@ namespace PMDC
                     }
                     DiagManager.Instance.LogInfo("Reserializing indices");
                     RogueEssence.Dev.DevHelper.RunIndexing(reserializeIndices);
+
+                    DataManager.InitInstance();
+                    DataManager.Instance.LoadConversions();
 
                     //TODO: Created v0.5.20, delete on v1.1
                     if (File.Exists(PathMod.HardMod(DataManager.MISC_PATH + "Index.bin")))
