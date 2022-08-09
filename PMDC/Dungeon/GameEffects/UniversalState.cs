@@ -43,6 +43,35 @@ namespace PMDC.Dungeon
             int defendIdx = TypeMap[defending];
             return TypeMatchup[attackIdx][defendIdx];
         }
+
+
+
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            if (TypeMap.Count == 0)
+            {
+                TypeMap["none"] = 0;
+                TypeMap["bug"] = 1;
+                TypeMap["dark"] = 2;
+                TypeMap["dragon"] = 3;
+                TypeMap["electric"] = 4;
+                TypeMap["fairy"] = 5;
+                TypeMap["fighting"] = 6;
+                TypeMap["fire"] = 7;
+                TypeMap["flying"] = 8;
+                TypeMap["ghost"] = 9;
+                TypeMap["grass"] = 10;
+                TypeMap["ground"] = 11;
+                TypeMap["ice"] = 12;
+                TypeMap["normal"] = 13;
+                TypeMap["poison"] = 14;
+                TypeMap["psychic"] = 15;
+                TypeMap["rock"] = 16;
+                TypeMap["steel"] = 17;
+                TypeMap["water"] = 18;
+            }
+        }
     }
 
     [Serializable]

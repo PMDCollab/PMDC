@@ -70,6 +70,7 @@ namespace PMDC
                 bool buildQuest = false;
                 bool loadModXml = true;
                 string playInputs = null;
+                bool preConvert = false;
                 for (int ii = 1; ii < args.Length; ii++)
                 {
                     if (args[ii] == "-dev")
@@ -195,6 +196,11 @@ namespace PMDC
                         loadModXml = false;
                         ii += jj - 1;
                     }
+                    else if (args[ii] == "-preconvert")
+                    {
+                        preConvert = true;
+                        ii++;
+                    }
                 }
 
                 DiagManager.Instance.SetupGamepad();
@@ -276,6 +282,21 @@ namespace PMDC
                         GraphicsManager.InitSystem(game.GraphicsDevice);
                         GraphicsManager.RunConversions(convertAssets);
                     }
+                    return;
+                }
+
+                if (preConvert)
+                {
+                    using (GameBase game = new GameBase())
+                    {
+                        GraphicsManager.InitSystem(game.GraphicsDevice);
+                        GraphicsManager.RebuildIndices(GraphicsManager.AssetType.All);
+                    }
+
+                    LuaEngine.InitInstance();
+                    DataManager.InitInstance();
+                    DataManager.Instance.LoadConversions();
+                    RogueEssence.Dev.DevHelper.PrepareAssetConversion();
                     return;
                 }
 
