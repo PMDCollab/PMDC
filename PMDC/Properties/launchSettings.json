@@ -2,7 +2,8 @@
   "profiles": {
     "PMDC": {
       "commandName": "Project",
-      "commandLineArgs": "-asset ../../../../../../DumpAsset/ -raw ../../../../../../RawAsset/ -dev -lang en"
+      "commandLineArgs": "-asset ../../DumpAsset/ -raw ../../RawAsset/ -dev -lang en",
+      "workingDirectory": "$(ProjectDir)"
     }
   }
 }
