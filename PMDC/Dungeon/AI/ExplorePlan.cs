@@ -100,7 +100,9 @@ namespace PMDC.Dungeon
                             if (destChar != null)
                             {
                                 bool pushOver = true;
-                                if (destChar.MemberTeam == controlledChar.MemberTeam)
+                                if (destChar.MemberTeam.MapFaction < controlledChar.MemberTeam.MapFaction)
+                                    pushOver = false;
+                                else if (destChar.MemberTeam.MapFaction == controlledChar.MemberTeam.MapFaction)
                                 {
                                     Team team = destChar.MemberTeam;
                                     if (destChar == team.Leader)
