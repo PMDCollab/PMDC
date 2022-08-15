@@ -126,6 +126,8 @@ namespace PMDC.Dungeon
                         // if there's a character there, and they're ordered before us
                         if (destChar != null)
                         {
+                            if (DungeonScene.Instance.GetMatchup(controlledChar, destChar) == Alignment.Foe)
+                                return true;
                             bool pushOver = true;
                             if (destChar.MemberTeam.MapFaction < controlledChar.MemberTeam.MapFaction)
                                 pushOver = false;
