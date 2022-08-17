@@ -710,8 +710,8 @@ namespace MapGenTest
                 {
                     if (mapItem.IsMoney)
                     {
-                        MathUtils.AddToDictionary<string>(generatedItems, null, mapItem.Amount);
-                        MathUtils.AddToDictionary<string>(generatedItems, "", 1);
+                        MathUtils.AddToDictionary<string>(generatedItems, "**MONEY**", mapItem.Amount);
+                        MathUtils.AddToDictionary<string>(generatedItems, "**MONEYPILE**", 1);
                     }
                     else
                         MathUtils.AddToDictionary<string>(generatedItems, mapItem.Value, 1);
@@ -741,15 +741,19 @@ namespace MapGenTest
             }
             foreach (string key in GeneratedItems.Keys)
             {
-                if (!String.IsNullOrEmpty(key))
+                if (key == "**MONEY**")
+                {
+                    finalString.Append(String.Format("Money: {0}", GeneratedItems[key]) + "\n");
+                }
+                else if (key == "**MONEYPILE**")
+                {
+                    printout.Add(String.Format("    {0:D5} {1:F5} {2}", GeneratedItems[key], ((float)GeneratedItems[key] / total), "Money Spawns"));
+                }
+                else if (!String.IsNullOrEmpty(key))
                 {
                     ItemData entry = DataManager.Instance.GetItem(key);
                     printout.Add(String.Format("    {0:D5} {1:F5} #{2:0000} {3}", GeneratedItems[key], ((float)GeneratedItems[key] / total), key, entry.Name.DefaultText));
                 }
-                else if (key == "")
-                    printout.Add(String.Format("    {0:D5} {1:F5} {2}", GeneratedItems[key], ((float)GeneratedItems[key] / total), "Money Spawns"));
-                else
-                    finalString.Append(String.Format("Money: {0}", GeneratedItems[key]) + "\n");
             }
             printout.Sort();
 
