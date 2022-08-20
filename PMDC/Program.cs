@@ -495,11 +495,13 @@ namespace PMDC
             //TODO: there is no parameterless interface for hashset
             //so instead we have to do the painful process of manually adding every hashset of every type we actually use.  ugh
             DataEditor.AddEditor(new HashSetEditor<int>());
+
             DataEditor.AddEditor(new ArrayEditor());
             DataEditor.AddEditor(new DictionaryEditor());
             DataEditor.AddEditor(new NoDupeListEditor());
             DataEditor.AddEditor(new ListEditor());
             DataEditor.AddEditor(new EnumEditor());
+            DataEditor.AddEditor(new GuidEditor());
             DataEditor.AddEditor(new StringEditor());
             DataEditor.AddEditor(new DoubleEditor());
             DataEditor.AddEditor(new SingleEditor());
