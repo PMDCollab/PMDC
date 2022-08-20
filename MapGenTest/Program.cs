@@ -16,7 +16,7 @@ namespace MapGenTest
                 enlargeConsole();
 
             string[] args = Environment.GetCommandLineArgs();
-            PathMod.InitExePath(args[0]);
+            PathMod.InitPathMod(args[0], "origin");
             DiagManager.InitInstance();
             //DiagManager.Instance.DevMode = true;
 
