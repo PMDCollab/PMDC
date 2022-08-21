@@ -207,16 +207,16 @@ namespace PMDC
                 GraphicsManager.InitParams();
 
                 DiagManager.Instance.DevMode = dev;
-                
+
+                ModHeader newQuest = ModHeader.Invalid;
+                ModHeader[] newMods = new ModHeader[0] { };
                 if (quest != "")
                 {
                     ModHeader header = PathMod.GetModDetails(Path.Combine(PathMod.MODS_PATH, quest));
                     if (header.IsValid())
                     {
-                        PathMod.Quest = header;
-
-                        //TODO: Set order
-                        DiagManager.Instance.LogInfo(String.Format("Loaded quest \"{0}\".", quest));
+                        newQuest = header;
+                        DiagManager.Instance.LogInfo(String.Format("Queued quest for loading: \"{0}\".", quest));
                     }
                     else
                         DiagManager.Instance.LogInfo(String.Format("Cannot find quest \"{0}\" in {1}. Falling back to base game.", quest, PathMod.MODS_PATH));
@@ -231,7 +231,7 @@ namespace PMDC
                         if (header.IsValid())
                         {
                             workingMods.Add(header);
-                            DiagManager.Instance.LogInfo(String.Format("Loaded mod \"{0}\".", String.Join(", ", mod[ii])));
+                            DiagManager.Instance.LogInfo(String.Format("Queued mod for loading: \"{0}\".", String.Join(", ", mod[ii])));
                         }
                         else
                         {
@@ -240,16 +240,16 @@ namespace PMDC
                             ii--;
                         }
                     }
-                    PathMod.Mods = workingMods.ToArray();
+                    newMods = workingMods.ToArray();
                 }
 
                 if (loadModXml)
-                    DiagManager.Instance.LoadModSettings();
+                    (newQuest, newMods) = DiagManager.Instance.LoadModSettings();
 
                 List<int> loadOrder = new List<int>();
                 List<(ModRelationship, List<ModHeader>)> loadErrors = new List<(ModRelationship, List<ModHeader>)>();
-                PathMod.ValidateModLoad(PathMod.Quest, PathMod.Mods, loadOrder, loadErrors);
-                PathMod.LoadOrder = loadOrder;
+                PathMod.ValidateModLoad(newQuest, newMods, loadOrder, loadErrors);
+                PathMod.SetMods(newQuest, newMods, loadOrder);
                 if (loadErrors.Count > 0)
                 {
                     List<string> errorMsgs = new List<string>();
@@ -276,14 +276,14 @@ namespace PMDC
                                     List<string> cycle = new List<string>();
                                     foreach (ModHeader header in involved)
                                         cycle.Add(header.Namespace);
-                                    errorMsgs.Add(String.Format("Load-order loop: .", String.Join(", ", cycle.ToArray())));
+                                    errorMsgs.Add(String.Format("Load-order loop: {0}.", String.Join(", ", cycle.ToArray())));
                                     errorMsgs.Add("\n");
                                 }
                                 break;
                         }
                     }
                     DiagManager.Instance.LogError(new Exception("Errors detected in mod load:\n" + String.Join("", errorMsgs.ToArray())));
-                    DiagManager.Instance.LogInfo(String.Format("The game will continue execution, but all bets are off for mods working properly!"));
+                    DiagManager.Instance.LogInfo(String.Format("The game will continue execution with mods loaded, but order will be broken!"));
                 }
 
 
