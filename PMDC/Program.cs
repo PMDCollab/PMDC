@@ -215,6 +215,7 @@ namespace PMDC
                     {
                         PathMod.Quest = header;
 
+                        //TODO: Set order
                         DiagManager.Instance.LogInfo(String.Format("Loaded quest \"{0}\".", quest));
                     }
                     else
@@ -244,6 +245,46 @@ namespace PMDC
 
                 if (loadModXml)
                     DiagManager.Instance.LoadModSettings();
+
+                List<int> loadOrder = new List<int>();
+                List<(ModRelationship, List<ModHeader>)> loadErrors = new List<(ModRelationship, List<ModHeader>)>();
+                PathMod.ValidateModLoad(PathMod.Quest, PathMod.Mods, loadOrder, loadErrors);
+                PathMod.LoadOrder = loadOrder;
+                if (loadErrors.Count > 0)
+                {
+                    List<string> errorMsgs = new List<string>();
+                    foreach ((ModRelationship, List<ModHeader>) loadError in loadErrors)
+                    {
+                        List<ModHeader> involved = loadError.Item2;
+                        switch (loadError.Item1)
+                        {
+                            case ModRelationship.Incompatible:
+                                {
+                                    errorMsgs.Add(String.Format("{0} is incompatible with {1}.", involved[0].Namespace, involved[1].Namespace));
+                                    errorMsgs.Add("\n");
+                                }
+                                break;
+                            case ModRelationship.DependsOn:
+                                {
+                                    errorMsgs.Add(String.Format("{0} depends on missing mod {1}.", involved[0].Namespace, involved[1].Namespace));
+                                    errorMsgs.Add("\n");
+                                }
+                                break;
+                            case ModRelationship.LoadBefore:
+                            case ModRelationship.LoadAfter:
+                                {
+                                    List<string> cycle = new List<string>();
+                                    foreach (ModHeader header in involved)
+                                        cycle.Add(header.Namespace);
+                                    errorMsgs.Add(String.Format("Load-order loop: .", String.Join(", ", cycle.ToArray())));
+                                    errorMsgs.Add("\n");
+                                }
+                                break;
+                        }
+                    }
+                    DiagManager.Instance.LogError(new Exception("Errors detected in mod load:\n" + String.Join("", errorMsgs.ToArray())));
+                    DiagManager.Instance.LogInfo(String.Format("The game will continue execution, but all bets are off for mods working properly!"));
+                }
 
 
                 if (playInputs != null)
