@@ -212,7 +212,7 @@ namespace PMDC.Dev
         {
             List<string[]> stats = new List<string[]>();
             stats.Add(new string[9] { "###", "Name", "Type", "Category", "Power", "Accuracy", "PP", "Range", "Description" });
-            foreach(String key in DataManager.Instance.DataIndices[DataManager.DataType.Skill].Entries.Keys)
+            foreach(String key in DataManager.Instance.DataIndices[DataManager.DataType.Skill].GetOrderedKeys(true))
             {
                 SkillData entry = DataManager.Instance.GetSkill(key);
                 if (entry.Released)
@@ -243,7 +243,7 @@ namespace PMDC.Dev
         {
             List<string[]> stats = new List<string[]>();
             stats.Add(new string[3] { "###", "Name", "Description" });
-            foreach(string key in DataManager.Instance.DataIndices[DataManager.DataType.Intrinsic].Entries.Keys)
+            foreach(string key in DataManager.Instance.DataIndices[DataManager.DataType.Intrinsic].GetOrderedKeys(true))
             {
                 IntrinsicData entry = DataManager.Instance.GetIntrinsic(key);
                 if (entry.Released)
@@ -307,7 +307,7 @@ namespace PMDC.Dev
             List<string> monsterKeys = DataManager.Instance.DataIndices[DataManager.DataType.Monster].GetOrderedKeys(true);
             foreach (string key in monsterKeys)
             {
-                EntrySummary summary = DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[key];
+                EntrySummary summary = DataManager.Instance.DataIndices[DataManager.DataType.Monster].Get(key);
                 if (summary.Released)
                 {
                     MonsterData data = DataManager.Instance.GetMonster(key);
@@ -355,7 +355,7 @@ namespace PMDC.Dev
                             Dictionary<string, HashSet<int>> specialDict = foundDict[tag].specialDict;
                             Dictionary<string, Dictionary<int, HashSet<int>>> floorDict = foundDict[tag].floorDict;
 
-                            foreach(string zz in DataManager.Instance.DataIndices[DataManager.DataType.Zone].Entries.Keys)
+                            foreach(string zz in DataManager.Instance.DataIndices[DataManager.DataType.Zone].GetOrderedKeys(true))
                             {
                                 ZoneData mainZone = DataManager.Instance.GetZone(zz);
                                 for (int yy = 0; yy < mainZone.Segments.Count; yy++)
@@ -407,10 +407,10 @@ namespace PMDC.Dev
                         if (encounterMsg.Count > 0)
                             encounterStr = String.Join(", ", encounterMsg.ToArray());
                     }
-                    stats.Add(new string[4] { summary.SortOrder.ToString("D3"), DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[key].Name.ToLocal(), data.JoinRate.ToString() + "%", encounterStr });
+                    stats.Add(new string[4] { summary.SortOrder.ToString("D3"), DataManager.Instance.DataIndices[DataManager.DataType.Monster].Get(key).Name.ToLocal(), data.JoinRate.ToString() + "%", encounterStr });
                 }
                 else
-                    stats.Add(new string[4] { summary.SortOrder.ToString("D3"), DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[key].Name.ToLocal(), "--%", "NO DATA" });
+                    stats.Add(new string[4] { summary.SortOrder.ToString("D3"), DataManager.Instance.DataIndices[DataManager.DataType.Monster].Get(key).Name.ToLocal(), "--%", "NO DATA" });
             }
             if (csv)
                 writeCSVGuide("Encounters", stats);

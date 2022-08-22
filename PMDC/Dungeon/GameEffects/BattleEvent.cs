@@ -645,7 +645,7 @@ namespace PMDC.Dungeon
         {
             List<string> elements = new List<string>();
             string element = DataManager.Instance.DefaultElement;
-            foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Element].Entries.Keys)
+            foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Element].GetOrderedKeys(true))
             {
                 int effectiveness = PreTypeEvent.CalculateTypeMatchup(context.Data.Element, key);
                 if (effectiveness == PreTypeEvent.N_E)
@@ -823,11 +823,11 @@ namespace PMDC.Dungeon
         protected override string GetInvokedMove(GameEventOwner owner, BattleContext context)
         {
             List<string> releasedMoves = new List<string>();
-            foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Skill].Entries.Keys)
+            foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Skill].GetOrderedKeys(true))
             {
                 if (key == DataManager.Instance.DefaultSkill)
                     continue;
-                if (DataManager.Instance.DataIndices[DataManager.DataType.Skill].Entries[key].Released)
+                if (DataManager.Instance.DataIndices[DataManager.DataType.Skill].Get(key).Released)
                     releasedMoves.Add(key);
             }
 
@@ -843,7 +843,7 @@ namespace PMDC.Dungeon
 
         private void tryAddMove(List<string> moves, string move)
         {
-            if (DataManager.Instance.DataIndices[DataManager.DataType.Skill].Entries[move].Released)
+            if (DataManager.Instance.DataIndices[DataManager.DataType.Skill].Get(move).Released)
                 moves.Add(move);
         }
 
@@ -943,7 +943,7 @@ namespace PMDC.Dungeon
                 List<Character> seenFoes = context.User.GetSeenCharacters(Alignment.Foe);
                 foreach (Character chara in seenFoes)
                 {
-                    foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Element].Entries.Keys)
+                    foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Element].GetOrderedKeys(true))
                     {
                         if (PreTypeEvent.GetDualEffectiveness(context.User, chara, key) > PreTypeEvent.NRM_2)
                             availableWeaknesses.Add(key);
@@ -1202,11 +1202,11 @@ namespace PMDC.Dungeon
             }
 
             List<string> releasedMoves = new List<string>();
-            foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Skill].Entries.Keys)
+            foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Skill].GetOrderedKeys(true))
             {
                 if (key == DataManager.Instance.DefaultSkill)
                     continue;
-                if (DataManager.Instance.DataIndices[DataManager.DataType.Skill].Entries[key].Released)
+                if (DataManager.Instance.DataIndices[DataManager.DataType.Skill].Get(key).Released)
                     releasedMoves.Add(key);
             }
             int randIndex = DataManager.Instance.Save.Rand.Next(releasedMoves.Count);
@@ -6677,12 +6677,12 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             List<string> possibleElements = new List<string>();
-            foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Element].Entries.Keys)
+            foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Element].GetOrderedKeys(true))
             {
                 if (key != DataManager.Instance.DefaultElement)
                     possibleElements.Add(key);
             }
-            ulong elementID = 1 + (ZoneManager.Instance.CurrentMap.Rand.FirstSeed ^ (ulong)context.User.Discriminator) % (ulong)(possibleElements.Count);
+            ulong elementID = (ZoneManager.Instance.CurrentMap.Rand.FirstSeed ^ (ulong)context.User.Discriminator) % (ulong)(possibleElements.Count);
             context.Data.Element = possibleElements[(int)elementID];
             ElementData element = DataManager.Instance.GetElement(context.Data.Element);
             DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SKILL_TO_ELEMENT").ToLocal(), element.GetIconName()));

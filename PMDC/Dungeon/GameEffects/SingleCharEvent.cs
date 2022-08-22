@@ -2943,7 +2943,7 @@ namespace PMDC.Dungeon
                 List<int> validEvos = new List<int>();
                 for (int ii = 0; ii < entry.Promotions.Count; ii++)
                 {
-                    if (!DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries[entry.Promotions[ii].Result.ToString()].Released)
+                    if (!DataManager.Instance.DataIndices[DataManager.DataType.Monster].Get(entry.Promotions[ii].Result).Released)
                         continue;
                     bool hardReq = false;
                     if (entry.Promotions[ii].IsQualified(character, true))

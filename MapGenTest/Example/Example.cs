@@ -44,7 +44,7 @@ namespace MapGenTest
             try
             {
                 List<string> zoneNames = new List<string>();
-                foreach(string key in DataManager.Instance.DataIndices[DataManager.DataType.Zone].Entries.Keys)
+                foreach(string key in DataManager.Instance.DataIndices[DataManager.DataType.Zone].GetOrderedKeys(false))
                     zoneNames.Add(key);
 
                 string state = "Zones";
@@ -470,7 +470,7 @@ namespace MapGenTest
             try
             {
                 Dictionary<string, List<TimeSpan>> generationTimes = new Dictionary<string, List<TimeSpan>>();
-                foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Zone].Entries.Keys)
+                foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Zone].GetOrderedKeys(false))
                     generationTimes[key] = new List<TimeSpan>();
 
                 Stopwatch watch = new Stopwatch();
@@ -480,7 +480,7 @@ namespace MapGenTest
                     zoneSeed = MathUtils.Rand.NextUInt64();
                     ReNoise totalNoise = new ReNoise(zoneSeed);
 
-                    foreach(string key in DataManager.Instance.DataIndices[DataManager.DataType.Zone].Entries.Keys)
+                    foreach(string key in DataManager.Instance.DataIndices[DataManager.DataType.Zone].GetOrderedKeys(false))
                     {
                         zoneIndex = key;
                         ZoneData zone = getCachedZone(key);

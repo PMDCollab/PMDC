@@ -159,7 +159,7 @@ namespace PMDC.Dev
             Dictionary<string, HashSet<(string, ZoneLoc)>> foundSpecies = new Dictionary<string, HashSet<(string, ZoneLoc)>>();
             
             //check all structures
-            foreach(string zz in DataManager.Instance.DataIndices[DataManager.DataType.Zone].Entries.Keys)
+            foreach(string zz in DataManager.Instance.DataIndices[DataManager.DataType.Zone].GetOrderedKeys(true))
             {
                 if (zz == DataManager.Instance.DefaultZone)
                     continue;
@@ -246,7 +246,7 @@ namespace PMDC.Dev
         {
             List<MonsterID> results = new List<MonsterID>();
             //go through entire dex
-            foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Monster].Entries.Keys)
+            foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Monster].GetOrderedKeys(true))
             {
                 MonsterData dex = DataManager.Instance.GetMonster(key);
                 for (int jj = 0; jj < dex.Forms.Count; jj++)
@@ -308,7 +308,7 @@ namespace PMDC.Dev
 
                             string ability = "";
                             IntrinsicData entry = null;
-                            foreach(string key in DataManager.Instance.DataIndices[DataManager.DataType.Intrinsic].Entries.Keys)
+                            foreach(string key in DataManager.Instance.DataIndices[DataManager.DataType.Intrinsic].GetOrderedKeys(true))
                             {
                                 entry = DataManager.Instance.GetIntrinsic(key);
                                 if (entry.Name.ToLocal().ToLower() == name.ToLower())

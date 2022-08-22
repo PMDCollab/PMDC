@@ -123,7 +123,7 @@ namespace PMDC.LevelGen
         {
             string status = String.Format("{0} Choices", DefaultMapStatus.Length);
             if (DefaultMapStatus.Length == 1)
-                status = DataManager.Instance.DataIndices[DataManager.DataType.MapStatus].Entries[DefaultMapStatus[0]].Name.ToLocal();
+                status = DataManager.Instance.DataIndices[DataManager.DataType.MapStatus].Get(DefaultMapStatus[0]).Name.ToLocal();
             return String.Format("{0}: {1}", this.GetType().Name, status);
         }
     }

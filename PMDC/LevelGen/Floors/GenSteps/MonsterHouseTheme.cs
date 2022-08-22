@@ -130,7 +130,7 @@ namespace PMDC.LevelGen
                     MapItem spawn = specialItems.GetSpawn(ii);
                     if (!spawn.IsMoney)
                     {
-                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.Value] as ItemEntrySummary;
+                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(spawn.Value) as ItemEntrySummary;
 
                         if (itemEntry.UsageType == UseType)
                             subList.Add(spawn, specialItems.GetSpawnRate(ii));
@@ -147,7 +147,7 @@ namespace PMDC.LevelGen
                     {
                         //TODO: spawn rate is somewhat distorted here
                         InvItem spawn = spawns.GetSpawn(ii);
-                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.ID] as ItemEntrySummary;
+                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(spawn.ID) as ItemEntrySummary;
                         if (itemEntry.UsageType == UseType)
                             subList.Add(new MapItem(spawn), spawns.GetSpawnRate(ii));
                     }
@@ -200,7 +200,7 @@ namespace PMDC.LevelGen
                     MapItem spawn = specialItems.GetSpawn(ii);
                     if (!spawn.IsMoney)
                     {
-                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.Value] as ItemEntrySummary;
+                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(spawn.Value) as ItemEntrySummary;
                         if (itemEntry.ContainsState(UseType.FullType))
                             subList.Add(spawn, specialItems.GetSpawnRate(ii));
                     }
@@ -216,7 +216,7 @@ namespace PMDC.LevelGen
                     {
                         //TODO: spawn rate is somewhat distorted here
                         InvItem spawn = spawns.GetSpawn(ii);
-                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Entries[spawn.ID] as ItemEntrySummary;
+                        ItemEntrySummary itemEntry = DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(spawn.ID) as ItemEntrySummary;
                         if (itemEntry.ContainsState(UseType.FullType))
                             subList.Add(new MapItem(spawn), spawns.GetSpawnRate(ii));
                     }
