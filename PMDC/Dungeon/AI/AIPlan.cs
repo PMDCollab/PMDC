@@ -115,17 +115,38 @@ namespace PMDC.Dungeon
             IQ = other.IQ;
         }
 
-        private bool allowedToPass(CharIndex myCharIndex, CharIndex charIndex, bool respectLeaders)
+        /// <summary>
+        /// Checks if the controlled character can push over the target character, based on ordering and matchup
+        /// </summary>
+        /// <param name="controlledChar"></param>
+        /// <param name="destChar"></param>
+        /// <returns></returns>
+        protected bool canPassChar(Character controlledChar, Character destChar)
         {
-            Character controlledChar = ZoneManager.Instance.CurrentMap.LookupCharIndex(myCharIndex);
-            Character otherChar = ZoneManager.Instance.CurrentMap.LookupCharIndex(charIndex);
-
-            if (DungeonScene.Instance.GetMatchup(controlledChar, otherChar, false) == Alignment.Foe)
-                return false;
-            else if (!respectLeaders)
+            if (destChar == null)
                 return true;
-            else
+
+            if ((destChar.MemberTeam.MapFaction == Faction.Foe) != (controlledChar.MemberTeam.MapFaction == Faction.Foe))
+                return true;
+
+            if (destChar.MemberTeam.MapFaction < controlledChar.MemberTeam.MapFaction)
                 return false;
+            else if (destChar.MemberTeam.MapFaction == controlledChar.MemberTeam.MapFaction)
+            {
+                CharIndex destIndex = ZoneManager.Instance.CurrentMap.GetCharIndex(destChar);
+                CharIndex controlledIndex = ZoneManager.Instance.CurrentMap.GetCharIndex(controlledChar);
+                if (destIndex.Team < controlledIndex.Team)
+                    return false;
+                else if (destIndex.Team == controlledIndex.Team)
+                {
+                    Team team = destChar.MemberTeam;
+                    if (destChar == team.Leader)
+                        return false;
+                    else if (destIndex < controlledIndex)
+                        return false;
+                }
+            }
+            return true;
         }
 
         /// <summary>

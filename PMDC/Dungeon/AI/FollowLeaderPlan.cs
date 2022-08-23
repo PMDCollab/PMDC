@@ -123,25 +123,8 @@ namespace PMDC.Dungeon
                     if (ZoneManager.Instance.CurrentMap.WrapLoc(testLoc) != targetChar.CharLoc && respectPeers)
                     {
                         Character destChar = ZoneManager.Instance.CurrentMap.GetCharAtLoc(testLoc);
-                        // if there's a character there, and they're ordered before us
-                        if (destChar != null)
-                        {
-                            if (DungeonScene.Instance.GetMatchup(controlledChar, destChar) == Alignment.Foe)
-                                return true;
-                            bool pushOver = true;
-                            if (destChar.MemberTeam.MapFaction < controlledChar.MemberTeam.MapFaction)
-                                pushOver = false;
-                            else if (destChar.MemberTeam.MapFaction == controlledChar.MemberTeam.MapFaction)
-                            {
-                                Team team = destChar.MemberTeam;
-                                if (destChar == team.Leader)
-                                    pushOver = false;
-                                else if (team.GetCharIndex(destChar) < team.GetCharIndex(controlledChar))
-                                    pushOver = false;
-                            }
-                            if (!pushOver)
-                                return true;
-                        }
+                        if (!canPassChar(controlledChar, destChar))
+                            return true;
                     }
 
                     return false;
