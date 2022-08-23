@@ -66,11 +66,14 @@ namespace PMDC.LevelGen
 
         public override void ApplyFeature(IMobSpawnMap map, Character newChar)
         {
-            if (map.Rand.Next(Odds) == 0)
+            if (Odds > 0 && map.Rand.Next(Odds) == 0)
             {
                 SkinTableState table = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<SkinTableState>();
                 newChar.BaseForm.Skin = table.AltColor;
             }
+            else
+                newChar.BaseForm.Skin = DataManager.Instance.DefaultSkin;
+            newChar.CurrentForm = newChar.BaseForm;
         }
 
         public override string ToString()
