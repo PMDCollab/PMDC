@@ -2127,6 +2127,11 @@ namespace PMDC.Dungeon
                                 if (!statusTarget.HasElement("ghost"))
                                     addedWorth = 100;
                             }
+                            else if (giveEffect.StatusID == "leech_seed" && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//immobilize NOTE: specialized code!
+                            {
+                                if (!statusTarget.HasElement("grass"))
+                                    addedWorth = 100;
+                            }
                             else if (giveEffect.StatusID == "disable")//disable NOTE: specialized code!
                             {
                                 if (statusTarget.StatusEffects.ContainsKey("last_used_move_slot"))
