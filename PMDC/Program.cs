@@ -517,6 +517,7 @@ namespace PMDC
             DataEditor.AddEditor(new ColumnAnimEditor());
             DataEditor.AddEditor(new StaticAnimEditor());
             DataEditor.AddEditor(new TypeDictEditor());
+            DataEditor.AddEditor(new CategorySpawnEditor());
             DataEditor.AddEditor(new RangeDictEditor(false, true));
             DataEditor.AddEditor(new SpawnListEditor());
             DataEditor.AddEditor(new SpawnRangeListEditor(false, true));
