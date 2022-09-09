@@ -12,6 +12,7 @@ using RogueElements;
 using Newtonsoft.Json.Linq;
 using RogueEssence.Dungeon;
 using PMDC.Data;
+using PMDC.Dungeon;
 
 namespace PMDC.Dev
 {

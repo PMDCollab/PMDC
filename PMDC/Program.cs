@@ -45,8 +45,8 @@ namespace PMDC
             string[] args = Environment.GetCommandLineArgs();
             PathMod.InitPathMod(args[0], "origin");
             DiagManager.InitInstance();
+            Serializer.InitSettings(new SerializerContractResolver(), new UpgradeBinder());
             DiagManager.Instance.CurSettings = DiagManager.Instance.LoadSettings();
-            DiagManager.Instance.UpgradeBinder = new UpgradeBinder();
 
             try
             {
