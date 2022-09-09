@@ -1219,9 +1219,11 @@ namespace PMDC.Dungeon
     {
         [JsonConverter(typeof(MapStatusSkillDictConverter))]
         [DataType(1, DataManager.DataType.MapStatus, false)]
+        [DataType(2, DataManager.DataType.Skill, false)]
         public Dictionary<string, string> TerrainPair;
         [JsonConverter(typeof(ElementSkillDictConverter))]
         [DataType(1, DataManager.DataType.Element, false)]
+        [DataType(2, DataManager.DataType.Skill, false)]
         public Dictionary<string, string> NaturePair;
 
         public NatureMoveEvent()
@@ -13184,10 +13186,7 @@ namespace PMDC.Dungeon
                 itemLocs.Add(ZoneManager.Instance.CurrentMap.Items[ii].TileLoc, ii);
             Loc?[] chosenItems = new Loc?[ZoneManager.Instance.CurrentMap.Items.Count];
 
-            uint mobility = 0;
-            mobility |= (1U << (int)TerrainData.Mobility.Lava);
-            mobility |= (1U << (int)TerrainData.Mobility.Water);
-            mobility |= (1U << (int)TerrainData.Mobility.Abyss);
+            TerrainData.Mobility mobility = TerrainData.Mobility.Lava | TerrainData.Mobility.Water | TerrainData.Mobility.Abyss;
 
             Grid.AffectConnectedTiles(context.User.CharLoc - new Loc(CharAction.MAX_RANGE), new Loc(CharAction.MAX_RANGE * 2 + 1),
                 (Loc effectLoc) =>

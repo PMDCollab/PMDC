@@ -5,30 +5,97 @@ using RogueEssence.Dungeon;
 using RogueEssence.Dev;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using System.Runtime.Serialization;
 
 namespace PMDC.Dungeon
 {
     [Serializable]
-    public class RefreshPreEvent : RefreshEvent
+    public class ElementMobilityEvent : RefreshEvent
     {
-        public override GameEvent Clone() { return new RefreshPreEvent(); }
+        [DataType(1, DataManager.DataType.Element, false)]
+        public Dictionary<string, TerrainData.Mobility> ElementPair;
+
+        public ElementMobilityEvent()
+        {
+            ElementPair = new Dictionary<string, TerrainData.Mobility>();
+        }
+        protected ElementMobilityEvent(ElementMobilityEvent other)
+            : this()
+        {
+            foreach (string element in other.ElementPair.Keys)
+                ElementPair.Add(element, other.ElementPair[element]);
+        }
+        public override GameEvent Clone() { return new ElementMobilityEvent(this); }
+
         public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (character.HasElement("water") || character.HasElement("flying") || character.HasElement("dragon"))
-                character.Mobility |= (1U << (int)TerrainData.Mobility.Water);
+            TerrainData.Mobility terrain1, terrain2;
+            if (ElementPair.TryGetValue(character.Element1, out terrain1))
+                character.Mobility |= terrain1;
+            if (ElementPair.TryGetValue(character.Element2, out terrain2))
+                character.Mobility |= terrain2;
+        }
 
-            if (character.HasElement("fire") || character.HasElement("flying") || character.HasElement("dragon"))
-                character.Mobility |= (1U << (int)TerrainData.Mobility.Lava);
-
-            if (character.HasElement("flying"))
-                character.Mobility |= (1U << (int)TerrainData.Mobility.Abyss);
-
-            if (character.HasElement("ghost"))
-                character.Mobility |= (1U << (int)TerrainData.Mobility.Block);
-
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            if (Serializer.OldVersion < new Version(0, 6, 4))
+            {
+                ElementPair["water"] = TerrainData.Mobility.Water;
+                ElementPair["fire"] = TerrainData.Mobility.Lava;
+                ElementPair["dragon"] = TerrainData.Mobility.Water | TerrainData.Mobility.Lava;
+                ElementPair["flying"] = TerrainData.Mobility.Water | TerrainData.Mobility.Lava | TerrainData.Mobility.Abyss;
+                ElementPair["ghost"] = TerrainData.Mobility.Block;
+            }
         }
     }
 
+    [Serializable]
+    public class SpeciesMobilityEvent : RefreshEvent
+    {
+        public Dictionary<MonsterID, TerrainData.Mobility> IDPair;
+
+        public SpeciesMobilityEvent()
+        {
+            IDPair = new Dictionary<MonsterID, TerrainData.Mobility>();
+        }
+        protected SpeciesMobilityEvent(SpeciesMobilityEvent other)
+            : this()
+        {
+            foreach (MonsterID id in other.IDPair.Keys)
+                IDPair.Add(id, other.IDPair[id]);
+        }
+        public override GameEvent Clone() { return new SpeciesMobilityEvent(this); }
+
+        public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            TerrainData.Mobility mobility;
+            MonsterID testID = character.CurrentForm;
+            if (IDPair.TryGetValue(testID, out mobility))
+            {
+                character.Mobility |= mobility;
+                return;
+            }
+            testID.Gender = Gender.Unknown;
+            if (IDPair.TryGetValue(testID, out mobility))
+            {
+                character.Mobility |= mobility;
+                return;
+            }
+            testID.Skin = "";
+            if (IDPair.TryGetValue(testID, out mobility))
+            {
+                character.Mobility |= mobility;
+                return;
+            }
+            testID.Form = -1;
+            if (IDPair.TryGetValue(testID, out mobility))
+            {
+                character.Mobility |= mobility;
+                return;
+            }
+        }
+    }
 
     [Serializable]
     public class FamilyRefreshEvent : RefreshEvent
@@ -72,7 +139,7 @@ namespace PMDC.Dungeon
 
         public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            character.Mobility |= (1U << (int)Mobility);
+            character.Mobility |= Mobility;
         }
     }
 

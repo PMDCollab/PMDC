@@ -429,7 +429,7 @@ namespace PMDC.Dungeon
 
             //requires a valid target tile
             Grid.LocTest checkDiagBlock = (Loc testLoc) => {
-                return (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, uint.MaxValue, true));
+                return (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, TerrainData.Mobility.All, true));
                 //enemy/ally blockings don't matter for diagonals
             };
 
@@ -441,7 +441,7 @@ namespace PMDC.Dungeon
                         return false;
                 }
 
-                if (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, uint.MaxValue))
+                if (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, TerrainData.Mobility.All))
                     return true;
 
                 return false;
