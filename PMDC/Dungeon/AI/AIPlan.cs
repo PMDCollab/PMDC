@@ -1804,6 +1804,21 @@ namespace PMDC.Dungeon
                         //the healing only has worth if the target is missing at least half the HP the healing would give
                         return hpWorthHealing * 200 / healHP;
                     }
+                    else if (effect is RestorePPEvent)
+                    {
+                        int total = 0;
+                        for (int ii = 0; ii < target.Skills.Count; ii++)
+                        {
+                            if (!String.IsNullOrEmpty(target.Skills[ii].Element.SkillNum) && controlledChar.Skills[ii].Element.Charges == 0)
+                            {
+                                if (total > 0)
+                                    total += 50;
+                                else
+                                    total += 100;
+                            }
+                        }
+                        return total;
+                    }
                     else if (effect is RemoveStateStatusBattleEvent)
                     {
                         int totalEffect = 0;
