@@ -346,7 +346,8 @@ namespace PMDC.Dungeon
                 context.Data.BeforeExplosions.Add(-5, new CatchItemSplashEvent());
                 context.Data.BeforeHits.Add(-5, new CatchableEvent(catchData));
             }
-            context.Data.AfterActions.Add(-1, new LandItemEvent());
+            if (!entry.BreakOnThrow)
+                context.Data.AfterActions.Add(-1, new LandItemEvent());
             context.Item = new InvItem(item);
             if (entry.MaxStack > 1)
                 context.Item.Amount = 1;
