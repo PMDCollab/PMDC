@@ -46,6 +46,301 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    [Serializable]
+    public class RespawnFromRandomEvent : RespawnBaseEvent
+    {
+        /// <summary>
+        /// The radius from the player characters from which to spawn.
+        /// </summary>
+        public int Radius;
+
+        public RespawnFromRandomEvent() { }
+        public RespawnFromRandomEvent(int maxFoes, int respawnTime) : base(maxFoes, respawnTime)
+        { }
+        protected RespawnFromRandomEvent(RespawnFromRandomEvent other) : base(other)
+        { Radius = other.Radius; }
+        public override GameEvent Clone() { return new RespawnFromRandomEvent(this); }
+
+        public override List<Character> RespawnMob()
+        {
+            List<Character> respawns = new List<Character>();
+            if (ZoneManager.Instance.CurrentMap.TeamSpawns.CanPick)
+            {
+                for (int ii = 0; ii < 10; ii++)
+                {
+                    Team newTeam = ZoneManager.Instance.CurrentMap.TeamSpawns.Pick(ZoneManager.Instance.CurrentMap.Rand).Spawn(ZoneManager.Instance.CurrentMap);
+                    if (newTeam == null)
+                        continue;
+
+                    Loc trialLoc;
+                    if (Radius <= 0)
+                        trialLoc = new Loc(ZoneManager.Instance.CurrentMap.Rand.Next(ZoneManager.Instance.CurrentMap.Width), ZoneManager.Instance.CurrentMap.Rand.Next(ZoneManager.Instance.CurrentMap.Height));
+                    else
+                    {
+                        // choose a random location period within radius of the player
+                        Character centerChara = ZoneManager.Instance.CurrentMap.ActiveTeam.Leader;
+                        trialLoc = new Loc(ZoneManager.Instance.CurrentMap.Rand.Next(centerChara.CharLoc.X - Radius, centerChara.CharLoc.X + Radius), ZoneManager.Instance.CurrentMap.Rand.Next(centerChara.CharLoc.Y - Radius, centerChara.CharLoc.Y + Radius));
+
+                        //make this wrap-friendly
+                        if (!ZoneManager.Instance.CurrentMap.GetLocInMapBounds(ref trialLoc))
+                            trialLoc = Collision.ClampToBounds(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height, trialLoc);
+
+                    }
+                    //but not too close
+
+                    //find a way to place all members- needs to fit all of them in, or else fail the spawn
+                    Grid.LocTest checkOpen = (Loc testLoc) =>
+                    {
+                        if (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc))
+                            return false;
+
+                        foreach (Character character in ZoneManager.Instance.CurrentMap.ActiveTeam.Players)
+                        {
+                            if (character.IsInSightBounds(testLoc))
+                                return false;
+                        }
+
+                        Character locChar = ZoneManager.Instance.CurrentMap.GetCharAtLoc(testLoc);
+                        if (locChar != null)
+                            return false;
+                        return true;
+                    };
+                    Grid.LocTest checkBlock = (Loc testLoc) =>
+                    {
+                        return ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, true);
+                    };
+                    Grid.LocTest checkDiagBlock = (Loc testLoc) =>
+                    {
+                        return ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, true, true);
+                    };
+
+                    List<Loc> resultLocs = new List<Loc>();
+                    foreach (Loc loc in Grid.FindClosestConnectedTiles(new Loc(), new Loc(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height),
+                        checkOpen, checkBlock, checkDiagBlock, trialLoc, newTeam.Players.Count))
+                    {
+                        resultLocs.Add(loc);
+                    }
+
+                    if (resultLocs.Count >= newTeam.Players.Count + newTeam.Guests.Count)
+                    {
+                        for (int jj = 0; jj < newTeam.Players.Count; jj++)
+                            newTeam.Players[jj].CharLoc = resultLocs[jj];
+                        for (int jj = 0; jj < newTeam.Guests.Count; jj++)
+                            newTeam.Guests[jj].CharLoc = resultLocs[newTeam.Players.Count + jj];
+
+                        ZoneManager.Instance.CurrentMap.MapTeams.Add(newTeam);
+
+                        foreach (Character member in newTeam.EnumerateChars())
+                        {
+                            member.RefreshTraits();
+                            respawns.Add(member);
+                        }
+                        break;
+                    }
+                }
+            }
+            return respawns;
+        }
+    }
+
+
+    [Serializable]
+    public class RespawnFromEligibleEvent : RespawnBaseEvent
+    {
+
+        public RespawnFromEligibleEvent() { }
+        public RespawnFromEligibleEvent(int maxFoes, int respawnTime) : base(maxFoes, respawnTime)
+        { }
+        protected RespawnFromEligibleEvent(RespawnFromEligibleEvent other) : base(other)
+        { }
+        public override GameEvent Clone() { return new RespawnFromEligibleEvent(this); }
+
+        public override List<Character> RespawnMob()
+        {
+            List<Character> respawns = new List<Character>();
+            if (ZoneManager.Instance.CurrentMap.TeamSpawns.CanPick)
+            {
+                List<Loc> freeTiles = ZoneManager.Instance.CurrentMap.GetFreeToSpawnTiles();
+                if (freeTiles.Count > 0)
+                {
+                    for (int ii = 0; ii < 10; ii++)
+                    {
+                        Team newTeam = ZoneManager.Instance.CurrentMap.TeamSpawns.Pick(ZoneManager.Instance.CurrentMap.Rand).Spawn(ZoneManager.Instance.CurrentMap);
+                        if (newTeam == null)
+                            continue;
+                        Loc trialLoc = freeTiles[ZoneManager.Instance.CurrentMap.Rand.Next(freeTiles.Count)];
+                        //find a way to place all members- needs to fit all of them in, or else fail the spawn
+
+                        Grid.LocTest checkOpen = (Loc testLoc) =>
+                        {
+                            if (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc))
+                                return false;
+
+                            foreach (Character character in ZoneManager.Instance.CurrentMap.ActiveTeam.Players)
+                            {
+                                if (character.IsInSightBounds(testLoc))
+                                    return false;
+                            }
+
+                            Character locChar = ZoneManager.Instance.CurrentMap.GetCharAtLoc(testLoc);
+                            if (locChar != null)
+                                return false;
+                            return true;
+                        };
+                        Grid.LocTest checkBlock = (Loc testLoc) =>
+                        {
+                            return ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, true);
+                        };
+                        Grid.LocTest checkDiagBlock = (Loc testLoc) =>
+                        {
+                            return ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, true, true);
+                        };
+
+                        List<Loc> resultLocs = new List<Loc>();
+                        foreach (Loc loc in Grid.FindClosestConnectedTiles(new Loc(), new Loc(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height),
+                            checkOpen, checkBlock, checkDiagBlock, trialLoc, newTeam.Players.Count))
+                        {
+                            resultLocs.Add(loc);
+                        }
+
+
+                        if (resultLocs.Count >= newTeam.Players.Count + newTeam.Guests.Count)
+                        {
+                            for (int jj = 0; jj < newTeam.Players.Count; jj++)
+                                newTeam.Players[jj].CharLoc = resultLocs[jj];
+                            for (int jj = 0; jj < newTeam.Guests.Count; jj++)
+                                newTeam.Guests[jj].CharLoc = resultLocs[newTeam.Players.Count + jj];
+
+                            ZoneManager.Instance.CurrentMap.MapTeams.Add(newTeam);
+
+                            foreach (Character member in newTeam.EnumerateChars())
+                            {
+                                member.RefreshTraits();
+                                respawns.Add(member);
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            return respawns;
+        }
+    }
+
+    [Serializable]
+    public abstract class RespawnBaseEvent : SingleCharEvent
+    {
+        /// <summary>
+        /// The limit to the number of enemies on the map.  If this number is reached or exceeded, no more respawns will occur.
+        /// </summary>
+        public int MaxFoes;
+
+        /// <summary>
+        /// The amount of time it takes for a new enemy team to respawn, in turns.
+        /// </summary>
+        public int RespawnTime;
+
+        public RespawnBaseEvent() { }
+        public RespawnBaseEvent(int maxFoes, int respawnTime)
+        {
+            MaxFoes = maxFoes;
+            RespawnTime = respawnTime;
+        }
+        protected RespawnBaseEvent(RespawnBaseEvent other)
+        {
+            MaxFoes = other.MaxFoes;
+            RespawnTime = other.RespawnTime;
+        }
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (character != null)
+                yield break;
+
+            //Map Respawns
+            if (RespawnTime > 0 && (ZoneManager.Instance.CurrentMap.MapTurns + 1) % RespawnTime == 0)
+            {
+                int totalFoes = 0;
+                foreach (Team team in ZoneManager.Instance.CurrentMap.MapTeams)
+                {
+                    foreach (Character chara in team.Players)
+                    {
+                        if (!chara.Dead)
+                            totalFoes++;
+                    }
+                }
+                if (totalFoes < MaxFoes)
+                {
+                    List<Character> respawns = RespawnMob();
+                    foreach (Character respawn in respawns)
+                    {
+                        respawn.Tactic.Initialize(respawn);
+                        if (!respawn.Dead)
+                        {
+                            yield return CoroutineManager.Instance.StartCoroutine(respawn.OnMapStart());
+                            ZoneManager.Instance.CurrentMap.UpdateExploration(respawn);
+                        }
+                    }
+                }
+            }
+        }
+
+        public abstract List<Character> RespawnMob();
+    }
+
+
+    [Serializable]
+    public class DespawnRadiusEvent : SingleCharEvent
+    {
+        /// <summary>
+        /// The maximum radius from a player that enemies are allowed to remain.  Go farther than this when the check occurs, and the enemy despawns.
+        /// </summary>
+        public int Radius;
+
+        /// <summary>
+        /// The amount of time it takes for a new enemy team to respawn, in turns.
+        /// </summary>
+        public int DespawnTime;
+
+        public DespawnRadiusEvent() { }
+        public DespawnRadiusEvent(int radius, int despawnTime)
+        {
+            Radius = radius;
+            DespawnTime = despawnTime;
+        }
+        protected DespawnRadiusEvent(DespawnRadiusEvent other)
+        {
+            Radius = other.Radius;
+            DespawnTime = other.DespawnTime;
+        }
+        public override GameEvent Clone() { return new DespawnRadiusEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (character != null)
+                yield break;
+
+            //Map Despawns
+            if (DespawnTime > 0 && (ZoneManager.Instance.CurrentMap.MapTurns + 1) % DespawnTime == 0)
+            {
+                for (int ii = ZoneManager.Instance.CurrentMap.MapTeams.Count - 1; ii >= 0; ii--)
+                {
+                    Team team = ZoneManager.Instance.CurrentMap.MapTeams[ii];
+                    for (int jj = team.Players.Count - 1; jj >= 0; jj--)
+                    {
+                        Character chara = team.Players[jj];
+
+                        foreach (Character player in ZoneManager.Instance.CurrentMap.ActiveTeam.Players)
+                        {
+                            if ((player.CharLoc - chara.CharLoc).Dist8() > Radius)
+                                chara.DieSilent();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     [Serializable]
     public class FamilySingleEvent : SingleCharEvent
     {
@@ -834,9 +1129,6 @@ namespace PMDC.Dungeon
             }
 
             yield return new WaitForFrames(animTime - 1);
-
-            character.HP = 0;
-            character.Dead = true;
         }
     }
 

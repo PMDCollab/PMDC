@@ -279,11 +279,16 @@ namespace PMDC.Dungeon
             //    ZoneManager.Instance.CurrentMap.TeamSpawns.Add(post_team, securityState.Security.GetSpawnRate(ii));
             //}
 
-            //set spawn rate
-            ZoneManager.Instance.CurrentMap.RespawnTime = 0;
-
-            //set spawn max
-            ZoneManager.Instance.CurrentMap.MaxFoes = 0;
+            //remove the end of turn respawn
+            foreach (SingleCharEvent priority in ZoneManager.Instance.CurrentMap.MapEffect.OnMapTurnEnds.EnumerateInOrder())
+            {
+                RespawnBaseEvent respawn = priority as RespawnBaseEvent;
+                if (respawn != null)
+                {
+                    respawn.MaxFoes = 0;
+                    respawn.RespawnTime = 0;
+                }
+            }
 
             //spawn 10 times
             List<Loc> randLocs = ZoneManager.Instance.CurrentMap.GetFreeToSpawnTiles();
