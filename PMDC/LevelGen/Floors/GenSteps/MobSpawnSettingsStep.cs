@@ -55,7 +55,10 @@ namespace PMDC.LevelGen
         {
             //TODO: Remove in v1.1
             if (Respawn == null)
+            {
+                Priority = new Priority(15);
                 Respawn = new RespawnFromEligibleEvent(MaxFoes, RespawnTime);
+            }
         }
     }
 }

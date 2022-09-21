@@ -25,6 +25,11 @@ namespace PMDC.Dev
                     assemblyName = assemblyName.Replace("RogueEssence", "RogueElements");
                     typeName = typeName.Replace("RogueEssence.IntrudingBlobWaterStep", "RogueElements.BlobWaterStep");
                 }
+                if (typeName.StartsWith("RogueEssence.LevelGen.MobSpawnSettingsStep"))
+                {
+                    assemblyName = assemblyName.Replace("RogueEssence", "PMDC");
+                    typeName = typeName.Replace("RogueEssence.LevelGen.MobSpawnSettingsStep", "PMDC.LevelGen.MobSpawnSettingsStep");
+                }
                 //typeName = typeName.Replace("From", "To");
                 //assemblyName = assemblyName.Replace("From", "To");
                 //then the type moved to a new namespace
