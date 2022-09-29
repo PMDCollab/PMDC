@@ -2735,6 +2735,52 @@ namespace PMDC.Dungeon
         }
     }
 
+    [Serializable]
+    public class MultiplyElementInMajorStatusEvent : BattleEvent
+    {
+        [JsonConverter(typeof(ElementListConverter))]
+        [DataType(0, DataManager.DataType.Element, false)]
+        public List<string> MultElements;
+        public int Numerator;
+        public int Denominator;
+        public bool AffectTarget;
+
+        public MultiplyElementInMajorStatusEvent() { MultElements = new List<string>(); }
+        public MultiplyElementInMajorStatusEvent(string element, int numerator, int denominator, bool affectTarget) : this()
+        {
+            MultElements.Add(element);
+            Numerator = numerator;
+            Denominator = denominator;
+            AffectTarget = affectTarget;
+        }
+        protected MultiplyElementInMajorStatusEvent(MultiplyElementInMajorStatusEvent other)
+        {
+            MultElements = new List<string>(other.MultElements);
+            Numerator = other.Numerator;
+            Denominator = other.Denominator;
+            AffectTarget = other.AffectTarget;
+        }
+        public override GameEvent Clone() { return new MultiplyElementInMajorStatusEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            Character target = (AffectTarget ? context.Target : context.User);
+
+            if (MultElements.Contains(context.Data.Element))
+            {
+                foreach (StatusEffect status in target.IterateStatusEffects())
+                {
+                    if (status.StatusStates.Contains<MajorStatusState>())
+                    {
+                        context.AddContextStateMult<DmgMult>(false, Numerator, Denominator);
+                        break;
+                    }
+                }
+            }
+            yield break;
+        }
+    }
+
 
     [Serializable]
     public class BetterOddsEvent : BattleEvent
