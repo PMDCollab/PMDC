@@ -2738,24 +2738,25 @@ namespace PMDC.Dungeon
     [Serializable]
     public class MultiplyElementInMajorStatusEvent : BattleEvent
     {
-        [JsonConverter(typeof(ElementListConverter))]
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public List<string> MultElements;
+        public string MultElement;
         public int Numerator;
         public int Denominator;
         public bool AffectTarget;
 
-        public MultiplyElementInMajorStatusEvent() { MultElements = new List<string>(); }
-        public MultiplyElementInMajorStatusEvent(string element, int numerator, int denominator, bool affectTarget) : this()
+        public MultiplyElementInMajorStatusEvent() { MultElement = ""; }
+
+        public MultiplyElementInMajorStatusEvent(string element, int numerator, int denominator, bool affectTarget)
         {
-            MultElements.Add(element);
+            MultElement = element;
             Numerator = numerator;
             Denominator = denominator;
             AffectTarget = affectTarget;
         }
         protected MultiplyElementInMajorStatusEvent(MultiplyElementInMajorStatusEvent other)
         {
-            MultElements = new List<string>(other.MultElements);
+            MultElement = other.MultElement;
             Numerator = other.Numerator;
             Denominator = other.Denominator;
             AffectTarget = other.AffectTarget;
@@ -2766,7 +2767,7 @@ namespace PMDC.Dungeon
         {
             Character target = (AffectTarget ? context.Target : context.User);
 
-            if (MultElements.Contains(context.Data.Element))
+            if (MultElement == context.Data.Element)
             {
                 foreach (StatusEffect status in target.IterateStatusEffects())
                 {
@@ -4085,25 +4086,27 @@ namespace PMDC.Dungeon
     [Serializable]
     public class AddElementRangeEvent : BattleEvent
     {
-        [JsonConverter(typeof(ElementListConverter))]
+        [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
-        public List<string> AffectedElements;
+        public string AffectedElement;
         public int Range;
 
-        public AddElementRangeEvent() { }
-        public AddElementRangeEvent(int range)
+        public AddElementRangeEvent() { AffectedElement = ""; }
+        public AddElementRangeEvent(string element, int range)
         {
+            AffectedElement = element;
             Range = range;
         }
         protected AddElementRangeEvent(AddElementRangeEvent other)
         {
+            AffectedElement = other.AffectedElement;
             Range = other.Range;
         }
         public override GameEvent Clone() { return new AddElementRangeEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (AffectedElements.Contains(context.Data.Element))
+            if (AffectedElement == context.Data.Element)
             {
                 context.RangeMod += Range;
             }
@@ -14471,7 +14474,7 @@ namespace PMDC.Dungeon
         {
             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
 
-            if (!(context.Target.MemberTeam is MonsterTeam) || ((MonsterTeam)context.Target.MemberTeam).Unrecruitable)
+            if (context.Target.Unrecruitable)
             {
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CANT_RECRUIT").ToLocal(), context.Target.GetDisplayName(false)));
                 GameManager.Instance.BattleSE("DUN_Miss");
