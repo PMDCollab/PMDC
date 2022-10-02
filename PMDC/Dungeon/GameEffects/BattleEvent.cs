@@ -2736,52 +2736,43 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
-    public class MultiplyElementInMajorStatusEvent : BattleEvent
+    public class MultiplyDamageInMajorStatusEvent : BattleEvent
     {
-        [JsonConverter(typeof(ElementConverter))]
-        [DataType(0, DataManager.DataType.Element, false)]
-        public string MultElement;
         public int Numerator;
         public int Denominator;
         public bool AffectTarget;
 
-        public MultiplyElementInMajorStatusEvent() { MultElement = ""; }
+        public MultiplyDamageInMajorStatusEvent() { }
 
-        public MultiplyElementInMajorStatusEvent(string element, int numerator, int denominator, bool affectTarget)
+        public MultiplyDamageInMajorStatusEvent(string element, int numerator, int denominator, bool affectTarget)
         {
-            MultElement = element;
             Numerator = numerator;
             Denominator = denominator;
             AffectTarget = affectTarget;
         }
-        protected MultiplyElementInMajorStatusEvent(MultiplyElementInMajorStatusEvent other)
+        protected MultiplyDamageInMajorStatusEvent(MultiplyDamageInMajorStatusEvent other)
         {
-            MultElement = other.MultElement;
             Numerator = other.Numerator;
             Denominator = other.Denominator;
             AffectTarget = other.AffectTarget;
         }
-        public override GameEvent Clone() { return new MultiplyElementInMajorStatusEvent(this); }
+        public override GameEvent Clone() { return new MultiplyDamageInMajorStatusEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             Character target = (AffectTarget ? context.Target : context.User);
 
-            if (MultElement == context.Data.Element)
+            foreach (StatusEffect status in target.IterateStatusEffects())
             {
-                foreach (StatusEffect status in target.IterateStatusEffects())
+                if (status.StatusStates.Contains<MajorStatusState>())
                 {
-                    if (status.StatusStates.Contains<MajorStatusState>())
-                    {
-                        context.AddContextStateMult<DmgMult>(false, Numerator, Denominator);
-                        break;
-                    }
+                    context.AddContextStateMult<DmgMult>(false, Numerator, Denominator);
+                    break;
                 }
             }
             yield break;
         }
     }
-
 
     [Serializable]
     public class BetterOddsEvent : BattleEvent
