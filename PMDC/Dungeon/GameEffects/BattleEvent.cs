@@ -4074,36 +4074,7 @@ namespace PMDC.Dungeon
             yield break;
         }
     }
-    [Serializable]
-    public class AddElementRangeEvent : BattleEvent
-    {
-        [JsonConverter(typeof(ElementConverter))]
-        [DataType(0, DataManager.DataType.Element, false)]
-        public string AffectedElement;
-        public int Range;
-
-        public AddElementRangeEvent() { AffectedElement = ""; }
-        public AddElementRangeEvent(string element, int range)
-        {
-            AffectedElement = element;
-            Range = range;
-        }
-        protected AddElementRangeEvent(AddElementRangeEvent other)
-        {
-            AffectedElement = other.AffectedElement;
-            Range = other.Range;
-        }
-        public override GameEvent Clone() { return new AddElementRangeEvent(this); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            if (AffectedElement == context.Data.Element)
-            {
-                context.RangeMod += Range;
-            }
-            yield break;
-        }
-    }
+    
     [Serializable]
     public class BoostCriticalEvent : BattleEvent
     {
