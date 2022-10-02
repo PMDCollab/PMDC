@@ -7167,6 +7167,58 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class HasStatusNeededEvent : BattleEvent
+    {
+        [JsonConverter(typeof(StatusListConverter))]
+        [DataType(1, DataManager.DataType.Status, false)]
+        public List<string> Statuses;
+        public bool AffectTarget;
+        public List<BattleEvent> BaseEvents;
+
+        public HasStatusNeededEvent() { Statuses = new List<string>(); BaseEvents = new List<BattleEvent>(); }
+        public HasStatusNeededEvent(bool affectTarget, string[] statuses, params BattleEvent[] effects) : this()
+        {
+            AffectTarget = affectTarget;
+            foreach (string statusId in statuses)
+                Statuses.Add(statusId);
+            foreach (BattleEvent effect in effects)
+                BaseEvents.Add(effect);
+        }
+        protected HasStatusNeededEvent(HasStatusNeededEvent other) : this()
+        {
+            AffectTarget = other.AffectTarget;
+            foreach (string statusId in other.Statuses)
+                Statuses.Add(statusId);
+            foreach (BattleEvent battleEffect in other.BaseEvents)
+                BaseEvents.Add((BattleEvent)battleEffect.Clone());
+        }
+        public override GameEvent Clone() { return new HasStatusNeededEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            Character target = (AffectTarget ? context.Target : context.User);
+
+            bool hasStatus = false;
+            foreach (StatusEffect status in target.IterateStatusEffects())
+            {
+                if(Statuses.Contains(status.ID))
+                {
+                    hasStatus = true;
+                    break;
+                }
+            }
+
+            if(hasStatus)
+            {
+                foreach (BattleEvent battleEffect in BaseEvents)
+                    yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
+            }
+
+            yield break;
+        }
+    }
+
+    [Serializable]
     public class StatusNeededEvent : BattleEvent
     {
         [JsonConverter(typeof(StatusConverter))]
