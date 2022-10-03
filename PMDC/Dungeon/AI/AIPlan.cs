@@ -990,7 +990,7 @@ namespace PMDC.Dungeon
             {
                 //in the event that no targets are found, and there is a non-null targetChar, calculate the potential attack value in a hypothetical hit scenario
 
-                int newVal = GetAttackValue(controlledChar, moveIndex, entry, seenChars, closestThreat, 0);
+                int newVal = GetAttackValue(controlledChar, moveIndex, entry, seenChars, closestThreat, 0, 100);
                 //then, add it to the dirs value on the stipulation that it is a "desired" value- if chosen, it will cause the character to return "wait" instead.
                 //this action value represents how valuable the action *would* be if in range
                 if (newVal > 0)
@@ -1009,7 +1009,7 @@ namespace PMDC.Dungeon
                 defaultDir = ZoneManager.Instance.CurrentMap.ApproximateClosestDir8(controlledChar.CharLoc, closestThreat.CharLoc);
             if (defaultDir == Dir8.None)
                 defaultDir = controlledChar.CharDir;
-            HitValue highestVal = GetActionDirValue("", null, entry.UseAction, entry.Explosion, entry.UseEvent, 0, controlledChar, seenChars, defaultDir);
+            HitValue highestVal = GetActionDirValue("", null, entry.UseAction, entry.Explosion, entry.UseEvent, 0, controlledChar, seenChars, defaultDir, 0);
             dirs[(int)defaultDir] = highestVal;
         }
 
@@ -1050,7 +1050,7 @@ namespace PMDC.Dungeon
             for (int ii = 0; ii < DirExt.DIR8_COUNT; ii++)
             {
                 Dir8 dir = (Dir8)ii;
-                vals[ii] = GetActionDirValue("", null, hitboxAction, testExplosion, entry.UseEvent, 0, controlledChar, seenChars, dir);
+                vals[ii] = GetActionDirValue("", null, hitboxAction, testExplosion, entry.UseEvent, 0, controlledChar, seenChars, dir, 0);
                 if (vals[ii].CompareTo(highestVal) > 0)
                     highestVal = vals[ii];
             }
@@ -1096,7 +1096,7 @@ namespace PMDC.Dungeon
                         continue;
 
                     //the attack has no effect on the target; don't count its tiles
-                    int atkVal = GetAttackValue(controlledChar, skillIndex, entry, seenChars, seenChar, rangeMod);
+                    int atkVal = GetAttackValue(controlledChar, skillIndex, entry, seenChars, seenChar, rangeMod, 100);
                     if (atkVal <= 0)
                         continue;
 
@@ -1446,7 +1446,7 @@ namespace PMDC.Dungeon
                     {
                         if (DungeonScene.Instance.IsTargeted(controlledChar, target, Alignment.Foe) && ZoneManager.Instance.CurrentMap.InRange(target.CharLoc, controlledChar.CharLoc, 3))
                         {
-                            int newVal = GetAttackValue(controlledChar, skillIndex, entry, seenChars, target, 0);
+                            int newVal = GetAttackValue(controlledChar, skillIndex, entry, seenChars, target, 0, 100);
                             if (newVal > 0)
                                 return new HitValue(100, true);
                         }
@@ -1467,10 +1467,10 @@ namespace PMDC.Dungeon
 
             modifyActionHitboxes(controlledChar, seenChars, dir, ref skillIndex, ref entry, ref rangeMod, ref hitboxAction, ref explosion);
 
-            return GetActionDirValue(skillIndex, entry, hitboxAction, explosion, entry?.Data, rangeMod, controlledChar, seenChars, dir);
+            return GetActionDirValue(skillIndex, entry, hitboxAction, explosion, entry?.Data, rangeMod, controlledChar, seenChars, dir, 100);
         }
 
-        protected HitValue GetActionDirValue(string skillIndex, SkillData entry, CombatAction hitboxAction, ExplosionData explosion, BattleData data, int rangeMod, Character controlledChar, List<Character> seenChars, Dir8 dir)
+        protected HitValue GetActionDirValue(string skillIndex, SkillData entry, CombatAction hitboxAction, ExplosionData explosion, BattleData data, int rangeMod, Character controlledChar, List<Character> seenChars, Dir8 dir, int defaultVal)
         {
             if (hitboxAction == null)
                 return new HitValue(0, false);
@@ -1498,9 +1498,9 @@ namespace PMDC.Dungeon
                     int newVal;
                     
                     if (entry != null)//for moves
-                        newVal = GetAttackValue(controlledChar, skillIndex, entry, seenChars, target, rangeMod);
+                        newVal = GetAttackValue(controlledChar, skillIndex, entry, seenChars, target, rangeMod, defaultVal);
                     else//for items
-                        newVal = GetBattleValue(controlledChar, data, seenChars, target, rangeMod);
+                        newVal = GetBattleValue(controlledChar, data, seenChars, target, rangeMod, defaultVal);
                     totalValue += newVal;
                     if (newVal >= 0)
                         maxValue = Math.Max(newVal, maxValue);
@@ -1523,16 +1523,16 @@ namespace PMDC.Dungeon
                 return new HitValue(maxValue, directHit);
         }
 
-        protected int GetAttackValue(Character controlledChar, string moveIndex, SkillData entry, List<Character> seenChars, Character target, int rangeMod)
+        protected int GetAttackValue(Character controlledChar, string moveIndex, SkillData entry, List<Character> seenChars, Character target, int rangeMod, int defaultVal)
         {
-            int delta = GetTargetEffect(controlledChar, moveIndex, entry, seenChars, target, rangeMod);
+            int delta = GetTargetEffect(controlledChar, moveIndex, entry, seenChars, target, rangeMod, defaultVal);
 
             return AlignTargetEffect(controlledChar, entry.Data, target, delta);
         }
 
-        protected int GetBattleValue(Character controlledChar, BattleData data, List<Character> seenChars, Character target, int rangeMod)
+        protected int GetBattleValue(Character controlledChar, BattleData data, List<Character> seenChars, Character target, int rangeMod, int defaultVal)
         {
-            int delta = GetTargetBattleDataEffect(controlledChar, data, seenChars, target, 0, 1);
+            int delta = GetTargetBattleDataEffect(controlledChar, data, seenChars, target, 0, 1, defaultVal);
 
             return AlignTargetEffect(controlledChar, data, target, delta);
         }
@@ -1612,7 +1612,7 @@ namespace PMDC.Dungeon
         /// <param name="target"></param>
         /// <param name="rangeMod"></param>
         /// <returns>Positive number means a positive effect for the target, negative number means a negative effect for the target.</returns>
-        protected int GetTargetEffect(Character controlledChar, string moveIndex, SkillData entry, List<Character> seenChars, Character target, int rangeMod)
+        protected int GetTargetEffect(Character controlledChar, string moveIndex, SkillData entry, List<Character> seenChars, Character target, int rangeMod, int defaultVal)
         {
             //when trying to attack an enemy, first check for getting in range of any attack, and use that attack if possible
             //check against all possible enemies before trying to move
@@ -1774,10 +1774,10 @@ namespace PMDC.Dungeon
                 return 0;
             }
 
-            return GetTargetBattleDataEffect(controlledChar, entry.Data, seenChars, target, rangeMod, entry.Strikes);
+            return GetTargetBattleDataEffect(controlledChar, entry.Data, seenChars, target, rangeMod, entry.Strikes, defaultVal);
         }
 
-        protected int GetTargetBattleDataEffect(Character controlledChar, BattleData data, List<Character> seenChars, Character target, int rangeMod, int strikes)
+        protected int GetTargetBattleDataEffect(Character controlledChar, BattleData data, List<Character> seenChars, Character target, int rangeMod, int strikes, int defaultVal)
         {
             if (data.Category == BattleData.SkillCategory.Status || data.Category == BattleData.SkillCategory.None)
             {
@@ -2170,9 +2170,9 @@ namespace PMDC.Dungeon
 
                 //for any other effect, assume it has a negative effect on foes, and positive effect on allies
                 if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
-                    return 100;
+                    return defaultVal;
                 else
-                    return -100;
+                    return -defaultVal;
             }
             else
             {
