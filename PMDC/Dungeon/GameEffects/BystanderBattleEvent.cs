@@ -239,6 +239,14 @@ namespace PMDC.Dungeon
                         context.Explosion.ExplodeFX = new BattleFX();
                         context.Explosion.Emitter = new EmptyCircleSquareEmitter();
                         context.Explosion.TileEmitter = new EmptyFiniteEmitter();
+
+
+
+                        BattleData catchData = new BattleData();
+                        catchData.Element = DataManager.Instance.DefaultElement;
+                        catchData.OnHits.Add(0, new CatchItemEvent());
+                        catchData.HitFX.Sound = "DUN_Equip";
+                        context.Data.BeforeHits.Add(-5, new CatchableEvent(catchData));
                     }
                 }
             }

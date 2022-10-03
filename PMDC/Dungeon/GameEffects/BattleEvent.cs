@@ -337,15 +337,7 @@ namespace PMDC.Dungeon
             }
 
             if (catchable)
-            {
-                BattleData catchData = new BattleData();
-                catchData.Element = DataManager.Instance.DefaultElement;
-                catchData.OnHits.Add(0, new CatchItemEvent());
-                catchData.HitFX.Sound = "DUN_Equip";
-
                 context.Data.BeforeExplosions.Add(-5, new CatchItemSplashEvent());
-                context.Data.BeforeHits.Add(-5, new CatchableEvent(catchData));
-            }
             if (!entry.BreakOnThrow)
                 context.Data.AfterActions.Add(-1, new LandItemEvent());
             context.Item = new InvItem(item);
