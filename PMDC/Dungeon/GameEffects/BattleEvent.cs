@@ -13943,11 +13943,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class LinkBoxEvent : BattleEvent
     {
+        public bool IncludePreEvolutions;
         public LinkBoxEvent() { }
         public override GameEvent Clone() { return new LinkBoxEvent(); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            List<string> forgottenMoves = context.User.GetRelearnableSkills();
+            List<string> forgottenMoves = context.User.GetRelearnableSkills(IncludePreEvolutions);
 
             if (DataManager.Instance.CurrentReplay != null)// this block of code will never evaluate to true AND have UI read back -1 (cancel)
             {
