@@ -2736,45 +2736,6 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
-    public class MultiplyDamageInMajorStatusEvent : BattleEvent
-    {
-        public int Numerator;
-        public int Denominator;
-        public bool AffectTarget;
-
-        public MultiplyDamageInMajorStatusEvent() { }
-
-        public MultiplyDamageInMajorStatusEvent(string element, int numerator, int denominator, bool affectTarget)
-        {
-            Numerator = numerator;
-            Denominator = denominator;
-            AffectTarget = affectTarget;
-        }
-        protected MultiplyDamageInMajorStatusEvent(MultiplyDamageInMajorStatusEvent other)
-        {
-            Numerator = other.Numerator;
-            Denominator = other.Denominator;
-            AffectTarget = other.AffectTarget;
-        }
-        public override GameEvent Clone() { return new MultiplyDamageInMajorStatusEvent(this); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            Character target = (AffectTarget ? context.Target : context.User);
-
-            foreach (StatusEffect status in target.IterateStatusEffects())
-            {
-                if (status.StatusStates.Contains<MajorStatusState>())
-                {
-                    context.AddContextStateMult<DmgMult>(false, Numerator, Denominator);
-                    break;
-                }
-            }
-            yield break;
-        }
-    }
-
-    [Serializable]
     public class BetterOddsEvent : BattleEvent
     {
         public override GameEvent Clone() { return new BetterOddsEvent(); }
@@ -7167,58 +7128,6 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
-    public class HasStatusNeededEvent : BattleEvent
-    {
-        [JsonConverter(typeof(StatusListConverter))]
-        [DataType(1, DataManager.DataType.Status, false)]
-        public List<string> Statuses;
-        public bool AffectTarget;
-        public List<BattleEvent> BaseEvents;
-
-        public HasStatusNeededEvent() { Statuses = new List<string>(); BaseEvents = new List<BattleEvent>(); }
-        public HasStatusNeededEvent(bool affectTarget, string[] statuses, params BattleEvent[] effects) : this()
-        {
-            AffectTarget = affectTarget;
-            foreach (string statusId in statuses)
-                Statuses.Add(statusId);
-            foreach (BattleEvent effect in effects)
-                BaseEvents.Add(effect);
-        }
-        protected HasStatusNeededEvent(HasStatusNeededEvent other) : this()
-        {
-            AffectTarget = other.AffectTarget;
-            foreach (string statusId in other.Statuses)
-                Statuses.Add(statusId);
-            foreach (BattleEvent battleEffect in other.BaseEvents)
-                BaseEvents.Add((BattleEvent)battleEffect.Clone());
-        }
-        public override GameEvent Clone() { return new HasStatusNeededEvent(this); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            Character target = (AffectTarget ? context.Target : context.User);
-
-            bool hasStatus = false;
-            foreach (StatusEffect status in target.IterateStatusEffects())
-            {
-                if(Statuses.Contains(status.ID))
-                {
-                    hasStatus = true;
-                    break;
-                }
-            }
-
-            if(hasStatus)
-            {
-                foreach (BattleEvent battleEffect in BaseEvents)
-                    yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
-            }
-
-            yield break;
-        }
-    }
-
-    [Serializable]
     public class StatusNeededEvent : BattleEvent
     {
         [JsonConverter(typeof(StatusConverter))]
@@ -7254,15 +7163,21 @@ namespace PMDC.Dungeon
     public class MajorStatusPowerEvent : BattleEvent
     {
         public bool AffectTarget;
+        public int Numerator;
+        public int Denominator;
 
-        public MajorStatusPowerEvent() { }
-        public MajorStatusPowerEvent(bool affectTarget)
+        public MajorStatusPowerEvent() { Numerator = 2; Denominator = 1; }
+        public MajorStatusPowerEvent(bool affectTarget, int numerator, int denominator)
         {
             AffectTarget = affectTarget;
+            Numerator = numerator;
+            Denominator = denominator;
         }
         protected MajorStatusPowerEvent(MajorStatusPowerEvent other)
         {
             AffectTarget = other.AffectTarget;
+            Numerator = other.Numerator;
+            Denominator = other.Denominator;
         }
         public override GameEvent Clone() { return new MajorStatusPowerEvent(this); }
 
@@ -7278,7 +7193,8 @@ namespace PMDC.Dungeon
                     if (status.StatusStates.Contains<MajorStatusState>())
                     {
                         DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_DMG_BOOST_ANY_STATUS").ToLocal()));
-                        basePower.Power *= 2;
+                        basePower.Power *= Numerator;
+                        basePower.Power /= Denominator;
                         break;
                     }
                 }
@@ -8550,14 +8466,16 @@ namespace PMDC.Dungeon
         [DataType(1, DataManager.DataType.Status, false)]
         public string[] Statuses;
         public List<BattleEvent> BaseEvents;
+        public bool AffectTarget;
 
         public GiveStatusNeededEvent() { BaseEvents = new List<BattleEvent>(); }
-        public GiveStatusNeededEvent(string[] statuses, params BattleEvent[] effects)
+        public GiveStatusNeededEvent(string[] statuses, bool affectTarget, params BattleEvent[] effects)
         {
             Statuses = statuses;
             BaseEvents = new List<BattleEvent>();
             foreach (BattleEvent effect in effects)
                 BaseEvents.Add(effect);
+            AffectTarget = affectTarget;
         }
         protected GiveStatusNeededEvent(GiveStatusNeededEvent other)
             : this()
@@ -8566,32 +8484,54 @@ namespace PMDC.Dungeon
             Array.Copy(other.Statuses, Statuses, Statuses.Length);
             foreach (BattleEvent battleEffect in other.BaseEvents)
                 BaseEvents.Add((BattleEvent)battleEffect.Clone());
+            AffectTarget = other.AffectTarget;
         }
         public override GameEvent Clone() { return new GiveStatusNeededEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             bool hasStatus = false;
-            foreach (BattleEvent effect in context.Data.OnHits.EnumerateInOrder())
+            if(AffectTarget)
             {
-                StatusBattleEvent statusEvent = effect as StatusBattleEvent;
-                if (statusEvent != null)
+                foreach (StatusEffect status in context.Target.IterateStatusEffects())
                 {
-                    foreach (string status in Statuses)
+                    if (HasStatus(status.ID))
                     {
-                        if (statusEvent.StatusID == status)
-                        {
-                            hasStatus = true;
-                            break;
-                        }
+                        hasStatus = true;
+                        break;
                     }
                 }
             }
+            else
+            {
+                foreach (BattleEvent effect in context.Data.OnHits.EnumerateInOrder())
+                {
+                    StatusBattleEvent statusEvent = effect as StatusBattleEvent;
+                    if (statusEvent != null && HasStatus(statusEvent.StatusID))
+                    {
+                        hasStatus = true;
+                        break;
+                    }
+                }
+            }    
+            
             if (hasStatus)
             {
                 foreach (BattleEvent battleEffect in BaseEvents)
                     yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
             }
+        }
+
+        private bool HasStatus(string statusId)
+        {
+            foreach (string status in Statuses)
+            {
+                if (statusId == status)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
