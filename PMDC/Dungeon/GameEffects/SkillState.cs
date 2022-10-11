@@ -43,4 +43,10 @@ namespace PMDC.Dungeon
         public JawState() { }
         public override GameplayState Clone() { return new JawState(); }
     }
+    [Serializable]
+    public class BladeState : SkillState
+    {
+        public BladeState() { }
+        public override GameplayState Clone() { return new BladeState(); }
+    }
 }

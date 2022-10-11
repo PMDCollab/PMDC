@@ -1148,6 +1148,38 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class SetTrapSingleEvent : SingleCharEvent
+    {
+        [JsonConverter(typeof(TileConverter))]
+        [DataType(0, DataManager.DataType.Tile, false)]
+        public string TrapID;
+
+        public SetTrapSingleEvent() { }
+        public SetTrapSingleEvent(string trapID)
+        {
+            TrapID = trapID;
+        }
+        protected SetTrapSingleEvent(SetTrapSingleEvent other)
+        {
+            TrapID = other.TrapID;
+        }
+        public override GameEvent Clone() { return new SetTrapSingleEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            Tile tile = ZoneManager.Instance.CurrentMap.GetTile(character.CharLoc);
+            if (tile == null)
+                yield break;
+
+            if (tile.Data.GetData().BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(tile.Effect.ID))
+            {
+                tile.Effect = new EffectTile(TrapID, true, tile.Effect.TileLoc);
+                tile.Effect.Owner = ZoneManager.Instance.CurrentMap.GetTileOwner(character);
+            }
+        }
+    }
+
+    [Serializable]
     public abstract class HandoutExpEvent : SingleCharEvent
     {
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
