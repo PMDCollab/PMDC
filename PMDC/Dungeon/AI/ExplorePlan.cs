@@ -19,9 +19,9 @@ namespace PMDC.Dungeon
 
         public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
-            foreach (Character target in ZoneManager.Instance.CurrentMap.IterateCharacters())
+            Loc radius = Character.GetSightDims();
+            foreach (Character target in ZoneManager.Instance.CurrentMap.GetCharsInRect(Rect.FromPoints(controlledChar.CharLoc - radius, controlledChar.CharLoc + radius)))
             {
-                //only check for players in vicinity; don't rely on FOV.
                 if (DungeonScene.Instance.IsTargeted(controlledChar, target, Alignment.Foe, false) && controlledChar.CanSeeCharacter(target, Map.SightRange.Clear))
                 {
                     //if a threat is in the vicinity (doesn't have to be seen), abort this plan

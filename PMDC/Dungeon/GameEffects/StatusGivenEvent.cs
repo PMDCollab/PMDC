@@ -1589,10 +1589,10 @@ namespace PMDC.Dungeon
 
                     foreach (StatusAnimEvent anim in Anims)
                         yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
-
-                    foreach (Character character in ZoneManager.Instance.CurrentMap.IterateCharacters())
+                    
+                    foreach (Character character in ZoneManager.Instance.CurrentMap.GetCharsInFillRect(context.Target.CharLoc, Rect.FromPointRadius(context.Target.CharLoc, Range)))
                     {
-                        if (!character.Dead && DungeonScene.Instance.GetMatchup(context.Target, character) == Alignment.Foe && ZoneManager.Instance.CurrentMap.InRange(context.Target.CharLoc, character.CharLoc, Range))
+                        if (!character.Dead && DungeonScene.Instance.GetMatchup(context.Target, character) == Alignment.Foe)
                         {
                             StatusEffect newStatus = context.Status.Clone();
                             if (context.Status.TargetChar != null)

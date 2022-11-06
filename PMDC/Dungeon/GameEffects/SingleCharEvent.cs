@@ -487,9 +487,9 @@ namespace PMDC.Dungeon
             foreach (AnimEvent anim in Anims)
                 yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, character));
 
-            foreach (Character target in ZoneManager.Instance.CurrentMap.IterateCharacters())
+            foreach (Character target in ZoneManager.Instance.CurrentMap.GetCharsInFillRect(character.CharLoc, Rect.FromPointRadius(character.CharLoc, Range)))
             {
-                if (!character.Dead && DungeonScene.Instance.GetMatchup(character, target) != Alignment.Foe && ZoneManager.Instance.CurrentMap.InRange(character.CharLoc, target.CharLoc, Range))
+                if (!character.Dead && DungeonScene.Instance.GetMatchup(character, target) != Alignment.Foe)
                     yield return CoroutineManager.Instance.StartCoroutine(target.InflictDamage(((StatusEffect)owner).StatusStates.GetWithDefault<HPState>().HP));
             }
         }
@@ -1951,9 +1951,9 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            foreach (Character target in ZoneManager.Instance.CurrentMap.IterateCharacters())
+            foreach (Character target in ZoneManager.Instance.CurrentMap.GetCharsInFillRect(character.CharLoc, Rect.FromPointRadius(character.CharLoc, Range)))
             {
-                if (!target.Dead && DungeonScene.Instance.GetMatchup(character, target) == Alignment.Foe && ZoneManager.Instance.CurrentMap.InRange(character.CharLoc, target.CharLoc, Range))
+                if (!target.Dead && DungeonScene.Instance.GetMatchup(character, target) == Alignment.Foe)
                     yield break;
             }
             if (character.HP < character.MaxHP)
@@ -1978,9 +1978,9 @@ namespace PMDC.Dungeon
         {
             if (character.HP == character.MaxHP)
             {
-                foreach (Character target in ZoneManager.Instance.CurrentMap.IterateCharacters())
+                foreach (Character target in ZoneManager.Instance.CurrentMap.GetCharsInFillRect(character.CharLoc, Rect.FromPointRadius(character.CharLoc, Range)))
                 {
-                    if (!target.Dead && DungeonScene.Instance.GetMatchup(character, target) == Alignment.Friend && ZoneManager.Instance.CurrentMap.InRange(character.CharLoc, target.CharLoc, Range))
+                    if (!target.Dead && DungeonScene.Instance.GetMatchup(character, target) == Alignment.Friend)
                     {
                         if (target.HP < target.MaxHP)
                             yield return CoroutineManager.Instance.StartCoroutine(target.RestoreHP(Math.Max(1, target.MaxHP / 16), false));
@@ -4616,11 +4616,8 @@ namespace PMDC.Dungeon
                     if (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc))
                         return false;
 
-                    foreach (Character testChar in ZoneManager.Instance.CurrentMap.IterateCharacters())
-                    {
-                        if (!testChar.Dead && testChar.CharLoc == testLoc)
-                            return false;
-                    }
+                    if (ZoneManager.Instance.CurrentMap.GetCharAtLoc(testLoc) != null)
+                        return false;
 
                     return true;
                 });

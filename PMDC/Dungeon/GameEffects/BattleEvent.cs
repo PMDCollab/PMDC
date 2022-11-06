@@ -5556,15 +5556,12 @@ namespace PMDC.Dungeon
                 lastMoveStatus.StatusStates.GetWithDefault<IDState>().ID = context.Data.ID;
                 yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, lastMoveStatus, null));
 
-                foreach (Character ally in ZoneManager.Instance.CurrentMap.IterateCharacters())
+                foreach (Character ally in context.User.GetSeenCharacters(Alignment.Friend))
                 {
-                    if (DungeonScene.Instance.GetMatchup(ally, context.User) == Alignment.Friend && ally.CanSeeCharacter(context.User))
-                    {
-                        StatusEffect allyStatus = new StatusEffect(AllyStatusID);
-                        allyStatus.LoadFromData();
-                        allyStatus.StatusStates.GetWithDefault<IDState>().ID = context.Data.ID;
-                        yield return CoroutineManager.Instance.StartCoroutine(ally.AddStatusEffect(context.User, allyStatus, null));
-                    }
+                    StatusEffect allyStatus = new StatusEffect(AllyStatusID);
+                    allyStatus.LoadFromData();
+                    allyStatus.StatusStates.GetWithDefault<IDState>().ID = context.Data.ID;
+                    yield return CoroutineManager.Instance.StartCoroutine(ally.AddStatusEffect(context.User, allyStatus, null));
                 }
 
                 if (context.GetContextStateInt<AttackHitTotal>(true, 0) == 0)
@@ -10309,9 +10306,9 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            foreach (Character target in ZoneManager.Instance.CurrentMap.IterateCharacters())
+            foreach (Character target in ZoneManager.Instance.CurrentMap.GetCharsInFillRect(context.User.CharLoc, Rect.FromPointRadius(context.User.CharLoc, 1)))
             {
-                if (!target.Dead && context.User != target && ZoneManager.Instance.CurrentMap.InRange(context.User.CharLoc, target.CharLoc, 1))
+                if (!target.Dead && context.User != target)
                 {
                     List<string> badStatuses = new List<string>();
                     foreach (StatusEffect status in target.IterateStatusEffects())
@@ -10729,9 +10726,9 @@ namespace PMDC.Dungeon
             //take count of allies
             if (AllyRadius > 0)
             {
-                foreach (Character character in ZoneManager.Instance.CurrentMap.IterateCharacters())
+                foreach (Character character in ZoneManager.Instance.CurrentMap.GetCharsInFillRect(target.CharLoc, Rect.FromPointRadius(target.CharLoc, AllyRadius)))
                 {
-                    if (!character.Dead && DungeonScene.Instance.GetMatchup(character, target) == Alignment.Friend && ZoneManager.Instance.CurrentMap.InRange(character.CharLoc, context.User.CharLoc, AllyRadius))
+                    if (!character.Dead && DungeonScene.Instance.GetMatchup(character, target) == Alignment.Friend)
                         allies.Add(character);
                 }
             }
@@ -10935,9 +10932,9 @@ namespace PMDC.Dungeon
                 //warp within the space
                 Loc startLoc = target.CharLoc;
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RandomWarp(target, Distance));
-                foreach (Character character in ZoneManager.Instance.CurrentMap.IterateCharacters())
+                foreach (Character character in ZoneManager.Instance.CurrentMap.GetCharsInFillRect(startLoc, Rect.FromPointRadius(startLoc, 1)))
                 {
-                    if (!character.Dead && DungeonScene.Instance.GetMatchup(character, target) == Alignment.Friend && ZoneManager.Instance.CurrentMap.InRange(character.CharLoc, startLoc, 1))
+                    if (!character.Dead && DungeonScene.Instance.GetMatchup(character, target) == Alignment.Friend)
                     {
                         if (character.CharStates.Contains<AnchorState>())
                             DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ANCHORED").ToLocal(), character.GetDisplayName(false)));
@@ -11163,14 +11160,16 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WarpAlliesInEvent : BattleEvent
     {
+        public int Distance;
         public int Amount;
         public bool FarthestFirst;
         public bool SilentFail;
         public StringKey Msg;
 
         public WarpAlliesInEvent() { }
-        public WarpAlliesInEvent(int allies, bool farthestFirst, StringKey msg, bool silentFail)
+        public WarpAlliesInEvent(int distance, int allies, bool farthestFirst, StringKey msg, bool silentFail)
         {
+            Distance = distance;
             Amount = allies;
             FarthestFirst = farthestFirst;
             Msg = msg;
@@ -11178,6 +11177,7 @@ namespace PMDC.Dungeon
         }
         protected WarpAlliesInEvent(WarpAlliesInEvent other)
         {
+            Distance = other.Distance;
             Amount = other.Amount;
             FarthestFirst = other.FarthestFirst;
             Msg = other.Msg;
@@ -11188,7 +11188,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             StablePriorityQueue<int, Character> targets = new StablePriorityQueue<int, Character>();
-            foreach (Character character in ZoneManager.Instance.CurrentMap.IterateCharacters())
+            foreach (Character character in ZoneManager.Instance.CurrentMap.GetCharsInFillRect(context.Target.CharLoc, Rect.FromPointRadius(context.Target.CharLoc, Distance)))
             {
                 if (!character.Dead && DungeonScene.Instance.GetMatchup(character, context.Target) == Alignment.Friend)
                     targets.Enqueue((FarthestFirst ? -1 : 1) * (character.CharLoc - context.Target.CharLoc).DistSquared(), character);
@@ -11214,16 +11214,17 @@ namespace PMDC.Dungeon
     public class WarpFoesToTileEvent : BattleEvent
     {
         public int Amount;
+        public int Distance;
 
         public WarpFoesToTileEvent() { }
-        public WarpFoesToTileEvent(int foes) { Amount = foes; }
-        protected WarpFoesToTileEvent(WarpFoesToTileEvent other) { Amount = other.Amount; }
+        public WarpFoesToTileEvent(int distance, int foes) { Distance = distance; Amount = foes; }
+        protected WarpFoesToTileEvent(WarpFoesToTileEvent other) { Distance = other.Distance; Amount = other.Amount; }
         public override GameEvent Clone() { return new WarpFoesToTileEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             StablePriorityQueue<int, Character> targets = new StablePriorityQueue<int, Character>();
-            foreach (Character character in ZoneManager.Instance.CurrentMap.IterateCharacters())
+            foreach (Character character in ZoneManager.Instance.CurrentMap.GetCharsInFillRect(context.User.CharLoc, Rect.FromPointRadius(context.User.CharLoc, Distance)))
             {
                 if (!character.Dead && DungeonScene.Instance.GetMatchup(character, context.User) == Alignment.Foe)
                     targets.Enqueue(-(character.CharLoc - context.TargetTile).DistSquared(), character);

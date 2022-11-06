@@ -378,31 +378,28 @@ namespace PMDC.Dungeon
             if (ownerChar.Fullness < BellyCost)
                 yield break;
             
-            foreach (Character newTarget in ZoneManager.Instance.CurrentMap.IterateCharacters())
+            foreach (Character newTarget in ZoneManager.Instance.CurrentMap.GetCharsInFillRect(ownerChar.CharLoc, Rect.FromPointRadius(ownerChar.CharLoc, 1)))
             {
                 if (!newTarget.Dead && newTarget != ownerChar && newTarget != context.User)
                 {
-                    if (ZoneManager.Instance.CurrentMap.InRange(ownerChar.CharLoc, newTarget.CharLoc, 1))
-                    {
-                        ownerChar.Fullness -= BellyCost;
-                        if (ownerChar.Fullness < 0)
-                            ownerChar.Fullness = 0;
+                    ownerChar.Fullness -= BellyCost;
+                    if (ownerChar.Fullness < 0)
+                        ownerChar.Fullness = 0;
 
-                        CharAnimSpin spinAnim = new CharAnimSpin();
-                        spinAnim.CharLoc = ownerChar.CharLoc;
-                        spinAnim.CharDir = ownerChar.CharDir;
-                        spinAnim.MajorAnim = true;
+                    CharAnimSpin spinAnim = new CharAnimSpin();
+                    spinAnim.CharLoc = ownerChar.CharLoc;
+                    spinAnim.CharDir = ownerChar.CharDir;
+                    spinAnim.MajorAnim = true;
 
-                        yield return CoroutineManager.Instance.StartCoroutine(ownerChar.StartAnim(spinAnim));
-                        yield return new WaitWhile(ownerChar.OccupiedwithAction);
+                    yield return CoroutineManager.Instance.StartCoroutine(ownerChar.StartAnim(spinAnim));
+                    yield return new WaitWhile(ownerChar.OccupiedwithAction);
 
-                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PASS_ATTACK").ToLocal(), ownerChar.GetDisplayName(false), newTarget.GetDisplayName(false)));
-                        context.ExplosionTile = newTarget.CharLoc;
-                        context.Explosion.TargetAlignments |= Alignment.Foe;
-                        context.Explosion.TargetAlignments |= Alignment.Friend;
-                        context.ContextStates.Set(new Redirected());
-                        yield break;
-                    }
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PASS_ATTACK").ToLocal(), ownerChar.GetDisplayName(false), newTarget.GetDisplayName(false)));
+                    context.ExplosionTile = newTarget.CharLoc;
+                    context.Explosion.TargetAlignments |= Alignment.Foe;
+                    context.Explosion.TargetAlignments |= Alignment.Friend;
+                    context.ContextStates.Set(new Redirected());
+                    yield break;
                 }
             }
             
