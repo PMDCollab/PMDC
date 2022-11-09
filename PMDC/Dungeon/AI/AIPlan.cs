@@ -215,7 +215,7 @@ namespace PMDC.Dungeon
 
             if (tile.Data.ID == "lava" && !controlledChar.HasElement("fire"))//check for lava; NOTE: specialized AI code!
                 return true;
-            if (tile.Data.ID == "poison_water" && !controlledChar.HasElement("poison") && !controlledChar.HasElement("steel"))//check for poison; NOTE: specialized AI code!
+            if (tile.Data.ID == "water_poison" && !controlledChar.HasElement("poison") && !controlledChar.HasElement("steel"))//check for poison; NOTE: specialized AI code!
                 return true;
             if (tile.Data.ID == DataManager.Instance.GenWall && controlledChar.MemberTeam is ExplorerTeam)//check for block; NOTE: specialized AI code!
             {
