@@ -1205,8 +1205,13 @@ namespace PMDC.Dungeon
                             if (ii >= DungeonScene.Instance.GainedEXP.Count)
                                 DungeonScene.Instance.GainedEXP.Add(0);
 
-                            int exp = GetExp(owner, ownerChar, character, ii);
+                            int exp = GetExp(owner, character, DungeonScene.Instance.ActiveTeam.Players[ii], DungeonScene.Instance.GainedEXP[ii]);
                             DungeonScene.Instance.GainedEXP[ii] += exp;
+                        }
+                        for (int ii = 0; ii < DungeonScene.Instance.ActiveTeam.Assembly.Count; ii++)
+                        {
+                            int exp = GetExp(owner, character, DungeonScene.Instance.ActiveTeam.Assembly[ii], 0);
+                            handoutAssemblyExp(DungeonScene.Instance.ActiveTeam.Assembly[ii], exp);
                         }
                     }
                 }
@@ -1214,7 +1219,29 @@ namespace PMDC.Dungeon
             }
         }
 
-        protected abstract int GetExp(GameEventOwner owner, Character ownerChar, Character character, int idx);
+        private void handoutAssemblyExp(Character player, int totalExp)
+        {
+            if (!player.Dead && player.Level < DataManager.Instance.MaxLevel)
+            {
+                player.EXP += totalExp;
+
+                string growth = DataManager.Instance.GetMonster(player.BaseForm.Species).EXPTable;
+                GrowthData growthData = DataManager.Instance.GetGrowth(growth);
+                while (player.EXP >= growthData.GetExpToNext(player.Level))
+                {
+                    player.EXP -= growthData.GetExpToNext(player.Level);
+                    player.Level++;
+
+                    if (player.Level >= DataManager.Instance.MaxLevel)
+                    {
+                        player.EXP = 0;
+                        break;
+                    }
+                }
+            }
+        }
+
+        protected abstract int GetExp(GameEventOwner owner, Character defeatedChar, Character recipient, int currentlyGainedExp);
     }
 
     /// <summary>
@@ -1235,11 +1262,11 @@ namespace PMDC.Dungeon
         }
         public override GameEvent Clone() { return new HandoutScaledExpEvent(this); }
 
-        protected override int GetExp(GameEventOwner owner, Character ownerChar, Character character, int idx)
+        protected override int GetExp(GameEventOwner owner, Character defeatedChar, Character recipient, int currentlyGainedExp)
         {
-            MonsterData monsterData = DataManager.Instance.GetMonster(character.BaseForm.Species);
-            MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[character.BaseForm.Form];
-            return expFormula(monsterForm.ExpYield, character.Level);
+            MonsterData monsterData = DataManager.Instance.GetMonster(defeatedChar.BaseForm.Species);
+            MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[defeatedChar.BaseForm.Form];
+            return expFormula(monsterForm.ExpYield, defeatedChar.Level);
         }
 
         private int expFormula(int expYield, int level)
@@ -1257,10 +1284,10 @@ namespace PMDC.Dungeon
         public HandoutConstantExpEvent() { }
         public override GameEvent Clone() { return new HandoutConstantExpEvent(); }
 
-        protected override int GetExp(GameEventOwner owner, Character ownerChar, Character character, int idx)
+        protected override int GetExp(GameEventOwner owner, Character defeatedChar, Character recipient, int currentlyGainedExp)
         {
-            MonsterData monsterData = DataManager.Instance.GetMonster(character.BaseForm.Species);
-            MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[character.BaseForm.Form];
+            MonsterData monsterData = DataManager.Instance.GetMonster(defeatedChar.BaseForm.Species);
+            MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[defeatedChar.BaseForm.Form];
             return monsterForm.ExpYield;
         }
     }
@@ -1285,18 +1312,17 @@ namespace PMDC.Dungeon
         }
         public override GameEvent Clone() { return new HandoutRelativeExpEvent(this); }
 
-        protected override int GetExp(GameEventOwner owner, Character ownerChar, Character character, int idx)
+        protected override int GetExp(GameEventOwner owner, Character defeatedChar, Character recipient, int currentlyGainedExp)
         {
             int levelDiff = 0;
-            Character player = DungeonScene.Instance.ActiveTeam.Players[idx];
-            string growth = DataManager.Instance.GetMonster(player.BaseForm.Species).EXPTable;
+            string growth = DataManager.Instance.GetMonster(recipient.BaseForm.Species).EXPTable;
             GrowthData growthData = DataManager.Instance.GetGrowth(growth);
-            while (player.Level + levelDiff < DataManager.Instance.MaxLevel && player.EXP + DungeonScene.Instance.GainedEXP[idx] >= growthData.GetExpTo(player.Level, player.Level + levelDiff + 1))
+            while (recipient.Level + levelDiff < DataManager.Instance.MaxLevel && recipient.EXP + currentlyGainedExp >= growthData.GetExpTo(recipient.Level, recipient.Level + levelDiff + 1))
                 levelDiff++;
 
-            MonsterData monsterData = DataManager.Instance.GetMonster(character.BaseForm.Species);
-            MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[character.BaseForm.Form];
-            return expFormula(monsterForm.ExpYield, character.Level, player.Level + levelDiff);
+            MonsterData monsterData = DataManager.Instance.GetMonster(defeatedChar.BaseForm.Species);
+            MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[defeatedChar.BaseForm.Form];
+            return expFormula(monsterForm.ExpYield, defeatedChar.Level, recipient.Level + levelDiff);
         }
 
         private int expFormula(int expYield, int level, int recipientLv)
