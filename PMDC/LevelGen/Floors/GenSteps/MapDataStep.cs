@@ -39,6 +39,11 @@ namespace PMDC.LevelGen
         /// </summary>
         public Map.SightRange CharSight;
 
+        /// <summary>
+        /// Clamps the map edges so that the camera does not scroll past them.  Does not work on wrapped-around maps.
+        /// </summary>
+        public bool ClampCamera;
+
         public MapDataStep()
         {
             Music = "";
@@ -67,6 +72,9 @@ namespace PMDC.LevelGen
 
             map.Map.TileSight = TileSight;
             map.Map.CharSight = CharSight;
+
+            if (map.Map.EdgeView != BaseMap.ScrollEdge.Wrap)
+                map.Map.EdgeView = ClampCamera ? BaseMap.ScrollEdge.Clamp : BaseMap.ScrollEdge.Blank;
         }
 
 
