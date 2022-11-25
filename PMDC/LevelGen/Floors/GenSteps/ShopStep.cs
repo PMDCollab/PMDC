@@ -153,6 +153,7 @@ namespace PMDC.LevelGen
                 {
                     Loc matLoc = new Loc(xx, yy);
                     itemTiles.Add(matLoc);
+                    map.SetTile(matLoc, map.RoomTerrain.Copy());
                     EffectTile effect = new EffectTile("area_shop", true, matLoc);
                     ((IPlaceableGenContext<EffectTile>)map).PlaceItem(matLoc, effect);
                     map.GetPostProc(matLoc).Status |= PostProcType.Panel;
