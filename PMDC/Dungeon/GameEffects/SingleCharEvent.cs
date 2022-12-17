@@ -3113,21 +3113,25 @@ namespace PMDC.Dungeon
                 }
 
                 ItemData itemEntry = DataManager.Instance.GetItem(unlock.UnlockItem);
-                if (itemSlot > -2)
-                    DungeonScene.Instance.PendingLeaderAction = MenuManager.Instance.ProcessMenuCoroutine(askItemUseQuestion(itemSlot, itemEntry));
-                else
-                    DungeonScene.Instance.PendingLeaderAction = MenuManager.Instance.SetSign(String.Format(new StringKey("DLG_LOCK").ToLocal(), itemEntry.GetIconName()));
-
+                DungeonScene.Instance.PendingLeaderAction = giveLockedResponse(itemSlot, itemEntry);
             }
         }
 
-        private DialogueBox askItemUseQuestion(int itemSlot, ItemData item)
+        private IEnumerator<YieldInstruction> giveLockedResponse(int itemSlot, ItemData item)
         {
-            return MenuManager.Instance.CreateQuestion(String.Format(new StringKey("DLG_LOCK_KEY").ToLocal(), item.GetIconName()),
+            if (DataManager.Instance.CurrentReplay != null)
+                yield break;
+
+            if (itemSlot > -2)
+            {
+                DialogueBox box = MenuManager.Instance.CreateQuestion(String.Format(new StringKey("DLG_LOCK_KEY").ToLocal(), item.GetIconName()),
                 () => { MenuManager.Instance.EndAction = DungeonScene.Instance.ProcessPlayerInput(new GameAction(GameAction.ActionType.UseItem, Dir8.None, itemSlot, -1)); },
                 () => { });
+                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(box));
+            }
+            else
+                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetSign(String.Format(new StringKey("DLG_LOCK").ToLocal(), item.GetIconName())));
         }
-
 
     }
 
@@ -3145,12 +3149,21 @@ namespace PMDC.Dungeon
                 if (notice == null)
                     yield break;
                 GameManager.Instance.SE("Menu/Confirm");
-                if (!notice.Title.Key.IsValid())
-                    DungeonScene.Instance.PendingLeaderAction = MenuManager.Instance.SetSign(notice.Content.FormatLocal());
-                else
-                    DungeonScene.Instance.PendingLeaderAction = MenuManager.Instance.ProcessMenuCoroutine(MenuManager.Instance.CreateNotice(notice.Title.FormatLocal(), notice.Content.FormatLocal()));
+
+                DungeonScene.Instance.PendingLeaderAction = processNotice(notice);
                 yield break;
             }
+        }
+
+        private IEnumerator<YieldInstruction> processNotice(NoticeState notice)
+        {
+            if (DataManager.Instance.CurrentReplay != null)
+                yield break;
+
+            if (!notice.Title.Key.IsValid())
+                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetSign(notice.Content.FormatLocal()));
+            else
+                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(MenuManager.Instance.CreateNotice(notice.Title.FormatLocal(), notice.Content.FormatLocal())));
         }
     }
 
@@ -3189,6 +3202,9 @@ namespace PMDC.Dungeon
 
         public IEnumerator<YieldInstruction> PromptTileCheck(GameEventOwner owner)
         {
+            if (DataManager.Instance.CurrentReplay != null)
+                yield break;
+
             EffectTile tile = (EffectTile)owner;
             Loc baseLoc = tile.TileLoc;
             if (DungeonScene.Instance.ActiveTeam.Leader.CharLoc == baseLoc && ZoneManager.Instance.CurrentMap.Tiles[baseLoc.X][baseLoc.Y].Effect == tile)
