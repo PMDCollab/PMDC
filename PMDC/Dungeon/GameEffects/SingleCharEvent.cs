@@ -1874,12 +1874,54 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new BurnEvent(); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            if (!character.CharStates.Contains<HeatproofState>() && !character.CharStates.Contains<MagicGuardState>())
+            AttackedThisTurnState recent = ((StatusEffect)owner).StatusStates.GetWithDefault<AttackedThisTurnState>();
+            if (recent.Attacked && !character.CharStates.Contains<HeatproofState>() && !character.CharStates.Contains<MagicGuardState>())
             {
-                yield return CoroutineManager.Instance.StartCoroutine(character.InflictDamage(Math.Max(1, character.MaxHP / 16), false));
+                yield return CoroutineManager.Instance.StartCoroutine(character.InflictDamage(Math.Max(1, character.MaxHP / 8), false));
+                recent.Attacked = false;
             }
         }
     }
+
+    [Serializable]
+    public class PoisonSingleEvent : SingleCharEvent
+    {
+        public bool Toxic;
+
+        public PoisonSingleEvent() { }
+        public PoisonSingleEvent(bool toxic)
+        {
+            Toxic = toxic;
+        }
+        protected PoisonSingleEvent(PoisonSingleEvent other)
+        {
+            Toxic = other.Toxic;
+        }
+        public override GameEvent Clone() { return new PoisonSingleEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            AttackedThisTurnState recent = ((StatusEffect)owner).StatusStates.GetWithDefault<AttackedThisTurnState>();
+            if (!recent.Attacked && !character.CharStates.Contains<MagicGuardState>())
+            {
+                CountState countState = ((StatusEffect)owner).StatusStates.Get<CountState>();
+                if (Toxic && countState.Count < 16)
+                    countState.Count++;
+                if (character.CharStates.Contains<PoisonHealState>())
+                {
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_POISON_HEAL").ToLocal(), character.GetDisplayName(false)));
+                    yield return CoroutineManager.Instance.StartCoroutine(character.RestoreHP(Math.Max(1, character.MaxHP / 12)));
+                }
+                else
+                {
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_POISONED").ToLocal(), character.GetDisplayName(false)));
+                    yield return CoroutineManager.Instance.StartCoroutine(character.InflictDamage(Math.Max(1, (character.MaxHP * countState.Count) / 16)));
+                }
+            }
+            recent.Attacked = false;
+        }
+    }
+
     [Serializable]
     public class AlternateParalysisEvent : SingleCharEvent
     {

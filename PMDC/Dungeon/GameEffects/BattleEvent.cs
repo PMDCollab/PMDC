@@ -6243,6 +6243,19 @@ namespace PMDC.Dungeon
         }
     }
 
+    [Serializable]
+    public class AttackedThisTurnEvent : BattleEvent
+    {
+        public override GameEvent Clone() { return new AttackedThisTurnEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            AttackedThisTurnState recent = ((StatusEffect)owner).StatusStates.GetWithDefault<AttackedThisTurnState>();
+            recent.Attacked = true;
+            yield break;
+        }
+    }
+
 
     [Serializable]
     public class GummiEvent : BattleEvent
