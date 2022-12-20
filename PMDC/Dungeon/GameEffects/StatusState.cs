@@ -91,6 +91,15 @@ namespace PMDC.Dungeon
         public override GameplayState Clone() { return new ParalyzeState(this); }
     }
     [Serializable]
+    public class AttackedThisTurnState : StatusState
+    {
+        public bool Attacked;
+        public AttackedThisTurnState() { }
+        public AttackedThisTurnState(bool attacked) { Attacked = attacked; }
+        protected AttackedThisTurnState(AttackedThisTurnState other) { Attacked = other.Attacked; }
+        public override GameplayState Clone() { return new AttackedThisTurnState(this); }
+    }
+    [Serializable]
     public class CategoryState : StatusState
     {
         public BattleData.SkillCategory Category;

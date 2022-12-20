@@ -6243,6 +6243,19 @@ namespace PMDC.Dungeon
         }
     }
 
+    [Serializable]
+    public class AttackedThisTurnEvent : BattleEvent
+    {
+        public override GameEvent Clone() { return new AttackedThisTurnEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            AttackedThisTurnState recent = ((StatusEffect)owner).StatusStates.GetWithDefault<AttackedThisTurnState>();
+            recent.Attacked = true;
+            yield break;
+        }
+    }
+
 
     [Serializable]
     public class GummiEvent : BattleEvent
@@ -12226,7 +12239,20 @@ namespace PMDC.Dungeon
             InvItem attackerItem = context.User.EquippedItem;
             InvItem targetItem = context.Target.EquippedItem;
 
-            if (!String.IsNullOrEmpty(attackerItem.ID) || !String.IsNullOrEmpty(targetItem.ID))
+            bool attackerCannotDrop = false;
+            if (!String.IsNullOrEmpty(attackerItem.ID))
+            {
+                ItemData entry = DataManager.Instance.GetItem(attackerItem.ID);
+                attackerCannotDrop = entry.CannotDrop;
+            }
+            bool targetCannotDrop = false;
+            if (!String.IsNullOrEmpty(targetItem.ID))
+            {
+                ItemData entry = DataManager.Instance.GetItem(targetItem.ID);
+                targetCannotDrop = entry.CannotDrop;
+            }
+
+            if ((!String.IsNullOrEmpty(attackerItem.ID) || !String.IsNullOrEmpty(targetItem.ID)) && (!attackerCannotDrop && !targetCannotDrop))
             {
                 //if it's an explorer, and their inv is full, and they're not holding anything, they cannot be given an item by the other party
                 if (String.IsNullOrEmpty(attackerItem.ID) && context.User.MemberTeam is ExplorerTeam && ((ExplorerTeam)context.User.MemberTeam).GetInvCount() >= ((ExplorerTeam)context.User.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone))
@@ -12396,7 +12422,14 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
+            bool attackerCannotDrop = false;
             if (!String.IsNullOrEmpty(context.User.EquippedItem.ID))
+            {
+                ItemData entry = DataManager.Instance.GetItem(context.User.EquippedItem.ID);
+                attackerCannotDrop = entry.CannotDrop;
+            }
+
+            if (!String.IsNullOrEmpty(context.User.EquippedItem.ID) && !attackerCannotDrop)
             {
                 context.Item = context.User.EquippedItem;
                 context.User.DequipItem();
