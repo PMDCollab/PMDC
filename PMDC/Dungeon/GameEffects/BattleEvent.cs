@@ -5208,6 +5208,50 @@ namespace PMDC.Dungeon
             context.SetActionMsg(String.Format(new StringKey("MSG_SKILL_USE").ToLocal(), context.User.GetDisplayName(false), entry.GetIconName()));
         }
     }
+
+    [Serializable]
+    public class ChargeCustomEvent : BattleEvent
+    {
+        public CombatAction HitboxAction;
+        public ExplosionData Explosion;
+        public BattleData NewData;
+
+        public ChargeCustomEvent() { }
+        public ChargeCustomEvent(CombatAction action, ExplosionData explosion, BattleData moveData)
+        {
+            HitboxAction = action;
+            Explosion = explosion;
+            NewData = moveData;
+        }
+        protected ChargeCustomEvent(ChargeCustomEvent other)
+        {
+            HitboxAction = other.HitboxAction;
+            Explosion = other.Explosion;
+            NewData = new BattleData(other.NewData);
+        }
+        public override GameEvent Clone() { return new ChargeCustomEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (!context.ContextStates.Contains<MoveCharge>())
+            {
+                context.Data = new BattleData(NewData);
+                context.Data.ID = context.Data.ID;
+                context.Data.DataType = context.Data.DataType;
+
+                context.Explosion = new ExplosionData(Explosion);
+
+                context.HitboxAction = HitboxAction.Clone();
+
+                context.Item = new InvItem();
+                context.Strikes = 1;
+
+                context.SetActionMsg("");
+            }
+            yield break;
+        }
+    }
+
     [Serializable]
     public class ChargeOrReleaseEvent : BattleEvent
     {
@@ -6002,6 +6046,22 @@ namespace PMDC.Dungeon
                         DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), context.User.GetDisplayName(false), ((StatusEffect)owner).TargetChar.GetDisplayName(false)));
                     context.AddContextStateMult<AccMult>(false, -1, 1);
                 }
+            }
+            yield break;
+        }
+    }
+    [Serializable]
+    public class ForceFaceTargetEvent : BattleEvent
+    {
+        public override GameEvent Clone() { return new ForceFaceTargetEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            StatusEffect status = ((StatusEffect)owner);
+            if (status.TargetChar != null)
+            {
+                Dir8 attackDir = ZoneManager.Instance.CurrentMap.GetClosestDir8(ownerChar.CharLoc, status.TargetChar.CharLoc);
+                ownerChar.CharDir = attackDir;
             }
             yield break;
         }
@@ -8954,6 +9014,34 @@ namespace PMDC.Dungeon
 
 
     [Serializable]
+    public class CoupledStatusBattleEvent : StatusBattleEvent
+    {
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string AltStatusID;
+
+        public CoupledStatusBattleEvent() { }
+        public CoupledStatusBattleEvent(string statusID, string altStatusID, bool affectTarget, bool silentCheck)
+            : base(statusID, affectTarget, silentCheck, false) { AltStatusID = altStatusID; }
+        protected CoupledStatusBattleEvent(CoupledStatusBattleEvent other)
+            : base(other) { AltStatusID = other.AltStatusID; }
+        public override GameEvent Clone() { return new CoupledStatusBattleEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            Character target = (AffectTarget ? context.Target : context.User);
+            Character origin = (AffectTarget ? context.User : context.Target);
+            if (target.Dead)
+                yield break;
+
+            AbortStatus cancel = new AbortStatus();
+            yield return CoroutineManager.Instance.StartCoroutine(applyStatus(owner, ownerChar, StatusID, target, origin, context, cancel));
+            if (!cancel.Cancel)
+                yield return CoroutineManager.Instance.StartCoroutine(applyStatus(owner, ownerChar, AltStatusID, origin, target, context, cancel));
+        }
+    }
+
+    [Serializable]
     public class StatusBattleEvent : BattleEvent
     {
         [JsonConverter(typeof(StatusConverter))]
@@ -9008,17 +9096,29 @@ namespace PMDC.Dungeon
             if (target.Dead)
                 yield break;
 
-            StatusEffect status = new StatusEffect(StatusID);
+            yield return CoroutineManager.Instance.StartCoroutine(applyStatus(owner, ownerChar, StatusID, target, origin, context, new AbortStatus()));
+        }
+
+
+        protected IEnumerator<YieldInstruction> applyStatus(GameEventOwner owner, Character ownerChar, string statusID, Character target, Character origin, BattleContext context, AbortStatus cancel)
+        {
+            StatusEffect status = new StatusEffect(statusID);
             status.LoadFromData();
             if (((StatusData)status.GetData()).Targeted)
             {
                 if (origin.Dead)
+                {
+                    cancel.Cancel = true;
                     yield break;
+                }
                 status.TargetChar = origin;
             }
 
             if (!ModStatus(owner, context, target, origin, status))
+            {
+                cancel.Cancel = true;
                 yield break;
+            }
 
             if (!TriggerMsg.IsValid())
             {
@@ -9038,7 +9138,10 @@ namespace PMDC.Dungeon
 
                 yield return CoroutineManager.Instance.StartCoroutine(target.BeforeStatusCheck(statusContext));
                 if (statusContext.CancelState.Cancel)
+                {
+                    cancel.Cancel = true;
                     yield break;
+                }
 
                 DungeonScene.Instance.LogMsg(String.Format(TriggerMsg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
                 statusContext.msg = true;

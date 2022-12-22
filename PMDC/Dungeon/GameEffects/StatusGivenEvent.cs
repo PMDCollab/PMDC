@@ -985,6 +985,7 @@ namespace PMDC.Dungeon
         }
     }
 
+
     [Serializable]
     public class StatusAnimEvent : StatusGivenEvent
     {
@@ -1031,6 +1032,41 @@ namespace PMDC.Dungeon
         }
     }
 
+
+
+    [Serializable]
+    public class StatusCharAnimEvent : StatusGivenEvent
+    {
+        public CharAnimData CharAnim;
+
+        public StatusCharAnimEvent()
+        {
+            CharAnim = new CharAnimFrameType();
+        }
+
+        public StatusCharAnimEvent(CharAnimData charAnim)
+        {
+            CharAnim = charAnim;
+        }
+        protected StatusCharAnimEvent(StatusCharAnimEvent other)
+        {
+            CharAnim = other.CharAnim;
+        }
+        public override GameEvent Clone() { return new StatusCharAnimEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, StatusCheckContext context)
+        {
+            if (context.Status != owner)
+                yield break;
+
+            StaticCharAnimation anim = CharAnim.GetCharAnim();
+            anim.CharLoc = context.Target.CharLoc;
+            anim.CharDir = context.Target.CharDir;
+
+            yield return CoroutineManager.Instance.StartCoroutine(context.Target.StartAnim(anim));
+        }
+    }
+
     [Serializable]
     public class StatusEmoteEvent : StatusGivenEvent
     {
@@ -1060,6 +1096,40 @@ namespace PMDC.Dungeon
             yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.ProcessEmoteFX(context.Target, Emote));
         }
     }
+
+
+    [Serializable]
+    public class RemoveTargetStatusEvent : StatusGivenEvent
+    {
+        //destiny knot logic
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string StatusID;
+        public bool ShowMessage;
+
+        public RemoveTargetStatusEvent() { StatusID = ""; }
+        public RemoveTargetStatusEvent(string statusID, bool showMessage)
+        {
+            StatusID = statusID;
+            ShowMessage = showMessage;
+        }
+        protected RemoveTargetStatusEvent(RemoveTargetStatusEvent other)
+        {
+            StatusID = other.StatusID;
+            ShowMessage = other.ShowMessage;
+        }
+        public override GameEvent Clone() { return new RemoveTargetStatusEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, StatusCheckContext context)
+        {
+            if (context.Status != owner)
+                yield break;
+
+            if (context.Status.TargetChar != null)
+                yield return CoroutineManager.Instance.StartCoroutine(context.Status.TargetChar.RemoveStatusEffect(StatusID, false));
+        }
+    }
+
 
     [Serializable]
     public class TargetedBattleLogEvent : StatusGivenEvent
