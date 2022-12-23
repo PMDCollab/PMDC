@@ -2028,6 +2028,20 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class SingleStrikeEvent : BattleEvent
+    {
+        public override GameEvent Clone() { return new SingleStrikeEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.StrikesMade == 0)
+                context.Strikes = 1;
+
+            yield break;
+        }
+    }
+
+    [Serializable]
     public class MultiStrikeEvent : BattleEvent
     {
         public int StrikeMult;
@@ -3452,6 +3466,38 @@ namespace PMDC.Dungeon
                     ((LinearAction)context.HitboxAction).StopAtHit = false;
                 if (PierceWalls)
                     ((LinearAction)context.HitboxAction).StopAtWall = false;
+            }
+            yield break;
+        }
+    }
+
+    [Serializable]
+    public class NoPierceEvent : BattleEvent
+    {
+        public bool PierceEnemies;
+        public bool PierceWalls;
+
+        public NoPierceEvent() { }
+        public NoPierceEvent(bool enemies, bool walls)
+        {
+            PierceEnemies = enemies;
+            PierceWalls = walls;
+        }
+        protected NoPierceEvent(NoPierceEvent other)
+        {
+            PierceEnemies = other.PierceEnemies;
+            PierceWalls = other.PierceWalls;
+        }
+        public override GameEvent Clone() { return new NoPierceEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.HitboxAction is LinearAction)
+            {
+                if (PierceEnemies)
+                    ((LinearAction)context.HitboxAction).StopAtHit = true;
+                if (PierceWalls)
+                    ((LinearAction)context.HitboxAction).StopAtWall = true;
             }
             yield break;
         }
@@ -9009,6 +9055,38 @@ namespace PMDC.Dungeon
                 }
                 yield return CoroutineManager.Instance.StartCoroutine(target.AddStatusEffect(origin, status, null, false, true));
             }
+        }
+    }
+
+
+    [Serializable]
+    public class SkyDropStatusBattleEvent : StatusBattleEvent
+    {
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string AltStatusID;
+
+        public SkyDropStatusBattleEvent() { }
+        public SkyDropStatusBattleEvent(string statusID, string altStatusID, bool affectTarget, bool silentCheck)
+            : base(statusID, affectTarget, silentCheck, false) { AltStatusID = altStatusID; }
+        protected SkyDropStatusBattleEvent(SkyDropStatusBattleEvent other)
+            : base(other) { AltStatusID = other.AltStatusID; }
+        public override GameEvent Clone() { return new SkyDropStatusBattleEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            Character target = (AffectTarget ? context.Target : context.User);
+            Character origin = (AffectTarget ? context.User : context.Target);
+            if (target.Dead)
+                yield break;
+
+            AbortStatus cancel = new AbortStatus();
+            yield return CoroutineManager.Instance.StartCoroutine(applyStatus(owner, ownerChar, StatusID, target, origin, context, cancel));
+            if (!cancel.Cancel)
+                yield return CoroutineManager.Instance.StartCoroutine(applyStatus(owner, ownerChar, AltStatusID, origin, target, context, cancel));
+
+            //This will pull the player to a proper location if it dashed onto untraversible terrain and snapped back.  it looks a bit janky though....
+            context.User.CharLoc = context.Target.CharLoc + context.User.CharDir.Reverse().GetLoc();
         }
     }
 
