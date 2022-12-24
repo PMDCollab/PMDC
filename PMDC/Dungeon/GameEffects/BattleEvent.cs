@@ -13538,6 +13538,50 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    [Serializable]
+    public class MapOutRadiusEvent : BattleEvent
+    {
+        public int Radius;
+
+        public MapOutRadiusEvent() { }
+        public MapOutRadiusEvent(int radius)
+        {
+            Radius = radius;
+        }
+        protected MapOutRadiusEvent(MapOutRadiusEvent other)
+        {
+            Radius = other.Radius;
+        }
+        public override GameEvent Clone() { return new MapOutRadiusEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+
+            for (int ii = 1; ii <= 25; ii++)
+            {
+                int limitSquared = Radius * Radius * ii * ii / 25 / 25;
+                for (int xx = -Radius; xx <= Radius; xx++)
+                {
+                    for (int yy = -Radius; yy <= Radius; yy++)
+                    {
+                        Loc diff = new Loc(xx, yy);
+                        if (diff.DistSquared() < limitSquared)
+                        {
+                            Loc loc = context.User.CharLoc + diff;
+                            if (!ZoneManager.Instance.CurrentMap.GetLocInMapBounds(ref loc))
+                                continue;
+                            if (ZoneManager.Instance.CurrentMap.DiscoveryArray[loc.X][loc.Y] == Map.DiscoveryState.None)
+                                ZoneManager.Instance.CurrentMap.DiscoveryArray[loc.X][loc.Y] = Map.DiscoveryState.Hinted;
+                        }
+                    }
+                }
+                yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(2));
+            }
+
+        }
+    }
+
     [Serializable]
     public class TilePostEvent : BattleEvent
     {
