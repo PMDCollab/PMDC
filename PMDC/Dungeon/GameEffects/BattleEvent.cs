@@ -3888,6 +3888,40 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class ChanceEvadeEvent : BattleEvent
+    {
+        public int Numerator;
+        public int Denominator;
+
+        public ChanceEvadeEvent()
+        { }
+        public ChanceEvadeEvent(int numerator, int denominator)
+        {
+            Numerator = numerator;
+            Denominator = denominator;
+        }
+        protected ChanceEvadeEvent(ChanceEvadeEvent other) : this()
+        {
+            Numerator = other.Numerator;
+            Denominator = other.Denominator;
+        }
+        public override GameEvent Clone() { return new ChanceEvadeEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.Data.HitRate > -1)
+            {
+                if (DataManager.Instance.Save.Rand.Next(0, Denominator) < Numerator)
+                {
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_MISS").ToLocal(), context.Target.GetDisplayName(false)));
+                    context.AddContextStateMult<AccMult>(false, -1, 1);
+                }
+            }
+            yield break;
+        }
+    }
+
+    [Serializable]
     public class EvadeDistanceEvent : BattleEvent
     {
         public override GameEvent Clone() { return new EvadeDistanceEvent(); }
@@ -9324,35 +9358,55 @@ namespace PMDC.Dungeon
         [DataType(0, DataManager.DataType.Status, false)]
         public string LastSlotStatusID;
 
+        public bool RandomFallback;
+
         public DisableBattleEvent() { LastSlotStatusID = ""; }
         public DisableBattleEvent(string statusID, string prevMoveID)
-            : this(statusID, prevMoveID, false) { }
-        public DisableBattleEvent(string statusID, string prevMoveID, bool anonymous)
+            : this(statusID, prevMoveID, false, false) { }
+        public DisableBattleEvent(string statusID, string prevMoveID, bool anonymous, bool randomFallback)
             : base(statusID, true, false, anonymous)
         {
             LastSlotStatusID = prevMoveID;
+            RandomFallback = randomFallback;
         }
         protected DisableBattleEvent(DisableBattleEvent other) : base(other)
         {
             LastSlotStatusID = other.LastSlotStatusID;
+            RandomFallback = other.RandomFallback;
         }
         public override GameEvent Clone() { return new DisableBattleEvent(this); }
 
         protected override bool ModStatus(GameEventOwner owner, BattleContext context, Character target, Character origin, StatusEffect status)
         {
             StatusEffect testStatus = target.GetStatusEffect(LastSlotStatusID);
+            int lockedSlot = 0;
             if (testStatus != null)
-            {
-                int lockedSlot = testStatus.StatusStates.GetWithDefault<SlotState>().Slot;
-                //add disable slot based on the last slot used
-                status.StatusStates.GetWithDefault<SlotState>().Slot = lockedSlot;
-                return true;
-            }
+                lockedSlot = testStatus.StatusStates.GetWithDefault<SlotState>().Slot;
             else
             {
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_DISABLE_FAIL").ToLocal(), target.GetDisplayName(false)));
-                return false;
+                List<int> possibleSlots = new List<int>();
+                //choose an enabled slot
+                for (int ii = 0; ii < context.Target.Skills.Count; ii++)
+                {
+                    if (!String.IsNullOrEmpty(context.Target.Skills[ii].Element.SkillNum))
+                    {
+                        if (context.Target.Skills[ii].Element.Enabled)
+                            possibleSlots.Add(ii);
+                    }
+                }
+
+                if (possibleSlots.Count > 0)
+                    lockedSlot = possibleSlots[DataManager.Instance.Save.Rand.Next(possibleSlots.Count)];
+                else
+                {
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_DISABLE_FAIL").ToLocal(), target.GetDisplayName(false)));
+                    return false;
+                }
             }
+
+            //add disable slot based on the last slot used
+            status.StatusStates.GetWithDefault<SlotState>().Slot = lockedSlot;
+            return true;
         }
     }
 
