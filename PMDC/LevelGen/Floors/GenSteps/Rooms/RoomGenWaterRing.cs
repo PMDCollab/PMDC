@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using RogueElements;
 using RogueEssence.Dungeon;
+using RogueEssence.LevelGen;
 
 namespace PMDC.LevelGen
 {
@@ -10,7 +11,7 @@ namespace PMDC.LevelGen
     /// </summary>
     /// <typeparam name="T"></typeparam>
     [Serializable]
-    public class RoomGenWaterRing<T> : PermissiveRoomGen<T> where T : ITiledGenContext, IPlaceableGenContext<MapItem>
+    public class RoomGenWaterRing<T> : PermissiveRoomGen<T> where T : IPostProcGenContext, ITiledGenContext, IPlaceableGenContext<MapItem>
     {
         /// <summary>
         /// The extra width of the room added to the area occupied by the water ring.
@@ -110,10 +111,15 @@ namespace PMDC.LevelGen
             {
                 for (int y = 0; y < ringSize.Y; y++)
                 {
+                    Loc targetLoc = new Loc(blockStart.X + x, blockStart.Y + y);
                     if (x == 0 || x == ringSize.X - 1 || y == 0 || y == ringSize.Y - 1)
-                        map.SetTile(new Loc(blockStart.X + x, blockStart.Y + y), WaterTerrain.Copy());
+                        map.SetTile(targetLoc, WaterTerrain.Copy());
                     else
-                        freeTiles.Add(new Loc(blockStart.X + x, blockStart.Y + y));
+                    {
+                        freeTiles.Add(targetLoc);
+                        map.GetPostProc(targetLoc).Status |= PostProcType.Panel;
+                        map.GetPostProc(targetLoc).Status |= PostProcType.Item;
+                    }
                 }
             }
             if (Treasures.Count > 0)
