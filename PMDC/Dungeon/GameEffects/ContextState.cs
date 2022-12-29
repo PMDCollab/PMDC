@@ -198,6 +198,13 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class Corrosion : ContextState
+    {
+        public Corrosion() { }
+        public override GameplayState Clone() { return new Corrosion(); }
+    }
+
+    [Serializable]
     public class Infiltrator : ContextState
     {
         public StringKey Msg;

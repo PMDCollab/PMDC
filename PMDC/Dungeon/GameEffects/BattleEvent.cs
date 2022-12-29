@@ -2015,6 +2015,43 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    [Serializable]
+    public class PinchNeededEvent : BattleEvent
+    {
+        public int Denominator;
+        public bool AffectTarget;
+        public List<BattleEvent> BaseEvents;
+
+        public PinchNeededEvent() { BaseEvents = new List<BattleEvent>(); }
+        public PinchNeededEvent(int denominator, params BattleEvent[] effects) : this()
+        {
+            Denominator = denominator;
+            foreach (BattleEvent effect in effects)
+                BaseEvents.Add(effect);
+        }
+        protected PinchNeededEvent(PinchNeededEvent other) : this()
+        {
+            Denominator = other.Denominator;
+            foreach (BattleEvent battleEffect in other.BaseEvents)
+                BaseEvents.Add((BattleEvent)battleEffect.Clone());
+        }
+        public override GameEvent Clone() { return new PinchNeededEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            Character target = (AffectTarget ? context.Target : context.User);
+
+            if (target.HP <= target.MaxHP / Math.Max(1, Denominator))
+            {
+                foreach (BattleEvent battleEffect in BaseEvents)
+                    yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
+            }
+
+            yield break;
+        }
+    }
+
     [Serializable]
     public class AdaptabilityEvent : BattleEvent
     {

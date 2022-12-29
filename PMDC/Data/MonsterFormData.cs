@@ -21,7 +21,6 @@ namespace PMDC.Data
 
         public int Generation;
 
-        public int Ratio;
         public int GenderlessWeight;
         public int MaleWeight;
         public int FemaleWeight;
