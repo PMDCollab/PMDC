@@ -67,6 +67,14 @@ namespace PMDC.LevelGen
 
             base.DrawOnMap(map);
 
+            for (int xx = 0; xx < this.Draw.Width; xx++)
+            {
+                for (int yy = 0; yy < this.Draw.Height; yy++)
+                {
+                    map.GetPostProc(new Loc(this.Draw.X + xx, this.Draw.Y + yy)).Status |= PostProcType.Terrain;
+                }
+            }
+
             //create new bosses from the spawns, adjusting their locations
             MobSpawnState mobSpawnState = new MobSpawnState();
             foreach (MobSpawn spawn in Bosses)
@@ -95,23 +103,13 @@ namespace PMDC.LevelGen
                 mobSpawnState.Spawns.Add(newSpawn);
             }
 
-            ////place the boss bounds here
-            //CheckIntrudeBoundsEvent trapZone = new CheckIntrudeBoundsEvent();
-            //trapZone.Bounds = new Rect(Trigger.Start + new Loc(this.Draw.Start), Trigger.Size);
-            //{
-            //    LockdownMapEvent lockdown = new LockdownMapEvent();
-            //    lockdown.Bounds = new Rect(this.Draw.Start - new Loc(1), this.Draw.Size + new Loc(2));
-            //    trapZone.Effects.Add(lockdown);
-            //    trapZone.Effects.Add(new BossSpawnEvent(this.Draw, mobSpawns.ToArray()));
-            //}
-            //map.CheckEvents.Add(trapZone);
-
 
             EffectTile newEffect = new EffectTile(TriggerTile, true, Trigger + this.Draw.Start);
             newEffect.TileStates.Set(mobSpawnState);
             newEffect.TileStates.Set(new BoundsState(new Rect(this.Draw.Start - new Loc(1), this.Draw.Size + new Loc(2))));
             newEffect.TileStates.Set(new SongState(Song));
             ((IPlaceableGenContext<EffectTile>)map).PlaceItem(Trigger + this.Draw.Start, newEffect);
+            map.GetPostProc(Trigger + this.Draw.Start).Status |= (PostProcType.Panel | PostProcType.Item | PostProcType.Terrain);
         }
     }
 }

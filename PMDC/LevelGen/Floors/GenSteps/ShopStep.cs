@@ -107,9 +107,7 @@ namespace PMDC.LevelGen
                     {
                         bool eligible = true;
                         Loc testLoc = roomPlan.RoomGen.Draw.Start + new Loc(xx, yy);
-                        Loc frontLoc = testLoc + Dir8.Down.GetLoc();
-                        if (map.RoomTerrain.TileEquivalent(map.GetTile(testLoc)) && !map.HasTileEffect(testLoc) &&
-                            map.RoomTerrain.TileEquivalent(map.GetTile(frontLoc)) && !map.HasTileEffect(frontLoc) &&
+                        if (!map.TileBlocked(testLoc) && !map.HasTileEffect(testLoc) &&
                              (map.GetPostProc(testLoc).Status & (PostProcType.Panel | PostProcType.Item)) == PostProcType.None)
                         {
                             foreach (MapItem item in map.Items)
@@ -127,7 +125,7 @@ namespace PMDC.LevelGen
                     }
                 }
 
-                List <Rect> candRects = Detection.DetectNLargestRects(eligibilityGrid, 1);
+                List<Rect> candRects = Detection.DetectNLargestRects(eligibilityGrid, 1);
                 if (candRects.Count > 0)
                 {
                     limitRect = new Rect(roomPlan.RoomGen.Draw.Start + candRects[0].Start, candRects[0].Size);

@@ -83,7 +83,10 @@ namespace PMDC.LevelGen
             for (int x = 0; x < platWidth; x++)
             {
                 for (int y = 0; y < platHeight; y++)
+                {
                     map.GetPostProc(new Loc(platStart.X + x, platStart.Y + y)).Status |= PostProcType.Panel;
+                    map.GetPostProc(new Loc(platStart.X + x, platStart.Y + y)).Status |= PostProcType.Terrain;
+                }
             }
             map.SetTile(new Loc(Draw.X + 1, Draw.Y + ROOM_OFFSET), map.WallTerrain.Copy());
             map.GetPostProc(new Loc(Draw.X + 1, Draw.Y + ROOM_OFFSET)).Status |= PostProcType.Terrain;

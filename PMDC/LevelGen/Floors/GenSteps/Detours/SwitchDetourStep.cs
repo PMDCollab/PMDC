@@ -63,7 +63,7 @@ namespace PMDC.LevelGen
 
             Grid.LocTest checkGround = (Loc testLoc) =>
             {
-                return (map.RoomTerrain.TileEquivalent(map.GetTile(testLoc)) && !map.HasTileEffect(testLoc));
+                return (!map.TileBlocked(testLoc) && !map.HasTileEffect(testLoc));
             };
             Grid.LocTest checkBlock = (Loc testLoc) =>
             {

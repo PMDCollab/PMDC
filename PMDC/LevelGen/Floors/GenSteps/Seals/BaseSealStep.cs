@@ -124,7 +124,7 @@ namespace PMDC.LevelGen
                 //  all normal walls for the INWARD border shall be turned into impassables
                 //  everything else for the INWARD border shall be saved into a key list
 
-                if (map.RoomTerrain.TileEquivalent(map.GetTile(forthLoc)))
+                if (!map.TileBlocked(forthLoc))
                     sealBorderTile(map, sealList, SealType.Key, locRay.Loc);
                 else
                     sealBorderTile(map, sealList, SealType.Locked, locRay.Loc);
@@ -180,7 +180,7 @@ namespace PMDC.LevelGen
 
         private void sealBorderTile(T map, Dictionary<Loc, SealType> sealList, SealType seal, Loc loc)
         {
-            if (!map.RoomTerrain.TileEquivalent(map.GetTile(loc)))
+            if (map.TileBlocked(loc))
                 sealList[loc] = SealType.Blocked;
             else
             {

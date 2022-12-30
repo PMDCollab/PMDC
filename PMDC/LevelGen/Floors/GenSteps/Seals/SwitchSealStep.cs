@@ -113,6 +113,7 @@ namespace PMDC.LevelGen
             int randIndex = map.Rand.Next(freeSwitchTiles.Count);
 
             ((IPlaceableGenContext<EffectTile>)map).PlaceItem(freeSwitchTiles[randIndex], switchTile);
+            map.GetPostProc(freeSwitchTiles[randIndex]).Status |= (PostProcType.Panel | PostProcType.Item | PostProcType.Terrain);
         }
 
     }

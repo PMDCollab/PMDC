@@ -50,7 +50,7 @@ namespace PMDC.LevelGen
         {
             Grid.LocTest checkBlock = (Loc testLoc) =>
             {
-                return (!map.RoomTerrain.TileEquivalent(map.GetTile(testLoc)) || map.HasTileEffect(testLoc));
+                return (map.TileBlocked(testLoc) || map.HasTileEffect(testLoc));
             };
 
             //choose a room to put the chest in
@@ -87,8 +87,8 @@ namespace PMDC.LevelGen
                 freeTiles = Grid.FindTilesInBox(room.Draw.Start, room.Draw.Size, (Loc testLoc) =>
                 {
                     Loc frontLoc = testLoc + Dir8.Down.GetLoc();
-                    if (map.RoomTerrain.TileEquivalent(map.GetTile(testLoc)) && !map.HasTileEffect(testLoc) &&
-                        map.RoomTerrain.TileEquivalent(map.GetTile(frontLoc)) && !map.HasTileEffect(frontLoc) &&
+                    if (!map.TileBlocked(testLoc) && !map.HasTileEffect(testLoc) &&
+                        !map.TileBlocked(frontLoc) && !map.HasTileEffect(frontLoc) &&
                         (map.GetPostProc(testLoc).Status & (PostProcType.Panel | PostProcType.Item)) == PostProcType.None)
                     {
                         if (Grid.GetForkDirs(testLoc, checkBlock, checkBlock).Count < 2)
@@ -177,9 +177,9 @@ namespace PMDC.LevelGen
             Rect wallBounds = new Rect(room.Draw.X - 1, room.Draw.Y - 1, room.Draw.Size.X + 2, room.Draw.Size.Y + 2);
             spawnedChest.TileStates.Set(new BoundsState(wallBounds));
 
+            map.SetTile(loc, map.RoomTerrain.Copy());
             ((IPlaceableGenContext<EffectTile>)map).PlaceItem(loc, spawnedChest);
-            map.GetPostProc(loc).Status |= PostProcType.Panel;
-            map.GetPostProc(loc).Status |= PostProcType.Item;
+            map.GetPostProc(loc).Status |= (PostProcType.Panel | PostProcType.Item | PostProcType.Terrain);
 
             GenContextDebug.DebugProgress("Placed Chest");
         }

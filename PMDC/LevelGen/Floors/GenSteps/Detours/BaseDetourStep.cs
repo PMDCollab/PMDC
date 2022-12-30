@@ -46,10 +46,9 @@ namespace PMDC.LevelGen
 
         protected LocRay4? PlaceRoom(T map, List<LocRay4> rays, EffectTile sealingTile, List<Loc> freeTiles)
         {
-
             Grid.LocTest checkBlockForPlace = (Loc testLoc) =>
             {
-                return !map.RoomTerrain.TileEquivalent(map.GetTile(testLoc)) && !map.UnbreakableTerrain.TileEquivalent(map.GetTile(testLoc));
+                return map.TileBlocked(testLoc) && !map.UnbreakableTerrain.TileEquivalent(map.GetTile(testLoc));
             };
             //try X times to dig a passage
             for (int ii = 0; ii < 500 && rays.Count > 0; ii++)
