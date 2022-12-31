@@ -49,7 +49,7 @@ namespace PMDC.LevelGen
                     if (openRooms.Count > 0)
                     {
                         int randIndex = map.Rand.Next(openRooms.Count);
-                        FloorRoomPlan plan = map.RoomPlan.GetRoomPlan(randIndex);
+                        FloorRoomPlan plan = map.RoomPlan.GetRoomPlan(openRooms[randIndex]);
                         PatternPlan chosenPattern = Maps.Pick(map.Rand);
 
                         Map placeMap;
@@ -125,19 +125,23 @@ namespace PMDC.LevelGen
                                             {
                                                 //only diagonal extrapolations allowed at edges
                                                 int x_diff = -1;
-                                                if (xx < centerRect.X || xx >= centerRect.End.X)
-                                                    x_diff = Math.Abs(centerRect.X - xx);
+                                                if (xx < centerRect.X)
+                                                    x_diff = centerRect.X - xx;
+                                                else if (xx >= centerRect.End.X)
+                                                    x_diff = xx - centerRect.End.X + 1;
 
                                                 int y_diff = -1;
-                                                if (yy < centerRect.Y || yy >= centerRect.End.Y)
-                                                    y_diff = Math.Abs(centerRect.Y - yy);
+                                                if (yy < centerRect.Y)
+                                                    y_diff = centerRect.Y - yy;
+                                                else if (yy >= centerRect.End.Y)
+                                                    y_diff = yy - centerRect.End.Y + 1;
 
                                                 if (x_diff == y_diff)
                                                     accept = true;
                                             }
                                             if (accept)
                                             {
-                                                Loc srcLoc = Collision.ClampToBounds(centerRect, destLoc - centerRect.Start);
+                                                Loc srcLoc = Collision.ClampToBounds(centerRect, destLoc) - centerRect.Start;
                                                 if (templateLocs[srcLoc.X][srcLoc.Y])
                                                     drawLocs.Add(destLoc);
                                             }
@@ -157,9 +161,9 @@ namespace PMDC.LevelGen
                                         {
                                             Loc destLoc = new Loc(xx, yy);
                                             bool accept = false;
-                                            if (!transpose && Collision.InBounds(centerRect.Y, centerRect.End.Y, yy))
+                                            if (!transpose && Collision.InBounds(centerRect.Y, centerRect.Height, yy))
                                                 accept = true;
-                                            else if (transpose && Collision.InBounds(centerRect.X, centerRect.End.X, xx))
+                                            else if (transpose && Collision.InBounds(centerRect.X, centerRect.Width, xx))
                                                 accept = true;
 
                                             if (accept)
