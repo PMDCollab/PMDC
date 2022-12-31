@@ -158,7 +158,12 @@ namespace MapGenTest
                     Tile tile = (Tile)context.GetTile(loc);
                     TerrainData terrainData = tile.Data.GetData();
                     if (terrainData.BlockType == TerrainData.Mobility.Passable)//floor
-                        tileChar = '.';
+                    {
+                        if (context.RoomTerrain.TileEquivalent(tile))
+                            tileChar = '.';
+                        else
+                            tileChar = ',';
+                    }
                     else if (terrainData.BlockType == TerrainData.Mobility.Impassable)//unbreakable
                         tileChar = 'X';
                     else if (terrainData.BlockType == TerrainData.Mobility.Block)//wall
