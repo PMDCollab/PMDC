@@ -75,6 +75,14 @@ namespace PMDC.LevelGen
                 sealCornerRay(map, sealList, plan, new LocRay8(plan.RoomGen.Draw.End.X - 1, plan.RoomGen.Draw.Y, Dir8.UpRight));
                 sealCornerRay(map, sealList, plan, new LocRay8(plan.RoomGen.Draw.X, plan.RoomGen.Draw.End.Y-1, Dir8.DownLeft));
                 sealCornerRay(map, sealList, plan, new LocRay8(plan.RoomGen.Draw.End.X - 1, plan.RoomGen.Draw.End.Y - 1, Dir8.DownRight));
+
+
+                for (int xx = plan.RoomGen.Draw.X; xx < plan.RoomGen.Draw.End.X; xx++)
+                {
+                    for (int yy = plan.RoomGen.Draw.Y; yy < plan.RoomGen.Draw.End.Y; yy++)
+                        map.GetPostProc(new Loc(xx, yy)).Status |= PostProcType.Terrain;
+                }
+
             }
 
             PlaceBorders(map, sealList);
