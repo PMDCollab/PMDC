@@ -8,6 +8,7 @@ using RogueEssence;
 using System.Diagnostics;
 using RogueEssence.Dungeon;
 using Microsoft.Win32;
+using PMDC.Dungeon;
 
 namespace MapGenTest
 {
@@ -506,7 +507,7 @@ namespace MapGenTest
                                 zoneContext.CurrentID = floorId;
                                 zoneContext.Seed = idNoise.GetUInt64((ulong)floorId);
 
-                                TestFloor(watch, save, structure, zoneContext, null, null, generationTimes[key]);
+                                TestFloor(watch, save, structure, zoneContext, null, null, null, null, generationTimes[key]);
                             }
                         }
                     }
@@ -562,7 +563,7 @@ namespace MapGenTest
                             zoneContext.CurrentID = floorId;
                             zoneContext.Seed = idNoise.GetUInt64((ulong)floorId);
 
-                            TestFloor(watch, save, structure, zoneContext, null, null, generationTimes[nn.ToString("D3")]);
+                            TestFloor(watch, save, structure, zoneContext, null, null, null, null, generationTimes[nn.ToString("D3")]);
                         }
                     }
                 }
@@ -588,18 +589,23 @@ namespace MapGenTest
             int floor = 0;
             try
             {
+                List<Dictionary<string, int>> generatedTerrain = new List<Dictionary<string, int>>();
                 List<Dictionary<string, int>> generatedItems = new List<Dictionary<string, int>>();
                 List<Dictionary<string, int>> generatedEnemies = new List<Dictionary<string, int>>();
+                List<Dictionary<string, int>> generatedStats = new List<Dictionary<string, int>>();
                 Dictionary<string, List<TimeSpan>> generationTimes = new Dictionary<string, List<TimeSpan>>();
                 for (int ii = 0; ii < structure.FloorCount; ii++)
                 {
+                    generatedTerrain.Add(new Dictionary<string, int>());
                     generatedItems.Add(new Dictionary<string, int>());
                     generatedEnemies.Add(new Dictionary<string, int>());
+                    generatedStats.Add(new Dictionary<string, int>());
                     generationTimes[ii.ToString("D3")] = new List<TimeSpan>();
                 }
 
                 Stopwatch watch = new Stopwatch();
 
+                int total = 0;
                 for (int ii = 0; ii < amount; ii++)
                 {
                     zoneSeed = MathUtils.Rand.NextUInt64();
@@ -617,27 +623,36 @@ namespace MapGenTest
                         zoneContext.CurrentID = floorId;
                         zoneContext.Seed = idNoise.GetUInt64((ulong)floorId);
 
-                        TestFloor(watch, save, structure, zoneContext, generatedItems[floorId], generatedEnemies[floorId], generationTimes[floorId.ToString("D3")]);
+                        TestFloor(watch, save, structure, zoneContext, generatedTerrain[floorId], generatedItems[floorId], generatedEnemies[floorId], generatedStats[floorId], generationTimes[floorId.ToString("D3")]);
+                        total++;
                     }
                 }
 
 
+                Dictionary<string, int> totalGeneratedTerrain = new Dictionary<string, int>();
                 Dictionary<string, int> totalGeneratedItems = new Dictionary<string, int>();
                 Dictionary<string, int> totalGeneratedEnemies = new Dictionary<string, int>();
+                Dictionary<string, int> totalGeneratedStats = new Dictionary<string, int>();
                 for (int ii = 0; ii < structure.FloorCount; ii++)
                 {
                     Debug.WriteLine("F"+ii+":");
-                    PrintContentAnalysis(generatedItems[ii], generatedEnemies[ii]);
-                    
-                    foreach(string key in generatedItems[ii].Keys)
+                    PrintContentAnalysis(amount, generatedTerrain[ii], generatedItems[ii], generatedEnemies[ii], generatedStats[ii]);
+
+                    foreach (string key in generatedTerrain[ii].Keys)
+                        MathUtils.AddToDictionary<string>(totalGeneratedTerrain, key, generatedTerrain[ii][key]);
+
+                    foreach (string key in generatedItems[ii].Keys)
                         MathUtils.AddToDictionary<string>(totalGeneratedItems, key, generatedItems[ii][key]);
 
                     foreach (string key in generatedEnemies[ii].Keys)
                         MathUtils.AddToDictionary<string>(totalGeneratedEnemies, key, generatedEnemies[ii][key]);
+
+                    foreach (string key in generatedStats[ii].Keys)
+                        MathUtils.AddToDictionary<string>(totalGeneratedStats, key, generatedStats[ii][key]);
                 }
 
                 Debug.WriteLine("Overall:");
-                PrintContentAnalysis(totalGeneratedItems, totalGeneratedEnemies);
+                PrintContentAnalysis(total, totalGeneratedTerrain, totalGeneratedItems, totalGeneratedEnemies, totalGeneratedStats);
 
                 PrintTimeAnalysisTier2(generationTimes, "F");
             }
@@ -659,8 +674,10 @@ namespace MapGenTest
             ulong zoneSeed = 0;
             try
             {
+                Dictionary<string, int> generatedTerrain = new Dictionary<string, int>();
                 Dictionary<string, int> generatedItems = new Dictionary<string, int>();
                 Dictionary<string, int> generatedEnemies = new Dictionary<string, int>();
+                Dictionary<string, int> generatedStats = new Dictionary<string, int>();
                 List<TimeSpan> generationTimes = new List<TimeSpan>();
                 Stopwatch watch = new Stopwatch();
 
@@ -671,11 +688,11 @@ namespace MapGenTest
                     GameProgress save = new MainProgress(MathUtils.Rand.NextUInt64(), Guid.NewGuid().ToString());
                     ZoneGenContext zoneContext = CreateZoneGenContext(zoneSeed, zoneIndex, floorIndex, structure);
 
-                    TestFloor(watch, save, structure, zoneContext, generatedItems, generatedEnemies, generationTimes);
+                    TestFloor(watch, save, structure, zoneContext, generatedTerrain, generatedItems, generatedEnemies, generatedStats, generationTimes);
 
                 }
 
-                PrintContentAnalysis(generatedItems, generatedEnemies);
+                PrintContentAnalysis(amount, generatedTerrain, generatedItems, generatedEnemies, generatedStats);
 
                 PrintTimeAnalysis(generationTimes);
             }
@@ -691,7 +708,7 @@ namespace MapGenTest
             }
         }
 
-        public static void TestFloor(Stopwatch watch, GameProgress save, ZoneSegmentBase structure, ZoneGenContext zoneContext, Dictionary<string, int> generatedItems, Dictionary<string, int> generatedEnemies, List<TimeSpan> generationTimes)
+        public static void TestFloor(Stopwatch watch, GameProgress save, ZoneSegmentBase structure, ZoneGenContext zoneContext, Dictionary<string, int> generatedTerrain, Dictionary<string, int> generatedItems, Dictionary<string, int> generatedEnemies, Dictionary<string, int> generatedStats, List<TimeSpan> generationTimes)
         {
             DataManager.Instance.SetProgress(save);
 
@@ -708,6 +725,16 @@ namespace MapGenTest
                 throw ExampleDebug.Error;
 
             BaseMapGenContext mapContext = context as BaseMapGenContext;
+            if (generatedTerrain != null)
+            {
+                for (int xx = 0; xx < mapContext.Map.Width; xx++)
+                {
+                    for (int yy = 0; yy < mapContext.Map.Height; yy++)
+                    {
+                        MathUtils.AddToDictionary<string>(generatedTerrain, mapContext.Map.Tiles[xx][yy].ID, 1);
+                    }
+                }
+            }
             if (generatedItems != null)
             {
                 foreach (MapItem mapItem in mapContext.Map.Items)
@@ -729,49 +756,92 @@ namespace MapGenTest
                         MathUtils.AddToDictionary<string>(generatedEnemies, character.BaseForm.Species, 1);
                 }
             }
+            if (generatedStats != null)
+            {
+                int unblockTotal = 0;
+                for (int xx = 0; xx < mapContext.Map.Width; xx++)
+                {
+                    for (int yy = 0; yy < mapContext.Map.Height; yy++)
+                    {
+                        if (!mapContext.TileBlocked(new Loc(xx, yy)))
+                            unblockTotal++;
+                    }
+                }
+                MathUtils.AddToDictionary<string>(generatedStats, "unblocked", unblockTotal);
+
+                foreach (SingleCharEvent effect in mapContext.Map.MapEffect.OnMapTurnEnds.EnumerateInOrder())
+                {
+                    RespawnBaseEvent respawn = (RespawnBaseEvent)effect;
+                    if (respawn != null)
+                    {
+                        MathUtils.AddToDictionary<string>(generatedStats, "npc_cap", respawn.MaxFoes);
+                        break;
+                    }
+                }
+            }
         }
 
-        public static void PrintContentAnalysis(Dictionary<string, int> GeneratedItems, Dictionary<string, int> GeneratedEnemies)
+        public static void PrintContentAnalysis(int gens, Dictionary<string, int> generatedTiles, Dictionary<string, int> generatedItems, Dictionary<string, int> generatedEnemies, Dictionary<string, int> miscStats)
         {
             StringBuilder finalString = new StringBuilder();
-
-            finalString.Append(String.Format("Items:") + "\n");
-            List<string> printout = new List<string>();
-            int total = 0;
-            foreach (string key in GeneratedItems.Keys)
             {
-                if (!String.IsNullOrEmpty(key))
-                    total += GeneratedItems[key];
-            }
-            foreach (string key in GeneratedItems.Keys)
-            {
-                if (key == "**MONEY**")
-                {
-                    finalString.Append(String.Format("Money: {0}", GeneratedItems[key]) + "\n");
-                }
-                else if (key == "**MONEYPILE**")
-                {
-                    printout.Add(String.Format("    {0:D5} {1:F5} {2}", GeneratedItems[key], ((float)GeneratedItems[key] / total), "Money Spawns"));
-                }
-                else if (!String.IsNullOrEmpty(key))
-                {
-                    ItemData entry = DataManager.Instance.GetItem(key);
-                    printout.Add(String.Format("    {0:D5} {1:F5} #{2:0000} {3}", GeneratedItems[key], ((float)GeneratedItems[key] / total), key, entry.Name.DefaultText));
-                }
-            }
-            printout.Sort();
+                finalString.Append(String.Format("Terrain:") + "\n");
+                int terrainTotal = 0;
+                foreach (string key in generatedTiles.Keys)
+                    terrainTotal += generatedTiles[key];
 
-            foreach (string print in printout)
-                finalString.Append(print + "\n");
-            finalString.Append("\n");
-
-            finalString.Append("Species:" + "\n");
-            foreach (string key in GeneratedEnemies.Keys)
-            {
-                MonsterData data = DataManager.Instance.GetMonster(key);
-                finalString.Append(String.Format("    {0:D5} #{1:000} {2}", GeneratedEnemies[key], key, data.Name) + "\n");
+                foreach (string key in generatedTiles.Keys)
+                {
+                    finalString.Append(String.Format("    {0:D7} AVG:{1:D4} {2:F5}% {3}", generatedTiles[key], generatedTiles[key] / gens, ((float)generatedTiles[key] * 100 / terrainTotal), key) + "\n");
+                }
+                finalString.Append("\n");
             }
-            finalString.Append("\n");
+
+            {
+                finalString.Append(String.Format("Items:") + "\n");
+                List<string> printout = new List<string>();
+                int total = 0;
+                foreach (string key in generatedItems.Keys)
+                {
+                    if (!String.IsNullOrEmpty(key))
+                        total += generatedItems[key];
+                }
+                foreach (string key in generatedItems.Keys)
+                {
+                    if (key == "**MONEY**")
+                    {
+                        finalString.Append(String.Format("Money: {0}", generatedItems[key]) + "\n");
+                    }
+                    else if (key == "**MONEYPILE**")
+                    {
+                        printout.Add(String.Format("    {0:D5} {1:F5}% {2}", generatedItems[key], ((float)generatedItems[key] * 100 / total), "Money Spawns"));
+                    }
+                    else if (!String.IsNullOrEmpty(key))
+                    {
+                        ItemData entry = DataManager.Instance.GetItem(key);
+                        printout.Add(String.Format("    {0:D5} {1:F5}% {2} {3}", generatedItems[key], ((float)generatedItems[key] * 100 / total), key, entry.Name.DefaultText));
+                    }
+                }
+                printout.Sort();
+
+                foreach (string print in printout)
+                    finalString.Append(print + "\n");
+                finalString.Append("\n");
+            }
+
+            {
+                finalString.Append("Species:" + "\n");
+                int enemyTotal = 0;
+                finalString.Append(String.Format("    Tiles Per NPC: {0}", miscStats["unblocked"] / miscStats["npc_cap"]) + "\n");
+                foreach (string key in generatedEnemies.Keys)
+                    enemyTotal += generatedEnemies[key];
+                foreach (string key in generatedEnemies.Keys)
+                {
+                    MonsterData data = DataManager.Instance.GetMonster(key);
+                    finalString.Append(String.Format("    {0:D5} {1:F3}% #{2:000} {3}", generatedEnemies[key], ((float)generatedEnemies[key] * 100 / enemyTotal), data.IndexNum, data.Name) + "\n");
+                }
+                finalString.Append("\n");
+            }
             //System.Diagnostics.Debug.WriteLine(String.Format("Gen Logs Printed"));
 
             System.Diagnostics.Debug.WriteLine(finalString.ToString());
