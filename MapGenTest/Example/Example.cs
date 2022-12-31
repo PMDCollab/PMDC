@@ -436,7 +436,10 @@ namespace MapGenTest
 
             INoise idNoise = new ReNoise(doubleSeed[1]);
             newContext.CurrentID = floorIndex.ID;
-            newContext.Seed = idNoise.GetUInt64((ulong)floorIndex.ID);
+            ulong finalSeed = (ulong)floorIndex.ID;
+            finalSeed <<= 32;
+            finalSeed |= (ulong)0;//MapsLoaded;
+            newContext.Seed = idNoise.GetUInt64(finalSeed);
 
             return newContext;
         }
@@ -678,7 +681,8 @@ namespace MapGenTest
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("ERROR: " + zoneSeed);
+                Console.WriteLine("ERROR: " + zoneSeed);
+                Debug.WriteLine("ERROR: " + zoneSeed);
                 PrintError(ex);
             }
             finally
