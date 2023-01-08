@@ -36,7 +36,7 @@ namespace PMDC.LevelGen
             foreach (Loc destLoc in drawLocs)
             {
                 if (this.TerrainStencil.Test(map, destLoc))
-                    map.SetTile(destLoc, tile.Copy());
+                    map.TrySetTile(destLoc, tile.Copy());
             }
         }
 
