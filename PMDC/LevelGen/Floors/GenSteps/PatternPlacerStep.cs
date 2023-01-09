@@ -16,6 +16,11 @@ namespace PMDC.LevelGen
         public List<BaseRoomFilter> Filters { get; set; }
 
         /// <summary>
+        /// Allows terminal rooms as spawn.
+        /// </summary>
+        public bool AllowTerminal { get; set; }
+
+        /// <summary>
         /// Determines which tiles are eligible to be painted on.
         /// </summary>
         public ITerrainStencil<T> TerrainStencil { get; set; }
@@ -38,8 +43,11 @@ namespace PMDC.LevelGen
             //get all places that traps are eligible
             for (int ii = 0; ii < map.RoomPlan.RoomCount; ii++)
             {
-                if (BaseRoomFilter.PassesAllFilters(map.RoomPlan.GetRoomPlan(ii), this.Filters))
-                    openRooms.Add(ii);
+                if (!BaseRoomFilter.PassesAllFilters(map.RoomPlan.GetRoomPlan(ii), this.Filters))
+                    continue;
+                if (!this.AllowTerminal && map.RoomPlan.GetAdjacents(new RoomHallIndex(ii, false)).Count <= 1)
+                    continue;
+                openRooms.Add(ii);
             }
 
             Dictionary<string, Map> mapCache = new Dictionary<string, Map>();
