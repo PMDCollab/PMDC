@@ -14,13 +14,8 @@ namespace PMDC.LevelGen
     /// Generates monster houses randomly across the whole dungeon segment.
     /// </summary>
     [Serializable]
-    public class SpreadHouseZoneStep : ZoneStep
+    public class SpreadHouseZoneStep : SpreadZoneStep
     {
-        /// <summary>
-        /// Determines how many floors to distribute the step to, and how spread apart they are.
-        /// </summary>
-        public SpreadPlanBase SpreadPlan;
-
         /// <summary>
         /// At what point in the map gen process to run the step in.
         /// </summary>
@@ -39,14 +34,6 @@ namespace PMDC.LevelGen
         public SpawnRangeList<MobTheme> MobThemes;
         public SpawnList<IMonsterHouseBaseStep> HouseStepSpawns;
 
-        /// <summary>
-        /// Flags from the player's passives that will affect the appearance rate of the monster house.
-        /// If a player enters a floor and is carrying an item, intrinsic, etc. that has a ModGenState listed here,
-        /// The chance of the monster house appearing will be increased by the ModGenState's value.
-        /// </summary>
-        [StringTypeConstraint(1, typeof(ModGenState))]
-        public List<FlagType> ModStates;
-
         //spreads an item through the floors
         //ensures that the space in floors between occurrences is kept tame
         public SpreadHouseZoneStep()
@@ -56,71 +43,32 @@ namespace PMDC.LevelGen
             Mobs = new SpawnRangeList<MobSpawn>();
             MobThemes = new SpawnRangeList<MobTheme>();
             HouseStepSpawns = new SpawnList<IMonsterHouseBaseStep>();
-            ModStates = new List<FlagType>();
         }
-        public SpreadHouseZoneStep(Priority priority) : this()
+        public SpreadHouseZoneStep(Priority priority, SpreadPlanBase plan) : base(plan)
         {
+            Items = new SpawnRangeList<MapItem>();
+            ItemThemes = new SpawnRangeList<ItemTheme>();
+            Mobs = new SpawnRangeList<MobSpawn>();
+            MobThemes = new SpawnRangeList<MobTheme>();
+            HouseStepSpawns = new SpawnList<IMonsterHouseBaseStep>();
+
             Priority = priority;
         }
 
-        public SpreadHouseZoneStep(Priority priority, SpreadPlanBase plan) : this(priority)
-        {
-            Priority = priority;
-            SpreadPlan = plan;
-        }
-
-        protected SpreadHouseZoneStep(SpreadHouseZoneStep other, ulong seed) : this()
+        protected SpreadHouseZoneStep(SpreadHouseZoneStep other, ulong seed) : base(other, seed)
         {
             Items = other.Items.CopyState();
             ItemThemes = other.ItemThemes.CopyState();
             Mobs = other.Mobs.CopyState();
             MobThemes = other.MobThemes.CopyState();
             HouseStepSpawns = (SpawnList<IMonsterHouseBaseStep>)other.HouseStepSpawns.CopyState();
-            ModStates.AddRange(other.ModStates);
 
             Priority = other.Priority;
-            SpreadPlan = other.SpreadPlan.Instantiate(seed);
         }
 
         public override ZoneStep Instantiate(ulong seed) { return new SpreadHouseZoneStep(this, seed); }
 
-        public override void Apply(ZoneGenContext zoneContext, IGenContext context, StablePriorityQueue<Priority, IGenStep> queue)
-        {
-            bool added = false;
-            foreach (int floorId in SpreadPlan.DropPoints)
-            {
-                if (floorId != zoneContext.CurrentID)
-                    continue;
-
-                addToQueue(zoneContext, context, queue);
-                added = true;
-            }
-
-            if (added)
-                return;
-
-            GameProgress progress = DataManager.Instance.Save;
-            if (progress != null && progress.ActiveTeam != null)
-            {
-                int totalMod = 0;
-                foreach (Character chara in progress.ActiveTeam.Players)
-                {
-                    foreach (FlagType state in ModStates)
-                    {
-                        CharState foundState;
-                        if (chara.CharStates.TryGet(state.FullType, out foundState))
-                            totalMod += ((ModGenState)foundState).Mod;
-                    }
-                }
-                if (context.Rand.Next(100) < totalMod)
-                {
-                    addToQueue(zoneContext, context, queue);
-                    return;
-                }
-            }
-        }
-
-        private void addToQueue(ZoneGenContext zoneContext, IGenContext context, StablePriorityQueue<Priority, IGenStep> queue)
+        protected override bool ApplyToFloor(ZoneGenContext zoneContext, IGenContext context, StablePriorityQueue<Priority, IGenStep> queue, int dropIdx)
         {
             int id = zoneContext.CurrentID;
 
@@ -142,6 +90,8 @@ namespace PMDC.LevelGen
                 monsterHouseStep.MobThemes.Add(mobThemeListSlice.GetSpawn(jj).Copy(), mobThemeListSlice.GetSpawnRate(jj));
 
             queue.Enqueue(Priority, monsterHouseStep);
+
+            return true;
         }
     }
 }
