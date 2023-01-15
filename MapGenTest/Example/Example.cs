@@ -452,13 +452,14 @@ namespace MapGenTest
             ZoneGenContext newContext = new ZoneGenContext();
             newContext.CurrentZone = zoneIndex;
             newContext.CurrentSegment = structureIndex;
-            foreach (ZoneStep zoneStep in structure.ZoneSteps)
+            for (int ii = 0; ii < structure.ZoneSteps.Count; ii++)
             {
+                ZoneStep zoneStep = structure.ZoneSteps[ii];
                 //TODO: find a better way to feed ZoneSteps into full zone segments.
                 //Is there a way for them to be stateless?
                 //Additionally, the ZoneSteps themselves sometimes hold IGenSteps that are copied over to the layouts.
                 //Is that really OK? (I would guess yes because there is no chance by design for them to be mutated when generating...)
-                ZoneStep newStep = zoneStep.Instantiate(structNoise.GetUInt64((ulong)newContext.ZoneSteps.Count));
+                ZoneStep newStep = zoneStep.Instantiate(structNoise.GetUInt64((ulong)ii));
                 newContext.ZoneSteps.Add(newStep);
             }
             return newContext;
