@@ -4401,12 +4401,13 @@ namespace PMDC.Dungeon
 
                 MapItem item = new MapItem(items[ii]);
                 int randIndex = DataManager.Instance.Save.Rand.Next(freeTiles.Count);
-                item.TileLoc = freeTiles[randIndex];
+                Loc itemTargetLoc = freeTiles[randIndex];
+                item.TileLoc = ZoneManager.Instance.CurrentMap.WrapLoc(itemTargetLoc);
                 spawnItems.Add(item);
                 freeTiles.RemoveAt(randIndex);
                 //start the animations
-
-                ItemAnim itemAnim = new ItemAnim(baseLoc * GraphicsManager.TileSize, item.MapLoc, item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, Math.Max(0, waitTime));
+                //NOTE: the animation is a little funky here for wrapped maps
+                ItemAnim itemAnim = new ItemAnim(baseLoc * GraphicsManager.TileSize, itemTargetLoc * GraphicsManager.TileSize, item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, Math.Max(0, waitTime));
                 DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
             }
             //they can be thematic, or use whatever's on the floor
