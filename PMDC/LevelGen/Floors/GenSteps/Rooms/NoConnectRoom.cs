@@ -3,6 +3,9 @@ using System;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// Rooms that are disconnected from the main path.
+    /// </summary>
     [Serializable]
     public class NoConnectRoom : RoomComponent
     {
