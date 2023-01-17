@@ -9816,7 +9816,7 @@ namespace PMDC.Dungeon
     public class SketchBattleEvent : BattleEvent
     {
         [JsonConverter(typeof(StatusConverter))]
-        [DataType(0, DataManager.DataType.Status, false)]
+        [DataType(0, DataManager.DataType.Status, true)]
         public string LastMoveStatusID;
 
         public SketchBattleEvent() { LastMoveStatusID = ""; }

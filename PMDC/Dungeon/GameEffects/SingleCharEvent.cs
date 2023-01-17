@@ -3580,7 +3580,7 @@ namespace PMDC.Dungeon
 
                     ZoneSegmentBase structure = ZoneManager.Instance.CurrentZone.Segments[ZoneManager.Instance.CurrentMapID.Segment];
                     GameManager.Instance.BattleSE("DUN_Stairs_Down");
-                    if (ZoneManager.Instance.CurrentMapID.ID + 1 < structure.FloorCount)
+                    if (structure.FloorCount < 0 || ZoneManager.Instance.CurrentMapID.ID + 1 < structure.FloorCount)
                     {
                         yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeOut(false));
                         GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, new SegLoc(ZoneManager.Instance.CurrentMapID.Segment, ZoneManager.Instance.CurrentMapID.ID + 1)));
@@ -3629,7 +3629,7 @@ namespace PMDC.Dungeon
                         int endSegment = ZoneManager.Instance.CurrentMapID.Segment + destState.Dest.Segment;
                         int endFloor = ZoneManager.Instance.CurrentMapID.ID + destState.Dest.ID;
 
-                        if (endSegment >= 0 && endFloor >= 0 && endSegment < ZoneManager.Instance.CurrentZone.Segments.Count && endFloor < ZoneManager.Instance.CurrentZone.Segments[endSegment].FloorCount)
+                        if (endSegment >= 0 && endFloor >= 0 && endSegment < ZoneManager.Instance.CurrentZone.Segments.Count && (ZoneManager.Instance.CurrentZone.Segments[endSegment].FloorCount < 0 || endFloor < ZoneManager.Instance.CurrentZone.Segments[endSegment].FloorCount))
                             GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, new SegLoc(endSegment, endFloor)));
                         else
                             yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
