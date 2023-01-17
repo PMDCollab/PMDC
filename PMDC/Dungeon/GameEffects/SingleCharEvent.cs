@@ -3322,6 +3322,8 @@ namespace PMDC.Dungeon
                     string currentSong = GameManager.Instance.Song;
                     GameManager.Instance.BGM("", true);
 
+                    yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(20));
+
                     int index = -1;
 
                     yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(String.Format(new StringKey("DLG_EVO_INTRO").ToLocal())));
@@ -3336,6 +3338,8 @@ namespace PMDC.Dungeon
                     yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(String.Format(new StringKey("DLG_EVO_END").ToLocal())));
 
                     GameManager.Instance.BGM(currentSong, true);
+
+                    yield return new WaitForFrames(1);
                 }
             }
         }
@@ -3645,6 +3649,101 @@ namespace PMDC.Dungeon
             }
             else if (character.MemberTeam == DungeonScene.Instance.ActiveTeam)
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LEADER_ONLY_TILE").ToLocal()));
+        }
+    }
+
+    [Serializable]
+    public class TransportOnElementEvent : SingleCharEvent
+    {
+        [JsonConverter(typeof(ElementConverter))]
+        [DataType(0, DataManager.DataType.Element, false)]
+        public string TargetElement;
+
+        [Sound(0)]
+        public string Sound;
+
+        public StringKey FailMessage;
+
+        public StringKey SuccessMessage;
+
+        public TransportOnElementEvent() { }
+        public TransportOnElementEvent(string element, string sound, StringKey fail, StringKey success)
+        {
+            TargetElement = element;
+            this.Sound = sound;
+            FailMessage = fail;
+            SuccessMessage = success;
+        }
+        public TransportOnElementEvent(TransportOnElementEvent other)
+        {
+            TargetElement = other.TargetElement;
+            this.Sound = other.Sound;
+            FailMessage = other.FailMessage;
+            SuccessMessage = other.SuccessMessage;
+        }
+        public override GameEvent Clone() { return new TransportOnElementEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            DestState destState = ((EffectTile)owner).TileStates.GetWithDefault<DestState>();
+
+            if (destState == null)
+                yield break;
+
+            string currentSong = GameManager.Instance.Song;
+            GameManager.Instance.BGM("", true);
+
+            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(20));
+
+            yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(String.Format(FailMessage.ToLocal())));
+
+            MonsterID formData = character.BaseForm;
+            BaseMonsterForm form = DataManager.Instance.GetMonster(formData.Species).Forms[formData.Form];
+
+            if (form.Element1 == TargetElement || form.Element2 == TargetElement)
+            {
+                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(String.Format(SuccessMessage.ToLocal(), character.BaseName)));
+
+                if (ZoneManager.Instance.InDevZone) //editor considerations
+                    GameManager.Instance.SceneOutcome = GameManager.Instance.ReturnToEditor();
+                else
+                {
+                    for (int ii = DungeonScene.Instance.ActiveTeam.GetInvCount() - 1; ii >= 0; ii--)
+                    {
+                        if (DungeonScene.Instance.ActiveTeam.GetInv(ii).Price > 0)
+                            DungeonScene.Instance.ActiveTeam.RemoveFromInv(ii);
+                    }
+
+                    GameManager.Instance.BattleSE(Sound);
+
+                    yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeOut(true));
+
+                    yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(60) + 30);
+
+                    GameManager.Instance.SetFade(true, false);
+                    if (destState.Relative)
+                    {
+                        int endSegment = ZoneManager.Instance.CurrentMapID.Segment + destState.Dest.Segment;
+                        int endFloor = ZoneManager.Instance.CurrentMapID.ID + destState.Dest.ID;
+
+                        if (endSegment >= 0 && endFloor >= 0 && endSegment < ZoneManager.Instance.CurrentZone.Segments.Count && (ZoneManager.Instance.CurrentZone.Segments[endSegment].FloorCount < 0 || endFloor < ZoneManager.Instance.CurrentZone.Segments[endSegment].FloorCount))
+                            GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, new SegLoc(endSegment, endFloor)));
+                        else
+                            yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
+                    }
+                    else if (!destState.Dest.IsValid())
+                        yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
+                    else//go to a designated dungeon structure
+                    {
+                        GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, destState.Dest));
+                    }
+                }
+            }
+            else
+            {
+                GameManager.Instance.BGM(currentSong, true);
+                yield return new WaitForFrames(1);
+            }
         }
     }
 
