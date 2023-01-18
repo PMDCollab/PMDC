@@ -532,6 +532,7 @@ namespace PMDC.Dungeon
     {
         public FiniteEmitter Emitter;
 
+        //TODO: make this into BattleFX?
         [Sound(0)]
         public string Sound;
         public bool AffectTarget;

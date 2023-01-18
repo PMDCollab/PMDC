@@ -4206,8 +4206,29 @@ namespace PMDC.Dungeon
     [Serializable]
     public class OpenSelfEvent : SingleCharEvent
     {
-        public OpenSelfEvent() { }
-        public override GameEvent Clone() { return new OpenSelfEvent(); }
+        public BattleFX Anim;
+
+        public bool PreOpen;
+
+        public bool Fanfare;
+
+        public OpenSelfEvent()
+        {
+            Anim = new BattleFX();
+        }
+        public OpenSelfEvent(BattleFX anim, bool preOpen, bool fanfare)
+        {
+            Anim = anim;
+            PreOpen = preOpen;
+            Fanfare = fanfare;
+        }
+        public OpenSelfEvent(OpenSelfEvent other)
+        {
+            Anim = other.Anim;
+            PreOpen = other.PreOpen;
+            Fanfare = other.Fanfare;
+        }
+        public override GameEvent Clone() { return new OpenSelfEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
@@ -4217,20 +4238,19 @@ namespace PMDC.Dungeon
             standAnim.MajorAnim = true;
             yield return CoroutineManager.Instance.StartCoroutine(character.StartAnim(standAnim));
 
-            //invoke the unlock sound and animation
-            GameManager.Instance.BattleSE("DUN_Open_Chamber");
-
             //remove all specified tiles; both the effect and the terrain, if there is one
             Loc baseLoc = effectTile.TileLoc;
             Tile tile = ZoneManager.Instance.CurrentMap.Tiles[baseLoc.X][baseLoc.Y];
-            if (tile.Effect == owner)
-                tile.Effect = new EffectTile(tile.Effect.TileLoc);
-
-            SingleEmitter emitter = new SingleEmitter(new AnimData("Vault_Key_Open", 3));
-            emitter.SetupEmit(baseLoc * GraphicsManager.TileSize, baseLoc * GraphicsManager.TileSize, Dir8.Down);
-            DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
-            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
+            if (PreOpen)
             {
+                if (tile.Effect == owner)
+                    tile.Effect = new EffectTile(tile.Effect.TileLoc);
+            }
+
+            yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.ProcessBattleFX(baseLoc, baseLoc, Dir8.Down, Anim));
+            {
+                if (!PreOpen)
+                    tile.Effect = new EffectTile(tile.Effect.TileLoc);
                 tile.Data = new TerrainTile(DataManager.Instance.GenFloor);
                 int distance = 0;
                 Loc startLoc = baseLoc - new Loc(distance + 2);
@@ -4243,9 +4263,11 @@ namespace PMDC.Dungeon
 
             //say, "The vault doors opened!"/with fanfare
             DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LOCK_OPEN").ToLocal()));
-            GameManager.Instance.Fanfare("Fanfare/Treasure");
-
-            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(90));
+            if (Fanfare)
+            {
+                GameManager.Instance.Fanfare("Fanfare/Treasure");
+                yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(90));
+            }
         }
 
     }
