@@ -7466,17 +7466,20 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.Data.Category == BattleData.SkillCategory.Physical)
-                context.Data.Category = BattleData.SkillCategory.Magical;
-            else if (context.Data.Category == BattleData.SkillCategory.Magical)
-                context.Data.Category = BattleData.SkillCategory.Physical;
-
-            if (MidwayCross)
+            if (context.StrikesMade == 0)
             {
-                if (context.ContextStates.Contains<CrossCategory>())
-                    context.ContextStates.Remove<CrossCategory>();
-                else
-                    context.ContextStates.Set(new CrossCategory());
+                if (context.Data.Category == BattleData.SkillCategory.Physical)
+                    context.Data.Category = BattleData.SkillCategory.Magical;
+                else if (context.Data.Category == BattleData.SkillCategory.Magical)
+                    context.Data.Category = BattleData.SkillCategory.Physical;
+
+                if (MidwayCross)
+                {
+                    if (context.ContextStates.Contains<CrossCategory>())
+                        context.ContextStates.Remove<CrossCategory>();
+                    else
+                        context.ContextStates.Set(new CrossCategory());
+                }
             }
             yield break;
         }
