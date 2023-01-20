@@ -4272,6 +4272,7 @@ namespace PMDC.Dungeon
 
     }
 
+
     [Serializable]
     public class OpenOtherPassageEvent : SingleCharEvent
     {
@@ -4306,7 +4307,7 @@ namespace PMDC.Dungeon
             EffectTile effectTile = (EffectTile)owner;
             //unlock the other doors
             //play the sound
-            TileListState tilesState = ((EffectTile)owner).TileStates.GetWithDefault<TileListState>();
+            TileListState tilesState = effectTile.TileStates.GetWithDefault<TileListState>();
             if (tilesState != null)
             {
                 List<Loc> locs = tilesState.Tiles;
@@ -4344,7 +4345,7 @@ namespace PMDC.Dungeon
             }
 
 
-            if (((EffectTile)owner).Danger)
+            if (effectTile.Danger)
             {
 
                 bool aboveTimeLimit = true;
@@ -4417,16 +4418,16 @@ namespace PMDC.Dungeon
     [Serializable]
     public class TriggerSwitchEvent : SingleCharEvent
     {
-        public bool OneTime;
+        public bool Simultaneous;
 
         public TriggerSwitchEvent() { }
-        public TriggerSwitchEvent(bool oneTime)
+        public TriggerSwitchEvent(bool simultaneous)
         {
-            OneTime = oneTime;
+            Simultaneous = simultaneous;
         }
         protected TriggerSwitchEvent(TriggerSwitchEvent other)
         {
-            OneTime = other.OneTime;
+            Simultaneous = other.Simultaneous;
         }
         public override GameEvent Clone() { return new TriggerSwitchEvent(this); }
 
@@ -4443,14 +4444,74 @@ namespace PMDC.Dungeon
 
             GameManager.Instance.BattleSE("DUN_Tile_Step");
 
-            if (OneTime)
+            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
+            if (!Simultaneous)
             {
                 Loc baseLoc = effectTile.TileLoc;
                 Tile tile = ZoneManager.Instance.CurrentMap.Tiles[baseLoc.X][baseLoc.Y];
                 if (tile.Effect == owner)
                     tile.Effect = new EffectTile(tile.Effect.TileLoc);
+
+                TileReqListState tilesState = effectTile.TileStates.GetWithDefault<TileReqListState>();
+                if (tilesState != null)
+                {
+                    int switchesLeft = tilesState.Tiles.Count;
+                    foreach (Loc loc in tilesState.Tiles)
+                    {
+                        //check that all other target tiles no longer have the switches there
+                        Tile checkTile = ZoneManager.Instance.CurrentMap.Tiles[loc.X][loc.Y];
+                        if (checkTile.Effect.ID != effectTile.ID)
+                            switchesLeft--;
+                    }
+
+                    if (switchesLeft > 0)
+                    {
+                        DiagManager.Instance.LogInfo(String.Format("There are {0} more to activate.", switchesLeft));
+                        yield break;
+                    }
+                }
             }
-            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
+            else
+            {
+                TileReqListState tilesState = effectTile.TileStates.GetWithDefault<TileReqListState>();
+                if (tilesState != null)
+                {
+                    bool allowOpen = true;
+                    foreach (Loc loc in tilesState.Tiles)
+                    {
+                        bool foundMember = false;
+                        //check that all other target tiles have a player on them
+                        foreach (Character player in character.MemberTeam.Players)
+                        {
+                            if (player.CharLoc == loc)
+                            {
+                                foundMember = true;
+                                break;
+                            }
+                        }
+                        if (!foundMember)
+                        {
+                            allowOpen = false;
+                            break;
+                        }
+                    }
+
+                    if (!allowOpen)
+                    {
+                        DiagManager.Instance.LogInfo(String.Format("All {0} switches need to be stepped on at once!", tilesState.Tiles.Count));
+                        yield break;
+                    }
+
+
+                    //if all have been met, remove all switches
+                    foreach (Loc loc in tilesState.Tiles)
+                    {
+                        Tile tile = ZoneManager.Instance.CurrentMap.Tiles[loc.X][loc.Y];
+                        if (tile.Effect.ID == effectTile.ID)
+                            tile.Effect = new EffectTile(tile.Effect.TileLoc);
+                    }
+                }
+            }
         }
 
 

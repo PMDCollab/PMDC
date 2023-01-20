@@ -73,6 +73,19 @@ namespace PMDC.Dungeon
         public override GameplayState Clone() { return new TileListState(this); }
     }
     [Serializable]
+    public class TileReqListState : TileState
+    {
+        public List<Loc> Tiles;
+        public TileReqListState() { Tiles = new List<Loc>(); }
+        protected TileReqListState(TileReqListState other)
+            : this()
+        {
+            foreach (Loc item in other.Tiles)
+                Tiles.Add(item);
+        }
+        public override GameplayState Clone() { return new TileReqListState(this); }
+    }
+    [Serializable]
     public class ItemSpawnState : TileState
     {
         public List<MapItem> Spawns;

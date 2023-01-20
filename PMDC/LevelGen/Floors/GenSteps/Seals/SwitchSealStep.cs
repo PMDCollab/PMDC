@@ -33,6 +33,11 @@ namespace PMDC.LevelGen
         public string SwitchTile;
 
         /// <summary>
+        /// Determines how many switches need to be placed.
+        /// </summary>
+        public int Amount;
+
+        /// <summary>
         /// Determines if a time limit is triggered when pressing the switch.
         /// </summary>
         public bool TimeLimit;
@@ -47,35 +52,41 @@ namespace PMDC.LevelGen
             SwitchFilters = new List<BaseRoomFilter>();
         }
 
-        public SwitchSealStep(string sealedTile, string switchTile, bool timeLimit) : base()
+        public SwitchSealStep(string sealedTile, string switchTile, int amount, bool timeLimit) : base()
         {
             SealedTile = sealedTile;
             SwitchTile = switchTile;
+            Amount = amount;
             TimeLimit = timeLimit;
             SwitchFilters = new List<BaseRoomFilter>();
         }
 
         protected override void PlaceBorders(T map, Dictionary<Loc, SealType> sealList)
         {
-            List<Loc> freeSwitchTiles = new List<Loc>();
+            //all free tiles to place switches, by room
+            List<List<Loc>> roomSwitchTiles = new List<List<Loc>>();
 
             for (int ii = 0; ii < map.RoomPlan.RoomCount; ii++)
             {
                 FloorRoomPlan plan = map.RoomPlan.GetRoomPlan(ii);
                 if (!BaseRoomFilter.PassesAllFilters(plan, this.SwitchFilters))
                     continue;
-                freeSwitchTiles.AddRange(((IPlaceableGenContext<EffectTile>)map).GetFreeTiles(plan.RoomGen.Draw));
+                List<Loc> freeTiles = ((IPlaceableGenContext<EffectTile>)map).GetFreeTiles(plan.RoomGen.Draw);
+                if (freeTiles.Count > 0)
+                    roomSwitchTiles.Add(freeTiles);
             }
             for (int ii = 0; ii < map.RoomPlan.HallCount; ii++)
             {
                 FloorHallPlan plan = map.RoomPlan.GetHallPlan(ii);
                 if (!BaseRoomFilter.PassesAllFilters(plan, this.SwitchFilters))
                     continue;
-                freeSwitchTiles.AddRange(((IPlaceableGenContext<EffectTile>)map).GetFreeTiles(plan.RoomGen.Draw));
+                List<Loc> freeTiles = ((IPlaceableGenContext<EffectTile>)map).GetFreeTiles(plan.RoomGen.Draw);
+                if (freeTiles.Count > 0)
+                    roomSwitchTiles.Add(freeTiles);
             }
 
             //if there's no way to open the door, there cannot be a door; give the player the treasure unguarded
-            if (freeSwitchTiles.Count == 0)
+            if (roomSwitchTiles.Count == 0)
                 return;
 
             List <Loc> lockList = new List<Loc>();
@@ -100,20 +111,50 @@ namespace PMDC.LevelGen
                 ((IPlaceableGenContext<EffectTile>)map).PlaceItem(loc, newEffect);
             }
 
+            List<Loc> chosenLocs = new List<Loc>();
+            for (int ii = 0; ii < Amount; ii++)
+            {
+                EffectTile switchTile = new EffectTile(SwitchTile, true);
 
-            EffectTile switchTile = new EffectTile(SwitchTile, true);
+                if (TimeLimit)
+                    switchTile.Danger = true;
 
-            if (TimeLimit)
-                switchTile.Danger = true;
+                TileListState state = new TileListState();
+                state.Tiles = lockList;
+                switchTile.TileStates.Set(state);
 
-            TileListState state = new TileListState();
-            state.Tiles = lockList;
-            switchTile.TileStates.Set(state);
+                int randIndex = map.Rand.Next(roomSwitchTiles.Count);
+                List<Loc> freeSwitchTiles = roomSwitchTiles[randIndex];
 
-            int randIndex = map.Rand.Next(freeSwitchTiles.Count);
+                int randTileIndex = map.Rand.Next(freeSwitchTiles.Count);
+                chosenLocs.Add(freeSwitchTiles[randTileIndex]);
 
-            ((IPlaceableGenContext<EffectTile>)map).PlaceItem(freeSwitchTiles[randIndex], switchTile);
-            map.GetPostProc(freeSwitchTiles[randIndex]).Status |= (PostProcType.Panel | PostProcType.Item | PostProcType.Terrain);
+                freeSwitchTiles.RemoveAt(randTileIndex);
+
+                //don't use this list anymore if it's empty
+                //don't choose the same room for multiple switches
+                if (freeSwitchTiles.Count == 0 || Amount - ii <= roomSwitchTiles.Count)
+                    roomSwitchTiles.RemoveAt(randIndex);
+            }
+
+            foreach (Loc chosenLoc in chosenLocs)
+            {
+                EffectTile switchTile = new EffectTile(SwitchTile, true);
+
+                if (TimeLimit)
+                    switchTile.Danger = true;
+
+                TileListState state = new TileListState();
+                state.Tiles = lockList;
+                switchTile.TileStates.Set(state);
+
+                TileReqListState reqState = new TileReqListState();
+                reqState.Tiles.AddRange(chosenLocs);
+                switchTile.TileStates.Set(reqState);
+
+                ((IPlaceableGenContext<EffectTile>)map).PlaceItem(chosenLoc, switchTile);
+                map.GetPostProc(chosenLoc).Status |= (PostProcType.Panel | PostProcType.Item | PostProcType.Terrain);
+            }
         }
 
     }
