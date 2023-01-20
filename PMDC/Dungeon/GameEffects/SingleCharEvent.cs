@@ -2310,6 +2310,47 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    [Serializable]
+    public class HintTempTileEvent : SingleCharEvent
+    {
+        public FiniteEmitter Emitter;
+        public StringKey HintMsg;
+
+        public HintTempTileEvent() { }
+        public HintTempTileEvent(StringKey msg, FiniteEmitter emitter)
+        {
+            HintMsg = msg;
+            Emitter = emitter;
+        }
+        public HintTempTileEvent(HintTempTileEvent other)
+        {
+            HintMsg = other.HintMsg;
+            Emitter = other.Emitter;
+        }
+        public override GameEvent Clone() { return new HintTempTileEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (character == null)
+            {
+                Character targetChar = DungeonScene.Instance.ActiveTeam.Leader;
+                MapLocState locState = ((MapStatus)owner).StatusStates.GetWithDefault<MapLocState>();
+                if (locState != null)
+                {
+                    DungeonScene.Instance.LogMsg(String.Format(HintMsg.ToLocal()));
+
+                    Dir8 stairsDir = ZoneManager.Instance.CurrentMap.ApproximateClosestDir8(targetChar.CharLoc, locState.Target);
+
+                    FiniteEmitter endEmitter = (FiniteEmitter)Emitter.Clone();
+                    endEmitter.SetupEmit(targetChar.MapLoc + stairsDir.GetLoc() * 16, targetChar.MapLoc + stairsDir.GetLoc() * 16, stairsDir);
+                    DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+                }
+            }
+            yield break;
+        }
+    }
+
     [Serializable]
     public class AcuteSnifferEvent : SingleCharEvent
     {
@@ -4166,6 +4207,82 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    [Serializable]
+    public class TempTileToStairsEvent : SingleCharEvent
+    {
+        [DataType(0, DataManager.DataType.Tile, false)]
+        public string ResultTile;
+
+        [DataType(0, DataManager.DataType.MapStatus, true)]
+        public string RemoveMapStatus;
+
+        public TempTileToStairsEvent()
+        {
+        }
+        public TempTileToStairsEvent(string resultTile, string removeMapStatus)
+        {
+            ResultTile = resultTile;
+            RemoveMapStatus = removeMapStatus;
+        }
+        public TempTileToStairsEvent(TempTileToStairsEvent other)
+        {
+            ResultTile = other.ResultTile;
+            RemoveMapStatus = other.RemoveMapStatus;
+        }
+        public override GameEvent Clone() { return new TempTileToStairsEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            EffectTile effectTile = (EffectTile)owner;
+
+            Loc baseLoc = effectTile.TileLoc;
+            Tile tile = ZoneManager.Instance.CurrentMap.Tiles[baseLoc.X][baseLoc.Y];
+            if (tile.Effect == owner)
+            {
+                tile.Effect = new EffectTile(ResultTile, true, tile.Effect.TileLoc);
+                tile.Effect.TileStates = effectTile.TileStates.Clone();
+            }
+
+            yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(RemoveMapStatus));
+
+            //say, "The vault doors opened!"/with fanfare
+            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LOCK_OPEN").ToLocal()));
+            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(90));
+        }
+
+    }
+
+
+    [Serializable]
+    public class TempTileCollapseEvent : SingleCharEvent
+    {
+        public TempTileCollapseEvent() { }
+        public override GameEvent Clone() { return new TempTileCollapseEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            if (character == null)
+            {
+                MapCountDownState countdown = ((MapStatus)owner).StatusStates.GetWithDefault<MapCountDownState>();
+                if (countdown != null && countdown.Counter > -1)
+                {
+                    countdown.Counter--;
+                    if (countdown.Counter <= 0)
+                    {
+                        yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(owner.GetID()));
+
+                        MapLocState locState = ((MapStatus)owner).StatusStates.GetWithDefault<MapLocState>();
+                        if (locState != null)
+                        {
+                            Tile tile = ZoneManager.Instance.CurrentMap.Tiles[locState.Target.X][locState.Target.Y];
+                            tile.Effect = new EffectTile(tile.Effect.TileLoc);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     [Serializable]
     public class OpenVaultEvent : SingleCharEvent

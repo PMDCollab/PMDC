@@ -7,6 +7,7 @@ using PMDC.Dungeon;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using RogueEssence.Dev;
+using RogueEssence.Data;
 
 namespace PMDC.LevelGen
 {
@@ -24,12 +25,14 @@ namespace PMDC.LevelGen
         /// It is removed when the player pressed the switch.
         /// </summary>
         [JsonConverter(typeof(TileConverter))]
+        [DataType(0, DataManager.DataType.Tile, false)]
         public string SealedTile;
 
         /// <summary>
         /// The switch tile that unlocked the vaults.
         /// </summary>
         [JsonConverter(typeof(TileConverter))]
+        [DataType(0, DataManager.DataType.Tile, false)]
         public string SwitchTile;
 
         /// <summary>
