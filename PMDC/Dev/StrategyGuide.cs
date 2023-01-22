@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using RogueElements;
@@ -12,6 +12,8 @@ namespace PMDC.Dev
 {
     public static class StrategyGuide
     {
+        private const int TOTAL_CHUNKS = 60;
+        
         private static void writeCSVGuide(string name, List<string[]> stats)
         {
 
@@ -24,7 +26,7 @@ namespace PMDC.Dev
                     file.WriteLine(String.Join("\t", stat));
             }
 
-            DiagManager.Instance.LogInfo("Printed " + name);
+            Console.WriteLine();
         }
 
         private static void writeHTMLGuide(string name, List<string[]> stats)
@@ -175,16 +177,15 @@ namespace PMDC.Dev
                 "		<footer>PMDC v"+ Versioning.GetVersion().ToString() + "</footer>\n" +
                 "	</body>\n" +
                 "</html>\n";
-
             if (!Directory.Exists(PathMod.ExePath + "GUIDE/"))
                 Directory.CreateDirectory(PathMod.ExePath + "GUIDE/");
 
             using (StreamWriter file = new StreamWriter(PathMod.ExePath + "GUIDE/" + name + ".html"))
                 file.Write(html);
 
-            DiagManager.Instance.LogInfo("Printed " + name);
+            Console.WriteLine();
         }
-
+        
         public static string currentIfEqual(string name, string title)
         {
             return name == title ? "class=\"current\"" : "";
@@ -195,8 +196,10 @@ namespace PMDC.Dev
             List<string[]> stats = new List<string[]>();
             stats.Add(new string[5] { "###", "Name", "Type", "Price", "Description" });
             List<string> itemKeys = DataManager.Instance.DataIndices[DataManager.DataType.Item].GetOrderedKeys(true);
-            foreach (string key in itemKeys)
+            for (int ii = 0; ii < itemKeys.Count; ii++)
             {
+                ProgressBar("Creating item guide...", "Done.", TOTAL_CHUNKS, ii, itemKeys.Count);
+                string key = itemKeys[ii];
                 ItemData entry = DataManager.Instance.GetItem(key);
                 if (entry.Released)
                     stats.Add(new string[5] { key, entry.Name.ToLocal(), entry.UsageType.ToString(), entry.Price.ToString(), entry.Desc.ToLocal() });
@@ -212,8 +215,11 @@ namespace PMDC.Dev
         {
             List<string[]> stats = new List<string[]>();
             stats.Add(new string[9] { "###", "Name", "Type", "Category", "Power", "Accuracy", "PP", "Range", "Description" });
-            foreach(String key in DataManager.Instance.DataIndices[DataManager.DataType.Skill].GetOrderedKeys(true))
+            List<string> moves = DataManager.Instance.DataIndices[DataManager.DataType.Skill].GetOrderedKeys(true);
+            for (int ii = 0; ii < moves.Count; ii++)
             {
+                ProgressBar("Creating moves guide...", "Done.", TOTAL_CHUNKS, ii, moves.Count);
+                string key = moves[ii];
                 SkillData entry = DataManager.Instance.GetSkill(key);
                 if (entry.Released)
                 {
@@ -243,8 +249,14 @@ namespace PMDC.Dev
         {
             List<string[]> stats = new List<string[]>();
             stats.Add(new string[3] { "###", "Name", "Description" });
-            foreach(string key in DataManager.Instance.DataIndices[DataManager.DataType.Intrinsic].GetOrderedKeys(true))
+
+            List<string> abilities =
+                DataManager.Instance.DataIndices[DataManager.DataType.Intrinsic].GetOrderedKeys(true);
+            
+            for (int ii = 0; ii < abilities.Count; ii++)
             {
+                ProgressBar("Creating abilities guide...", "Done.", TOTAL_CHUNKS, ii, abilities.Count);
+                string key = abilities[ii];
                 IntrinsicData entry = DataManager.Instance.GetIntrinsic(key);
                 if (entry.Released)
                     stats.Add(new string[3] { key, entry.Name.ToLocal(), entry.Desc.ToLocal() });
@@ -289,13 +301,14 @@ namespace PMDC.Dev
                 rangeStrings.Add((curStart + 1).ToString());
             else
                 rangeStrings.Add((curStart + 1).ToString() + "-" + (curEnd + 1).ToString());
-
-
             return rangeStrings;
         }
 
         public static void PrintEncounterGuide(bool csv)
         {
+            List<string> monsterKeys = DataManager.Instance.DataIndices[DataManager.DataType.Monster].GetOrderedKeys(true);
+            ProgressBar("Creating encounters guide...", "Done.", TOTAL_CHUNKS, 0, monsterKeys.Count);
+            
             Dictionary<string, HashSet<(string, ZoneLoc)>> foundSpecies = DevHelper.GetAllAppearingMonsters(true);
 
             foreach ((MonsterID mon, string name) startchar in DataManager.Instance.StartChars)
@@ -304,9 +317,10 @@ namespace PMDC.Dev
             List<string[]> stats = new List<string[]>();
             stats.Add(new string[4] { "###", "Name", "Join %", "Found In" });
 
-            List<string> monsterKeys = DataManager.Instance.DataIndices[DataManager.DataType.Monster].GetOrderedKeys(true);
-            foreach (string key in monsterKeys)
+            for (int ii = 0; ii < monsterKeys.Count; ii++ )
             {
+                ProgressBar("Creating encounters guide...", "Done.", TOTAL_CHUNKS, ii, monsterKeys.Count);
+                string key = monsterKeys[ii]; 
                 EntrySummary summary = DataManager.Instance.DataIndices[DataManager.DataType.Monster].Get(key);
                 if (summary.Released)
                 {
@@ -416,6 +430,55 @@ namespace PMDC.Dev
                 writeCSVGuide("Encounters", stats);
             else
                 writeHTMLGuide("Encounters", stats);
+        }
+
+        public static void ProgressBar(string message, string ending, int totalChunks, int progress, int total)
+        {
+            // offset the progress by 1;
+            progress++;
+            Console.CursorVisible = false;
+
+            double progressCompleted = (double)(progress) / total;
+            int numChunksComplete = (int)(totalChunks * progressCompleted);
+            string progressString = String.Format("Progress: [{0, 3}%]", (int)(progressCompleted * 100));
+            string spacer = " ";
+
+            int offset = progressString.Length + spacer.Length;
+
+            Console.CursorLeft = 0;
+            Console.BackgroundColor = ConsoleColor.Green;
+            Console.Write(progressString);
+            
+            Console.ResetColor();
+            Console.Write(spacer);
+            Console.CursorLeft = offset;
+            Console.Write("[");
+            Console.CursorLeft = offset + totalChunks + 1;
+            Console.Write("|");
+            Console.CursorLeft = offset + 1;
+            
+            if (numChunksComplete > 0 && progress != total)
+                Console.Write("".PadRight(numChunksComplete - 1, '=') + ">");
+            else
+                Console.Write("".PadRight(numChunksComplete, '='));
+
+            Console.Write("".PadRight(totalChunks - numChunksComplete, '-'));
+            Console.CursorLeft = offset + totalChunks + 2;
+
+            int totalDigits = total.ToString().Length;
+            string display = String.Format(" {0}/{1} ]", progress.ToString().PadLeft(totalDigits), total);
+
+ 
+            string currMessage;
+            if (progress < total)
+                currMessage = message;
+            else
+            {
+                string spacePadding = new string(' ', Math.Abs(ending.Length - message.Length));
+                currMessage = ending + spacePadding;
+            }
+
+            Console.Write(display + spacer + currMessage);
         }
     }
 }
