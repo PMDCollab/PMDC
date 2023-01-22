@@ -68,22 +68,9 @@ namespace PMDC.Dungeon
 
         public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
-            //check to see if close to highest leader
-            foreach (Character testChar in controlledChar.MemberTeam.IterateByRank())
-            {
-                //no leader found?  don't be preparing.
-                if (testChar == controlledChar)
-                    return null;
-                else if (controlledChar.IsInSightBounds(testChar.CharLoc))
-                {
-                    //only check the first leader that is within sight
-                    //leader found; check if nearby
-                    if (ZoneManager.Instance.CurrentMap.InRange(testChar.CharLoc, controlledChar.CharLoc, 1))
-                        break;
-                    else
-                        return null;
-                }
-            }
+            //pre-check to confirm correct positioning
+            if (!closestToHighestLeader(controlledChar))
+                return null;
 
             bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
             Character target = null;
@@ -105,6 +92,74 @@ namespace PMDC.Dungeon
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Checks if the controlled character is close to the highest ranking member in sight.
+        /// </summary>
+        /// <returns></returns>
+        private bool closestToHighestLeader(Character controlledChar)
+        {
+            foreach (Character testChar in controlledChar.MemberTeam.IterateByRank())
+            {
+                //no leader found?  don't be preparing.
+                if (testChar == controlledChar)
+                    return false;
+                else if (controlledChar.IsInSightBounds(testChar.CharLoc))
+                {
+                    //only check the first leader that is within sight
+                    //leader found; check if nearby
+                    if (ZoneManager.Instance.CurrentMap.InRange(testChar.CharLoc, controlledChar.CharLoc, 1))
+                    {
+                        //check if able to walk there specifically
+                        Dir8 dir = DirExt.GetDir(controlledChar.CharLoc, testChar.CharLoc);
+                        if (!ZoneManager.Instance.CurrentMap.DirBlocked(dir, controlledChar.CharLoc, controlledChar.Mobility, 1, false, true))
+                            return true;
+                    }
+                    //if any checks fail, return null
+                    return false;
+                }
+            }
+            //couldn't find the leader by some way
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if the controlled character is transitively close to THE leader. Unsure if should use this method.
+        /// </summary>
+        /// <param name="controlledChar"></param>
+        /// <returns></returns>
+        private bool transitivelyTouchesLeader(Character controlledChar)
+        {
+            Team team = controlledChar.MemberTeam;
+
+            //requires a valid target tile
+            Grid.LocTest checkDiagBlock = (Loc testLoc) => {
+                Character nextChar = ZoneManager.Instance.CurrentMap.GetCharAtLoc(testLoc);
+                if (nextChar == null)
+                    return true;
+                if (nextChar.MemberTeam != team)
+                    return true;
+
+                //check to make sure you can actually walk this way
+                return ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, controlledChar.Mobility, true);
+            };
+
+            Grid.LocTest checkBlock = (Loc testLoc) => {
+
+                Character nextChar = ZoneManager.Instance.CurrentMap.GetCharAtLoc(testLoc);
+                if (nextChar == null)
+                    return true;
+                if (nextChar.MemberTeam != team)
+                    return true;
+                return false;
+            };
+
+            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
+            Loc mapSize = Character.GetSightDims() * 2 + new Loc(1);
+            List<Loc> path = Grid.FindPath(mapStart, mapSize, controlledChar.CharLoc, team.Leader.CharLoc, checkBlock, checkDiagBlock);
+
+            return (path[0] == team.Leader.CharLoc);
         }
     }
 

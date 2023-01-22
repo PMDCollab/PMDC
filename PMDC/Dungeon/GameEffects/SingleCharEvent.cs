@@ -1909,6 +1909,20 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    [Serializable]
+    public class WalkedThisTurnEvent : SingleCharEvent
+    {
+        public override GameEvent Clone() { return new WalkedThisTurnEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            WalkedThisTurnState recent = ((StatusEffect)owner).StatusStates.GetWithDefault<WalkedThisTurnState>();
+            recent.Walked = true;
+            yield break;
+        }
+    }
+
     [Serializable]
     public class PoisonSingleEvent : SingleCharEvent
     {
@@ -1927,8 +1941,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
-            AttackedThisTurnState recent = ((StatusEffect)owner).StatusStates.GetWithDefault<AttackedThisTurnState>();
-            if (!recent.Attacked && !character.CharStates.Contains<MagicGuardState>())
+            if (!character.CharStates.Contains<MagicGuardState>())
             {
                 CountState countState = ((StatusEffect)owner).StatusStates.Get<CountState>();
                 if (Toxic && countState.Count < 16)
@@ -1936,7 +1949,7 @@ namespace PMDC.Dungeon
                 if (character.CharStates.Contains<PoisonHealState>())
                 {
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_POISON_HEAL").ToLocal(), character.GetDisplayName(false)));
-                    yield return CoroutineManager.Instance.StartCoroutine(character.RestoreHP(Math.Max(1, character.MaxHP / 12)));
+                    yield return CoroutineManager.Instance.StartCoroutine(character.RestoreHP(Math.Max(1, character.MaxHP / 16)));
                 }
                 else
                 {
@@ -1944,7 +1957,53 @@ namespace PMDC.Dungeon
                     yield return CoroutineManager.Instance.StartCoroutine(character.InflictDamage(Math.Max(1, (character.MaxHP * countState.Count) / 16)));
                 }
             }
-            recent.Attacked = false;
+        }
+    }
+
+    [Serializable]
+    public class PoisonEndEvent : SingleCharEvent
+    {
+        public bool Toxic;
+        public bool ReducedDamage;
+
+        public PoisonEndEvent() { }
+        public PoisonEndEvent(bool toxic, bool reduce)
+        {
+            Toxic = toxic;
+            ReducedDamage = reduce;
+        }
+        protected PoisonEndEvent(PoisonEndEvent other)
+        {
+            Toxic = other.Toxic;
+            ReducedDamage = other.ReducedDamage;
+        }
+        public override GameEvent Clone() { return new PoisonEndEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            AttackedThisTurnState recentAttack = ((StatusEffect)owner).StatusStates.GetWithDefault<AttackedThisTurnState>();
+            WalkedThisTurnState recentWalk = ((StatusEffect)owner).StatusStates.GetWithDefault<WalkedThisTurnState>();
+            if (!recentAttack.Attacked && !recentWalk.Walked && !character.CharStates.Contains<MagicGuardState>())
+            {
+                CountState countState = ((StatusEffect)owner).StatusStates.Get<CountState>();
+                if (Toxic && countState.Count < 16)
+                    countState.Count++;
+                if (character.CharStates.Contains<PoisonHealState>())
+                {
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_POISON_HEAL").ToLocal(), character.GetDisplayName(false)));
+                    yield return CoroutineManager.Instance.StartCoroutine(character.RestoreHP(Math.Max(1, character.MaxHP / 16)));
+                }
+                else
+                {
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_POISONED").ToLocal(), character.GetDisplayName(false)));
+                    int ticks = countState.Count;
+                    if (ReducedDamage)
+                        ticks--;
+                    yield return CoroutineManager.Instance.StartCoroutine(character.InflictDamage(Math.Max(1, (character.MaxHP * ticks) / 16)));
+                }
+            }
+            recentAttack.Attacked = false;
+            recentWalk.Walked = false;
         }
     }
 
