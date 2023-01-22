@@ -100,6 +100,15 @@ namespace PMDC.Dungeon
         public override GameplayState Clone() { return new AttackedThisTurnState(this); }
     }
     [Serializable]
+    public class WalkedThisTurnState : StatusState
+    {
+        public bool Walked;
+        public WalkedThisTurnState() { }
+        public WalkedThisTurnState(bool walked) { Walked = walked; }
+        protected WalkedThisTurnState(WalkedThisTurnState other) { Walked = other.Walked; }
+        public override GameplayState Clone() { return new WalkedThisTurnState(this); }
+    }
+    [Serializable]
     public class CategoryState : StatusState
     {
         public BattleData.SkillCategory Category;
