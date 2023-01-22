@@ -123,7 +123,7 @@ namespace PMDC.Dungeon
                     if (ZoneManager.Instance.CurrentMap.WrapLoc(testLoc) != targetChar.CharLoc && respectPeers)
                     {
                         Character destChar = ZoneManager.Instance.CurrentMap.GetCharAtLoc(testLoc);
-                        if (!canPassChar(controlledChar, destChar))
+                        if (!canPassChar(controlledChar, destChar, true))
                             return true;
                     }
 

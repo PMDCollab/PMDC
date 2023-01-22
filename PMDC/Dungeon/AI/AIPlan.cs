@@ -120,25 +120,33 @@ namespace PMDC.Dungeon
         /// </summary>
         /// <param name="controlledChar"></param>
         /// <param name="destChar"></param>
+        /// <param name="yieldToTeam">Considers other team members non-passable, even if they are lower rank.</param>
         /// <returns></returns>
-        protected bool canPassChar(Character controlledChar, Character destChar)
+        protected bool canPassChar(Character controlledChar, Character destChar, bool yieldToTeam)
         {
             if (destChar == null)
                 return true;
 
-            if ((destChar.MemberTeam.MapFaction == Faction.Foe) != (controlledChar.MemberTeam.MapFaction == Faction.Foe))
+            if (!controlledChar.CanSeeCharacter(destChar))
                 return true;
+
+            if (DungeonScene.Instance.GetMatchup(controlledChar, destChar) == Alignment.Foe)
+                return false;
 
             if (destChar.MemberTeam.MapFaction < controlledChar.MemberTeam.MapFaction)
                 return false;
             else if (destChar.MemberTeam.MapFaction == controlledChar.MemberTeam.MapFaction)
             {
+                //always yield to the higher rank of team or member within team
                 CharIndex destIndex = ZoneManager.Instance.CurrentMap.GetCharIndex(destChar);
                 CharIndex controlledIndex = ZoneManager.Instance.CurrentMap.GetCharIndex(controlledChar);
                 if (destIndex.Team < controlledIndex.Team)
                     return false;
                 else if (destIndex.Team == controlledIndex.Team)
                 {
+                    if (yieldToTeam)
+                        return false;
+
                     Team team = destChar.MemberTeam;
                     if (destChar == team.Leader)
                         return false;

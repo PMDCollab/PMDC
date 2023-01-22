@@ -97,7 +97,7 @@ namespace PMDC.Dungeon
                         {
                             Character destChar = ZoneManager.Instance.CurrentMap.GetCharAtLoc(goalPath[goalPath.Count - 2]);
                             // if there's a character there, and they're ordered before us
-                            if (!canPassChar(controlledChar, destChar))
+                            if (!canPassChar(controlledChar, destChar, false))
                                 return new GameAction(GameAction.ActionType.Wait, Dir8.None);
                         }
                         GameAction act = TrySelectWalk(controlledChar, ZoneManager.Instance.CurrentMap.GetClosestDir8(goalPath[goalPath.Count - 1], goalPath[goalPath.Count - 2]));
@@ -162,7 +162,7 @@ namespace PMDC.Dungeon
             if (!preThink && goalPath.Count > 1)
             {
                 Character destChar = ZoneManager.Instance.CurrentMap.GetCharAtLoc(goalPath[goalPath.Count - 2]);
-                if (!canPassChar(controlledChar, destChar))
+                if (!canPassChar(controlledChar, destChar, false))
                     return new GameAction(GameAction.ActionType.Wait, Dir8.None);
             }
             return SelectChoiceFromPath(controlledChar, goalPath);
