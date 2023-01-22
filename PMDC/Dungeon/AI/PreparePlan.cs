@@ -68,8 +68,8 @@ namespace PMDC.Dungeon
 
         public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
-            // If not transitively touching the leader, do not use this plan
-            if (!transitivelyTouchesLeader(controlledChar))
+            //pre-check to confirm correct positioning
+            if (!closestToHighestLeader(controlledChar))
                 return null;
 
             bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
@@ -94,6 +94,41 @@ namespace PMDC.Dungeon
             return null;
         }
 
+        /// <summary>
+        /// Checks if the controlled character is close to the highest ranking member in sight.
+        /// </summary>
+        /// <returns></returns>
+        private bool closestToHighestLeader(Character controlledChar)
+        {
+            foreach (Character testChar in controlledChar.MemberTeam.IterateByRank())
+            {
+                //no leader found?  don't be preparing.
+                if (testChar == controlledChar)
+                    return false;
+                else if (controlledChar.IsInSightBounds(testChar.CharLoc))
+                {
+                    //only check the first leader that is within sight
+                    //leader found; check if nearby
+                    if (ZoneManager.Instance.CurrentMap.InRange(testChar.CharLoc, controlledChar.CharLoc, 1))
+                    {
+                        //check if able to walk there specifically
+                        Dir8 dir = DirExt.GetDir(controlledChar.CharLoc, testChar.CharLoc);
+                        if (!ZoneManager.Instance.CurrentMap.DirBlocked(dir, controlledChar.CharLoc, controlledChar.Mobility, 1, false, true))
+                            return true;
+                    }
+                    //if any checks fail, return null
+                    return false;
+                }
+            }
+            //couldn't find the leader by some way
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if the controlled character is transitively close to THE leader. Unsure if should use this method.
+        /// </summary>
+        /// <param name="controlledChar"></param>
+        /// <returns></returns>
         private bool transitivelyTouchesLeader(Character controlledChar)
         {
             Team team = controlledChar.MemberTeam;
@@ -125,65 +160,6 @@ namespace PMDC.Dungeon
             List<Loc> path = Grid.FindPath(mapStart, mapSize, controlledChar.CharLoc, team.Leader.CharLoc, checkBlock, checkDiagBlock);
 
             return (path[0] == team.Leader.CharLoc);
-        }
-
-        // higher performance transitive touch check
-        private bool transitivelyTouchesLeaderFast(Character controlledChar)
-        {
-            Team team = controlledChar.MemberTeam;
-
-            bool[] traversedPlayers = new bool[team.Players.Count];
-            bool[] traversedGuests = new bool[team.Guests.Count];
-
-            List<CharIndex> openSet = new List<CharIndex>();
-            openSet.Add(new CharIndex(Faction.None, -1, false, team.LeaderIndex));
-
-            while (openSet.Count > 0)
-            {
-                //pop from top; depth first behavior
-                CharIndex popped = openSet[openSet.Count-1];
-                openSet.RemoveAt(openSet.Count - 1);
-                Character poppedChar = team.CharAtIndex(popped.Guest, popped.Char);
-                if (poppedChar == controlledChar)
-                    return true;
-
-                if (popped.Guest)
-                    traversedGuests[popped.Char] = true;
-                else
-                    traversedPlayers[popped.Char] = true;
-
-                //get members adjacent
-                for (int ii = 0; ii < team.Players.Count; ii++)
-                {
-                    CharIndex charIndex = new CharIndex(Faction.None, -1, false, ii);
-                    if (isAdjacent(team, traversedPlayers, charIndex, poppedChar.CharLoc))
-                        openSet.Add(charIndex);
-                }
-                for (int ii = 0; ii < team.Guests.Count; ii++)
-                {
-                    CharIndex charIndex = new CharIndex(Faction.None, -1, true, ii);
-                    if (isAdjacent(team, traversedPlayers, charIndex, poppedChar.CharLoc))
-                        openSet.Add(charIndex);
-                }
-
-            }
-            return true;
-        }
-
-        private bool isAdjacent(Team team, bool[] traversed, CharIndex charIndex, Loc checkLoc)
-        {
-            if (!traversed[charIndex.Char])
-            {
-                Character checkChar = team.CharAtIndex(false, charIndex.Char);
-                if (ZoneManager.Instance.CurrentMap.InRange(checkChar.CharLoc, checkLoc, 1))
-                {
-                    //in order for the checkChar to be included in the set, it must be able to reach the checkLoc location
-                    //check for diagonal interruption
-                    Dir8 dir = DirExt.GetDir(checkChar.CharLoc, checkLoc);
-                    return !ZoneManager.Instance.CurrentMap.DirBlocked(dir, checkChar.CharLoc, checkChar.Mobility, 1, false, true);
-                }
-            }
-            return false;
         }
     }
 
