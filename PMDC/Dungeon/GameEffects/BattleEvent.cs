@@ -419,7 +419,8 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, AffectTarget ? context.Target : context.User));
+            SingleCharContext singleContext = new SingleCharContext(AffectTarget ? context.Target : context.User);
+            yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, singleContext));
         }
     }
 
@@ -10338,8 +10339,10 @@ namespace PMDC.Dungeon
                         DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), ownerChar.GetDisplayName(false), target.GetDisplayName(false)));
 
                         foreach (AnimEvent anim in Anims)
-                            yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, target));
-
+                        {
+                            SingleCharContext singleContext = new SingleCharContext(target);
+                            yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, singleContext));
+                        }
                     }
 
                     foreach (string statusID in badStatuses)
@@ -10617,7 +10620,10 @@ namespace PMDC.Dungeon
                 yield return CoroutineManager.Instance.StartCoroutine(context.User.StartAnim(chargeAnim));
 
                 foreach (AnimEvent anim in Anims)
-                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, targetChar));
+                {
+                    SingleCharContext singleContext = new SingleCharContext(targetChar);
+                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, singleContext));
+                }
 
                 int trapdmg = status.StatusStates.GetWithDefault<HPState>().HP;
                 yield return CoroutineManager.Instance.StartCoroutine(targetChar.InflictDamage(trapdmg));
