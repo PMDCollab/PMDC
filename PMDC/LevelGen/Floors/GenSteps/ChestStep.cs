@@ -149,8 +149,8 @@ namespace PMDC.LevelGen
 
             if (Ambush && MobThemes.CanPick)
             {
+                spawnedChest.TileStates.Set(new DangerState(true));
 
-                spawnedChest.Danger = true;
                 //the mob theme will be selected randomly
                 MobTheme chosenMobTheme = MobThemes.Pick(map.Rand);
 
@@ -169,7 +169,9 @@ namespace PMDC.LevelGen
                 }
                 spawnedChest.TileStates.Set(mobSpawn);
             }
-            
+            else
+                spawnedChest.TileStates.Set(new DangerState(false));
+
             ItemSpawnState itemSpawn = new ItemSpawnState();
             itemSpawn.Spawns = chosenItems;
             spawnedChest.TileStates.Set(itemSpawn);

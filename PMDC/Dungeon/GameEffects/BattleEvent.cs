@@ -13500,7 +13500,10 @@ namespace PMDC.Dungeon
             {
                 TileData entry = DataManager.Instance.GetTile(tile.Effect.GetID());
                 if (entry.StepType == TileData.TriggerType.Trap)
-                    yield return CoroutineManager.Instance.StartCoroutine(tile.Effect.InteractWithTile(context.User));
+                {
+                    SingleCharContext singleContext = new SingleCharContext(context.User);
+                    yield return CoroutineManager.Instance.StartCoroutine(tile.Effect.InteractWithTile(singleContext));
+                }
             }
         }
     }
@@ -13750,7 +13753,10 @@ namespace PMDC.Dungeon
                 {
                     UnlockState unlock = tile.Effect.TileStates.GetWithDefault<UnlockState>();
                     if (unlock != null && unlock.UnlockItem == context.Item.ID)
-                        yield return CoroutineManager.Instance.StartCoroutine(tile.Effect.InteractWithTile(context.User));
+                    {
+                        SingleCharContext singleContext = new SingleCharContext(context.User);
+                        yield return CoroutineManager.Instance.StartCoroutine(tile.Effect.InteractWithTile(singleContext));
+                    }
                 }
             }
         }

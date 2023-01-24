@@ -28,6 +28,15 @@ namespace PMDC.Dungeon
         public override GameplayState Clone() { return new DestState(this); }
     }
     [Serializable]
+    public class DangerState : TileState
+    {
+        public bool Danger;
+        public DangerState() { }
+        public DangerState(bool danger) { Danger = danger; }
+        protected DangerState(DangerState other) { Danger = other.Danger; }
+        public override GameplayState Clone() { return new DangerState(this); }
+    }
+    [Serializable]
     public class SongState : TileState
     {
         [Music(0)]

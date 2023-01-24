@@ -3311,8 +3311,34 @@ namespace PMDC.Dungeon
             if (DungeonScene.Instance.ActiveTeam.Leader.CharLoc == baseLoc && ZoneManager.Instance.CurrentMap.Tiles[baseLoc.X][baseLoc.Y].Effect == tile)
             {
                 GameManager.Instance.SE("Menu/Confirm");
-                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(new TileUnderfootMenu(tile.ID, tile.Danger)));
+                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(new TileUnderfootMenu(tile.ID)));
 
+            }
+        }
+    }
+
+
+    [Serializable]
+    public class AskIfDangerEvent : SingleCharEvent
+    {
+        public AskIfDangerEvent() { }
+        public override GameEvent Clone() { return new AskIfDangerEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            EffectTile effectTile = (EffectTile)owner;
+            DangerState danger = effectTile.TileStates.Get<DangerState>();
+            if (danger.Danger)
+            {
+
+                DialogueBox box = MenuManager.Instance.CreateQuestion(Text.FormatKey("MSG_DANGER_CONFIRM"),
+                        () => { },
+                        () => {
+                            context.CancelState.Cancel = true;
+                            context.TurnCancel.Cancel = true;
+                        });
+
+                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(box));
             }
         }
     }
@@ -3581,7 +3607,11 @@ namespace PMDC.Dungeon
                 yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Rescue));
             }
             else if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
+            {
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LEADER_ONLY_TILE").ToLocal()));
+                context.CancelState.Cancel = true;
+            }
+            context.TurnCancel.Cancel = true;
         }
     }
 
@@ -3623,7 +3653,11 @@ namespace PMDC.Dungeon
                 }
             }
             else if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
+            {
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LEADER_ONLY_TILE").ToLocal()));
+                context.CancelState.Cancel = true;
+            }
+            context.TurnCancel.Cancel = true;
         }
     }
 
@@ -3677,7 +3711,11 @@ namespace PMDC.Dungeon
                 }
             }
             else if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
+            {
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LEADER_ONLY_TILE").ToLocal()));
+                context.CancelState.Cancel = true;
+            }
+            context.TurnCancel.Cancel = true;
         }
     }
 
@@ -4256,7 +4294,8 @@ namespace PMDC.Dungeon
             }
 
 
-            if (((EffectTile)owner).Danger)
+            DangerState danger = effectTile.TileStates.Get<DangerState>();
+            if (danger.Danger)
             {
 
                 bool aboveTimeLimit = true;
@@ -4462,8 +4501,8 @@ namespace PMDC.Dungeon
             DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TREASURE").ToLocal()));
             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(60));
 
-
-            if (((EffectTile)owner).Danger)
+            DangerState danger = effectTile.TileStates.Get<DangerState>();
+            if (danger.Danger)
             {
                 LockdownTileEvent lockdown = new LockdownTileEvent("map_clear_check");// magic number
                 MonsterHouseTileEvent monsterHouse = new MonsterHouseTileEvent();
