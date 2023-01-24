@@ -86,7 +86,8 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, StatusCheckContext context)
         {
-            yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, AffectTarget ? context.Target : context.User));
+            SingleCharContext singleContext = new SingleCharContext(AffectTarget ? context.Target : context.User);
+            yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, singleContext));
         }
     }
 
@@ -1820,7 +1821,10 @@ namespace PMDC.Dungeon
             if (owner != context.Status)//can't check on self
             {
                 if (context.Status.ID == StatusID)
-                    yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, context.Target));
+                {
+                    SingleCharContext singleContext = new SingleCharContext(context.Target);
+                    yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, singleContext));
+                }
             }
         }
     }
@@ -1849,8 +1853,9 @@ namespace PMDC.Dungeon
                 {
                     if (context.StackDiff < 0)
                     {
+                        SingleCharContext singleContext = new SingleCharContext(context.Target);
                         DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STAT_DROP_TRIGGER").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
-                        yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, context.Target));
+                        yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, singleContext));
                     }
                 }
             }

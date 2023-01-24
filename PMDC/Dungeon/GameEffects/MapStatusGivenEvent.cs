@@ -31,7 +31,8 @@ namespace PMDC.Dungeon
             if (status != owner || character == null)
                 yield break;
 
-            yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, character));
+            SingleCharContext singleContext = new SingleCharContext(character);
+            yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, singleContext));
         }
     }
 
