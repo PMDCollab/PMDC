@@ -632,7 +632,7 @@ namespace PMDC.Dungeon
         {
             GameManager.Instance.BattleSE(Sound);
 
-            if (!context.User.Unidentifiable)
+            if (context.User != null && !context.User.Unidentifiable)
             {
                 FiniteEmitter endEmitter = (FiniteEmitter)Emitter.Clone();
                 endEmitter.SetupEmit(context.User.MapLoc, context.User.MapLoc, context.User.CharDir);
@@ -4343,8 +4343,7 @@ namespace PMDC.Dungeon
 
             yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(RemoveMapStatus));
 
-            //say, "The vault doors opened!"/with fanfare
-            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LOCK_OPEN").ToLocal()));
+            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_STAIRS").ToLocal()));
             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(90));
         }
 
@@ -4354,8 +4353,21 @@ namespace PMDC.Dungeon
     [Serializable]
     public class TempTileCollapseEvent : SingleCharEvent
     {
-        public TempTileCollapseEvent() { }
-        public override GameEvent Clone() { return new TempTileCollapseEvent(); }
+        public List<AnimEvent> Anims;
+
+        public TempTileCollapseEvent() { Anims = new List<AnimEvent>(); }
+        public TempTileCollapseEvent(params AnimEvent[] anims)
+        {
+            Anims = new List<AnimEvent>();
+            Anims.AddRange(anims);
+        }
+        protected TempTileCollapseEvent(TempTileCollapseEvent other)
+        {
+            Anims = new List<AnimEvent>();
+            foreach (AnimEvent anim in other.Anims)
+                Anims.Add((AnimEvent)anim.Clone());
+        }
+        public override GameEvent Clone() { return new TempTileCollapseEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
@@ -4367,6 +4379,11 @@ namespace PMDC.Dungeon
                     countdown.Counter--;
                     if (countdown.Counter <= 0)
                     {
+                        context.User = DungeonScene.Instance.ActiveTeam.Leader;
+                        foreach (AnimEvent anim in Anims)
+                            yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
+                        context.User = null;
+
                         yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(owner.GetID()));
 
                         MapLocState locState = ((MapStatus)owner).StatusStates.GetWithDefault<MapLocState>();
@@ -4681,7 +4698,11 @@ namespace PMDC.Dungeon
 
                     if (switchesLeft > 0)
                     {
-                        DiagManager.Instance.LogInfo(String.Format("There are {0} more to activate.", switchesLeft));
+                        if (switchesLeft > 1)
+                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SWITCH_NEEDED_ONE").ToLocal(), tilesState.Tiles.Count));
+                        else
+                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SWITCH_NEEDED_MULTI").ToLocal(), tilesState.Tiles.Count));
+                        context.CancelState.Cancel = true;
                         yield break;
                     }
                 }
@@ -4713,7 +4734,8 @@ namespace PMDC.Dungeon
 
                     if (!allowOpen)
                     {
-                        DiagManager.Instance.LogInfo(String.Format("All {0} switches need to be stepped on at once!", tilesState.Tiles.Count));
+                        DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SWITCH_NEEDED_SYNC").ToLocal(), tilesState.Tiles.Count));
+                        context.CancelState.Cancel = true;
                         yield break;
                     }
 
