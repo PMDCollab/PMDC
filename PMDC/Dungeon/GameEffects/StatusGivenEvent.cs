@@ -242,9 +242,11 @@ namespace PMDC.Dungeon
         [StringTypeConstraint(1, typeof(CharState))]
         public List<FlagType> States;
 
+        public int Stack;
+
         public StatusStackBoostMod() { States = new List<FlagType>(); }
-        public StatusStackBoostMod(Type state) : this() { States.Add(new FlagType(state)); }
-        public StatusStackBoostMod(StatusStackBoostMod other) : this() { States.AddRange(other.States); }
+        public StatusStackBoostMod(Type state, int stack) : this() { States.Add(new FlagType(state)); Stack = stack; }
+        public StatusStackBoostMod(StatusStackBoostMod other) : this() { States.AddRange(other.States); Stack = other.Stack; }
 
         public override GameEvent Clone() { return new StatusStackBoostMod(this); }
 
@@ -263,7 +265,7 @@ namespace PMDC.Dungeon
                 {
                     StackState stack = context.Status.StatusStates.GetWithDefault<StackState>();
                     if (stack != null)
-                        stack.Stack += 1;
+                        stack.Stack += Stack;
                 }
             }
             yield break;
