@@ -4698,9 +4698,9 @@ namespace PMDC.Dungeon
                     if (switchesLeft > 0)
                     {
                         if (switchesLeft > 1)
-                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SWITCH_NEEDED_ONE").ToLocal(), tilesState.Tiles.Count));
+                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SWITCH_NEEDED_MULTI").ToLocal(), switchesLeft));
                         else
-                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SWITCH_NEEDED_MULTI").ToLocal(), tilesState.Tiles.Count));
+                            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SWITCH_NEEDED_ONE").ToLocal(), switchesLeft));
                         context.CancelState.Cancel = true;
                         yield break;
                     }

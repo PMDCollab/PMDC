@@ -143,7 +143,7 @@ namespace PMDC.LevelGen
             {
                 EffectTile switchTile = new EffectTile(SwitchTile, true);
 
-            switchTile.TileStates.Set(new DangerState(TimeLimit));
+                switchTile.TileStates.Set(new DangerState(TimeLimit));
 
                 TileListState state = new TileListState();
                 state.Tiles = lockList;
