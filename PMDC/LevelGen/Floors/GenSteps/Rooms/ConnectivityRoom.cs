@@ -14,7 +14,8 @@ namespace PMDC.LevelGen
             Disconnected = 2,
             SwitchVault = 4,
             KeyVault = 8,
-            BossLocked = 16
+            BossLocked = 16,
+            BlockVault = 32
         }
 
         public ConnectivityRoom()

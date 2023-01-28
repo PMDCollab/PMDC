@@ -6,6 +6,10 @@ using RogueEssence.Dungeon;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// Sets terrain in a room to a certain value.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class RoomTerrainStep<T> : GenStep<T> where T : class, IFloorPlanGenContext
     {

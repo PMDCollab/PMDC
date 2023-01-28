@@ -43,6 +43,8 @@ namespace PMDC.LevelGen
 
         public KeySealStep()
         {
+            LockedTile = "";
+            KeyTile = "";
             KeyItem = "";
         }
 
