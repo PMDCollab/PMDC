@@ -6313,7 +6313,9 @@ namespace PMDC.Dungeon
                     yield break;
             }
 
-            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_FROZEN").ToLocal(), context.User.GetDisplayName(false)));
+
+            if (((StatusEffect)owner).StatusStates.GetWithDefault<CountDownState>().Counter > 0)
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_FROZEN").ToLocal(), context.User.GetDisplayName(false)));
             context.CancelState.Cancel = true;
         }
     }
