@@ -9,6 +9,7 @@ using RogueEssence.Data;
 using System.Xml;
 using Newtonsoft.Json;
 using RogueEssence.Dev;
+using PMDC.Data;
 
 namespace PMDC.LevelGen
 {

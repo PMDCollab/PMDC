@@ -85,6 +85,45 @@ namespace PMDC.LevelGen
     }
 
     /// <summary>
+    /// Sets only time limit for the map.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    [Serializable]
+    public class MapTimeLimitStep<T> : GenStep<T> where T : BaseMapGenContext
+    {
+        /// <summary>
+        /// How many turns the player can spend on the map before an instant game over.
+        /// </summary>
+        public int TimeLimit;
+
+        public MapTimeLimitStep()
+        {
+        }
+        public MapTimeLimitStep(int timeLimit)
+        {
+            TimeLimit = timeLimit;
+        }
+
+        public override void Apply(T map)
+        {
+            if (TimeLimit > 0)
+            {
+                MapStatus timeStatus = new MapStatus("somethings_stirring");
+                timeStatus.LoadFromData();
+                MapCountDownState timeState = timeStatus.StatusStates.GetWithDefault<MapCountDownState>();
+                timeState.Counter = TimeLimit;
+                map.Map.Status.Add("somethings_stirring", timeStatus);
+            }
+        }
+
+
+        public override string ToString()
+        {
+            return String.Format("{0}: Time:{1}", this.GetType().Name, TimeLimit);
+        }
+    }
+
+    /// <summary>
     /// Adds a map status that is considered the "default" for that map.
     /// The map will always revert back to this status even if replaced (it will wait for the replacing status to run out).
     /// </summary>
