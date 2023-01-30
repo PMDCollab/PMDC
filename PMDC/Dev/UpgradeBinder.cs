@@ -14,11 +14,21 @@ namespace PMDC.Dev
     {
         public override Type BindToType(string assemblyName, string typeName)
         {
+            //TODO: Remove in v1.1
+            if (RogueEssence.Data.Serializer.OldVersion < new Version(0, 7, 0))
+            {
+                if (typeName.StartsWith("RogueEssence.LevelGen.FloorNameIDZoneStep"))
+                {
+                    assemblyName = assemblyName.Replace("RogueEssence", "PMDC");
+                    typeName = typeName.Replace("RogueEssence.LevelGen.FloorNameIDZoneStep", "PMDC.LevelGen.FloorNameDropZoneStep");
+                }
+            }
             Type typeToDeserialize = Type.GetType(String.Format("{0}, {1}",
                 typeName, assemblyName));
 
             if (typeToDeserialize == null)
             {
+                //TODO: Remove in v1.1
                 typeName = typeName.Replace("RefreshPreEvent", "ElementMobilityEvent");
                 if (typeName.StartsWith("RogueEssence.IntrudingBlobWaterStep"))
                 {
