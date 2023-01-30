@@ -21,10 +21,11 @@ namespace PMDC.Dungeon
     {
         public SegLoc Dest;
         public bool Relative;
+        public bool PreserveMusic;
         public DestState() { }
         public DestState(SegLoc dest) { Dest = dest; }
         public DestState(SegLoc dest, bool relative) { Dest = dest; Relative = relative; }
-        protected DestState(DestState other) { Dest = other.Dest; Relative = other.Relative; }
+        protected DestState(DestState other) { Dest = other.Dest; Relative = other.Relative; PreserveMusic = other.PreserveMusic; }
         public override GameplayState Clone() { return new DestState(this); }
     }
     [Serializable]

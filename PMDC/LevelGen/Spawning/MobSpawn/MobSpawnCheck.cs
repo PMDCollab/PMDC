@@ -50,6 +50,42 @@ namespace PMDC.LevelGen
         }
 
     }
+    /// <summary>
+    /// Spawns the mob if the player's savevar is true.
+    /// </summary>
+    [Serializable]
+    public class MobCheckSaveVar : MobSpawnCheck
+    {
+        /// <summary>
+        /// The savevar to query
+        /// </summary>
+        public string SaveVar;
+
+        public bool Negate;
+
+        public MobCheckSaveVar()
+        {
+        }
+
+        public MobCheckSaveVar(string saveVar, bool negate)
+        {
+            SaveVar = saveVar;
+            Negate = negate;
+        }
+        public MobCheckSaveVar(MobCheckSaveVar other) : this()
+        {
+            SaveVar = other.SaveVar;
+            Negate = other.Negate;
+        }
+        public override MobSpawnCheck Copy() { return new MobCheckSaveVar(this); }
+
+        public override bool CanSpawn()
+        {
+            object obj = LuaEngine.Instance.LuaState[LuaEngine.SCRIPT_VARS_NAME + "." + SaveVar];
+            return object.Equals(true, obj) != Negate;
+        }
+
+    }
 
     /// <summary>
     /// Spawns the mob if the time of day is right.  DOESNT WORK.

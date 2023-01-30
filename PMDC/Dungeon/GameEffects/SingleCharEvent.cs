@@ -3789,7 +3789,7 @@ namespace PMDC.Dungeon
                         int endFloor = ZoneManager.Instance.CurrentMapID.ID + destState.Dest.ID;
 
                         if (endSegment >= 0 && endFloor >= 0 && endSegment < ZoneManager.Instance.CurrentZone.Segments.Count && (ZoneManager.Instance.CurrentZone.Segments[endSegment].FloorCount < 0 || endFloor < ZoneManager.Instance.CurrentZone.Segments[endSegment].FloorCount))
-                            GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, new SegLoc(endSegment, endFloor)));
+                            GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, new SegLoc(endSegment, endFloor)), false, destState.PreserveMusic);
                         else
                             yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
                     }
@@ -3798,7 +3798,7 @@ namespace PMDC.Dungeon
                     else//go to a designated dungeon structure
                     {
                         yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeOut(false));
-                        GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, destState.Dest));
+                        GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, destState.Dest), false, destState.PreserveMusic);
                     }
                 }
             }
