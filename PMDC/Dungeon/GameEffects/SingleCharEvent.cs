@@ -3334,15 +3334,32 @@ namespace PMDC.Dungeon
             DangerState danger = effectTile.TileStates.Get<DangerState>();
             if (danger.Danger)
             {
+                if (DataManager.Instance.CurrentReplay != null)
+                {
+                    int index = DataManager.Instance.CurrentReplay.ReadUI();
+                    if (index == -1)
+                    {
+                        context.CancelState.Cancel = true;
+                        context.TurnCancel.Cancel = true;
+                    }
+                }
+                else
+                {
+                    int index = 0;
+                    DialogueBox box = MenuManager.Instance.CreateQuestion(Text.FormatKey("MSG_DANGER_CONFIRM"),
+                            () => { },
+                            () => {
+                                context.CancelState.Cancel = true;
+                                context.TurnCancel.Cancel = true;
+                                index = -1;
+                            });
 
-                DialogueBox box = MenuManager.Instance.CreateQuestion(Text.FormatKey("MSG_DANGER_CONFIRM"),
-                        () => { },
-                        () => {
-                            context.CancelState.Cancel = true;
-                            context.TurnCancel.Cancel = true;
-                        });
+                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(box));
 
-                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(box));
+                    if (DataManager.Instance.CurrentReplay == null)
+                        DataManager.Instance.LogUIPlay(index);
+
+                }
             }
         }
     }
