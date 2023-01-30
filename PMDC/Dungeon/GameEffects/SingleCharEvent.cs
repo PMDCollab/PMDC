@@ -158,6 +158,11 @@ namespace PMDC.Dungeon
 
         public override List<Character> RespawnMob()
         {
+            return Respawn();
+        }
+
+        public static List<Character> Respawn()
+        {
             List<Character> respawns = new List<Character>();
             if (ZoneManager.Instance.CurrentMap.TeamSpawns.CanPick)
             {
@@ -3836,6 +3841,27 @@ namespace PMDC.Dungeon
                     character.CharLoc = ZoneManager.Instance.CurrentMap.EntryPoints[0].Loc;
             }
             character.CharDir = ZoneManager.Instance.CurrentMap.EntryPoints[0].Dir;
+        }
+    }
+
+    [Serializable]
+    public class FadeTitleEvent : SingleCharEvent
+    {
+        public FadeTitleEvent() { }
+        public override GameEvent Clone() { return new FadeTitleEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            if (context.User != null)
+                yield break;
+
+            // title drop if faded, but do not fade directly
+            if (GameManager.Instance.IsFaded())
+            {
+                yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeTitle(true, ZoneManager.Instance.CurrentMap.Name.ToLocal()));
+                yield return new WaitForFrames(30);
+                yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeTitle(false, ""));
+            }
         }
     }
 
