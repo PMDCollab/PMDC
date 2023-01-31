@@ -1602,10 +1602,10 @@ namespace PMDC.Dungeon
                     if (!String.IsNullOrEmpty(changeTo))
                     {
                         context.User.EquippedItem.ID = ChangeTo;
-                        context.User.EquipItem(context.User.EquippedItem);
+                        yield return CoroutineManager.Instance.StartCoroutine(context.User.EquipItem(context.User.EquippedItem));
                     }
                     else
-                        context.User.DequipItem();
+                        yield return CoroutineManager.Instance.StartCoroutine(context.User.DequipItem());
                 }
                 else if (context.User.MemberTeam is ExplorerTeam)
                 {
@@ -2576,7 +2576,7 @@ namespace PMDC.Dungeon
                 foreach (AnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
 
-                context.User.EquipItem(item);
+                yield return CoroutineManager.Instance.StartCoroutine(context.User.EquipItem(item));
                 //}
             }
 
@@ -2635,7 +2635,7 @@ namespace PMDC.Dungeon
                 foreach (AnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
 
-                context.User.EquipItem(invItem);
+                yield return CoroutineManager.Instance.StartCoroutine(context.User.EquipItem(invItem));
             }
         }
     }
@@ -3521,7 +3521,7 @@ namespace PMDC.Dungeon
             character.Promote(newData);
             branch.OnPromote(character, true, bypass);
             if (bypass)
-                character.DequipItem();
+                yield return CoroutineManager.Instance.StartCoroutine(character.DequipItem());
 
             int oldFullness = character.Fullness;
             character.FullRestore();

@@ -11342,14 +11342,14 @@ namespace PMDC.Dungeon
                 if (String.IsNullOrEmpty(newItem))
                     newItem = DefaultItems[DataManager.Instance.Save.Rand.Next(DefaultItems.Count)];
 
-                context.Target.DequipItem();
+                yield return CoroutineManager.Instance.StartCoroutine(context.Target.DequipItem());
 
                 string oldName = item.GetDisplayName();
 
                 //restore this item
                 item.ID = newItem;
                 item.HiddenValue = "";
-                context.Target.EquipItem(item);
+                yield return CoroutineManager.Instance.StartCoroutine(context.Target.EquipItem(item));
                 DungeonScene.Instance.LogMsg(String.Format(SuccessMsg.ToLocal(), context.Target.GetDisplayName(false), oldName, item.GetDisplayName()));
             }
 
@@ -11574,7 +11574,7 @@ namespace PMDC.Dungeon
                     if (itemIndex > -1)
                         ((ExplorerTeam)context.Target.MemberTeam).RemoveFromInv(itemIndex);
                     else
-                        context.Target.DequipItem();
+                        yield return CoroutineManager.Instance.StartCoroutine(context.Target.DequipItem());
 
                     yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropMapItem(new MapItem(item), newLoc.Value, context.Target.CharLoc, true));
                 }
@@ -11621,7 +11621,7 @@ namespace PMDC.Dungeon
                 if (itemIndex > -1)
                     ((ExplorerTeam)context.Target.MemberTeam).RemoveFromInv(itemIndex);
                 else
-                    context.Target.DequipItem();
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.DequipItem());
 
                 Loc endLoc = context.Target.CharLoc + context.User.CharDir.GetLoc() * 2;
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(item, endLoc, context.Target.CharLoc));
@@ -11654,7 +11654,7 @@ namespace PMDC.Dungeon
                 if (itemIndex > -1)
                     ((ExplorerTeam)context.Target.MemberTeam).RemoveFromInv(itemIndex);
                 else
-                    context.Target.DequipItem();
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.DequipItem());
 
                 BattleContext newContext = new BattleContext(BattleActionType.Throw);
                 newContext.User = context.User;
@@ -11807,12 +11807,12 @@ namespace PMDC.Dungeon
                     }
                     else
                     {
-                        context.Target.DequipItem();
+                        yield return CoroutineManager.Instance.StartCoroutine(context.Target.DequipItem());
                         item.HiddenValue = item.ID;
                         item.ID = NewItem;
                         DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_TRANSFORM_HELD_ITEM").ToLocal(), context.Target.GetDisplayName(false),
                             oldItem.GetDisplayName(), item.GetDisplayName()));
-                        context.Target.EquipItem(item);
+                        yield return CoroutineManager.Instance.StartCoroutine(context.Target.EquipItem(item));
                     }
                     yield break;
                 }
@@ -11916,7 +11916,7 @@ namespace PMDC.Dungeon
                 }
                 else
                 {
-                    context.Target.DequipItem();
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.DequipItem());
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LOSE_HELD_ITEM").ToLocal(), context.Target.GetDisplayName(false), item.GetDisplayName()));
                 }
             }
@@ -11975,7 +11975,7 @@ namespace PMDC.Dungeon
                     if (itemIndex > -1)
                         ((ExplorerTeam)target.MemberTeam).RemoveFromInv(itemIndex);
                     else
-                        target.DequipItem();
+                        yield return CoroutineManager.Instance.StartCoroutine(target.DequipItem());
 
 
                     //item steal animation
@@ -11997,10 +11997,10 @@ namespace PMDC.Dungeon
                             if (!String.IsNullOrEmpty(origin.EquippedItem.ID))
                             {
                                 InvItem attackerItem = origin.EquippedItem;
-                                origin.DequipItem();
+                                yield return CoroutineManager.Instance.StartCoroutine(origin.DequipItem());
                                 origin.MemberTeam.AddToInv(attackerItem);
                             }
-                            origin.EquipItem(item);
+                            yield return CoroutineManager.Instance.StartCoroutine(origin.EquipItem(item));
                         }
                         else
                         {
@@ -12016,12 +12016,12 @@ namespace PMDC.Dungeon
                         if (!String.IsNullOrEmpty(origin.EquippedItem.ID))
                         {
                             InvItem attackerItem = origin.EquippedItem;
-                            origin.DequipItem();
+                            yield return CoroutineManager.Instance.StartCoroutine(origin.DequipItem());
                             //if the user is holding an item already, the item will slide off in the opposite direction they're facing
                             Loc endLoc = origin.CharLoc + origin.CharDir.Reverse().GetLoc();
                             yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(attackerItem, endLoc, origin.CharLoc));
                         }
-                        origin.EquipItem(item);
+                        yield return CoroutineManager.Instance.StartCoroutine(origin.EquipItem(item));
                     }
                 }
                 else
@@ -12083,7 +12083,7 @@ namespace PMDC.Dungeon
                     if (itemIndex > -1)
                         ((ExplorerTeam)target.MemberTeam).RemoveFromInv(itemIndex);
                     else
-                        target.DequipItem();
+                        yield return CoroutineManager.Instance.StartCoroutine(target.DequipItem());
 
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_GIVE_ITEM_AWAY").ToLocal(), target.GetDisplayName(false), item.GetDisplayName()));
 
@@ -12106,10 +12106,10 @@ namespace PMDC.Dungeon
                                 if (!String.IsNullOrEmpty(origin.EquippedItem.ID))
                                 {
                                     InvItem attackerItem = origin.EquippedItem;
-                                    origin.DequipItem();
+                                    yield return CoroutineManager.Instance.StartCoroutine(origin.DequipItem());
                                     origin.MemberTeam.AddToInv(attackerItem);
                                 }
-                                origin.EquipItem(item);
+                                yield return CoroutineManager.Instance.StartCoroutine(origin.EquipItem(item));
                             }
                             else
                             {
@@ -12125,12 +12125,12 @@ namespace PMDC.Dungeon
                             if (!String.IsNullOrEmpty(origin.EquippedItem.ID))
                             {
                                 InvItem attackerItem = origin.EquippedItem;
-                                origin.DequipItem();
+                                yield return CoroutineManager.Instance.StartCoroutine(origin.DequipItem());
                                 //if the user is holding an item already, the item will slide off in the opposite direction they're facing
                                 Loc endLoc = origin.CharLoc + origin.CharDir.Reverse().GetLoc();
                                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(attackerItem, endLoc, origin.CharLoc));
                             }
-                            origin.EquipItem(item);
+                            yield return CoroutineManager.Instance.StartCoroutine(origin.EquipItem(item));
                         }
                     }
                     else
@@ -12184,8 +12184,8 @@ namespace PMDC.Dungeon
                 }
                 else
                 {
-                    context.Target.DequipItem();
-                    context.Target.EquipItem(attackerItem);
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.DequipItem());
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.EquipItem(attackerItem));
                 }
 
                 if (attackerIndex > -1)
@@ -12195,8 +12195,8 @@ namespace PMDC.Dungeon
                 }
                 else
                 {
-                    context.User.DequipItem();
-                    context.User.EquipItem(targetItem);
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.DequipItem());
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.EquipItem(targetItem));
                 }
             }
             yield break;
@@ -12272,13 +12272,13 @@ namespace PMDC.Dungeon
                 {
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_EXCHANGE_HELD_ITEM").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
 
-                    context.Target.DequipItem();
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.DequipItem());
                     if (!String.IsNullOrEmpty(attackerItem.ID))
-                        context.Target.EquipItem(attackerItem);
+                        yield return CoroutineManager.Instance.StartCoroutine(context.Target.EquipItem(attackerItem));
 
-                    context.User.DequipItem();
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.DequipItem());
                     if (!String.IsNullOrEmpty(targetItem.ID))
-                        context.User.EquipItem(targetItem);
+                        yield return CoroutineManager.Instance.StartCoroutine(context.User.EquipItem(targetItem));
                 }
             }
             else
@@ -12396,7 +12396,7 @@ namespace PMDC.Dungeon
                     if (itemIndex > -1)
                         ((ExplorerTeam)target.MemberTeam).RemoveFromInv(itemIndex);
                     else
-                        target.DequipItem();
+                        yield return CoroutineManager.Instance.StartCoroutine(target.DequipItem());
 
                     newContext.PrintActionMsg();
 
@@ -12441,7 +12441,7 @@ namespace PMDC.Dungeon
             if (!String.IsNullOrEmpty(context.User.EquippedItem.ID) && !attackerCannotDrop)
             {
                 context.Item = context.User.EquippedItem;
-                context.User.DequipItem();
+                yield return CoroutineManager.Instance.StartCoroutine(context.User.DequipItem());
             }
             else
             {
@@ -12477,12 +12477,12 @@ namespace PMDC.Dungeon
                 {
                     //held item slides off
                     InvItem heldItem = context.Target.EquippedItem;
-                    context.Target.DequipItem();
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.DequipItem());
                     Loc endLoc = context.Target.CharLoc + context.User.CharDir.GetLoc() * 2;
                     yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(heldItem, endLoc, context.Target.CharLoc));
 
                     //give the target the item
-                    context.Target.EquipItem(new InvItem(context.Item));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.EquipItem(new InvItem(context.Item)));
                 }
                 else if (context.Target.MemberTeam is ExplorerTeam && ((ExplorerTeam)context.Target.MemberTeam).GetInvCount() >= ((ExplorerTeam)context.Target.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone))
                 {
@@ -12495,7 +12495,7 @@ namespace PMDC.Dungeon
                 else
                 {
                     //give the target the item
-                    context.Target.EquipItem(new InvItem(context.Item));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.EquipItem(new InvItem(context.Item)));
                 }
 
             }
@@ -12516,7 +12516,7 @@ namespace PMDC.Dungeon
             {
                 DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_CATCH_ITEM").ToLocal(), context.Target.GetDisplayName(false), context.Item.GetDisplayName()));
                 //give the target the item
-                context.Target.EquipItem(new InvItem(context.Item));
+                yield return CoroutineManager.Instance.StartCoroutine(context.Target.EquipItem(new InvItem(context.Item)));
             }
             yield break;
         }
@@ -14572,7 +14572,7 @@ namespace PMDC.Dungeon
                         if (!String.IsNullOrEmpty(context.Target.EquippedItem.ID) && DungeonScene.Instance.ActiveTeam.MaxInv == DungeonScene.Instance.ActiveTeam.GetInvCount())
                         {
                             InvItem item = context.Target.EquippedItem;
-                            context.Target.DequipItem();
+                            yield return CoroutineManager.Instance.StartCoroutine(context.Target.DequipItem());
                             yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(item, context.Target.CharLoc));
                         }
 
