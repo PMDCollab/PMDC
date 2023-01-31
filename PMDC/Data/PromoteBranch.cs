@@ -52,7 +52,7 @@ namespace PMDC.Data
         public override void OnGroundPromote(Character character)
         {
             if (character.EquippedItem.ID == ItemNum)
-                character.DequipItem();
+                character.SilentDequipItem();
             else
             {
                 for (int ii = 0; ii < character.MemberTeam.GetInvCount(); ii++)
@@ -69,7 +69,7 @@ namespace PMDC.Data
         public override void OnPromote(Character character)
         {
             if (character.EquippedItem.ID == ItemNum && !character.EquippedItem.Cursed)
-                character.DequipItem();
+                character.SilentDequipItem();
             
         }
     }

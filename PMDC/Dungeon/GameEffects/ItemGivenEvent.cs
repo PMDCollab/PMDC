@@ -14,7 +14,7 @@ namespace PMDC.Dungeon
     {
         public override GameEvent Clone() { return new AutoCurseItemEvent(); }
 
-        public override void Apply(GameEventOwner owner, Character ownerChar, ItemCheckContext context)
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, ItemCheckContext context)
         {
             if (!context.User.EquippedItem.Cursed)
             {
@@ -26,6 +26,7 @@ namespace PMDC.Dungeon
                 context.User.EquippedItem.Cursed = true;
             }
             context.User.RefreshTraits();
+            yield break;
         }
     }
 
@@ -34,13 +35,14 @@ namespace PMDC.Dungeon
     {
         public override GameEvent Clone() { return new CurseWarningEvent(); }
 
-        public override void Apply(GameEventOwner owner, Character ownerChar, ItemCheckContext context)
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, ItemCheckContext context)
         {
             if (context.User.EquippedItem.Cursed && !context.User.CanRemoveStuck)
             {
                 GameManager.Instance.SE(GraphicsManager.CursedSE);
                 DungeonScene.Instance.LogMsg(Text.FormatKey("MSG_EQUIP_CURSED", context.User.EquippedItem.GetDisplayName(), context.User.GetDisplayName(false)));
             }
+            yield break;
         }
     }
 
@@ -49,7 +51,7 @@ namespace PMDC.Dungeon
     {
         public override GameEvent Clone() { return new CheckEquipPassValidityEvent(); }
 
-        public override void Apply(GameEventOwner owner, Character ownerChar, ItemCheckContext context)
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, ItemCheckContext context)
         {
             if (!String.IsNullOrEmpty(context.User.EquippedItem.ID))
             {
@@ -58,6 +60,7 @@ namespace PMDC.Dungeon
                 if (CanItemEffectBePassed(entry))
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_EQUIP_SHARE").ToLocal(), context.User.EquippedItem.GetDisplayName(), context.User.GetDisplayName(false)));
             }
+            yield break;
         }
 
         public static bool CanItemEffectBePassed(ItemData entry)
