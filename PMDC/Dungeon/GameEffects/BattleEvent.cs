@@ -1885,6 +1885,70 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class MultiplyNotElementEvent : BattleEvent
+    {
+        [DataType(1, DataManager.DataType.Element, false)]
+        public HashSet<string> NotMultElement;
+        public int Numerator;
+        public int Denominator;
+        public List<BattleAnimEvent> Anims;
+        public bool Msg;
+
+        public MultiplyNotElementEvent()
+        {
+            NotMultElement = new HashSet<string>();
+            Anims = new List<BattleAnimEvent>();
+        }
+        public MultiplyNotElementEvent(string element, int numerator, int denominator, bool msg)
+        {
+            NotMultElement = new HashSet<string>();
+            NotMultElement.Add(element);
+            Numerator = numerator;
+            Denominator = denominator;
+            Msg = msg;
+            Anims = new List<BattleAnimEvent>();
+        }
+        public MultiplyNotElementEvent(string element, int numerator, int denominator, bool msg, params BattleAnimEvent[] anims)
+        {
+            NotMultElement = new HashSet<string>();
+            NotMultElement.Add(element);
+            Numerator = numerator;
+            Denominator = denominator;
+            Msg = msg;
+            Anims = new List<BattleAnimEvent>();
+            Anims.AddRange(anims);
+        }
+        protected MultiplyNotElementEvent(MultiplyNotElementEvent other)
+        {
+            NotMultElement = new HashSet<string>();
+            foreach(string element in other.NotMultElement)
+                NotMultElement.Add(element);
+            Numerator = other.Numerator;
+            Denominator = other.Denominator;
+            Msg = other.Msg;
+            Anims = new List<BattleAnimEvent>();
+            foreach (BattleAnimEvent anim in other.Anims)
+                Anims.Add((BattleAnimEvent)anim.Clone());
+        }
+        public override GameEvent Clone() { return new MultiplyNotElementEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (!NotMultElement.Contains(context.Data.Element) && context.Data.Element != DataManager.Instance.DefaultElement &&
+                (context.Data.Category == BattleData.SkillCategory.Physical || context.Data.Category == BattleData.SkillCategory.Magical))
+            {
+                if (Msg)
+                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PROTECT_WITH").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
+                foreach (BattleAnimEvent anim in Anims)
+                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
+
+                context.AddContextStateMult<DmgMult>(false, Numerator, Denominator);
+            }
+            yield break;
+        }
+    }
+
+    [Serializable]
     public class MultiplyStatusElementEvent : BattleEvent
     {
         public int Numerator;
