@@ -61,28 +61,28 @@ namespace PMDC.LevelGen
         /// </summary>
         public string SaveVar;
 
-        public bool Negate;
+        public bool Status;
 
         public MobCheckSaveVar()
         {
         }
 
-        public MobCheckSaveVar(string saveVar, bool negate)
+        public MobCheckSaveVar(string saveVar, bool status)
         {
             SaveVar = saveVar;
-            Negate = negate;
+            Status = status;
         }
         public MobCheckSaveVar(MobCheckSaveVar other) : this()
         {
             SaveVar = other.SaveVar;
-            Negate = other.Negate;
+            Status = other.Status;
         }
         public override MobSpawnCheck Copy() { return new MobCheckSaveVar(this); }
 
         public override bool CanSpawn()
         {
             object obj = LuaEngine.Instance.LuaState[LuaEngine.SCRIPT_VARS_NAME + "." + SaveVar];
-            return object.Equals(true, obj) != Negate;
+            return object.Equals(true, obj) == Status;
         }
 
     }
