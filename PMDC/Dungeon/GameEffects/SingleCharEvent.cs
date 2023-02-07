@@ -3284,7 +3284,7 @@ namespace PMDC.Dungeon
                 yield break;
 
             LuaTable args = LuaEngine.Instance.RunString("return " + state.ArgTable).First() as LuaTable;
-            object[] parameters = new object[] { owner, ownerChar, context.User, args };
+            object[] parameters = new object[] { owner, ownerChar, context, args };
             string name = "SINGLE_CHAR_SCRIPT." + state.Script;
             LuaFunction func_iter = LuaEngine.Instance.CreateCoroutineIterator(name, parameters);
 
