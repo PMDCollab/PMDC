@@ -13870,8 +13870,16 @@ namespace PMDC.Dungeon
     [Serializable]
     public class TriggerTrapEvent : BattleEvent
     {
+        [DataType(0, DataManager.DataType.Tile, false)]
+        public string ExceptID;
+
         public TriggerTrapEvent() { }
-        public override GameEvent Clone() { return new TriggerTrapEvent(); }
+        public TriggerTrapEvent(string exceptID) { ExceptID = exceptID; }
+        public TriggerTrapEvent(TriggerTrapEvent other)
+        {
+            ExceptID = other.ExceptID;
+        }
+        public override GameEvent Clone() { return new TriggerTrapEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
@@ -13879,7 +13887,7 @@ namespace PMDC.Dungeon
             if (tile == null)
                 yield break;
 
-            if (!String.IsNullOrEmpty(tile.Effect.ID))
+            if (!String.IsNullOrEmpty(tile.Effect.ID) && tile.Effect.ID != ExceptID)
             {
                 TileData entry = DataManager.Instance.GetTile(tile.Effect.GetID());
                 if (entry.StepType == TileData.TriggerType.Trap)

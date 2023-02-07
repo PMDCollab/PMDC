@@ -433,6 +433,7 @@ namespace PMDC.LevelGen
             if (newChar.MemberTeam is MonsterTeam)
                 newChar.Unrecruitable = true;
             newChar.BaseForm.Skin = DataManager.Instance.DefaultSkin;
+            newChar.CurrentForm = newChar.BaseForm;
         }
 
         public override string ToString()
