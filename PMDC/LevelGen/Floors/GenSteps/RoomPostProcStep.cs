@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using RogueElements;
 using RogueEssence.Data;
 using RogueEssence.Dungeon;
+using RogueEssence.LevelGen;
 
 namespace PMDC.LevelGen
 {
@@ -11,7 +12,7 @@ namespace PMDC.LevelGen
     /// </summary>
     /// <typeparam name="T"></typeparam>
     [Serializable]
-    public class RoomTerrainStep<T> : GenStep<T> where T : class, IFloorPlanGenContext
+    public class RoomPostProcStep<T> : GenStep<T> where T : ListMapGenContext
     {
         public RandRange Amount;
 
@@ -20,7 +21,7 @@ namespace PMDC.LevelGen
         /// <summary>
         /// Tile representing the water terrain to paint with.
         /// </summary>
-        public ITile Terrain { get; set; }
+        public PostProcType PostProc { get; set; }
 
         /// <summary>
         /// Determines which tiles are eligible to be painted on.
@@ -37,15 +38,15 @@ namespace PMDC.LevelGen
         /// </summary>
         public bool IncludeRooms { get; set; }
 
-        public RoomTerrainStep()
+        public RoomPostProcStep()
         {
             this.Filters = new List<BaseRoomFilter>();
             this.TerrainStencil = new DefaultTerrainStencil<T>();
         }
 
-        public RoomTerrainStep(ITile terrain, RandRange amount, bool includeRooms, bool includeHalls) : this()
+        public RoomPostProcStep(PostProcType postProc, RandRange amount, bool includeRooms, bool includeHalls) : this()
         {
-            Terrain = terrain;
+            PostProc = postProc;
             Amount = amount;
             IncludeRooms = includeRooms;
             IncludeHalls = includeHalls;
@@ -95,7 +96,10 @@ namespace PMDC.LevelGen
                         {
                             Loc destLoc = new Loc(xx, yy);
                             if (this.TerrainStencil.Test(map, destLoc))
-                                map.TrySetTile(destLoc, this.Terrain.Copy());
+                            {
+                                PostProcTile tile = map.GetPostProc(destLoc);
+                                tile.Status |= PostProc;
+                            }
                         }
                     }
 

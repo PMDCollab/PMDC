@@ -29,7 +29,7 @@ namespace PMDC.LevelGen
             TSpawnable spawn = map.Spawner.Pick(map.Rand);
             foreach (Loc destLoc in drawLocs)
             {
-                if (this.TerrainStencil.Test(map, destLoc))
+                if (this.TerrainStencil.Test(map, destLoc) && map.CanPlaceItem(destLoc))
                     map.PlaceItem(destLoc, spawn);
             }
         }

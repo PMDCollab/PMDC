@@ -207,6 +207,8 @@ namespace PMDC.LevelGen
                     //then send it to the draw call
                     DrawOnLocs(map, drawLocs);
 
+                    GenContextDebug.DebugProgress("Draw Pattern");
+
                     openRooms.RemoveAt(randIndex);
                 }
             }
