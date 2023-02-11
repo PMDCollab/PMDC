@@ -42,13 +42,13 @@ namespace MapGenTest
             LuaEngine.InitInstance();
             DataManager.InitInstance();
             DataManager.Instance.InitData();
-#if DEBUG
+
             GenContextDebug.OnInit += ExampleDebug.Init;
             GenContextDebug.OnStep += ExampleDebug.OnStep;
             GenContextDebug.OnStepIn += ExampleDebug.StepIn;
             GenContextDebug.OnStepOut += ExampleDebug.StepOut;
             GenContextDebug.OnError += ExampleDebug.OnError;
-#endif
+
             Example.Run();
 
             Console.Clear();

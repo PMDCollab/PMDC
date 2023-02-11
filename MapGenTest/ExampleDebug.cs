@@ -96,16 +96,16 @@ namespace MapGenTest
             //SteppingIn = false;
             bool printDebug = false;
             bool printViewer = false;
-            if (Printing > -1)
+            if (Printing == -1)
+                return;
+
+            if (currentDepth < Printing)
             {
-                if (currentDepth < Printing)
-                {
-                    printDebug = true;
-                    printViewer = true;
-                }
-                if (currentDepth == 0)
-                    printDebug = true;
+                printDebug = true;
+                printViewer = true;
             }
+            if (currentDepth == 0)
+                printDebug = true;
 
 
             ConsoleKey key = ConsoleKey.Enter;
