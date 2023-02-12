@@ -84,41 +84,13 @@ namespace PMDC.LevelGen
                 room = map.RoomPlan.GetRoom(possibleRooms[chosenRoom]);
 
                 //get all places that the chest is eligible
-                freeTiles = Grid.FindTilesInBox(room.Draw.Start, room.Draw.Size, (Loc testLoc) =>
+                List<Loc> preTiles = ((IPlaceableGenContext<EffectTile>)map).GetFreeTiles(room.Draw);
+                foreach (Loc preLoc in preTiles)
                 {
-                    Loc frontLoc = testLoc + Dir8.Down.GetLoc();
-                    if (!map.TileBlocked(testLoc) && !map.HasTileEffect(testLoc) &&
-                        !map.TileBlocked(frontLoc) && !map.HasTileEffect(frontLoc) &&
-                        (map.GetPostProc(testLoc).Status & (PostProcType.Panel | PostProcType.Item)) == PostProcType.None)
-                    {
-                        if (Grid.GetForkDirs(testLoc, checkBlock, checkBlock).Count < 2)
-                        {
-                            foreach (MapItem item in map.Items)
-                            {
-                                if (item.TileLoc == testLoc)
-                                    return false;
-                            }
-                            foreach (Team team in map.AllyTeams)
-                            {
-                                foreach (Character testChar in team.EnumerateChars())
-                                {
-                                    if (testChar.CharLoc == testLoc)
-                                        return false;
-                                }
-                            }
-                            foreach (Team team in map.MapTeams)
-                            {
-                                foreach (Character testChar in team.EnumerateChars())
-                                {
-                                    if (testChar.CharLoc == testLoc)
-                                        return false;
-                                }
-                            }
-                            return true;
-                        }
-                    }
-                    return false;
-                });
+                    Loc frontLoc = preLoc + Dir8.Down.GetLoc();
+                    if (((IPlaceableGenContext<EffectTile>)map).CanPlaceItem(frontLoc))
+                        freeTiles.Add(preLoc);
+                }
                 if (freeTiles.Count > 0)
                     break;
                 possibleRooms.RemoveAt(chosenRoom);
