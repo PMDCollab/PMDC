@@ -106,7 +106,7 @@ namespace PMDC.LevelGen
                 //now, attempt to add the treasure room and remove the previous rooms if failed
 
 
-                FloorPathBranch<T>.ListPathBranchExpansion? expansionResult = FloorPathBranch<T>.ChooseRoomExpansion(this.PrepareTreasureRoom, 100, rand, floorPlan, new List<RoomHallIndex>() { bossFrom });
+                FloorPathBranch<T>.ListPathBranchExpansion? expansionResult = FloorPathBranch<T>.ChooseRandRoomExpansion(this.PrepareTreasureRoom, true, rand, floorPlan, new List<RoomHallIndex>() { bossFrom });
 
                 if (!expansionResult.HasValue)
                 {
@@ -149,7 +149,7 @@ namespace PMDC.LevelGen
                 availableExpansions.Add(new RoomHallIndex(ii, true));
             }
 
-            return FloorPathBranch<T>.ChooseRoomExpansion(this.PrepareBossRoom, 100, rand, floorPlan, availableExpansions);
+            return FloorPathBranch<T>.ChooseRandRoomExpansion(this.PrepareBossRoom, true, rand, floorPlan, availableExpansions);
         }
 
         //TODO: refactor the below reduncancies
