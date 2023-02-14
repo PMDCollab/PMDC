@@ -8,7 +8,7 @@ using RogueEssence.LevelGen;
 namespace PMDC.LevelGen
 {
     /// <summary>
-    /// Spawns objects in randomly chosen rooms.  Once a room is chosen, it
+    /// Spawns objects in randomly chosen rooms.  Once a room is chosen, it and adjacent rooms cannot be chosen.
     /// Large rooms have the same probability as small rooms.
     /// </summary>
     /// <typeparam name="TGenContext"></typeparam>

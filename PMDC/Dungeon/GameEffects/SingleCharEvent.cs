@@ -1307,13 +1307,15 @@ namespace PMDC.Dungeon
         public int Numerator;
         public int Denominator;
         public int LevelBuffer;
+        public int PowerCurve;
         public HandoutRelativeExpEvent() { }
-        public HandoutRelativeExpEvent(int numerator, int denominator, int levelBuffer) { Numerator = numerator; Denominator = denominator; LevelBuffer = levelBuffer; }
+        public HandoutRelativeExpEvent(int numerator, int denominator, int levelBuffer, int powerCurve) { Numerator = numerator; Denominator = denominator; LevelBuffer = levelBuffer; PowerCurve = powerCurve; }
         protected HandoutRelativeExpEvent(HandoutRelativeExpEvent other)
         {
             this.Numerator = other.Numerator;
             this.Denominator = other.Denominator;
             this.LevelBuffer = other.LevelBuffer;
+            this.PowerCurve = other.PowerCurve;
         }
         public override GameEvent Clone() { return new HandoutRelativeExpEvent(this); }
 
@@ -1334,7 +1336,13 @@ namespace PMDC.Dungeon
         {
             int multNum = 2 * level + LevelBuffer;
             int multDen = recipientLv + level + LevelBuffer;
-            return (int)((ulong)expYield * (ulong)Numerator * (ulong)level * (ulong)multNum * (ulong)multNum * (ulong)multNum / (ulong)multDen / (ulong)multDen / (ulong)multDen / (ulong)Denominator) + 1;
+            ulong exp = (ulong)expYield * (ulong)Numerator * (ulong)level;
+            for (int ii = 0; ii < PowerCurve; ii++)
+                exp *= (ulong)multNum;
+            for (int ii = 0; ii < PowerCurve; ii++)
+                exp /= (ulong)multDen;
+            exp /= (ulong)Denominator;
+            return (int)exp + 1;
         }
     }
 

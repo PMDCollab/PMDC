@@ -12052,7 +12052,7 @@ namespace PMDC.Dungeon
                 ProjectileAction action = new ProjectileAction();
                 action.HitOffset = context.Target.CharLoc - context.User.CharLoc;
                 //no intro action
-                action.CharAnimData = new CharAnimFrameType(0);
+                action.CharAnimData = new CharAnimProcess();
                 action.TargetAlignments = Alignment.Friend | Alignment.Foe;
                 action.Anim = new AnimData(entry.ThrowAnim);
                 action.ItemSprite = DataManager.Instance.GetItem(item.ID).Sprite;
