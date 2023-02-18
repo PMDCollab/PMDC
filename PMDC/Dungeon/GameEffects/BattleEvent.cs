@@ -8,6 +8,7 @@ using RogueEssence.LevelGen;
 using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Dev;
+using PMDC.Dev;
 using PMDC.Data;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
@@ -11766,6 +11767,56 @@ namespace PMDC.Dungeon
         }
     }
 
+
+
+    [Serializable]
+    public class FakeItemBattleEvent : BattleEvent
+    {
+        [JsonConverter(typeof(ItemFakeTableConverter))]
+        public Dictionary<ItemFake, MobSpawn> SpawnTable;
+
+        public FakeItemBattleEvent()
+        {
+            SpawnTable = new Dictionary<ItemFake, MobSpawn>();
+        }
+
+        public FakeItemBattleEvent(Dictionary<ItemFake, MobSpawn> spawnTable)
+        {
+            this.SpawnTable = spawnTable;
+        }
+
+        public FakeItemBattleEvent(FakeItemBattleEvent other)
+        {
+            this.SpawnTable = new Dictionary<ItemFake, MobSpawn>();
+            foreach (ItemFake fake in other.SpawnTable.Keys)
+                this.SpawnTable.Add(fake, other.SpawnTable[fake].Copy());
+        }
+
+        public override GameEvent Clone() { return new FakeItemBattleEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            ItemFake fake = new ItemFake(context.Item.ID, context.Item.HiddenValue);
+            MobSpawn spawn;
+            if (SpawnTable.TryGetValue(fake, out spawn))
+            {
+                if (context.UsageSlot == BattleContext.FLOOR_ITEM_SLOT)
+                {
+                    int mapSlot = ZoneManager.Instance.CurrentMap.GetItem(context.User.CharLoc);
+                    ZoneManager.Instance.CurrentMap.Items.RemoveAt(mapSlot);
+                }
+                else if (context.UsageSlot == BattleContext.EQUIP_ITEM_SLOT)
+                    context.User.SilentDequipItem();
+                else
+                    context.User.MemberTeam.RemoveFromInv(context.UsageSlot);
+
+                yield return CoroutineManager.Instance.StartCoroutine(FakeItemEvent.SpawnFake(context.User, context.Item, spawn));
+
+                //cancel the operation
+                context.CancelState.Cancel = true;
+            }
+        }
+    }
 
     [Serializable]
     public abstract class ItemMetaEvent : BattleEvent
