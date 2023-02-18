@@ -41,7 +41,7 @@ namespace PMDC.LevelGen
                 for (int yy = 0; yy < map.Height; yy++)
                 {
                     Loc destLoc = new Loc(xx, yy);
-                    if (this.TerrainStencil.Test(map, destLoc) && ((IPlaceableGenContext<EffectTile>)map).CanPlaceItem(destLoc))
+                    if (this.TerrainStencil.Test(map, destLoc))
                         ((IPlaceableGenContext<EffectTile>)map).PlaceItem(destLoc, new EffectTile(Tile));
                 }
             }

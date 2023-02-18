@@ -3857,6 +3857,9 @@ namespace PMDC.Dungeon
             if (destState == null)
                 yield break;
 
+            if (context.User.MemberTeam != DungeonScene.Instance.ActiveTeam)
+                yield break;
+
             string currentSong = GameManager.Instance.Song;
             GameManager.Instance.BGM("", true);
 

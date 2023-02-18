@@ -294,7 +294,7 @@ namespace PMDC.Data
 
         public override bool GetReq(Character character)
         {
-            return Hungry ? (character.Fullness == 0) : (character.Fullness == 110);
+            return Hungry ? (character.Fullness == 0) : (character.Fullness >= 110);
         }
     }
     [Serializable]
