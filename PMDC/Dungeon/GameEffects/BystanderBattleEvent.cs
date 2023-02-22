@@ -221,33 +221,33 @@ namespace PMDC.Dungeon
                     ItemData entry = DataManager.Instance.GetItem(context.Item.ID);
 
                     //can't catch recruit item under any circumstances
-                    if (!entry.ItemStates.Contains<RecruitState>())
+                    if (entry.ItemStates.Contains<RecruitState>())
+                        yield break;
+
+
+                    if (targetChar.MemberTeam is MonsterTeam)
                     {
-
-                        if (targetChar.MemberTeam is MonsterTeam)
-                        {
-                            //can't catch if it's a wild team, and it's an edible or ammo
-                            if (entry.ItemStates.Contains<EdibleState>() || entry.ItemStates.Contains<AmmoState>())
-                                yield break;
-                        }
-
-                        // throwing edibles at an ally always results in no-catch (eaten)
-                        if (DungeonScene.Instance.GetMatchup(context.User, targetChar) == Alignment.Friend && entry.ItemStates.Contains<EdibleState>())
+                        //can't catch if it's a wild team, and it's an edible or ammo
+                        if (entry.ItemStates.Contains<EdibleState>() || entry.ItemStates.Contains<AmmoState>())
                             yield break;
-
-                        context.Explosion.Range = 0;
-                        context.Explosion.ExplodeFX = new BattleFX();
-                        context.Explosion.Emitter = new EmptyCircleSquareEmitter();
-                        context.Explosion.TileEmitter = new EmptyFiniteEmitter();
-
-
-
-                        BattleData catchData = new BattleData();
-                        catchData.Element = DataManager.Instance.DefaultElement;
-                        catchData.OnHits.Add(0, new CatchItemEvent());
-                        catchData.HitFX.Sound = "DUN_Equip";
-                        context.Data.BeforeHits.Add(-5, new CatchableEvent(catchData));
                     }
+
+                    // throwing edibles at an ally always results in no-catch (eaten)
+                    if (DungeonScene.Instance.GetMatchup(context.User, targetChar) == Alignment.Friend && entry.ItemStates.Contains<EdibleState>())
+                        yield break;
+
+                    context.Explosion.Range = 0;
+                    context.Explosion.ExplodeFX = new BattleFX();
+                    context.Explosion.Emitter = new EmptyCircleSquareEmitter();
+                    context.Explosion.TileEmitter = new EmptyFiniteEmitter();
+
+
+
+                    BattleData catchData = new BattleData();
+                    catchData.Element = DataManager.Instance.DefaultElement;
+                    catchData.OnHits.Add(0, new CatchItemEvent());
+                    catchData.HitFX.Sound = "DUN_Equip";
+                    context.Data.BeforeHits.Add(-5, new CatchableEvent(catchData));
                 }
             }
         }
