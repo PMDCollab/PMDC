@@ -2646,7 +2646,7 @@ namespace PMDC.Dungeon
                 //if (!entry.Cursed)
                 //{
                 //item.Cursed = false;
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PICKUP").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PICKUP").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName()), false, false, context.User, null);
 
                 foreach (AnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
@@ -2705,7 +2705,7 @@ namespace PMDC.Dungeon
             if (ZoneManager.Instance.CurrentMap.MapTurns == 0 && DataManager.Instance.Save.Rand.Next(100) < Chance)
             {
                 InvItem invItem = new InvItem(GatherItem);
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PICKUP").ToLocal(), context.User.GetDisplayName(false), invItem.GetDisplayName()));
+                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PICKUP").ToLocal(), context.User.GetDisplayName(false), invItem.GetDisplayName()), false, false, context.User, null);
 
                 foreach (AnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
@@ -2824,13 +2824,20 @@ namespace PMDC.Dungeon
             if (ZoneManager.Instance.CurrentMap.TeamSpawns.CanPick)
             {
                 TeamSpawner spawner = ZoneManager.Instance.CurrentMap.TeamSpawns.Pick(DataManager.Instance.Save.Rand);
-                List<MobSpawn> candidateSpecies = spawner.ChooseSpawns(DataManager.Instance.Save.Rand);
+                SpawnList<MobSpawn> candidateSpawns = spawner.GetPossibleSpawns();
+                List<MonsterID> candidateSpecies = new List<MonsterID>();
+                foreach (var spawn in candidateSpawns)
+                {
+                    MonsterID id = spawn.Spawn.BaseForm;
+                    if (id.Species != context.User.BaseForm.Species)
+                        candidateSpecies.Add(id);
+                }
 
                 if (candidateSpecies.Count > 0)
                 {
                     StatusEffect status = new StatusEffect(IllusionID);
                     status.LoadFromData();
-                    MonsterID id = candidateSpecies[DataManager.Instance.Save.Rand.Next(candidateSpecies.Count)].BaseForm;
+                    MonsterID id = candidateSpecies[DataManager.Instance.Save.Rand.Next(candidateSpecies.Count)];
                     id.Form = Math.Max(0, id.Form);
                     id.Skin = String.IsNullOrEmpty(id.Skin) ? DataManager.Instance.DefaultSkin : id.Skin;
                     id.Gender = (Gender)Math.Max(0, (int)id.Gender);
@@ -4755,6 +4762,12 @@ namespace PMDC.Dungeon
                             DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SWITCH_NEEDED_MULTI").ToLocal(), switchesLeft));
                         else
                             DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SWITCH_NEEDED_ONE").ToLocal(), switchesLeft));
+
+                        //emote
+                        EmoteData emoteData = DataManager.Instance.GetEmote("question");
+                        context.User.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 1));
+                        GameManager.Instance.BattleSE("EVT_Emote_Confused");
+
                         context.CancelState.Cancel = true;
                         yield break;
                     }
@@ -4788,6 +4801,12 @@ namespace PMDC.Dungeon
                     if (!allowOpen)
                     {
                         DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SWITCH_NEEDED_SYNC").ToLocal(), tilesState.Tiles.Count));
+
+                        //emote
+                        EmoteData emoteData = DataManager.Instance.GetEmote("question");
+                        context.User.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 1));
+                        GameManager.Instance.BattleSE("EVT_Emote_Confused");
+
                         context.CancelState.Cancel = true;
                         yield break;
                     }

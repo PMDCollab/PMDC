@@ -41,6 +41,11 @@ namespace PMDC.LevelGen
         public int Amount;
 
         /// <summary>
+        /// Determines if the switch tile is revealed.
+        /// </summary>
+        public bool Revealed;
+
+        /// <summary>
         /// Determines if a time limit is triggered when pressing the switch.
         /// </summary>
         public bool TimeLimit;
@@ -55,11 +60,12 @@ namespace PMDC.LevelGen
             SwitchFilters = new List<BaseRoomFilter>();
         }
 
-        public SwitchSealStep(string sealedTile, string switchTile, int amount, bool timeLimit) : base()
+        public SwitchSealStep(string sealedTile, string switchTile, int amount, bool revealed, bool timeLimit) : base()
         {
             SealedTile = sealedTile;
             SwitchTile = switchTile;
             Amount = amount;
+            Revealed = revealed;
             TimeLimit = timeLimit;
             SwitchFilters = new List<BaseRoomFilter>();
         }
@@ -141,7 +147,7 @@ namespace PMDC.LevelGen
 
             foreach (Loc chosenLoc in chosenLocs)
             {
-                EffectTile switchTile = new EffectTile(SwitchTile, true);
+                EffectTile switchTile = new EffectTile(SwitchTile, Revealed);
 
                 switchTile.TileStates.Set(new DangerState(TimeLimit));
 
