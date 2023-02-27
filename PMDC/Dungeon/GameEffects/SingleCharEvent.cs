@@ -4335,8 +4335,10 @@ namespace PMDC.Dungeon
                 }
             }
 
+            DangerState danger;
+            if (!effectTile.TileStates.TryGet<DangerState>(out danger))
+                yield break;
 
-            DangerState danger = effectTile.TileStates.Get<DangerState>();
             if (danger.Danger)
             {
 
