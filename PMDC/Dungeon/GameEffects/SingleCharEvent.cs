@@ -14,6 +14,7 @@ using NLua;
 using RogueEssence.Script;
 using System.Linq;
 using Newtonsoft.Json;
+using System.Runtime.Serialization;
 
 namespace PMDC.Dungeon
 {
@@ -1343,6 +1344,15 @@ namespace PMDC.Dungeon
                 exp /= (ulong)multDen;
             exp /= (ulong)Denominator;
             return (int)exp + 1;
+        }
+
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            if (Serializer.OldVersion < new Version(0, 7, 0))
+            {
+                PowerCurve = 3;
+            }
         }
     }
 
