@@ -98,6 +98,7 @@ namespace PMDC.LevelGen
             {
                 map.SetTile(keyLoc, map.UnbreakableTerrain.Copy());
                 EffectTile newEffect = new EffectTile(KeyTile, true, keyLoc);
+                newEffect.TileStates.Set(new DangerState(false));
                 TileListState state = new TileListState();
                 state.Tiles = lockList;
                 newEffect.TileStates.Set(state);
