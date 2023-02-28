@@ -7805,7 +7805,7 @@ namespace PMDC.Dungeon
     {
         protected IEnumerator<YieldInstruction> InflictDamage(BattleContext context, int dmg)
         {
-            bool fastSpeed = (DiagManager.Instance.CurSettings.BattleFlow >= Settings.BattleSpeed.Fast);
+            bool fastSpeed = (DiagManager.Instance.CurSettings.BattleFlow > Settings.BattleSpeed.Fast);
             bool hasEffect = (context.Data.HitFX.Delay == 0 && context.Data.HitFX.Sound != "");//determines if a sound plays at the same frame the move hits
 
             if (hasEffect && fastSpeed)
