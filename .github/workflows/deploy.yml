@@ -46,7 +46,7 @@ jobs:
       - name: Zip Mac
         run: cd publish/osx-x64/;zip -r osx-x64.zip PMDO/ WaypointServer.app/
       - name: Set Version
-        run: echo "::set-output name=version::$(sed -En 's,<\AssemblyVersion>(.+)</AssemblyVersion>,\1,p' PMDC/PMDC.csproj)"
+        run: echo "version=$(sed -En 's,<\AssemblyVersion>(.+)</AssemblyVersion>,\1,p' PMDC/PMDC.csproj)" >> $GITHUB_OUTPUT
         id: version
       - name: Create Release
         uses: actions/create-release@v1
