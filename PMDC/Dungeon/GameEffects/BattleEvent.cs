@@ -5869,19 +5869,24 @@ namespace PMDC.Dungeon
                 yield break;
 
             string highestSpecial = SpAtkStat;
-            int highestSpecialValue = target.MAtk;
+            int highestSpecialValue = modStat(target.MAtk, SpAtkStat, target);
             string highestPhysical = AtkStat;
-            int highestPhysicalValue = target.Atk;
-            if (target.Def > target.Atk)
+            int highestPhysicalValue = modStat(target.Atk, AtkStat, target);
+
+            int defValue = modStat(target.Def, DefStat, target);
+            if (defValue > target.Atk)
             {
                 highestPhysical = DefStat;
-                highestPhysicalValue = target.Def;
+                highestPhysicalValue = defValue;
             }
-            if (target.MDef > target.MAtk)
+
+            int mDefValue = modStat(target.MDef, SpDefStat, target);
+            if (mDefValue > target.MAtk)
             {
                 highestSpecial = SpDefStat;
-                highestSpecialValue = target.MDef;
+                highestSpecialValue = mDefValue;
             }
+
             string highestStat = highestPhysical;
             if (highestSpecialValue > highestPhysicalValue)
                 highestStat = highestSpecial;
@@ -5891,6 +5896,17 @@ namespace PMDC.Dungeon
             setStatus.StatusStates.Set(new StackState(Stack));
 
             yield return CoroutineManager.Instance.StartCoroutine(target.AddStatusEffect(Anonymous ? null : context.User, setStatus, Anonymous ? null : context.ContextStates));
+        }
+
+        private int modStat(int value, string status, Character target)
+        {
+            //StatusEffect statChange = target.GetStatusEffect(status);
+            //if (statChange != null)
+            //{
+            //    int stack = statChange.StatusStates.GetWithDefault<StackState>().Stack;
+            //    //TODO: modify the stat based on stacking
+            //}
+            return value;
         }
     }
 

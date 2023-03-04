@@ -47,6 +47,16 @@ namespace PMDC.Dungeon
         }
     }
 
+    [Serializable]
+    public class WaitAnimsOverEvent : SingleCharEvent
+    {
+        public override GameEvent Clone() { return new WaitAnimsOverEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            yield return new WaitUntil(DungeonScene.Instance.AnimationsOver);
+        }
+    }
 
     [Serializable]
     public class RespawnFromRandomEvent : RespawnBaseEvent
