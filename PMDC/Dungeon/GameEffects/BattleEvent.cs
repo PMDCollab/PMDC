@@ -14751,8 +14751,19 @@ namespace PMDC.Dungeon
                 {
                     DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_LEADER_ONLY_ITEM").ToLocal()));
                     context.CancelState.Cancel = true;
+                    yield break;
                 }
-                else if (((ExplorerTeam)context.User.MemberTeam).Assembly.Count == 0)
+                bool hasBench = false;
+                ExplorerTeam team = ((ExplorerTeam)context.User.MemberTeam);
+                foreach (Character chara in team.Assembly)
+                {
+                    if (!chara.Absentee)
+                    {
+                        hasBench = true;
+                        break;
+                    }
+                }
+                if (!hasBench)
                 {
                     yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(String.Format(new StringKey("MSG_ASSEMBLY_EMPTY").ToLocal())));
                     context.CancelState.Cancel = true;

@@ -1216,8 +1216,11 @@ namespace PMDC.Dungeon
                         }
                         for (int ii = 0; ii < DungeonScene.Instance.ActiveTeam.Assembly.Count; ii++)
                         {
-                            int exp = GetExp(owner, context.User, DungeonScene.Instance.ActiveTeam.Assembly[ii], 0);
-                            handoutAssemblyExp(DungeonScene.Instance.ActiveTeam.Assembly[ii], exp);
+                            if (!DungeonScene.Instance.ActiveTeam.Assembly[ii].Absentee)
+                            {
+                                int exp = GetExp(owner, context.User, DungeonScene.Instance.ActiveTeam.Assembly[ii], 0);
+                                handoutAssemblyExp(DungeonScene.Instance.ActiveTeam.Assembly[ii], exp);
+                            }
                         }
                     }
                 }
