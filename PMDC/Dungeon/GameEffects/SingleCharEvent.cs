@@ -1321,14 +1321,16 @@ namespace PMDC.Dungeon
         public int Numerator;
         public int Denominator;
         public int LevelBuffer;
+        public int ScaleMin;
         public int PowerCurve;
         public HandoutRelativeExpEvent() { }
-        public HandoutRelativeExpEvent(int numerator, int denominator, int levelBuffer, int powerCurve) { Numerator = numerator; Denominator = denominator; LevelBuffer = levelBuffer; PowerCurve = powerCurve; }
+        public HandoutRelativeExpEvent(int numerator, int denominator, int levelBuffer, int scaleMin, int powerCurve) { Numerator = numerator; Denominator = denominator; LevelBuffer = levelBuffer; ScaleMin = scaleMin; PowerCurve = powerCurve; }
         protected HandoutRelativeExpEvent(HandoutRelativeExpEvent other)
         {
             this.Numerator = other.Numerator;
             this.Denominator = other.Denominator;
             this.LevelBuffer = other.LevelBuffer;
+            this.ScaleMin = other.ScaleMin;
             this.PowerCurve = other.PowerCurve;
         }
         public override GameEvent Clone() { return new HandoutRelativeExpEvent(this); }
@@ -1348,8 +1350,10 @@ namespace PMDC.Dungeon
 
         private int expFormula(int expYield, int level, int recipientLv)
         {
-            int multNum = 2 * level + LevelBuffer;
-            int multDen = recipientLv + level + LevelBuffer;
+            recipientLv = Math.Max(ScaleMin, recipientLv);
+            int scaleLevel = Math.Max(ScaleMin, level);
+            int multNum = 2 * scaleLevel + LevelBuffer;
+            int multDen = recipientLv + scaleLevel + LevelBuffer;
             ulong exp = (ulong)expYield * (ulong)Numerator * (ulong)level;
             for (int ii = 0; ii < PowerCurve; ii++)
                 exp *= (ulong)multNum;
@@ -1363,9 +1367,7 @@ namespace PMDC.Dungeon
         internal void OnDeserializedMethod(StreamingContext context)
         {
             if (Serializer.OldVersion < new Version(0, 7, 0))
-            {
                 PowerCurve = 3;
-            }
         }
     }
 
