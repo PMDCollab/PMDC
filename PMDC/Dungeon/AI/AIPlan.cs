@@ -1344,7 +1344,44 @@ namespace PMDC.Dungeon
                     break;
                 case "nature_power": // nature power
                     {
-                        //TODO
+                        string calledMove = "";
+                        foreach (BattleEvent effect in entry.Data.OnHits.EnumerateInOrder())
+                        {
+                            NatureMoveEvent nature = effect as NatureMoveEvent;
+                            if (nature != null)
+                            {
+                                foreach (string terrain in nature.TerrainPair.Keys)
+                                {
+                                    if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(terrain))
+                                    {
+                                        calledMove = nature.TerrainPair[terrain];
+                                        break;
+                                    }
+                                }
+
+                                string moveNum;
+                                if (nature.NaturePair.TryGetValue(ZoneManager.Instance.CurrentMap.Element, out moveNum))
+                                    calledMove = moveNum;
+                                else
+                                    calledMove = "";
+                                break;
+                            }
+                        }
+                        skillIndex = calledMove;
+                        if (String.IsNullOrEmpty(calledMove))
+                        {
+                            entry = null;
+                            hitboxAction = null;
+                            explosion = null;
+                        }
+                        else
+                        {
+                            SkillData calledEntry = DataManager.Instance.GetSkill(calledMove);
+                            entry = calledEntry;
+
+                            hitboxAction = entry.HitboxAction;
+                            explosion = entry.Explosion;
+                        }
                     }
                     break;
                 case "sleep_talk": // sleep talk
