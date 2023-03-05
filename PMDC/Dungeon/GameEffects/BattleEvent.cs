@@ -14840,7 +14840,9 @@ namespace PMDC.Dungeon
                 emitter.SetupEmit(member.CharLoc * GraphicsManager.TileSize, member.CharLoc * GraphicsManager.TileSize, member.CharDir);
                 DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
                 DungeonScene.Instance.AddCharToTeam(Faction.Player, 0, false, member);
+                member.Tactic = new AITactic(member.Tactic);
                 member.RefreshTraits();
+                member.Tactic.Initialize(member);
                 ZoneManager.Instance.CurrentMap.UpdateExploration(member);
 
                 yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(String.Format(new StringKey("MSG_ASSEMBLY_TAKE_ANY").ToLocal(), member.GetDisplayName(true))));

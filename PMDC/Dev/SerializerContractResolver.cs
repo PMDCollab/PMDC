@@ -17,8 +17,15 @@ namespace PMDC.Dev
     {
         protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
         {
-            FieldInfo[] fieldsLess = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             List<MemberInfo> fields = type.GetSerializableMembers();
+
+            //Remove nonserialized
+            for (int ii = fields.Count - 1; ii >= 0; ii--)
+            {
+                if (fields[ii].GetCustomAttributes(typeof(NonSerializedAttribute), false).Length > 0)
+                    fields.RemoveAt(ii);
+            }
+
             List<JsonProperty> props = fields.Select(f => CreateProperty(f, memberSerialization))
                 .ToList();
             props.ForEach(p => { p.Writable = true; p.Readable = true; });
