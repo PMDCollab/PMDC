@@ -14917,6 +14917,20 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class SkinRecruitmentEvent : RecruitBoostEvent
+    {
+        public override GameEvent Clone() { return new SkinRecruitmentEvent(); }
+
+        protected override int GetRecruitRate(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            MonsterID formData = context.Target.BaseForm;
+            if (formData.Skin != DataManager.Instance.DefaultSkin)
+                return 35;
+            return -50;
+        }
+    }
+
+    [Serializable]
     public class TypeMatchupRecruitmentEvent : RecruitBoostEvent
     {
         public override GameEvent Clone() { return new TypeMatchupRecruitmentEvent(); }
