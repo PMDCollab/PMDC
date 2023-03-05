@@ -2149,6 +2149,30 @@ namespace PMDC.Dungeon
                             if (existingStatus != null)
                                 existingStack = existingStatus.StatusStates.GetWithDefault<StackState>().Stack;
                             addedWorth = calculateStatusStackWorth(giveEffect.StatusID, stackEffect.Stack, existingStack);
+
+                            //special case for non-bosses
+                            if ((IQ & AIFlags.KnowsMatchups) == AIFlags.None)
+                            {
+                                //special case for self-buffing
+                                if (addedWorth > 0 && DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
+                                {
+                                    //do not self-buff if more than 4 tiles away and hasnt been attacked yet
+                                    if (controlledChar.GetStatusEffect("last_targeted_by") == null)
+                                    {
+                                        bool nearEnemy = false;
+                                        foreach (Character character in seenChars)
+                                        {
+                                            if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Foe && ZoneManager.Instance.CurrentMap.InRange(character.CharLoc, controlledChar.CharLoc, 4))
+                                            {
+                                                nearEnemy = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!nearEnemy)
+                                            addedWorth = 0;
+                                    }
+                                }
+                            }
                         }
                         else if (existingStatus == null)
                         {
