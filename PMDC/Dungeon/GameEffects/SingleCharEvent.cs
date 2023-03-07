@@ -4040,6 +4040,9 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
+            if (context.User != null)
+                yield break;
+
             int total_alive = 0;
             foreach (Character target in DungeonScene.Instance.ActiveTeam.IterateByRank())
             {
@@ -4051,7 +4054,6 @@ namespace PMDC.Dungeon
                     total_alive++;
                 }
             }
-            yield break;
         }
         
         public void MoveChar(Character character, int total_alive)
@@ -4158,6 +4160,9 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
+            if (context.User != null)
+                yield break;
+
             if (DungeonScene.Instance.CanUseTeamMode())
                 DungeonScene.Instance.SetTeamMode(true);
 
