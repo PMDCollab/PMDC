@@ -73,41 +73,41 @@ namespace PMDC
                 bool preConvert = false;
                 for (int ii = 1; ii < args.Length; ii++)
                 {
-                    if (args[ii] == "-dev")
+                    if (args[ii].ToLower() == "-dev")
                         dev = true;
-                    else if (args[ii] == "-play" && args.Length > ii + 1)
+                    else if (args[ii].ToLower() == "-play" && args.Length > ii + 1)
                     {
                         playInputs = args[ii + 1];
                         ii++;
                     }
-                    else if (args[ii] == "-lang" && args.Length > ii + 1)
+                    else if (args[ii].ToLower() == "-lang" && args.Length > ii + 1)
                     {
                         langArgs = args[ii + 1];
                         ii++;
                     }
-                    else if (args[ii] == "-nolog")
+                    else if (args[ii].ToLower() == "-nolog")
                         logInput = false;
-                    else if (args[ii] == "-guide")
+                    else if (args[ii].ToLower() == "-guide")
                         guideBook = true;
-                    else if (args[ii] == "-csv")
+                    else if (args[ii].ToLower() == "-csv")
                         guideCsv = true;
-                    else if (args[ii] == "-asset")
+                    else if (args[ii].ToLower() == "-asset")
                     {
                         PathMod.ASSET_PATH = Path.GetFullPath(args[ii + 1]);
                         ii++;
                     }
-                    else if (args[ii] == "-raw")
+                    else if (args[ii].ToLower() == "-raw")
                     {
                         PathMod.DEV_PATH = Path.GetFullPath(args[ii + 1]);
                         ii++;
                     }
-                    else if (args[ii] == "-quest")
+                    else if (args[ii].ToLower() == "-quest")
                     {
                         quest = args[ii + 1];
                         loadModXml = false;
                         ii++;
                     }
-                    else if (args[ii] == "-mod")
+                    else if (args[ii].ToLower() == "-mod")
                     {
                         int jj = 1;
                         while (args.Length > ii + jj)
@@ -121,13 +121,13 @@ namespace PMDC
                         loadModXml = false;
                         ii += jj - 1;
                     }
-                    else if (args[ii] == "-build")
+                    else if (args[ii].ToLower() == "-build")
                     {
                         buildQuest = true;
                         loadModXml = false;
                         ii++;
                     }
-                    else if (args[ii] == "-convert")
+                    else if (args[ii].ToLower() == "-convert")
                     {
                         int jj = 1;
                         while (args.Length > ii + jj)
@@ -150,7 +150,7 @@ namespace PMDC
                         loadModXml = false;
                         ii += jj - 1;
                     }
-                    else if (args[ii] == "-index")
+                    else if (args[ii].ToLower() == "-index")
                     {
                         int jj = 1;
                         while (args.Length > ii + jj)
@@ -173,7 +173,7 @@ namespace PMDC
                         loadModXml = false;
                         ii += jj - 1;
                     }
-                    else if (args[ii] == "-reserialize")
+                    else if (args[ii].ToLower() == "-reserialize")
                     {
                         int jj = 1;
                         while (args.Length > ii + jj)
@@ -196,7 +196,7 @@ namespace PMDC
                         loadModXml = false;
                         ii += jj - 1;
                     }
-                    else if (args[ii] == "-preconvert")
+                    else if (args[ii].ToLower() == "-preconvert")
                     {
                         preConvert = true;
                         ii++;
