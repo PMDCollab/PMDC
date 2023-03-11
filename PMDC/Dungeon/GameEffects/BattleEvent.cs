@@ -6586,8 +6586,11 @@ namespace PMDC.Dungeon
 
             context.Target.Fullness += heal;
 
-            if (context.Target.Fullness > context.Target.MaxFullness)
+            if (context.Target.Fullness >= context.Target.MaxFullness)
+            {
                 context.Target.Fullness = context.Target.MaxFullness;
+                context.Target.FullnessRemainder = 0;
+            }
 
             yield break;
         }
@@ -10353,8 +10356,11 @@ namespace PMDC.Dungeon
 
             if (context.Target.Fullness < 0)
                 context.Target.Fullness = 0;
-            if (context.Target.Fullness > context.Target.MaxFullness)
+            if (context.Target.Fullness >= context.Target.MaxFullness)
+            {
                 context.Target.Fullness = context.Target.MaxFullness;
+                context.Target.FullnessRemainder = 0;
+            }
 
             yield break;
         }
