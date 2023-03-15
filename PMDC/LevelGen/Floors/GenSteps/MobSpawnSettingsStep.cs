@@ -47,7 +47,9 @@ namespace PMDC.LevelGen
 
         public override string ToString()
         {
-            return String.Format("{0}", this.GetType().Name);
+            if (this.Respawn == null)
+                return String.Format("{0}: [EMPTY]", this.GetType().GetFormattedTypeName());
+            return String.Format("{0}: Turns: {1} Max: {2}", this.GetType().GetFormattedTypeName(), Respawn.RespawnTime, Respawn.MaxFoes);
         }
 
         [OnDeserialized]

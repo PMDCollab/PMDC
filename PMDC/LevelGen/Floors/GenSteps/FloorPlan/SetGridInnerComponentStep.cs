@@ -67,7 +67,7 @@ namespace PMDC.LevelGen
 
         public override string ToString()
         {
-            return string.Format("{0}[{1}]", this.GetType().Name, this.Components.Count);
+            return string.Format("{0}[{1}]", this.GetType().GetFormattedTypeName(), this.Components.Count);
         }
     }
 }

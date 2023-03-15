@@ -122,6 +122,11 @@ namespace PMDC.LevelGen
 
             SetRoomBorders(map);
         }
+
+        public override string ToString()
+        {
+            return string.Format("{0}", this.GetType().GetFormattedTypeName());
+        }
     }
 
 
@@ -180,6 +185,11 @@ namespace PMDC.LevelGen
             map.GetPostProc(new Loc(Draw.X + 3, Draw.Y + 4)).Status |= PostProcType.Terrain;
 
             SetRoomBorders(map);
+        }
+
+        public override string ToString()
+        {
+            return string.Format("{0}", this.GetType().GetFormattedTypeName());
         }
     }
 }

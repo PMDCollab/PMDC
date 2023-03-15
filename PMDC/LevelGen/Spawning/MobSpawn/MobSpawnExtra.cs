@@ -38,7 +38,7 @@ namespace PMDC.LevelGen
 
         public override string ToString()
         {
-            return string.Format("{0}", this.GetType().Name);
+            return string.Format("{0}", this.GetType().GetFormattedTypeName());
         }
     }
 
@@ -78,7 +78,7 @@ namespace PMDC.LevelGen
 
         public override string ToString()
         {
-            return string.Format("{0}: 1/{1}", this.GetType().Name, Odds);
+            return string.Format("{0}: 1/{1}", this.GetType().GetFormattedTypeName(), Odds);
         }
     }
 
@@ -126,7 +126,7 @@ namespace PMDC.LevelGen
 
         public override string ToString()
         {
-            return string.Format("{0}: {1}+", this.GetType().Name, StartAt);
+            return string.Format("{0}: {1}+", this.GetType().GetFormattedTypeName(), StartAt);
         }
     }
 
@@ -168,7 +168,7 @@ namespace PMDC.LevelGen
 
         public override string ToString()
         {
-            return string.Format("{0}", this.GetType().Name);
+            return string.Format("{0}", this.GetType().GetFormattedTypeName());
         }
     }
 
@@ -217,7 +217,7 @@ namespace PMDC.LevelGen
 
         public override string ToString()
         {
-            return string.Format("{0}", this.GetType().Name);
+            return string.Format("{0}", this.GetType().GetFormattedTypeName());
         }
     }
 
@@ -268,11 +268,11 @@ namespace PMDC.LevelGen
         public override string ToString()
         {
             if (Items.Count != 1)
-                return string.Format("{0}[{1}]", this.GetType().Name, Items.Count.ToString());
+                return string.Format("{0}[{1}]", this.GetType().GetFormattedTypeName(), Items.Count.ToString());
             else
             {
                 EntrySummary summary = DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(Items.GetSpawn(0).ID);
-                return string.Format("{0}: {1}", this.GetType().Name, summary.Name.ToLocal());
+                return string.Format("{0}: {1}", this.GetType().GetFormattedTypeName(), summary.Name.ToLocal());
             }
         }
     }
@@ -326,7 +326,7 @@ namespace PMDC.LevelGen
 
         public override string ToString()
         {
-            return string.Format("{0}", this.GetType().Name);
+            return string.Format("{0}", this.GetType().GetFormattedTypeName());
         }
     }
 
@@ -377,7 +377,7 @@ namespace PMDC.LevelGen
 
         public override string ToString()
         {
-            return string.Format("{0}", this.GetType().Name);
+            return string.Format("{0}", this.GetType().GetFormattedTypeName());
         }
     }
 
@@ -415,7 +415,7 @@ namespace PMDC.LevelGen
 
         public override string ToString()
         {
-            return string.Format("{0}", this.GetType().Name);
+            return string.Format("{0}", this.GetType().GetFormattedTypeName());
         }
     }
 
@@ -438,7 +438,7 @@ namespace PMDC.LevelGen
 
         public override string ToString()
         {
-            return string.Format("{0}", this.GetType().Name);
+            return string.Format("{0}", this.GetType().GetFormattedTypeName());
         }
     }
 
@@ -459,7 +459,7 @@ namespace PMDC.LevelGen
 
         public override string ToString()
         {
-            return string.Format("{0}", this.GetType().Name);
+            return string.Format("{0}", this.GetType().GetFormattedTypeName());
         }
     }
 
@@ -498,7 +498,7 @@ namespace PMDC.LevelGen
 
         public override string ToString()
         {
-            return string.Format("{0}", this.GetType().Name);
+            return string.Format("{0}", this.GetType().GetFormattedTypeName());
         }
     }
 
@@ -530,7 +530,7 @@ namespace PMDC.LevelGen
 
         public override string ToString()
         {
-            return string.Format("{0}", this.GetType().Name);
+            return string.Format("{0}", this.GetType().GetFormattedTypeName());
         }
     }
 
@@ -560,7 +560,7 @@ namespace PMDC.LevelGen
 
         public override string ToString()
         {
-            return string.Format("{0}", this.GetType().Name);
+            return string.Format("{0}", this.GetType().GetFormattedTypeName());
         }
     }
 }

@@ -80,7 +80,7 @@ namespace PMDC.LevelGen
 
         public override string ToString()
         {
-            return String.Format("{0}: Time:{1} Song:{2} TileSight:{3} CharSight:{4}", this.GetType().Name, TimeLimit, Music, TileSight, CharSight);
+            return String.Format("{0}: Time:{1} Song:{2} TileSight:{3} CharSight:{4}", this.GetType().GetFormattedTypeName(), TimeLimit, Music, TileSight, CharSight);
         }
     }
 
@@ -119,7 +119,7 @@ namespace PMDC.LevelGen
 
         public override string ToString()
         {
-            return String.Format("{0}: Time:{1}", this.GetType().Name, TimeLimit);
+            return String.Format("{0}: Time:{1}", this.GetType().GetFormattedTypeName(), TimeLimit);
         }
     }
 
@@ -168,10 +168,9 @@ namespace PMDC.LevelGen
 
         public override string ToString()
         {
-            string status = String.Format("{0} Choices", DefaultMapStatus.Length);
             if (DefaultMapStatus.Length == 1)
-                status = DataManager.Instance.DataIndices[DataManager.DataType.MapStatus].Get(DefaultMapStatus[0]).Name.ToLocal();
-            return String.Format("{0}: {1}", this.GetType().Name, status);
+                return String.Format("{0}: {1}", this.GetType().GetFormattedTypeName(), DataManager.Instance.DataIndices[DataManager.DataType.MapStatus].Get(DefaultMapStatus[0]).Name.ToLocal());
+            return String.Format("{0}[{1}]", this.GetType().GetFormattedTypeName(), DefaultMapStatus.Length);
         }
     }
 
