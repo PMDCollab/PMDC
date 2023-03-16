@@ -15,7 +15,11 @@ namespace PMDC.LevelGen
     [Serializable]
     public class MobSpawnSettingsStep<T> : GenStep<T> where T : BaseMapGenContext
     {
+        /// <summary>
+        /// Priority of execution in Turn End operations
+        /// </summary>
         public Priority Priority;
+
         /// <summary>
         /// The respawn step.
         /// </summary>
@@ -26,6 +30,10 @@ namespace PMDC.LevelGen
         /// OBSOLETE
         /// </summary>
         public int MaxFoes;
+
+        /// <summary>
+        /// OBSOLETE
+        /// </summary>
         public int RespawnTime;
 
         public MobSpawnSettingsStep()
