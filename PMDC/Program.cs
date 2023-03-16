@@ -475,7 +475,8 @@ namespace PMDC
             DataEditor.AddEditor(new EntryDataEditor());
             DataEditor.AddEditor(new FrameTypeEditor());
             DataEditor.AddEditor(new MapItemEditor());
-            
+            DataEditor.AddEditor(new InvItemEditor());
+
             DataEditor.AddEditor(new MultiStepSpawnerEditor());
             DataEditor.AddEditor(new PickerSpawnerEditor());
             DataEditor.AddEditor(new ContextSpawnerEditor());
@@ -518,7 +519,7 @@ namespace PMDC
             DataEditor.AddEditor(new ColumnAnimEditor());
             DataEditor.AddEditor(new StaticAnimEditor());
             DataEditor.AddEditor(new TypeDictEditor());
-            DataEditor.AddEditor(new CategorySpawnEditor());
+            DataEditor.AddEditor(new CategorySpawnEditor(true));
             DataEditor.AddEditor(new DictSpawnEditor());
             DataEditor.AddEditor(new RangeDictEditor(false, true));
             DataEditor.AddEditor(new SpawnListEditor());
