@@ -2865,7 +2865,12 @@ namespace PMDC.Dungeon
                     MonsterID id = candidateSpecies[DataManager.Instance.Save.Rand.Next(candidateSpecies.Count)];
                     id.Form = Math.Max(0, id.Form);
                     id.Skin = String.IsNullOrEmpty(id.Skin) ? DataManager.Instance.DefaultSkin : id.Skin;
-                    id.Gender = (Gender)Math.Max(0, (int)id.Gender);
+                    if (id.Gender == Gender.Unknown)
+                    {
+                        MonsterData monData = DataManager.Instance.GetMonster(id.Species);
+                        BaseMonsterForm form = monData.Forms[id.Form];
+                        id.Gender = form.RollGender(DataManager.Instance.Save.Rand);
+                    }
                     status.StatusStates.Set(new MonsterIDState(id));
                     if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
                         DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_ILLUSION_START").ToLocal(), context.User.GetDisplayName(true)));
