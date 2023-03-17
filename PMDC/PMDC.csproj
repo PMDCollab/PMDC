@@ -6,7 +6,7 @@
     <AssemblyName>PMDC</AssemblyName>
     <AssemblyVersion>0.7.3</AssemblyVersion>
     <AssemblyCopyright>Audino 2023</AssemblyCopyright>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <Deterministic>true</Deterministic>
     <RuntimeIdentifiers>win-x64;osx-x64;linux-x64</RuntimeIdentifiers>
     <Platforms>AnyCPU;x64;x86</Platforms>
