@@ -1240,7 +1240,7 @@ namespace PMDC.Dungeon
 
         private void handoutAssemblyExp(Character player, int totalExp)
         {
-            if (!player.Dead && player.Level < DataManager.Instance.MaxLevel)
+            if (!player.Dead && player.Level < DataManager.Instance.Start.MaxLevel)
             {
                 player.EXP += totalExp;
 
@@ -1251,7 +1251,7 @@ namespace PMDC.Dungeon
                     player.EXP -= growthData.GetExpToNext(player.Level);
                     player.Level++;
 
-                    if (player.Level >= DataManager.Instance.MaxLevel)
+                    if (player.Level >= DataManager.Instance.Start.MaxLevel)
                     {
                         player.EXP = 0;
                         break;
@@ -1340,7 +1340,7 @@ namespace PMDC.Dungeon
             int levelDiff = 0;
             string growth = DataManager.Instance.GetMonster(recipient.BaseForm.Species).EXPTable;
             GrowthData growthData = DataManager.Instance.GetGrowth(growth);
-            while (recipient.Level + levelDiff < DataManager.Instance.MaxLevel && recipient.EXP + currentlyGainedExp >= growthData.GetExpTo(recipient.Level, recipient.Level + levelDiff + 1))
+            while (recipient.Level + levelDiff < DataManager.Instance.Start.MaxLevel && recipient.EXP + currentlyGainedExp >= growthData.GetExpTo(recipient.Level, recipient.Level + levelDiff + 1))
                 levelDiff++;
 
             MonsterData monsterData = DataManager.Instance.GetMonster(defeatedChar.BaseForm.Species);

@@ -6789,7 +6789,7 @@ namespace PMDC.Dungeon
             else if (Level > 0)
             {
                 int levelsChanged = 0;
-                while (levelsChanged < Level && context.Target.Level + levelsChanged < DataManager.Instance.MaxLevel)
+                while (levelsChanged < Level && context.Target.Level + levelsChanged < DataManager.Instance.Start.MaxLevel)
                 {
                     context.Target.EXP += growthData.GetExpToNext(context.Target.Level + levelsChanged);
                     levelsChanged++;
@@ -6814,7 +6814,7 @@ namespace PMDC.Dungeon
                 Team playerTeam = context.User.MemberTeam;
                 foreach (Character player in playerTeam.EnumerateChars())
                 {
-                    if (player.Level < DataManager.Instance.MaxLevel)
+                    if (player.Level < DataManager.Instance.Start.MaxLevel)
                     {
                         player.EXP += gainedExp;
                         DungeonScene.Instance.MeterChanged(player.CharLoc, gainedExp, true);

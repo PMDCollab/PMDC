@@ -219,9 +219,9 @@ namespace PMDC.Data
         public override int ReverseGetStat(Stat stat, int val, int level)
         {
             if (stat == Stat.HP)
-                return (val - 10) * DataManager.Instance.MaxLevel / level - 130;
+                return (val - 10) * DataManager.Instance.Start.MaxLevel / level - 130;
             else
-                return (val - 5) * DataManager.Instance.MaxLevel / level - 30;
+                return (val - 5) * DataManager.Instance.Start.MaxLevel / level - 30;
         }
 
         public override int GetMaxStatBonus(Stat stat)
@@ -231,12 +231,12 @@ namespace PMDC.Data
 
         private int genericStatCalc(int baseStat, int level)
         {
-            return (baseStat + 30) * level / DataManager.Instance.MaxLevel + 5;
+            return (baseStat + 30) * level / DataManager.Instance.Start.MaxLevel + 5;
         }
         private int hpStatCalc(int baseStat, int level)
         {
             if (baseStat > 1)
-                return (baseStat + 130) * level / DataManager.Instance.MaxLevel + 10;
+                return (baseStat + 130) * level / DataManager.Instance.Start.MaxLevel + 10;
             else
                 return (level / 10 + 1);
         }
@@ -255,13 +255,13 @@ namespace PMDC.Data
 
         private int genericStatMax(int baseStat)
         {
-            return genericStatCalc(scaleStatTotal(baseStat), DataManager.Instance.MaxLevel);
+            return genericStatCalc(scaleStatTotal(baseStat), DataManager.Instance.Start.MaxLevel);
         }
 
         private int hpStatMax(int baseStat)
         {
             if (baseStat > 1)
-                return hpStatCalc(scaleStatTotal(baseStat), DataManager.Instance.MaxLevel);
+                return hpStatCalc(scaleStatTotal(baseStat), DataManager.Instance.Start.MaxLevel);
             else
                 return 21;
         }
