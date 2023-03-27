@@ -479,7 +479,9 @@ namespace PMDC
 
             DataEditor.AddEditor(new MultiStepSpawnerEditor());
             DataEditor.AddEditor(new PickerSpawnerEditor());
+            DataEditor.AddEditor(new TeamContextSpawnerEditor());
             DataEditor.AddEditor(new ContextSpawnerEditor());
+            DataEditor.AddEditor(new MoneyDivSpawnerEditor());
             DataEditor.AddEditor(new TeamStepSpawnerEditor());
             DataEditor.AddEditor(new StepSpawnerEditor());
 
@@ -490,6 +492,9 @@ namespace PMDC
             DataEditor.AddEditor(new AddDisconnectedRoomsStepEditor());
             DataEditor.AddEditor(new ConnectRoomStepEditor());
             DataEditor.AddEditor(new FloorPathBranchEditor());
+
+            DataEditor.AddEditor(new BaseSpawnStepEditor());
+            DataEditor.AddEditor(new PlaceMobsStepEditor());
 
             DataEditor.AddEditor(new RoomGenCrossEditor());
             DataEditor.AddEditor(new SizedRoomGenEditor());
@@ -528,6 +533,8 @@ namespace PMDC
             DataEditor.AddEditor(new PriorityEditor());
             DataEditor.AddEditor(new SegLocEditor());
             DataEditor.AddEditor(new LocEditor());
+            DataEditor.AddEditor(new LoopedRandEditor());
+            DataEditor.AddEditor(new PresetMultiRandEditor());
             DataEditor.AddEditor(new RandRangeEditor(false, true));
             DataEditor.AddEditor(new RandPickerEditor());
             DataEditor.AddEditor(new MultiRandPickerEditor());
