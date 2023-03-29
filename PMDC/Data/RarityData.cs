@@ -41,8 +41,12 @@ namespace PMDC.Data
             //Add it to its new locations
             string dataPath = DataManager.DATA_PATH + DataManager.DataType.Item.ToString() + "/";
             string dir = PathMod.ModPath(dataPath + idx + DataManager.DATA_EXT);
-            ItemData data = DataManager.LoadData<ItemData>(dir);
-            computeSummary(idx, data);
+            //check against deletion
+            if (File.Exists(dir))
+            {
+                ItemData data = DataManager.LoadData<ItemData>(dir);
+                computeSummary(idx, data);
+            }
         }
 
         public override void ReIndex()
