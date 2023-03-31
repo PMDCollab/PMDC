@@ -89,6 +89,35 @@ namespace PMDC.LevelGen
     /// </summary>
     /// <typeparam name="T"></typeparam>
     [Serializable]
+    public class MapTitleDropStep<T> : GenStep<T> where T : BaseMapGenContext
+    {
+        public Priority DropPriority;
+
+        public MapTitleDropStep()
+        {
+        }
+        public MapTitleDropStep(Priority dropPriority)
+        {
+            DropPriority = dropPriority;
+        }
+
+        public override void Apply(T map)
+        {
+            map.Map.MapEffect.OnMapStarts.Add(DropPriority, new FadeTitleEvent());
+        }
+
+
+        public override string ToString()
+        {
+            return String.Format("{0}: At:{1}", this.GetType().GetFormattedTypeName(), DropPriority);
+        }
+    }
+
+    /// <summary>
+    /// Sets only time limit for the map.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    [Serializable]
     public class MapTimeLimitStep<T> : GenStep<T> where T : BaseMapGenContext
     {
         /// <summary>

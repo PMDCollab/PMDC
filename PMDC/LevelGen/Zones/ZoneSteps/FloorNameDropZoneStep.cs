@@ -37,8 +37,7 @@ namespace PMDC.LevelGen
         {
             base.Apply(zoneContext, context, queue);
 
-            MapEffectStep<BaseMapGenContext> fade = new MapEffectStep<BaseMapGenContext>();
-            fade.Effect.OnMapStarts.Add(DropPriority, new FadeTitleEvent());
+            MapTitleDropStep<BaseMapGenContext> fade = new MapTitleDropStep<BaseMapGenContext>(DropPriority);
             queue.Enqueue(Priority, fade);
         }
 
