@@ -318,7 +318,9 @@ namespace PMDC.Data
         }
         public override bool GetReq(Character character)
         {
-            return ZoneManager.Instance.CurrentMap.Element == TileElement;
+            if (GameManager.Instance.CurrentScene == DungeonScene.Instance)
+                return ZoneManager.Instance.CurrentMap.Element == TileElement;
+            return false;
         }
     }
     [Serializable]
