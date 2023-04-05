@@ -494,6 +494,7 @@ namespace PMDC
             DataEditor.AddEditor(new FloorPathBranchEditor());
 
             DataEditor.AddEditor(new BaseSpawnStepEditor());
+            DataEditor.AddEditor(new MoneySpawnStepEditor());
             DataEditor.AddEditor(new PlaceMobsStepEditor());
 
             DataEditor.AddEditor(new RoomGenCrossEditor());
@@ -535,6 +536,7 @@ namespace PMDC
             DataEditor.AddEditor(new LocEditor());
             DataEditor.AddEditor(new LoopedRandEditor());
             DataEditor.AddEditor(new PresetMultiRandEditor());
+            DataEditor.AddEditor(new MoneySpawnRangeEditor(false, true));
             DataEditor.AddEditor(new RandRangeEditor(false, true));
             DataEditor.AddEditor(new RandPickerEditor());
             DataEditor.AddEditor(new MultiRandPickerEditor());
