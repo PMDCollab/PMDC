@@ -29,11 +29,13 @@ namespace PMDC.LevelGen
         /// <summary>
         /// OBSOLETE
         /// </summary>
+        [NonEdited]
         public int MaxFoes;
 
         /// <summary>
         /// OBSOLETE
         /// </summary>
+        [NonEdited]
         public int RespawnTime;
 
         public MobSpawnSettingsStep()
