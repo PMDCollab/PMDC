@@ -4029,6 +4029,13 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Sets the position of team members for starting a battle.
+    /// The first loc in the list is where team member 1 should be
+    /// The second is where team member 2 should be
+    /// etc.
+    /// All positions are relative to the first entrance.
+    /// </summary>
     [Serializable]
     public class BattlePositionEvent : SingleCharEvent
     {
@@ -4148,6 +4155,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Sets Team Mode On for boss battles and adds a map condition for checking if all enemies have been defeated.
+    /// </summary>
     [Serializable]
     public class BeginBattleEvent : SingleCharEvent
     {
