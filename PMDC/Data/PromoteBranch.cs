@@ -15,7 +15,7 @@ namespace PMDC.Data
     {
         public int Level;
 
-        public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_LEVEL").ToLocal(), Level); }
+        public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_LEVEL").ToLocal(), Level); }
         public override bool GetReq(Character character)
         {
             return character.Level >= Level;
@@ -29,7 +29,7 @@ namespace PMDC.Data
         public string ItemNum;
 
         public override string GiveItem { get { return ItemNum; } }
-        public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_ITEM").ToLocal(), DataManager.Instance.GetItem(ItemNum).GetColoredName()); }
+        public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_ITEM").ToLocal(), DataManager.Instance.GetItem(ItemNum).GetColoredName()); }
         public override bool GetGroundReq(Character character)
         {
             if (character.EquippedItem.ID == ItemNum)
@@ -84,7 +84,7 @@ namespace PMDC.Data
             Allies = allies;
         }
 
-        public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_ALLIES").ToLocal(), Allies); }
+        public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_ALLIES").ToLocal(), Allies); }
         public override bool GetReq(Character character)
         {
             ExplorerTeam team = character.MemberTeam as ExplorerTeam;
@@ -111,7 +111,7 @@ namespace PMDC.Data
     {
         public TimeOfDay Time;
 
-        public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_TIME").ToLocal(), Time.ToLocal()); }
+        public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_TIME").ToLocal(), Time.ToLocal()); }
         public override bool GetReq(Character character)
         {
             return DataManager.Instance.Save.Time != TimeOfDay.Unknown && (DataManager.Instance.Save.Time == Time || (TimeOfDay)(((int)DataManager.Instance.Save.Time + 1) % 4) == Time);
@@ -125,7 +125,7 @@ namespace PMDC.Data
         public string Weather;
 
         public override bool GetGroundReq(Character character) { return false; }
-        public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_MAP").ToLocal(), DataManager.Instance.GetMapStatus(Weather).GetColoredName()); }
+        public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_MAP").ToLocal(), DataManager.Instance.GetMapStatus(Weather).GetColoredName()); }
         public override bool GetReq(Character character)
         {
             return ZoneManager.Instance.CurrentMap.Status.ContainsKey(Weather);
@@ -139,11 +139,11 @@ namespace PMDC.Data
         public override string GetReqString()
         {
             if (AtkDefComparison > 0)
-                return String.Format(new StringKey("EVO_REQ_ATK_DEF_GREATER").ToLocal());
+                return Text.FormatGrammar(new StringKey("EVO_REQ_ATK_DEF_GREATER").ToLocal());
             else if (AtkDefComparison < 0)
-                return String.Format(new StringKey("EVO_REQ_ATK_DEF_LESS").ToLocal());
+                return Text.FormatGrammar(new StringKey("EVO_REQ_ATK_DEF_LESS").ToLocal());
             else
-                return String.Format(new StringKey("EVO_REQ_ATK_DEF_EQUAL").ToLocal());
+                return Text.FormatGrammar(new StringKey("EVO_REQ_ATK_DEF_EQUAL").ToLocal());
         }
         public override bool GetReq(Character character)
         {
@@ -160,7 +160,7 @@ namespace PMDC.Data
 
         public override string GetReqString()
         {
-            return String.Format(new StringKey("EVO_REQ_CRITS").ToLocal(), Stack);
+            return Text.FormatGrammar(new StringKey("EVO_REQ_CRITS").ToLocal(), Stack);
         }
         public override bool GetReq(Character character)
         {
@@ -183,7 +183,7 @@ namespace PMDC.Data
 
         public override string GetReqString()
         {
-            return String.Format(new StringKey("EVO_REQ_STAT_BOOST").ToLocal(), DataManager.Instance.GetStatus(StatBoostStatus).GetColoredName());
+            return Text.FormatGrammar(new StringKey("EVO_REQ_STAT_BOOST").ToLocal(), DataManager.Instance.GetStatus(StatBoostStatus).GetColoredName());
         }
         public override bool GetReq(Character character)
         {
@@ -204,7 +204,7 @@ namespace PMDC.Data
         [DataType(0, DataManager.DataType.Skill, false)]
         public string MoveNum;
 
-        public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_SKILL").ToLocal(), DataManager.Instance.GetSkill(MoveNum).GetColoredName()); }
+        public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_SKILL").ToLocal(), DataManager.Instance.GetSkill(MoveNum).GetColoredName()); }
         public override bool GetReq(Character character)
         {
             foreach (SlotSkill move in character.BaseSkills)
@@ -227,7 +227,7 @@ namespace PMDC.Data
         public override string GetReqString()
         {
             ElementData elementEntry = DataManager.Instance.GetElement(MoveElement);
-            return String.Format(new StringKey("EVO_REQ_SKILL_ELEMENT").ToLocal(), elementEntry.GetColoredName());
+            return Text.FormatGrammar(new StringKey("EVO_REQ_SKILL_ELEMENT").ToLocal(), elementEntry.GetColoredName());
         }
         public override bool GetReq(Character character)
         {
@@ -287,9 +287,9 @@ namespace PMDC.Data
         public override string GetReqString()
         {
             if (Hungry)
-                return String.Format(new StringKey("EVO_REQ_HUNGER_LOW").ToLocal());
+                return Text.FormatGrammar(new StringKey("EVO_REQ_HUNGER_LOW").ToLocal());
             else
-                return String.Format(new StringKey("EVO_REQ_HUNGER_HIGH").ToLocal());
+                return Text.FormatGrammar(new StringKey("EVO_REQ_HUNGER_HIGH").ToLocal());
         }
 
         public override bool GetReq(Character character)
@@ -314,7 +314,7 @@ namespace PMDC.Data
         public override string GetReqString()
         {
             ElementData elementEntry = DataManager.Instance.GetElement(TileElement);
-            return String.Format(new StringKey("EVO_REQ_TILE_ELEMENT").ToLocal(), elementEntry.GetColoredName());
+            return Text.FormatGrammar(new StringKey("EVO_REQ_TILE_ELEMENT").ToLocal(), elementEntry.GetColoredName());
         }
         public override bool GetReq(Character character)
         {
@@ -330,7 +330,7 @@ namespace PMDC.Data
         [DataType(0, DataManager.DataType.Monster, false)]
         public string Species;
 
-        public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_ALLY_SPECIES").ToLocal(), DataManager.Instance.GetMonster(Species).GetColoredName()); }
+        public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_ALLY_SPECIES").ToLocal(), DataManager.Instance.GetMonster(Species).GetColoredName()); }
         public override bool GetReq(Character character)
         {
             foreach (Character partner in character.MemberTeam.Players)
@@ -353,7 +353,7 @@ namespace PMDC.Data
         public override string GetReqString()
         {
             ElementData elementEntry = DataManager.Instance.GetElement(PartnerElement);
-            return String.Format(new StringKey("EVO_REQ_ALLY_ELEMENT").ToLocal(), elementEntry.GetColoredName());
+            return Text.FormatGrammar(new StringKey("EVO_REQ_ALLY_ELEMENT").ToLocal(), elementEntry.GetColoredName());
         }
         public override bool GetReq(Character character)
         {
@@ -499,7 +499,7 @@ namespace PMDC.Data
     [Serializable]
     public class EvoFormDusk : PromoteDetail
     {
-        public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_ITEM").ToLocal(), "???"); }
+        public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_ITEM").ToLocal(), "???"); }
 
         public override bool GetReq(Character character)
         {
@@ -520,7 +520,7 @@ namespace PMDC.Data
     {
         public override string GetReqString()
         {
-            return String.Format(new StringKey("EVO_REQ_TILE_ELEMENT").ToLocal(), "???");
+            return Text.FormatGrammar(new StringKey("EVO_REQ_TILE_ELEMENT").ToLocal(), "???");
         }
 
         public override bool GetReq(Character character)
@@ -551,7 +551,7 @@ namespace PMDC.Data
     [Serializable]
     public class EvoTrade : PromoteDetail
     {
-        public override string GetReqString() { return String.Format(new StringKey("EVO_REQ_TRADE").ToLocal()); }
+        public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_TRADE").ToLocal()); }
         public override bool GetReq(Character character)
         {
             return true; //character.TradeHistory.Count > 0;

@@ -155,7 +155,7 @@ namespace PMDC.Dungeon
             else
                 endLoc = chara.CharLoc;
 
-            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_FAKE_ITEM").ToLocal(), item.GetDisplayName(), mob.GetDisplayName(false)));
+            DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_FAKE_ITEM").ToLocal(), item.GetDisplayName(), mob.GetDisplayName(false)));
 
             ZoneManager.Instance.CurrentMap.MapTeams.Add(team);
             mob.RefreshTraits();
@@ -209,7 +209,7 @@ namespace PMDC.Dungeon
                 ItemData entry = (ItemData)context.User.EquippedItem.GetData();
 
                 if (CanItemEffectBePassed(entry))
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_EQUIP_SHARE").ToLocal(), context.User.EquippedItem.GetDisplayName(), context.User.GetDisplayName(false)));
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_EQUIP_SHARE").ToLocal(), context.User.EquippedItem.GetDisplayName(), context.User.GetDisplayName(false)));
             }
             yield break;
         }

@@ -89,7 +89,7 @@ namespace PMDC.Dungeon
             {
                 //transform it
                 character.Transform(new MonsterID(character.CurrentForm.Species, forme, character.CurrentForm.Skin, character.CurrentForm.Gender));
-                DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_FORM_CHANGE").ToLocal(), character.GetDisplayName(false)));
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_FORM_CHANGE").ToLocal(), character.GetDisplayName(false)));
             }
 
             yield break;
@@ -201,7 +201,7 @@ namespace PMDC.Dungeon
             if (msg)
             {
                 SkillData entry = DataManager.Instance.GetSkill(status.StatusStates.GetWithDefault<MapIDState>().ID);
-                DungeonScene.Instance.LogMsg(String.Format(Message.ToLocal(), entry.GetIconName()));
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(Message.ToLocal(), entry.GetIconName()));
                 yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(10));
             }
         }

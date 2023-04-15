@@ -89,7 +89,7 @@ namespace PMDC.Dungeon
             yield return CoroutineManager.Instance.StartCoroutine(ownerChar.StartAnim(SpinAnim));
             yield return new WaitWhile(ownerChar.OccupiedwithAction);
 
-            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_SNATCH").ToLocal(), ownerChar.GetDisplayName(false)));
+            DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_SNATCH").ToLocal(), ownerChar.GetDisplayName(false)));
             context.Target = ownerChar;
             context.ContextStates.Set(new Redirected());
         }
@@ -162,7 +162,7 @@ namespace PMDC.Dungeon
 
             //make sure to exempt Round.
 
-            DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), ownerChar.GetDisplayName(false)));
+            DungeonScene.Instance.LogMsg(Text.FormatGrammar(Msg.ToLocal(), ownerChar.GetDisplayName(false)));
             context.Explosion.Range = 0;
             context.Explosion.ExplodeFX = new BattleFX();
             context.Explosion.Emitter = new EmptyCircleSquareEmitter();
@@ -338,7 +338,7 @@ namespace PMDC.Dungeon
             yield return CoroutineManager.Instance.StartCoroutine(ownerChar.StartAnim(spinAnim));
             yield return new WaitWhile(ownerChar.OccupiedwithAction);
 
-            DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
+            DungeonScene.Instance.LogMsg(Text.FormatGrammar(Msg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
             context.ExplosionTile = ownerChar.CharLoc;
             context.Explosion.Range = 0;
             context.ContextStates.Set(new Redirected());
@@ -394,7 +394,7 @@ namespace PMDC.Dungeon
                     yield return CoroutineManager.Instance.StartCoroutine(ownerChar.StartAnim(spinAnim));
                     yield return new WaitWhile(ownerChar.OccupiedwithAction);
 
-                    DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_PASS_ATTACK").ToLocal(), ownerChar.GetDisplayName(false), newTarget.GetDisplayName(false)));
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_PASS_ATTACK").ToLocal(), ownerChar.GetDisplayName(false), newTarget.GetDisplayName(false)));
                     context.ExplosionTile = newTarget.CharLoc;
                     context.Explosion.TargetAlignments |= Alignment.Foe;
                     context.Explosion.TargetAlignments |= Alignment.Friend;
@@ -439,7 +439,7 @@ namespace PMDC.Dungeon
             yield return CoroutineManager.Instance.StartCoroutine(ownerChar.StartAnim(spinAnim));
             yield return new WaitWhile(ownerChar.OccupiedwithAction);
 
-            DungeonScene.Instance.LogMsg(String.Format(new StringKey("MSG_COVER_ATTACK").ToLocal(), ownerChar.GetDisplayName(false)));
+            DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_COVER_ATTACK").ToLocal(), ownerChar.GetDisplayName(false)));
             context.ExplosionTile = ownerChar.CharLoc;
             context.ContextStates.Set(new Redirected());        
         }
@@ -487,7 +487,7 @@ namespace PMDC.Dungeon
 
                 SkillData entry = DataManager.Instance.GetSkill(InvokedMove);
 
-                DungeonScene.Instance.LogMsg(String.Format(Msg.ToLocal(), ownerChar.GetDisplayName(false), context.User.GetDisplayName(false)));
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(Msg.ToLocal(), ownerChar.GetDisplayName(false), context.User.GetDisplayName(false)));
 
                 BattleContext newContext = new BattleContext(BattleActionType.Skill);
                 newContext.User = ownerChar;
