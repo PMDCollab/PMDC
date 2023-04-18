@@ -46,7 +46,14 @@ namespace PMDC.LevelGen
                     if (rarity.RarityMap.TryGetValue(baseSpecies, out rarityTable))
                     {
                         if (rarityTable.ContainsKey(ii))
-                            possibleItems.AddRange(rarityTable[ii]);
+                        {
+                            foreach (string item in rarityTable[ii])
+                            {
+                                EntrySummary summary = DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(item);
+                                if (summary.Released)
+                                    possibleItems.Add(item);
+                            }
+                        }
                     }
                 }
             }
