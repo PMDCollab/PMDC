@@ -82,7 +82,10 @@ namespace PMDC.Dev
                     for (int jj = 0; jj < DirExt.DIR8_COUNT + 1; jj++)
                     {
                         curEndTime += swing_durations[jj];
-                        CharAnimSequence sequence = sheet.AnimData[GraphicsManager.IdleAction].Sequences[(ii + jj) % DirExt.DIR8_COUNT];
+                        int dirIdx = (ii + jj) % DirExt.DIR8_COUNT;
+                        if (ii > 0 && ii < 4)
+                            dirIdx = (ii + DirExt.DIR8_COUNT - jj) % DirExt.DIR8_COUNT;
+                        CharAnimSequence sequence = sheet.AnimData[GraphicsManager.IdleAction].Sequences[dirIdx];
                         CharAnimFrame frame = new CharAnimFrame(sequence.Frames[0]);
                         frame.Offset = frame.Offset + swing_offsets[ii, jj];
                         frame.ShadowOffset = frame.ShadowOffset + swing_shadows[ii, jj];
