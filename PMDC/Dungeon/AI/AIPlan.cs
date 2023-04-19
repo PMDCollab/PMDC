@@ -322,7 +322,7 @@ namespace PMDC.Dungeon
         /// Gets the path directly to a target
         /// </summary>
         /// <param name="controlledChar"></param>
-        /// <param name="end"></param>
+        /// <param name="ends"></param>
         /// <param name="freeGoal">Determines whether the goal should be reachable even if blocked.</param>
         /// <param name="respectPeers">Considers entities as blockers</param>
         /// <returns></returns>
