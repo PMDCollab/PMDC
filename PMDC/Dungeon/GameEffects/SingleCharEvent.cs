@@ -4262,10 +4262,8 @@ namespace PMDC.Dungeon
 
                     if (!context.User.Unidentifiable)
                     {
-                        SingleEmitter emitter = new SingleEmitter(new AnimData("Emote_Exclaim", 1));
-                        emitter.LocHeight = 24;
-                        emitter.SetupEmit(context.User.MapLoc + context.User.CharDir.GetLoc() * GraphicsManager.TileSize / 2, context.User.MapLoc + context.User.CharDir.GetLoc() * GraphicsManager.TileSize / 2, context.User.CharDir);
-                        DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
+                        EmoteData emoteData = DataManager.Instance.GetEmote("exclaim");
+                        context.User.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 1));
                     }
 
                     yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(20)+20);
@@ -4892,19 +4890,19 @@ namespace PMDC.Dungeon
             Loc baseLoc = effectTile.TileLoc;
             {
                 SingleEmitter emitter = new SingleEmitter(new AnimData("Chest_Open", 8));
-                emitter.SetupEmit(baseLoc * GraphicsManager.TileSize, baseLoc * GraphicsManager.TileSize, Dir8.Down);
+                emitter.SetupEmit(baseLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), baseLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), Dir8.Down);
                 DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
             }
             yield return new WaitForFrames(8);
             GameManager.Instance.BattleSE("EVT_Fade_White");
             {
                 SingleEmitter emitter = new SingleEmitter(new AnimData("Chest_Light", 4));
-                emitter.SetupEmit(baseLoc * GraphicsManager.TileSize + new Loc(-80, 52), baseLoc * GraphicsManager.TileSize + new Loc(-80, 52), Dir8.Left);
+                emitter.SetupEmit(baseLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2) + new Loc(-100, 72), baseLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2) + new Loc(-80, 52), Dir8.Left);
                 DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
             }
             {
                 SingleEmitter emitter = new SingleEmitter(new AnimData("Chest_Light", 4));
-                emitter.SetupEmit(baseLoc * GraphicsManager.TileSize + new Loc(80, 52), baseLoc * GraphicsManager.TileSize + new Loc(80, 52), Dir8.Right);
+                emitter.SetupEmit(baseLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2) + new Loc(100, 72), baseLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2) + new Loc(80, 52), Dir8.Right);
                 DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
             }
 
@@ -4958,7 +4956,7 @@ namespace PMDC.Dungeon
                 freeTiles.RemoveAt(randIndex);
                 //start the animations
                 //NOTE: the animation is a little funky here for wrapped maps
-                ItemAnim itemAnim = new ItemAnim(baseLoc * GraphicsManager.TileSize, itemTargetLoc * GraphicsManager.TileSize, item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, Math.Max(0, waitTime));
+                ItemAnim itemAnim = new ItemAnim(baseLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), itemTargetLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, Math.Max(0, waitTime));
                 DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
             }
             //they can be thematic, or use whatever's on the floor

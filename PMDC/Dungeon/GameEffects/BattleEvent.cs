@@ -13723,7 +13723,7 @@ namespace PMDC.Dungeon
                     Loc? newLoc = ZoneManager.Instance.CurrentMap.FindItemlessTile(context.User.CharLoc, CharAction.MAX_RANGE, true);
                     if (newLoc != null)
                     {
-                        ItemAnim itemAnim = new ItemAnim(chosenItems[ii].Value * GraphicsManager.TileSize, newLoc.Value * GraphicsManager.TileSize, item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, 1);
+                        ItemAnim itemAnim = new ItemAnim(chosenItems[ii].Value * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), newLoc.Value * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, 1);
                         DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
                         item.TileLoc = ZoneManager.Instance.CurrentMap.WrapLoc(newLoc.Value);
                     }
@@ -14987,16 +14987,28 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
+            context.Target.CharDir = context.User.CharDir.Reverse();
+            if (DiagManager.Instance.CurSettings.BattleFlow < Settings.BattleSpeed.VeryFast)
+            {
+                EmoteData emoteData = DataManager.Instance.GetEmote("question");
+                context.Target.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 1));
+                GameManager.Instance.BattleSE("EVT_Emote_Confused");
+                yield return new WaitForFrames(60);
+            }
+
 
             if (context.Target.Unrecruitable)
             {
+                EmoteData emoteData = DataManager.Instance.GetEmote("angry");
+                context.Target.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 1));
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_CANT_RECRUIT").ToLocal(), context.Target.GetDisplayName(false)));
                 GameManager.Instance.BattleSE("DUN_Miss");
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(context.Item, context.Target.CharLoc));
             }
             else if (context.Target.Level > context.User.Level + 5)
             {
+                EmoteData emoteData = DataManager.Instance.GetEmote("angry");
+                context.Target.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 1));
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_CANT_RECRUIT_LEVEL").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
                 GameManager.Instance.BattleSE("DUN_Miss");
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(context.Item, context.Target.CharLoc));
@@ -15011,15 +15023,14 @@ namespace PMDC.Dungeon
 
                 if (totalRate <= 0)
                 {
-                    //TODO: emote
-
+                    EmoteData emoteData = DataManager.Instance.GetEmote("angry");
+                    context.Target.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 1));
                     DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_CANT_RECRUIT_RATE").ToLocal(), context.Target.GetDisplayName(false)));
                     GameManager.Instance.BattleSE("DUN_Miss");
                     yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(context.Item, context.Target.CharLoc));
                 }
                 else
                 {
-                    //TODO: emote
                     if (DataManager.Instance.Save.Rand.Next(100) < totalRate)
                     {
                         GameManager.Instance.Fanfare("Fanfare/JoinTeam");
@@ -15057,7 +15068,11 @@ namespace PMDC.Dungeon
                         if (ActionScript != null)
                             context.Target.ActionEvents.Add((BattleEvent)ActionScript.Clone());
                         ZoneManager.Instance.CurrentMap.UpdateExploration(context.Target);
+
+                        EmoteData emoteData = DataManager.Instance.GetEmote("glowing");
+                        context.Target.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 2));
                         yield return new WaitForFrames(40);
+                        yield return CoroutineManager.Instance.StartCoroutine(context.Target.StartAnim(new CharAnimPose(context.Target.CharLoc, context.Target.CharDir, 50, 0)));
 
                         //check against inventory capacity violation
                         if (!String.IsNullOrEmpty(context.Target.EquippedItem.ID) && DungeonScene.Instance.ActiveTeam.MaxInv == DungeonScene.Instance.ActiveTeam.GetInvCount())
@@ -15094,9 +15109,12 @@ namespace PMDC.Dungeon
                         DataManager.Instance.Save.RogueUnlockMonster(context.Target.BaseForm.Species);
                         yield return CoroutineManager.Instance.StartCoroutine(context.Target.OnMapStart());
 
+                        //yield return new WaitForFrames(120);
+
                         if (DungeonScene.Instance.ActiveTeam.Players.Count > DungeonScene.Instance.ActiveTeam.GetMaxTeam(ZoneManager.Instance.CurrentZone))
                             yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AskToSendHome());
 
+                        yield return CoroutineManager.Instance.StartCoroutine(context.Target.StartAnim(new CharAnimIdle(context.Target.CharLoc, context.Target.CharDir)));
                     }
                     else
                     {
