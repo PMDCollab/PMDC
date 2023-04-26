@@ -1301,14 +1301,14 @@ namespace PMDC.Dungeon
             //Set to true by default to preserve existing functionality
             AffectTarget = true;
         }
-        public InvokeCustomBattleEvent(CombatAction action, ExplosionData explosion, BattleData moveData, StringKey msg)
+        public InvokeCustomBattleEvent(CombatAction action, ExplosionData explosion, BattleData moveData, StringKey msg, bool affectTarget = true)
         {
             HitboxAction = action;
             Explosion = explosion;
             NewData = moveData;
             Msg = msg;
             //Set to true by default to preserve existing functionality
-            AffectTarget = true;
+            AffectTarget = affectTarget;
         }
         protected InvokeCustomBattleEvent(InvokeCustomBattleEvent other)
         {
@@ -1316,6 +1316,7 @@ namespace PMDC.Dungeon
             Explosion = other.Explosion;
             NewData = new BattleData(other.NewData);
             Msg = other.Msg;
+            AffectTarget = other.AffectTarget;
         }
         public override GameEvent Clone() { return new InvokeCustomBattleEvent(this); }
 
