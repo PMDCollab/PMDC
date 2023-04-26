@@ -1294,6 +1294,7 @@ namespace PMDC.Dungeon
         public ExplosionData Explosion;
         public BattleData NewData;
         public StringKey Msg;
+        public bool AffectTarget;
 
         public InvokeCustomBattleEvent() { }
         public InvokeCustomBattleEvent(CombatAction action, ExplosionData explosion, BattleData moveData, StringKey msg)
@@ -1315,7 +1316,7 @@ namespace PMDC.Dungeon
         protected override BattleContext CreateContext(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             BattleContext newContext = new BattleContext(BattleActionType.Skill);
-            newContext.User = context.Target;
+            newContext.User = (AffectTarget ? context.Target : context.User);
             newContext.UsageSlot = BattleContext.FORCED_SLOT;
 
             newContext.StartDir = newContext.User.CharDir;
