@@ -1298,16 +1298,15 @@ namespace PMDC.Dungeon
 
         public InvokeCustomBattleEvent()
         {
-            //Set to true by default to preserve existing functionality
-            AffectTarget = true;
+
         }
+
         public InvokeCustomBattleEvent(CombatAction action, ExplosionData explosion, BattleData moveData, StringKey msg, bool affectTarget = true)
         {
             HitboxAction = action;
             Explosion = explosion;
             NewData = moveData;
             Msg = msg;
-            //Set to true by default to preserve existing functionality
             AffectTarget = affectTarget;
         }
         protected InvokeCustomBattleEvent(InvokeCustomBattleEvent other)
@@ -1342,6 +1341,17 @@ namespace PMDC.Dungeon
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(Msg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
 
             return newContext;
+        }
+
+
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            //TODO: remove on v1.1
+            if (Serializer.OldVersion < new Version(0, 7, 10))
+            {
+                AffectTarget = true;
+            }
         }
     }
 
