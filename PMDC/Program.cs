@@ -473,6 +473,7 @@ namespace PMDC
             DataEditor.AddEditor(new SpreadPlanBaseEditor());
 
             DataEditor.AddEditor(new ItemSpawnZoneStepEditor());
+            DataEditor.AddEditor(new TeamSpawnZoneStepEditor());
             DataEditor.AddEditor(new AutoTileBaseEditor());
             DataEditor.AddEditor(new DataFolderEditor());
             DataEditor.AddEditor(new AnimDataEditor());
