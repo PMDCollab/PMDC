@@ -464,10 +464,12 @@ namespace PMDC
             DataEditor.AddEditor(new StatusEffectEditor());
             DataEditor.AddEditor(new MapStatusEditor());
 
+            DataEditor.AddEditor(new SaveVarsZoneStepEditor());
             DataEditor.AddEditor(new MoneySpawnZoneStepEditor());
             DataEditor.AddEditor(new SpreadPlanSpacedEditor());
             DataEditor.AddEditor(new SpreadPlanQuotaEditor());
             DataEditor.AddEditor(new SpreadPlanBaseEditor());
+
 
             DataEditor.AddEditor(new AutoTileBaseEditor());
             DataEditor.AddEditor(new DataFolderEditor());
