@@ -17,6 +17,7 @@ using SDL2;
 using RogueElements;
 using System.IO;
 using System.Collections.Generic;
+using RogueEssence.LevelGen;
 #endregion
 
 namespace PMDC
@@ -471,7 +472,7 @@ namespace PMDC
             DataEditor.AddEditor(new SpreadPlanQuotaEditor());
             DataEditor.AddEditor(new SpreadPlanBaseEditor());
 
-
+            DataEditor.AddEditor(new ItemSpawnZoneStepEditor());
             DataEditor.AddEditor(new AutoTileBaseEditor());
             DataEditor.AddEditor(new DataFolderEditor());
             DataEditor.AddEditor(new AnimDataEditor());
