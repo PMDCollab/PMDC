@@ -19,7 +19,7 @@ namespace RogueEssence.Dev
     {
         public override string GetString(FloorNameDropZoneStep obj, Type type, object[] attributes)
         {
-            return "Show Floor Name: " + obj.Name;
+            return String.Format("{0}: '{1}'", "Show Floor Name", obj.Name);
         }
     }
 }
