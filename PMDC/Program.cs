@@ -465,6 +465,7 @@ namespace PMDC
             DataEditor.AddEditor(new MapStatusEditor());
 
             DataEditor.AddEditor(new SaveVarsZoneStepEditor());
+            DataEditor.AddEditor(new FloorNameDropZoneStepEditor());
             DataEditor.AddEditor(new MoneySpawnZoneStepEditor());
             DataEditor.AddEditor(new SpreadPlanSpacedEditor());
             DataEditor.AddEditor(new SpreadPlanQuotaEditor());
