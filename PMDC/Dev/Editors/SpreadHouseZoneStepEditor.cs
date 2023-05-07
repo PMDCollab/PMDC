@@ -15,11 +15,22 @@ using PMDC.LevelGen;
 
 namespace RogueEssence.Dev
 {
-    public class FloorNameDropZoneStepEditor : Editor<FloorNameDropZoneStep>
+    public class SpreadHouseZoneStepEditor : Editor<SpreadHouseZoneStep>
     {
-        public override string GetString(FloorNameDropZoneStep obj, Type type, object[] attributes)
+        public override string GetString(SpreadHouseZoneStep obj, Type type, object[] attributes)
         {
-            return String.Format("{0}: '{1}'", "Show Floor Name", obj.Name);
+            string housePrefix = "";
+
+            if (obj.Mobs.Count > 0)
+            {
+                housePrefix = "Monster ";
+            }
+            else if (obj.Items.Count > 0)
+            {
+                housePrefix = "Item ";
+            }
+
+            return String.Format("Spread {0}Houses", housePrefix);
         }
     }
 }
