@@ -68,6 +68,23 @@ namespace PMDC.LevelGen
 
             if (!chokePoint)
                 return;
+            
+            //Monster halls will never spawn right where you start if no monster house entrances is set
+            if (DiagManager.Instance.CurSettings.NoMonsterHouseEntrances)
+            {
+                bool skipRoom = false;
+                foreach (MapGenEntrance entrance in map.GenEntrances)
+                {
+                    if (originPoint.Equals(entrance.Loc))
+                    {
+                        skipRoom = true;
+                        break;
+                    }
+                }
+
+                if (skipRoom)
+                    return;
+            }
 
             int stages = 4;
             Loc size = new Loc(Math.Max(Size.X, 1 + stages * 2), Math.Max(Size.Y, 1 + stages * 2));
@@ -305,6 +322,12 @@ namespace PMDC.LevelGen
                     }
                 }
 
+                //Make monster houses visible if set
+                if (DiagManager.Instance.CurSettings.VisibleMonsterHouses)
+                {
+                    if (map.RoomTerrain.TileEquivalent(map.GetTile(startLoc)))
+                    ((IPlaceableGenContext<EffectTile>)map).PlaceItem(startLoc,  new EffectTile("tile_warning", true));
+                }
 
                 MonsterHallMapEvent house = new MonsterHallMapEvent();
                 house.Phases.AddRange(housePhases);

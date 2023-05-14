@@ -114,9 +114,15 @@ namespace PMDC.LevelGen
 
             int randIndex = map.Rand.Next(freeTiles.Count);
             Loc loc = freeTiles[randIndex];
-
-
+            
             EffectTile spawnedChest = new EffectTile("chest_full", true);
+            
+            if (Ambush && DiagManager.Instance.CurSettings.VisibleMonsterHouses)
+            {
+                //Mark ambush chests if visible monster houses are set
+                spawnedChest = new EffectTile("chest_house_full", true);
+            }
+            
             spawnedChest.TileStates.Set(new UnlockState("key"));
 
             if (Ambush && MobThemes.CanPick)
@@ -129,7 +135,6 @@ namespace PMDC.LevelGen
                 //the mobs in this class are the ones that would be available when the game wants to spawn things outside of the floor's spawn list
                 //it will be queried for monsters that match the theme provided
                 List<MobSpawn> chosenMobs = chosenMobTheme.GenerateMobs(map, Mobs);
-
 
                 MobSpawnState mobSpawn = new MobSpawnState();
                 foreach (MobSpawn mob in chosenMobs)

@@ -4889,7 +4889,10 @@ namespace PMDC.Dungeon
             //open chest animation/sound
             Loc baseLoc = effectTile.TileLoc;
             {
+                Tile chest = ZoneManager.Instance.CurrentMap.Tiles[baseLoc.X][baseLoc.Y];
                 SingleEmitter emitter = new SingleEmitter(new AnimData("Chest_Open", 8));
+                if (chest.Effect.ID.Equals("chest_house_full"))
+                    emitter = new SingleEmitter(new AnimData("Chest_Red_Open", 8));
                 emitter.SetupEmit(baseLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), baseLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), Dir8.Down);
                 DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
             }
@@ -4914,7 +4917,10 @@ namespace PMDC.Dungeon
             //change the chest to open
             Tile tile = ZoneManager.Instance.CurrentMap.Tiles[baseLoc.X][baseLoc.Y];
             if (tile.Effect == owner)
-                tile.Effect = new EffectTile("chest_empty", true, tile.Effect.TileLoc);// magic number
+                if (tile.Effect.ID.Equals("chest_house_full"))
+                    tile.Effect = new EffectTile("chest_house_empty", true, tile.Effect.TileLoc);
+                else
+                    tile.Effect = new EffectTile("chest_empty", true, tile.Effect.TileLoc);// magic number
 
             //spawn the items
             Rect bounds = ((EffectTile)owner).TileStates.GetWithDefault<BoundsState>().Bounds;
