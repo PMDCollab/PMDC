@@ -15258,7 +15258,215 @@ namespace PMDC.Dungeon
     }
 
 
+     /**
+     * This event spawns a number of items from the source tile/object onto the tiles around it, like the ChestEvent
+     * item spawning.
+     */
+     [Serializable]
+    public class SpawnItemsBattleEvent : BattleEvent
+    {
+        public List<MapItem> Items;
+        
+        /**
+         * Max range/distance to spawn from the origin.
+         */
+        public int MaxRangeWidth;
+        /**
+         * Max range/distance to spawn from the origin.
+         */
+        public int MaxRangeHeight;
+        public SpawnItemsBattleEvent() { Items = new List<MapItem>();  }
+        
+        public SpawnItemsBattleEvent(List<MapItem> items, int maxRangeWidth, int maxRangeHeight) : this()
+        {
+            Items = items;
+            MaxRangeWidth = maxRangeWidth;
+            MaxRangeHeight = maxRangeHeight;
+        }
+        
+        protected SpawnItemsBattleEvent(SpawnItemsBattleEvent other) : this()
+        {
+            Items.AddRange(other.Items);
+            MaxRangeWidth = other.MaxRangeWidth;
+            MaxRangeHeight = other.MaxRangeHeight;
+        }
+        public override GameEvent Clone() { return new SpawnItemsBattleEvent(this); }
 
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            Loc baseLoc = context.TargetTile;
+            
+            //spawn the items
+            int locX = baseLoc.X;
+            int locY = baseLoc.Y;
+            int xWithBorders = MaxRangeWidth + 1;
+            int yWithBorders = MaxRangeHeight + 1;
+            Rect bounds = new Rect(locX - xWithBorders, locY - yWithBorders, (2 * xWithBorders) + 1, (2 * yWithBorders) + 1);
+            //find the open tiles to spawn in
+            List<Loc> freeTiles = Grid.FindTilesInBox(bounds.Start + new Loc(1), bounds.Size - new Loc(2),
+                (Loc testLoc) =>
+                {
+                    Tile testTile = ZoneManager.Instance.CurrentMap.GetTile(testLoc);
+                    if (testTile.Data.GetData().BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(testTile.Effect.ID))//hardcoded Walkable check
+                    {
+                        foreach (MapItem item in ZoneManager.Instance.CurrentMap.Items)
+                        {
+                            if (item.TileLoc == testLoc)
+                                return false;
+                        }
+                        return true;
+                    }
+                    return false;
+                });
+
+            yield return new WaitForFrames(30);
+
+            int waitTime = GameManager.Instance.ModifyBattleSpeed(ItemAnim.ITEM_ACTION_TIME);
+            
+            List<MapItem> spawnItems = new List<MapItem>();
+            //spawn their animations
+            for (int ii = 0; ii < Items.Count; ii++)
+            {
+                if (freeTiles.Count == 0)
+                    break;
+
+                MapItem item = new MapItem(Items[ii]);
+                int randIndex = DataManager.Instance.Save.Rand.Next(freeTiles.Count);
+                Loc itemTargetLoc = freeTiles[randIndex];
+                item.TileLoc = ZoneManager.Instance.CurrentMap.WrapLoc(itemTargetLoc);
+                spawnItems.Add(item);
+                freeTiles.RemoveAt(randIndex);
+                //start the animations
+                //NOTE: the animation is a little funky here for wrapped maps
+                ItemAnim itemAnim = new ItemAnim(baseLoc * GraphicsManager.TileSize, itemTargetLoc * GraphicsManager.TileSize, item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, Math.Max(0, waitTime));
+                DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
+            }
+
+            if (waitTime > 0)
+                yield return new WaitForFrames(waitTime);
+            
+            //place the actual items
+            for (int ii = 0; ii < spawnItems.Count; ii++)
+                ZoneManager.Instance.CurrentMap.Items.Add(spawnItems[ii]);
+
+            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(60));
+            
+            ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
+        }
+
+    }
+    
+       /**
+     * This event spawns a number of enemy mobs from the source tile/object onto the tiles around it, like the ChestEvent
+     * item spawning.
+     */
+     [Serializable]
+    public class SpawnEnemiesBattleEvent : BattleEvent
+    {
+        public List<MobSpawn> Enemies;
+        
+        /**
+         * Max range/distance to spawn from the origin.
+         */
+        public int MaxRangeWidth;
+        /**
+         * Max range/distance to spawn from the origin.
+         */
+        public int MaxRangeHeight;
+        public SpawnEnemiesBattleEvent() { Enemies = new List<MobSpawn>(); }
+        public SpawnEnemiesBattleEvent(List<MobSpawn> enemies, int maxRangeWidth, int maxRangeHeight) : this()
+        {
+            Enemies = enemies;
+            MaxRangeWidth = maxRangeWidth;
+            MaxRangeHeight = maxRangeHeight;
+        }
+        
+        protected SpawnEnemiesBattleEvent(SpawnEnemiesBattleEvent other) : this()
+        {
+            Enemies.AddRange(other.Enemies);
+            MaxRangeWidth = other.MaxRangeWidth;
+            MaxRangeHeight = other.MaxRangeHeight;
+        }
+        public override GameEvent Clone() { return new SpawnEnemiesBattleEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            Loc baseLoc = context.TargetTile;
+            
+            int locX = baseLoc.X;
+            int locY = baseLoc.Y;
+            int xWithBorders = MaxRangeWidth + 1;
+            int yWithBorders = MaxRangeHeight + 1;
+            Rect bounds = new Rect(locX - xWithBorders, locY - yWithBorders, (2 * xWithBorders) + 1, (2 * yWithBorders) + 1);
+            //find the open tiles to spawn in
+            List<Loc> freeTiles = Grid.FindTilesInBox(bounds.Start + new Loc(1), bounds.Size - new Loc(2),
+                (Loc testLoc) =>
+                {
+                    Tile testTile = ZoneManager.Instance.CurrentMap.GetTile(testLoc);
+                    if (testTile.Data.GetData().BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(testTile.Effect.ID))//hardcoded Walkable check
+                    {
+                        foreach (MapItem item in ZoneManager.Instance.CurrentMap.Items)
+                        {
+                            if (item.TileLoc == testLoc)
+                                return false;
+                        }
+                        return true;
+                    }
+                    return false;
+                });
+
+            yield return new WaitForFrames(30);
+            
+            //spawn in mobs
+            List<Character> respawns = new List<Character>();
+            for (int ii = 0; ii < Enemies.Count; ii++)
+            {
+                if (freeTiles.Count == 0)
+                    break;
+
+                MonsterTeam team = new MonsterTeam();
+                Character mob = Enemies[ii].Spawn(team, ZoneManager.Instance.CurrentMap);
+                int randIndex = DataManager.Instance.Save.Rand.Next(freeTiles.Count);
+                mob.CharLoc = freeTiles[randIndex];
+                ZoneManager.Instance.CurrentMap.MapTeams.Add(team);
+                mob.RefreshTraits();
+
+                CharAnimDrop dropAnim = new CharAnimDrop();
+                dropAnim.CharLoc = mob.CharLoc;
+                dropAnim.CharDir = mob.CharDir;
+                yield return CoroutineManager.Instance.StartCoroutine(mob.StartAnim(dropAnim));
+                freeTiles.RemoveAt(randIndex);
+
+                mob.Tactic.Initialize(mob);
+
+                respawns.Add(mob);
+                if (ii % Math.Max(1, Enemies.Count / 5) == 0)
+                    yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(10));
+            }
+
+            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
+
+
+            //trigger their map entry methods
+            foreach (Character respawn in respawns)
+            {
+                if (!respawn.Dead)
+                {
+                    yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.SpecialIntro(respawn));
+
+                    yield return CoroutineManager.Instance.StartCoroutine(respawn.OnMapStart());
+
+                    ZoneManager.Instance.CurrentMap.UpdateExploration(respawn);
+                }
+            }
+
+            //force everyone to skip their turn
+            ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
+
+            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(60));
+        }
+
+    }
 
 
     [Serializable]
