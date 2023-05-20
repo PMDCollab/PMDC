@@ -5077,7 +5077,7 @@ namespace PMDC.Dungeon
 
     }
     
-       /**
+     /**
      * This event spawns a number of enemy mobs from the source tile/object onto the tiles around it, like the ChestEvent
      * item spawning.
      */
@@ -5177,6 +5177,29 @@ namespace PMDC.Dungeon
         }
 
     }
+
+     /**
+     * This event transforms a specific tile into another tile.
+     */
+     [Serializable]
+     public class TransformTileEvent : SingleCharEvent
+     {
+         public EffectTile TileToTransformInto;
+         public TransformTileEvent() { }
+         public override GameEvent Clone() { return new TransformTileEvent(); }
+
+         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar,SingleCharContext context)
+         {
+             EffectTile effectTile = (EffectTile)owner;
+             Loc baseLoc = effectTile.TileLoc;
+             Tile tile = ZoneManager.Instance.CurrentMap.Tiles[baseLoc.X][baseLoc.Y];
+             if (tile.Effect == owner)
+                 tile.Effect = new EffectTile(TileToTransformInto.ID, true, tile.Effect.TileLoc);// magic number
+             
+             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(20));
+         }
+
+     }
     
 
     [Serializable]
