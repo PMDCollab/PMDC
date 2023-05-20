@@ -5070,7 +5070,7 @@ namespace PMDC.Dungeon
             for (int ii = 0; ii < spawnItems.Count; ii++)
                 ZoneManager.Instance.CurrentMap.Items.Add(spawnItems[ii]);
 
-            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(60));
+            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(10));
             
             ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
         }
@@ -5154,7 +5154,7 @@ namespace PMDC.Dungeon
                     yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(10));
             }
 
-            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
+            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(10));
 
 
             //trigger their map entry methods
@@ -5173,7 +5173,7 @@ namespace PMDC.Dungeon
             //force everyone to skip their turn
             ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
 
-            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(60));
+            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(10));
         }
 
     }
@@ -5196,7 +5196,7 @@ namespace PMDC.Dungeon
              if (tile.Effect == owner)
                  tile.Effect = new EffectTile(TileToTransformInto.ID, true, tile.Effect.TileLoc);// magic number
              
-             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(20));
+             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(10));
          }
 
      }
