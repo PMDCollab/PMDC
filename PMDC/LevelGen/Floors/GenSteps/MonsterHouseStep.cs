@@ -47,7 +47,7 @@ namespace PMDC.LevelGen
             for(int ii = 0; ii < map.RoomPlan.RoomCount; ii++)
             {
                 //Monster houses will never spawn in the starting room if no monster house entrances is set
-                if (DiagManager.Instance.CurSettings.NoMonsterHouseEntrances)
+                if (GameManager.Instance.NoMonsterHouseEntrances)
                 {
                     Rect curRoom = map.RoomPlan.GetRoom(ii).Draw;
                     bool skipRoom = false;
@@ -163,7 +163,7 @@ namespace PMDC.LevelGen
                 MonsterHouseMapEvent house = new MonsterHouseMapEvent();
                 house.Bounds = room.Draw;
 
-                if (DiagManager.Instance.CurSettings.VisibleMonsterHouses)
+                if (GameManager.Instance.MonsterHouseWarningTile != null)
                 {
                     //Make monster houses visible if set
                     for (int xx = house.Bounds.X; xx < house.Bounds.X + house.Bounds.Size.X; xx++)
@@ -172,7 +172,7 @@ namespace PMDC.LevelGen
                         {
                             Loc loc = new Loc(xx, yy);
                             if (map.RoomTerrain.TileEquivalent(map.GetTile(loc)))
-                                ((IPlaceableGenContext<EffectTile>)map).PlaceItem(loc,  new EffectTile("tile_warning", true));
+                                ((IPlaceableGenContext<EffectTile>)map).PlaceItem(loc,  new EffectTile(GameManager.Instance.MonsterHouseWarningTile, true));
                         }
                     }
                 }

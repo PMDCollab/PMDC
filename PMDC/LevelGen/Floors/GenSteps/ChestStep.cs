@@ -117,10 +117,10 @@ namespace PMDC.LevelGen
             
             EffectTile spawnedChest = new EffectTile("chest_full", true);
             
-            if (Ambush && DiagManager.Instance.CurSettings.VisibleMonsterHouses)
+            if (Ambush && GameManager.Instance.ChestAmbushWarningTile != null)
             {
                 //Mark ambush chests if visible monster houses are set
-                spawnedChest = new EffectTile("chest_house_full", true);
+                spawnedChest = new EffectTile(GameManager.Instance.ChestAmbushWarningTile, true);
             }
             
             spawnedChest.TileStates.Set(new UnlockState("key"));
