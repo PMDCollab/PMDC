@@ -15319,8 +15319,6 @@ namespace PMDC.Dungeon
                     return false;
                 });
 
-            yield return new WaitForFrames(10);
-
             int waitTime = GameManager.Instance.ModifyBattleSpeed(ItemAnim.ITEM_ACTION_TIME);
             
             List<MapItem> spawnItems = new List<MapItem>();
@@ -15349,7 +15347,7 @@ namespace PMDC.Dungeon
             for (int ii = 0; ii < spawnItems.Count; ii++)
                 ZoneManager.Instance.CurrentMap.Items.Add(spawnItems[ii]);
 
-            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(10));
+            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(0));
             
             ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
         }
@@ -15405,6 +15403,11 @@ namespace PMDC.Dungeon
                     Tile testTile = ZoneManager.Instance.CurrentMap.GetTile(testLoc);
                     if (testTile != null && !ZoneManager.Instance.CurrentMap.TileBlocked(testLoc) && testTile.Data.GetData().BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(testTile.Effect.ID))//hardcoded Walkable check
                     {
+                        foreach (Character chara in ZoneManager.Instance.CurrentMap.ActiveTeam.EnumerateChars())
+                        {
+                            if (chara.CharLoc == testLoc)
+                                return false;
+                        }
                         foreach (Team team in ZoneManager.Instance.CurrentMap.AllyTeams)
                         {
                             foreach (Character chara in team.EnumerateChars())
@@ -15425,8 +15428,6 @@ namespace PMDC.Dungeon
                     }
                     return false;
                 });
-
-            yield return new WaitForFrames(10);
             
             //spawn in mobs
             List<Character> respawns = new List<Character>();
@@ -15455,8 +15456,6 @@ namespace PMDC.Dungeon
                     yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(10));
             }
 
-            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
-
 
             //trigger their map entry methods
             foreach (Character respawn in respawns)
@@ -15474,7 +15473,7 @@ namespace PMDC.Dungeon
             //force everyone to skip their turn
             ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
 
-            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(10));
+            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(0));
         }
 
     }
@@ -15547,8 +15546,6 @@ namespace PMDC.Dungeon
                     return false;
                 });
 
-            yield return new WaitForFrames(10);
-
             int waitTime = GameManager.Instance.ModifyBattleSpeed(ItemAnim.ITEM_ACTION_TIME);
             
             List<MapItem> spawnItems = new List<MapItem>();
@@ -15579,7 +15576,7 @@ namespace PMDC.Dungeon
             for (int ii = 0; ii < spawnItems.Count; ii++)
                 ZoneManager.Instance.CurrentMap.Items.Add(spawnItems[ii]);
 
-            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(10));
+            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(0));
             
             ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
         }
@@ -15642,6 +15639,11 @@ namespace PMDC.Dungeon
                     Tile testTile = ZoneManager.Instance.CurrentMap.GetTile(testLoc);
                     if (testTile != null && !ZoneManager.Instance.CurrentMap.TileBlocked(testLoc) && testTile.Data.GetData().BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(testTile.Effect.ID))//hardcoded Walkable check
                     {
+                        foreach (Character chara in ZoneManager.Instance.CurrentMap.ActiveTeam.EnumerateChars())
+                        {
+                            if (chara.CharLoc == testLoc)
+                                return false;
+                        }
                         foreach (Team team in ZoneManager.Instance.CurrentMap.AllyTeams)
                         {
                             foreach (Character chara in team.EnumerateChars())
@@ -15663,8 +15665,6 @@ namespace PMDC.Dungeon
                     }
                     return false;
                 });
-
-            yield return new WaitForFrames(10);
             
             //spawn in mobs
             List<Character> respawns = new List<Character>();
@@ -15695,8 +15695,6 @@ namespace PMDC.Dungeon
                     yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(10));
             }
 
-            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(10));
-
 
             //trigger their map entry methods
             foreach (Character respawn in respawns)
@@ -15714,7 +15712,7 @@ namespace PMDC.Dungeon
             //force everyone to skip their turn
             ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
 
-            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(10));
+            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(0));
         }
 
     }
