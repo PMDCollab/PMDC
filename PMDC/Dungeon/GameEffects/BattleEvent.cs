@@ -15333,7 +15333,7 @@ namespace PMDC.Dungeon
                 MapItem item = new MapItem(Items[ii]);
                 int randIndex = DataManager.Instance.Save.Rand.Next(freeTiles.Count);
                 Loc itemTargetLoc = freeTiles[randIndex];
-                item.TileLoc = ZoneManager.Instance.CurrentMap.WrapLoc(itemTargetLoc);
+                item.TileLoc = itemTargetLoc;
                 spawnItems.Add(item);
                 freeTiles.RemoveAt(randIndex);
                 //start the animations
@@ -15563,7 +15563,7 @@ namespace PMDC.Dungeon
                 MapItem item = Items.GetSpawn(spawnIndex);
                 int randIndex = DataManager.Instance.Save.Rand.Next(freeTiles.Count);
                 Loc itemTargetLoc = freeTiles[randIndex];
-                item.TileLoc = ZoneManager.Instance.CurrentMap.WrapLoc(itemTargetLoc);
+                item.TileLoc = itemTargetLoc;
                 spawnItems.Add(item);
                 freeTiles.RemoveAt(randIndex);
                 //start the animations
