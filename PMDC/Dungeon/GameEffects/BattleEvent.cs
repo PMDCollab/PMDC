@@ -15560,7 +15560,7 @@ namespace PMDC.Dungeon
                     break;
 
                 int spawnIndex = Items.PickIndex(ZoneManager.Instance.CurrentMap.Rand);
-                MapItem item = Items.GetSpawn(spawnIndex);
+                MapItem item = new MapItem(Items.GetSpawn(spawnIndex));
                 int randIndex = DataManager.Instance.Save.Rand.Next(freeTiles.Count);
                 Loc itemTargetLoc = freeTiles[randIndex];
                 item.TileLoc = ZoneManager.Instance.CurrentMap.WrapLoc(itemTargetLoc);
