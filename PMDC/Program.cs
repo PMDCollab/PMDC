@@ -17,6 +17,7 @@ using SDL2;
 using RogueElements;
 using System.IO;
 using System.Collections.Generic;
+using RogueEssence.LevelGen;
 #endregion
 
 namespace PMDC
@@ -464,11 +465,18 @@ namespace PMDC
             DataEditor.AddEditor(new StatusEffectEditor());
             DataEditor.AddEditor(new MapStatusEditor());
 
+            DataEditor.AddEditor(new SaveVarsZoneStepEditor());
+            DataEditor.AddEditor(new FloorNameDropZoneStepEditor());
             DataEditor.AddEditor(new MoneySpawnZoneStepEditor());
+            DataEditor.AddEditor(new SpreadHouseZoneStepEditor());
+            DataEditor.AddEditor(new SpreadVaultZoneStepEditor());
             DataEditor.AddEditor(new SpreadPlanSpacedEditor());
             DataEditor.AddEditor(new SpreadPlanQuotaEditor());
             DataEditor.AddEditor(new SpreadPlanBaseEditor());
 
+            DataEditor.AddEditor(new ItemSpawnZoneStepEditor());
+            DataEditor.AddEditor(new TeamSpawnZoneStepEditor());
+            DataEditor.AddEditor(new TileSpawnZoneStepEditor());
             DataEditor.AddEditor(new AutoTileBaseEditor());
             DataEditor.AddEditor(new DataFolderEditor());
             DataEditor.AddEditor(new AnimDataEditor());
