@@ -29,6 +29,7 @@ namespace PMDC.LevelGen
         /// The items that can be sold in the shop.
         /// This is filtered by Item Themes when generating.
         /// </summary>
+        [MapItemAttribute(1, true)]
         public SpawnList<MapItem> Items { get; set; }
 
         /// <summary>
