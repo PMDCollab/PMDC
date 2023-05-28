@@ -23,14 +23,14 @@ namespace RogueEssence.Dev
 
             if (obj.Mobs.Count > 0)
             {
-                housePrefix = "Monster ";
+                housePrefix = "Monster";
             }
             else if (obj.Items.Count > 0)
             {
-                housePrefix = "Item ";
+                housePrefix = "Item";
             }
 
-            return String.Format("Spread {0}Houses", housePrefix);
+            return String.Format("Spread {0} Houses", housePrefix);
         }
     }
 }
