@@ -87,6 +87,15 @@ namespace PMDC.LevelGen
                 if (skipRoom)
                     return;
             }
+            
+            //Prevents monster halls on tiles such as foliage that block light
+            if (mhtable != null && mhtable.NoMonsterHallOnBlockLightTiles)
+            {
+                if (map.Map.GetTile(originPoint) != null && map.Map.GetTile(originPoint).Data.GetData() != null && map.Map.GetTile(originPoint).Data.GetData().BlockLight)
+                {
+                    return;
+                }
+            }
 
             int stages = 4;
             Loc size = new Loc(Math.Max(Size.X, 1 + stages * 2), Math.Max(Size.Y, 1 + stages * 2));

@@ -243,6 +243,11 @@ namespace PMDC.Dungeon
         public string ChestAmbushWarningTile;
 
         /// <summary>
+        /// If this is set to true, monster halls will never appear on tiles where you can't see the warning tile
+        /// </summary>
+        public bool NoMonsterHallOnBlockLightTiles;
+        
+        /// <summary>
         /// If this is set to true, you will not be able to spawn into a monster house upon entering a floor.
         /// </summary>
         public bool NoMonsterHouseEntrances;
@@ -251,13 +256,15 @@ namespace PMDC.Dungeon
         {
             MonsterHouseWarningTile = null;
             ChestAmbushWarningTile = null;
+            NoMonsterHallOnBlockLightTiles = false;
             NoMonsterHouseEntrances = false;
         }
 
-        public MonsterHouseTableState(string monsterHouseWarningTile, string chestAmbushWarningTile, bool noMonsterHouseEntrances)
+        public MonsterHouseTableState(string monsterHouseWarningTile, string chestAmbushWarningTile, bool noMonsterHallOnBlockLightTiles, bool noMonsterHouseEntrances)
         {
             MonsterHouseWarningTile = monsterHouseWarningTile; 
             ChestAmbushWarningTile = chestAmbushWarningTile; 
+            NoMonsterHallOnBlockLightTiles = noMonsterHallOnBlockLightTiles;
             NoMonsterHouseEntrances = noMonsterHouseEntrances;
         }
         protected MonsterHouseTableState(MonsterHouseTableState other)
@@ -265,6 +272,7 @@ namespace PMDC.Dungeon
             MonsterHouseWarningTile = other.MonsterHouseWarningTile;
             ChestAmbushWarningTile = other.ChestAmbushWarningTile;
             NoMonsterHouseEntrances = other.NoMonsterHouseEntrances;
+            NoMonsterHallOnBlockLightTiles = other.NoMonsterHallOnBlockLightTiles;
         }
         public override GameplayState Clone() { return new MonsterHouseTableState(this); }
     }
