@@ -4,6 +4,7 @@ using RogueElements;
 using RogueEssence.Dungeon;
 using PMDC.Dungeon;
 using RogueEssence;
+using RogueEssence.Data;
 using RogueEssence.LevelGen;
 
 namespace PMDC.LevelGen
@@ -116,11 +117,12 @@ namespace PMDC.LevelGen
             Loc loc = freeTiles[randIndex];
             
             EffectTile spawnedChest = new EffectTile("chest_full", true);
-            
-            if (Ambush && GameManager.Instance.ChestAmbushWarningTile != null)
+
+            MonsterHouseTableState mhtable = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<MonsterHouseTableState>();
+            if (mhtable != null && mhtable.ChestAmbushWarningTile != null && Ambush)
             {
                 //Mark ambush chests if visible monster houses are set
-                spawnedChest = new EffectTile(GameManager.Instance.ChestAmbushWarningTile, true);
+                spawnedChest = new EffectTile(mhtable.ChestAmbushWarningTile, true);
             }
             
             spawnedChest.TileStates.Set(new UnlockState("key"));

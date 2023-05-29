@@ -70,7 +70,9 @@ namespace PMDC.LevelGen
                 return;
             
             //Monster halls will never spawn right where you start if no monster house entrances is set
-            if (GameManager.Instance.NoMonsterHouseEntrances)
+            MonsterHouseTableState mhtable = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<MonsterHouseTableState>();
+
+            if (mhtable != null && mhtable.NoMonsterHouseEntrances)
             {
                 bool skipRoom = false;
                 foreach (MapGenEntrance entrance in map.GenEntrances)
@@ -323,10 +325,12 @@ namespace PMDC.LevelGen
                 }
 
                 //Make monster houses visible if set
-                if (GameManager.Instance.MonsterHouseWarningTile != null)
+                MonsterHouseTableState mhtable = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<MonsterHouseTableState>();
+
+                if (mhtable != null && mhtable.MonsterHouseWarningTile != null)
                 {
                     if (map.RoomTerrain.TileEquivalent(map.GetTile(startLoc)))
-                    ((IPlaceableGenContext<EffectTile>)map).PlaceItem(startLoc,  new EffectTile(GameManager.Instance.MonsterHouseWarningTile, true));
+                    ((IPlaceableGenContext<EffectTile>)map).PlaceItem(startLoc,  new EffectTile(mhtable.MonsterHouseWarningTile, true));
                 }
 
                 MonsterHallMapEvent house = new MonsterHallMapEvent();
