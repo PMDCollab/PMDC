@@ -15258,9 +15258,6 @@ namespace PMDC.Dungeon
     }
 
 
-
-
-
     [Serializable]
     public abstract class ShareEquipBattleEvent : BattleEvent
     {
