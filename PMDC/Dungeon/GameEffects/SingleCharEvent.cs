@@ -4991,22 +4991,23 @@ namespace PMDC.Dungeon
 
     }
     
-    /**
-     * This event spawns a number of items from the source tile/object onto the tiles around it, like the ChestEvent
-     * item spawning.
-     */
+    /// <summary>
+    /// This event spawns a number of items from the source tile/object onto the tiles around it, like the ChestEvent
+    /// item spawning.
+    /// </summary>
      [Serializable]
     public class SpawnItemsEvent : SingleCharEvent
     {
         public List<MapItem> Items;
         
-        /**
-         * Max range/distance to spawn from the origin.
-         */
+        /// <summary>
+        /// Max range/distance to spawn from the origin.
+        /// </summary>
         public int MaxRangeWidth;
-        /**
-         * Max range/distance to spawn from the origin.
-         */
+        
+        /// <summary>
+        /// Max range/distance to spawn from the origin.
+        /// </summary>
         public int MaxRangeHeight;
         public SpawnItemsEvent() { }
         public override GameEvent Clone() { return new SpawnItemsEvent(); }
@@ -5075,22 +5076,22 @@ namespace PMDC.Dungeon
 
     }
     
-     /**
-     * This event spawns a number of enemy mobs from the source tile/object onto the tiles around it, like the ChestEvent
-     * item spawning.
-     */
+    /// <summary>
+    /// This event spawns a number of enemy mobs from the source tile/object onto the tiles around it, like the ChestEvent
+    /// item spawning.
+    /// </summary>
      [Serializable]
     public class SpawnEnemiesEvent : SingleCharEvent
     {
         public List<MobSpawn> Enemies;
         
-        /**
-         * Max range/distance to spawn from the origin.
-         */
+        /// <summary>
+        /// Max range/distance to spawn from the origin.
+        /// </summary>
         public int MaxRangeWidth;
-        /**
-         * Max range/distance to spawn from the origin.
-         */
+        /// <summary>
+        /// Max range/distance to spawn from the origin.
+        /// </summary>
         public int MaxRangeHeight;
         public SpawnEnemiesEvent() { }
         public override GameEvent Clone() { return new SpawnEnemiesEvent(); }
@@ -5188,10 +5189,10 @@ namespace PMDC.Dungeon
 
     }
      
-     /**
-     * This event spawns a number of items from the source tile/object onto the tiles around it, like the ChestEvent
-     * item spawning.  It picks the data randomly from a spawn list.
-     */
+     /// <summary>
+     /// This event spawns a number of items from the source tile/object onto the tiles around it, like the ChestEvent
+     /// item spawning.  It picks the data randomly from a spawn list.
+     /// </summary>
      [Serializable]
     public class SpawnRandomItemsEvent : SingleCharEvent
     {
@@ -5200,13 +5201,14 @@ namespace PMDC.Dungeon
         public int MinAmount;
         public int MaxAmount;
         
-        /**
-         * Max range/distance to spawn from the origin.
-         */
+        /// <summary>
+        /// Max range/distance to spawn from the origin.
+        /// </summary>
         public int MaxRangeWidth;
-        /**
-         * Max range/distance to spawn from the origin.
-         */
+        
+        /// <summary>
+        /// Max range/distance to spawn from the origin.
+        /// </summary>
         public int MaxRangeHeight;
         public SpawnRandomItemsEvent() { }
         public override GameEvent Clone() { return new SpawnItemsEvent(); }
@@ -5277,10 +5279,10 @@ namespace PMDC.Dungeon
 
     }
     
-     /**
-     * This event spawns a number of enemy mobs from the source tile/object onto the tiles around it, like the ChestEvent
-     * item spawning.  It picks the data randomly from a spawn list.
-     */
+     /// <summary>
+     /// This event spawns a number of enemy mobs from the source tile/object onto the tiles around it, like the ChestEvent
+     /// item spawning.  It picks the data randomly from a spawn list.
+     /// </summary>
      [Serializable]
     public class SpawnRandomEnemiesEvent : SingleCharEvent
     {
@@ -5288,13 +5290,13 @@ namespace PMDC.Dungeon
         public int MinAmount;
         public int MaxAmount;
         
-        /**
-         * Max range/distance to spawn from the origin.
-         */
+        /// <summary>
+        /// Max range/distance to spawn from the origin.
+        /// </summary>
         public int MaxRangeWidth;
-        /**
-         * Max range/distance to spawn from the origin.
-         */
+        /// <summary>
+        /// Max range/distance to spawn from the origin.
+        /// </summary>
         public int MaxRangeHeight;
         public SpawnRandomEnemiesEvent() { }
         public override GameEvent Clone() { return new SpawnEnemiesEvent(); }
@@ -5395,9 +5397,9 @@ namespace PMDC.Dungeon
 
     }
 
-     /**
-     * This event transforms a specific tile into another tile.
-     */
+     /// <summary>
+     /// This event transforms a specific tile into another tile.
+     /// </summary>
      [Serializable]
      public class TransformTileEvent : SingleCharEvent
      {
