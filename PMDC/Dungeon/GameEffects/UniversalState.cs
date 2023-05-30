@@ -227,4 +227,53 @@ namespace PMDC.Dungeon
         }
     }
 
+    [Serializable]
+    public class MonsterHouseTableState : UniversalState
+    {
+        /// <summary>
+        /// If this is set, this tile will be used to display a warning for monster houses.
+        /// </summary>
+        [DataType(0, DataManager.DataType.Tile, false)]
+        public string MonsterHouseWarningTile;
+        
+        /// <summary>
+        /// If this is set, this tile will be used to replace the chest in a chest ambush.
+        /// </summary>
+        [DataType(0, DataManager.DataType.Tile, false)]
+        public string ChestAmbushWarningTile;
+
+        /// <summary>
+        /// If this is set to true, monster halls will never appear on tiles where you can't see the warning tile
+        /// </summary>
+        public bool NoMonsterHallOnBlockLightTiles;
+        
+        /// <summary>
+        /// If this is set to true, you will not be able to spawn into a monster house upon entering a floor.
+        /// </summary>
+        public bool NoMonsterHouseEntrances;
+
+        public MonsterHouseTableState()
+        {
+            MonsterHouseWarningTile = null;
+            ChestAmbushWarningTile = null;
+            NoMonsterHallOnBlockLightTiles = false;
+            NoMonsterHouseEntrances = false;
+        }
+
+        public MonsterHouseTableState(string monsterHouseWarningTile, string chestAmbushWarningTile, bool noMonsterHallOnBlockLightTiles, bool noMonsterHouseEntrances)
+        {
+            MonsterHouseWarningTile = monsterHouseWarningTile; 
+            ChestAmbushWarningTile = chestAmbushWarningTile; 
+            NoMonsterHallOnBlockLightTiles = noMonsterHallOnBlockLightTiles;
+            NoMonsterHouseEntrances = noMonsterHouseEntrances;
+        }
+        protected MonsterHouseTableState(MonsterHouseTableState other)
+        {
+            MonsterHouseWarningTile = other.MonsterHouseWarningTile;
+            ChestAmbushWarningTile = other.ChestAmbushWarningTile;
+            NoMonsterHouseEntrances = other.NoMonsterHouseEntrances;
+            NoMonsterHallOnBlockLightTiles = other.NoMonsterHallOnBlockLightTiles;
+        }
+        public override GameplayState Clone() { return new MonsterHouseTableState(this); }
+    }
 }

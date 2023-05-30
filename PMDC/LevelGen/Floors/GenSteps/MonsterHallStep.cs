@@ -68,6 +68,34 @@ namespace PMDC.LevelGen
 
             if (!chokePoint)
                 return;
+            
+            //Monster halls will never spawn right where you start if no monster house entrances is set
+            MonsterHouseTableState mhtable = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<MonsterHouseTableState>();
+
+            if (mhtable != null && mhtable.NoMonsterHouseEntrances)
+            {
+                bool skipRoom = false;
+                foreach (MapGenEntrance entrance in map.GenEntrances)
+                {
+                    if (originPoint.Equals(entrance.Loc))
+                    {
+                        skipRoom = true;
+                        break;
+                    }
+                }
+
+                if (skipRoom)
+                    return;
+            }
+            
+            //Prevents monster halls on tiles such as foliage that block light
+            if (mhtable != null && mhtable.NoMonsterHallOnBlockLightTiles)
+            {
+                if (map.Map.GetTile(originPoint) != null && map.Map.GetTile(originPoint).Data.GetData() != null && map.Map.GetTile(originPoint).Data.GetData().BlockLight)
+                {
+                    return;
+                }
+            }
 
             int stages = 4;
             Loc size = new Loc(Math.Max(Size.X, 1 + stages * 2), Math.Max(Size.Y, 1 + stages * 2));
@@ -305,6 +333,14 @@ namespace PMDC.LevelGen
                     }
                 }
 
+                //Make monster houses visible if set
+                MonsterHouseTableState mhtable = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<MonsterHouseTableState>();
+
+                if (mhtable != null && mhtable.MonsterHouseWarningTile != null)
+                {
+                    if (map.RoomTerrain.TileEquivalent(map.GetTile(startLoc)))
+                    ((IPlaceableGenContext<EffectTile>)map).PlaceItem(startLoc,  new EffectTile(mhtable.MonsterHouseWarningTile, true));
+                }
 
                 MonsterHallMapEvent house = new MonsterHallMapEvent();
                 house.Phases.AddRange(housePhases);

@@ -4874,7 +4874,22 @@ namespace PMDC.Dungeon
     [Serializable]
     public class ChestEvent : SingleCharEvent
     {
-        public ChestEvent() { }
+        /// <summary>
+        /// The animation to play when the chest opens.
+        /// Defaults to Chest_Open.
+        /// </summary>
+        public AnimData ChestAnimation;
+
+        /// <summary>
+        /// The empty chest tile to spawn after the chest is opened.
+        /// Defaults to chest_empty.
+        /// </summary>
+        [DataType(0, DataManager.DataType.Tile, true)]
+        public string ChestEmptyTile;
+
+        public ChestEvent()
+        {
+        }
         public override GameEvent Clone() { return new ChestEvent(); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
@@ -4889,7 +4904,8 @@ namespace PMDC.Dungeon
             //open chest animation/sound
             Loc baseLoc = effectTile.TileLoc;
             {
-                SingleEmitter emitter = new SingleEmitter(new AnimData("Chest_Open", 8));
+                Tile chest = ZoneManager.Instance.CurrentMap.Tiles[baseLoc.X][baseLoc.Y];
+                SingleEmitter emitter = new SingleEmitter(ChestAnimation);
                 emitter.SetupEmit(baseLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), baseLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), Dir8.Down);
                 DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
             }
@@ -4914,7 +4930,7 @@ namespace PMDC.Dungeon
             //change the chest to open
             Tile tile = ZoneManager.Instance.CurrentMap.Tiles[baseLoc.X][baseLoc.Y];
             if (tile.Effect == owner)
-                tile.Effect = new EffectTile("chest_empty", true, tile.Effect.TileLoc);// magic number
+                tile.Effect = new EffectTile(ChestEmptyTile, true, tile.Effect.TileLoc);// magic number
 
             //spawn the items
             Rect bounds = ((EffectTile)owner).TileStates.GetWithDefault<BoundsState>().Bounds;

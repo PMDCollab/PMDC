@@ -46,6 +46,26 @@ namespace PMDC.LevelGen
             List<int> possibleRooms = new List<int>();
             for(int ii = 0; ii < map.RoomPlan.RoomCount; ii++)
             {
+                //Monster houses will never spawn in the starting room if no monster house entrances is set
+                MonsterHouseTableState mhtable = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<MonsterHouseTableState>();
+
+                if (mhtable != null && mhtable.NoMonsterHouseEntrances)
+                {
+                    Rect curRoom = map.RoomPlan.GetRoom(ii).Draw;
+                    bool skipRoom = false;
+                    foreach (MapGenEntrance entrance in map.GenEntrances)
+                    {
+                        if (curRoom.Contains(entrance.Loc))
+                        {
+                            skipRoom = true;
+                            break;
+                        }
+                    }
+
+                    if (skipRoom)
+                        continue;
+                }
+                
                 if (!BaseRoomFilter.PassesAllFilters(map.RoomPlan.GetRoomPlan(ii), this.Filters))
                     continue;
                 possibleRooms.Add(ii);
@@ -144,6 +164,22 @@ namespace PMDC.LevelGen
             {
                 MonsterHouseMapEvent house = new MonsterHouseMapEvent();
                 house.Bounds = room.Draw;
+                
+                MonsterHouseTableState mhtable = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<MonsterHouseTableState>();
+                if (mhtable != null && mhtable.MonsterHouseWarningTile != null)
+                {
+                    //Make monster houses visible if set
+                    for (int xx = house.Bounds.X; xx < house.Bounds.X + house.Bounds.Size.X; xx++)
+                    {
+                        for (int yy = house.Bounds.Y; yy < house.Bounds.Y + house.Bounds.Size.Y; yy++)
+                        {
+                            Loc loc = new Loc(xx, yy);
+                            if (map.RoomTerrain.TileEquivalent(map.GetTile(loc)))
+                                ((IPlaceableGenContext<EffectTile>)map).PlaceItem(loc,  new EffectTile(mhtable.MonsterHouseWarningTile, true));
+                        }
+                    }
+                }
+                
                 foreach (MobSpawn mob in chosenMobs)
                 {
                     MobSpawn copyMob = mob.Copy();
