@@ -4881,8 +4881,8 @@ namespace PMDC.Dungeon
         public AnimData ChestAnimation;
 
         /// <summary>
-        /// The empty chest tile to spawn.
-        /// Defaults to chest_house_empty.
+        /// The empty chest tile to spawn after the chest is opened.
+        /// Defaults to chest_empty.
         /// </summary>
         [DataType(0, DataManager.DataType.Tile, true)]
         public string ChestEmptyTile;
