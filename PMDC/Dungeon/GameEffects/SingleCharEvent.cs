@@ -4521,7 +4521,7 @@ namespace PMDC.Dungeon
                 Tile tile = ZoneManager.Instance.CurrentMap.Tiles[loc.X][loc.Y];
                 tile.Effect = new EffectTile(tile.Effect.TileLoc);
                 SingleEmitter emitter = new SingleEmitter(new AnimData("Vault_Key_Open", 3));
-                emitter.SetupEmit(loc * GraphicsManager.TileSize, loc * GraphicsManager.TileSize, Dir8.Down);
+                emitter.SetupEmit(loc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), loc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), Dir8.Down);
                 DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
                 yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
                 {
@@ -4655,7 +4655,7 @@ namespace PMDC.Dungeon
                         exTile.Effect = new EffectTile(exTile.Effect.TileLoc);
 
                         SingleEmitter altEmitter = new SingleEmitter(new AnimData("Vault_Open", 3));
-                        altEmitter.SetupEmit(loc * GraphicsManager.TileSize, loc * GraphicsManager.TileSize, Dir8.Down);
+                        altEmitter.SetupEmit(loc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), loc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), Dir8.Down);
                         DungeonScene.Instance.CreateAnim(altEmitter, DrawLayer.NoDraw);
                     }
                     yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
@@ -5874,7 +5874,7 @@ namespace PMDC.Dungeon
 
                         Loc animLoc = new Loc(xx, yy);
                         SingleEmitter emitter = new SingleEmitter(new AnimData("Wall_Break", 2));
-                        emitter.SetupEmit(animLoc * GraphicsManager.TileSize, animLoc * GraphicsManager.TileSize, Dir8.Down);
+                        emitter.SetupEmit(animLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), animLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), Dir8.Down);
                         DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
 
                         freeTiles.Add(new Loc(xx, yy));

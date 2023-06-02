@@ -13886,7 +13886,7 @@ namespace PMDC.Dungeon
                         GameManager.Instance.BattleSE("DUN_Smokescreen");
                         SingleEmitter emitter = new SingleEmitter(new AnimData("Puff_Brown", 3));
                         emitter.Layer = DrawLayer.Front;
-                        emitter.SetupEmit(context.TargetTile * GraphicsManager.TileSize, context.TargetTile * GraphicsManager.TileSize, context.User.CharDir);
+                        emitter.SetupEmit(context.TargetTile * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), context.TargetTile * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), context.User.CharDir);
                         DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
                         tile.Effect.Revealed = true;
                     }
@@ -14069,7 +14069,7 @@ namespace PMDC.Dungeon
             {
                 GameManager.Instance.BattleSE(RemoveSound);
                 FiniteEmitter emitter = (FiniteEmitter)RemoveAnim.Clone();
-                emitter.SetupEmit(context.TargetTile * GraphicsManager.TileSize, context.TargetTile * GraphicsManager.TileSize, context.User.CharDir);
+                emitter.SetupEmit(context.TargetTile * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), context.TargetTile * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), context.User.CharDir);
                 DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
             }
 
@@ -14115,7 +14115,7 @@ namespace PMDC.Dungeon
             {
                 GameManager.Instance.BattleSE("DUN_Rollout");
                 SingleEmitter emitter = new SingleEmitter(new AnimData("Rock_Smash", 2));
-                emitter.SetupEmit(context.TargetTile * GraphicsManager.TileSize, context.TargetTile * GraphicsManager.TileSize, context.User.CharDir);
+                emitter.SetupEmit(context.TargetTile * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), context.TargetTile * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), context.User.CharDir);
                 DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
             }
 
@@ -14861,7 +14861,7 @@ namespace PMDC.Dungeon
                 GameManager.Instance.BattleSE("DUN_Send_Home");
                 SingleEmitter emitter = new SingleEmitter(new BeamAnimData("Column_Yellow", 3));
                 emitter.Layer = DrawLayer.Front;
-                emitter.SetupEmit(member.CharLoc * GraphicsManager.TileSize, member.CharLoc * GraphicsManager.TileSize, member.CharDir);
+                emitter.SetupEmit(member.CharLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), member.CharLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), member.CharDir);
                 DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
                 DungeonScene.Instance.AddCharToTeam(Faction.Player, 0, false, member);
                 member.Tactic = new AITactic(member.Tactic);
