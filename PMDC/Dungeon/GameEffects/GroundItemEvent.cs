@@ -60,7 +60,7 @@ namespace PMDC.Dungeon
             yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(createLinkBoxDialog(context, forgottenMoves)));
             if (!context.CancelState.Cancel)
             {
-                MoveDeleteState delete = context.ContextStates.GetWithDefault<MoveDeleteState>();
+                MoveDeleteContext delete = context.ContextStates.GetWithDefault<MoveDeleteContext>();
                 if (delete != null)
                 {
                     string moveNum = context.User.BaseSkills[delete.MoveDelete].SkillNum;
@@ -68,7 +68,7 @@ namespace PMDC.Dungeon
                     yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(Text.FormatGrammar(new StringKey("DLG_FORGET_SKILL").ToLocal(), context.User.GetDisplayName(false), DataManager.Instance.GetSkill(moveNum).GetIconName()), context.User.MemberTeam));
                 }
                 
-                MoveLearnState learn = context.ContextStates.GetWithDefault<MoveLearnState>();
+                MoveLearnContext learn = context.ContextStates.GetWithDefault<MoveLearnContext>();
                 if (learn != null)
                 {
                     if (!String.IsNullOrEmpty(learn.MoveLearn))
@@ -95,7 +95,7 @@ namespace PMDC.Dungeon
                 if (totalMoves > 1)
                 {
                     MenuManager.Instance.AddMenu(new SkillForgetMenu(context.User,
-                        (int slot) => { context.ContextStates.Set(new MoveDeleteState(slot)); },
+                        (int slot) => { context.ContextStates.Set(new MoveDeleteContext(slot)); },
                         () => { MenuManager.Instance.AddMenu(createLinkBoxDialog(context, forgottenMoves), false); }), false);
                 }
                 else
@@ -117,7 +117,7 @@ namespace PMDC.Dungeon
                     MenuManager.Instance.NextAction = DungeonScene.TryLearnSkill(context.User, moveNum,
                         (int slot) =>
                         {
-                            MoveLearnState learn = new MoveLearnState();
+                            MoveLearnContext learn = new MoveLearnContext();
                             learn.MoveLearn = moveNum;
                             learn.ReplaceSlot = slot;
                             context.ContextStates.Set(learn);
