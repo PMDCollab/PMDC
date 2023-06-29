@@ -1262,6 +1262,16 @@ namespace PMDC.Dungeon
                             rangeMod += weatherRangeEvent.Range;
                         continue;
                     }
+                    
+                    ElementAddRangeEvent elementRangeEvent = getConditionalEvent<ElementAddRangeEvent>(controlledChar, passive, effect);
+                    if (elementRangeEvent != null)
+                    {
+                        if (elementRangeEvent.Elements.Contains(controlledChar.Element1) || elementRangeEvent.Elements.Contains(controlledChar.Element2))
+                        {
+                            rangeMod += elementRangeEvent.Range;
+                        }
+                        continue;
+                    }
                 }
             }
             //check for moves that want to wait until within range
