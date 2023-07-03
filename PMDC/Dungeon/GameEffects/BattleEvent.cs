@@ -19,7 +19,38 @@ namespace PMDC.Dungeon
     public class PreActionEvent : BattleEvent
     {
 
-        public override GameEvent Clone() { return new PreActionEvent(); }
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string LastSlotStatusID;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string LastMoveStatusID;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string RepeatStatusID;
+
+        public PreActionEvent()
+        {
+            LastSlotStatusID = "";
+            LastMoveStatusID = "";
+            RepeatStatusID = "";
+        }
+        
+        public PreActionEvent(string lastSlotStatusID, string lastMoveStatusID, string repeatStatusID)
+        {
+            LastSlotStatusID = lastSlotStatusID;
+            LastMoveStatusID = lastMoveStatusID;
+            RepeatStatusID = repeatStatusID;
+        }
+
+        public PreActionEvent(PreActionEvent other)
+        {
+            LastSlotStatusID = other.LastSlotStatusID;
+            LastMoveStatusID = other.LastMoveStatusID;
+            RepeatStatusID = other.RepeatStatusID;
+        }
+
+        public override GameEvent Clone() { return new PreActionEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
@@ -30,7 +61,43 @@ namespace PMDC.Dungeon
                 context.ContextStates.Set(new AttackerStat(context.User.MAtk));
             context.ContextStates.Set(new UserLevel(context.User.Level));
 
-            yield break;
+            if (context.ActionType == BattleActionType.Skill && context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS)
+            {
+                StatusEffect lastSlotStatus = new StatusEffect(LastSlotStatusID);
+                lastSlotStatus.LoadFromData();
+                lastSlotStatus.StatusStates.GetWithDefault<SlotState>().Slot = context.UsageSlot;
+                yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, lastSlotStatus, null));
+
+                StatusEffect testStatus = context.User.GetStatusEffect(LastMoveStatusID);
+                StatusEffect repeatStatus = context.User.GetStatusEffect(RepeatStatusID);
+                if (lastSlotStatus != null && repeatStatus != null &&
+                    testStatus.StatusStates.GetWithDefault<IDState>().ID == context.Data.ID &&
+                    repeatStatus.StatusStates.GetWithDefault<RecentState>() != null)
+                {
+                    //increment repetition
+                    repeatStatus.StatusStates.GetWithDefault<CountState>().Count++;
+                    //reset turn counter
+                    repeatStatus.StatusStates.GetWithDefault<CountDownState>().Counter = 0;
+                }
+                else
+                {
+                    //start new repetition
+                    StatusEffect newRepeatStatus = new StatusEffect(RepeatStatusID);
+                    newRepeatStatus.LoadFromData();
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, newRepeatStatus, null));
+                }
+
+                StatusEffect lastMoveStatus = new StatusEffect(LastMoveStatusID);
+                lastMoveStatus.LoadFromData();
+                lastMoveStatus.StatusStates.GetWithDefault<IDState>().ID = context.Data.ID;
+                yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, lastMoveStatus, null));
+            }
+            else
+            {
+                StatusEffect repeatStatus = context.User.GetStatusEffect(RepeatStatusID);
+                if (repeatStatus != null)
+                    repeatStatus.StatusStates.Remove<RecentState>();
+            }
         }
     }
 
@@ -5768,15 +5835,6 @@ namespace PMDC.Dungeon
     {
         [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public string LastSlotStatusID;
-        [JsonConverter(typeof(StatusConverter))]
-        [DataType(0, DataManager.DataType.Status, false)]
-        public string LastMoveStatusID;
-        [JsonConverter(typeof(StatusConverter))]
-        [DataType(0, DataManager.DataType.Status, false)]
-        public string RepeatStatusID;
-        [JsonConverter(typeof(StatusConverter))]
-        [DataType(0, DataManager.DataType.Status, false)]
         public string AllyStatusID;
         [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
@@ -5784,25 +5842,16 @@ namespace PMDC.Dungeon
 
         public UsePostEvent()
         {
-            LastSlotStatusID = "";
-            LastMoveStatusID = "";
-            RepeatStatusID = "";
             AllyStatusID = "";
             MissedAllID = "";
         }
-        public UsePostEvent(string lastSlotStatusID, string lastMoveStatusID, string repeatStatusID, string allyStatusID, string missedAllID)
+        public UsePostEvent(string allyStatusID, string missedAllID)
         {
-            LastSlotStatusID = lastSlotStatusID;
-            LastMoveStatusID = lastMoveStatusID;
-            RepeatStatusID = repeatStatusID;
             AllyStatusID = allyStatusID;
             MissedAllID = missedAllID;
         }
         protected UsePostEvent(UsePostEvent other)
         {
-            LastSlotStatusID = other.LastSlotStatusID;
-            LastMoveStatusID = other.LastMoveStatusID;
-            RepeatStatusID = other.RepeatStatusID;
             AllyStatusID = other.AllyStatusID;
             MissedAllID = other.MissedAllID;
         }
@@ -5812,34 +5861,6 @@ namespace PMDC.Dungeon
         {
             if (context.ActionType == BattleActionType.Skill && context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS)
             {
-                StatusEffect lastSlotStatus = new StatusEffect(LastSlotStatusID);
-                lastSlotStatus.LoadFromData();
-                lastSlotStatus.StatusStates.GetWithDefault<SlotState>().Slot = context.UsageSlot;
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, lastSlotStatus, null));
-
-
-                StatusEffect testStatus = context.User.GetStatusEffect(LastMoveStatusID);
-                StatusEffect repeatStatus = context.User.GetStatusEffect(RepeatStatusID);
-                if (lastSlotStatus != null && repeatStatus != null && testStatus.StatusStates.GetWithDefault<IDState>().ID == context.Data.ID && repeatStatus.StatusStates.GetWithDefault<RecentState>() != null)
-                {
-                    //increment repetition
-                    repeatStatus.StatusStates.GetWithDefault<CountState>().Count++;
-                    //reset turn counter
-                    repeatStatus.StatusStates.GetWithDefault<CountDownState>().Counter = 0;
-                }
-                else
-                {
-                    //start new repetition
-                    StatusEffect newRepeatStatus = new StatusEffect(RepeatStatusID);
-                    newRepeatStatus.LoadFromData();
-                    yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, newRepeatStatus, null));
-                }
-
-                StatusEffect lastMoveStatus = new StatusEffect(LastMoveStatusID);
-                lastMoveStatus.LoadFromData();
-                lastMoveStatus.StatusStates.GetWithDefault<IDState>().ID = context.Data.ID;
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, lastMoveStatus, null));
-
                 foreach (Character ally in context.User.GetSeenCharacters(Alignment.Friend))
                 {
                     StatusEffect allyStatus = new StatusEffect(AllyStatusID);
@@ -5858,13 +5879,6 @@ namespace PMDC.Dungeon
                 {
                     yield return CoroutineManager.Instance.StartCoroutine(context.User.RemoveStatusEffect(MissedAllID, false));
                 }
-
-            }
-            else
-            {
-                StatusEffect repeatStatus = context.User.GetStatusEffect(RepeatStatusID);
-                if (repeatStatus != null)
-                    repeatStatus.StatusStates.Remove<RecentState>();
             }
         }
     }
