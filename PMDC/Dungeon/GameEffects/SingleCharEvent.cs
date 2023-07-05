@@ -1819,16 +1819,33 @@ namespace PMDC.Dungeon
     [Serializable]
     public class LeechSeedEvent : SingleCharEvent
     {
-        public LeechSeedEvent() { }
-        public override GameEvent Clone() { return new LeechSeedEvent(); }
+        public StringKey Message;
+        public int Range;
+        public int HPFraction;
 
+        public LeechSeedEvent(StringKey message, int range, int hpFraction)
+        {
+            Message = message;
+            Range = range;
+            HPFraction = hpFraction;
+        }
+        
+        public LeechSeedEvent() { }
+        
+        protected LeechSeedEvent(LeechSeedEvent other)
+        {
+            Message = other.Message;
+            Range = other.Range;
+            HPFraction = other.HPFraction;
+        }
+        public override GameEvent Clone() { return new LeechSeedEvent(this); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
             if (context.User.CharStates.Contains<MagicGuardState>())
                 yield break;
                     
-            //check for someone within 4 tiles away; if there's no one, then remove the status
-            List<Character> targets = AreaAction.GetTargetsInArea(context.User, context.User.CharLoc, Alignment.Foe, 4);
+            //check for someone within X tiles away; if there's no one, then remove the status
+            List<Character> targets = AreaAction.GetTargetsInArea(context.User, context.User.CharLoc, Alignment.Foe, Range);
             int lowestDist = Int32.MaxValue;
             Character target = null;
             for (int ii = 0; ii < targets.Count; ii++)
@@ -1845,9 +1862,9 @@ namespace PMDC.Dungeon
                 yield return CoroutineManager.Instance.StartCoroutine(context.User.RemoveStatusEffect(((StatusEffect)owner).ID));
             else
             {
-                int seeddmg = Math.Max(1, context.User.MaxHP / 12);
+                int seeddmg = Math.Max(1, context.User.MaxHP / HPFraction);
 
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_LEECH_SEED").ToLocal(), context.User.GetDisplayName(false)));
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(Message.ToLocal(), context.User.GetDisplayName(false)));
                 
                 GameManager.Instance.BattleSE("DUN_Hit_Neutral");
                 if (!context.User.Unidentifiable)
