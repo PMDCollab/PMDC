@@ -1112,6 +1112,65 @@ namespace PMDC.Dungeon
     }
 
 
+
+
+    [Serializable]
+    public class MeteorFormeEvent : SingleCharEvent
+    {
+        [JsonConverter(typeof(MonsterConverter))]
+        [DataType(0, DataManager.DataType.Monster, false)]
+        public string ReqSpecies;
+        public int ResultForme;
+        public int FormeMult;
+        public int PercentHP;
+        public bool Below;
+
+        public MeteorFormeEvent() { ReqSpecies = ""; }
+        public MeteorFormeEvent(string reqSpecies, int resultForme, int formeMult, int percentHp, bool below)
+        {
+            ReqSpecies = reqSpecies;
+            ResultForme = resultForme;
+            FormeMult = formeMult;
+            PercentHP = percentHp;
+            Below = below;
+        }
+        protected MeteorFormeEvent(MeteorFormeEvent other) : this()
+        {
+            ReqSpecies = other.ReqSpecies;
+            ResultForme = other.ResultForme;
+            FormeMult = other.FormeMult;
+            PercentHP = other.PercentHP;
+            Below = other.Below;
+        }
+        public override GameEvent Clone() { return new MeteorFormeEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            if (context.User == null)
+                yield break;
+
+            if (context.User.CurrentForm.Species != ReqSpecies)
+                yield break;
+
+            //get the forme it should be in
+            bool compareThrough = false;
+            if (Below)
+                compareThrough = (context.User.HP * 100 <= context.User.MaxHP * PercentHP);
+            else
+                compareThrough = (context.User.HP * 100 > context.User.MaxHP * PercentHP);
+
+            if (ResultForme != context.User.CurrentForm.Form / FormeMult && compareThrough)
+            {
+                //transform it
+                context.User.Transform(new MonsterID(context.User.CurrentForm.Species, context.User.CurrentForm.Form % FormeMult + ResultForme * FormeMult, context.User.CurrentForm.Skin, context.User.CurrentForm.Gender));
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_FORM_CHANGE").ToLocal(), context.User.GetDisplayName(false)));
+            }
+
+            yield break;
+        }
+    }
+
+
     [Serializable]
     public class PreDeathEvent : SingleCharEvent
     {

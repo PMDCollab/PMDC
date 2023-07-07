@@ -989,6 +989,42 @@ namespace PMDC.Dungeon
     }
 
 
+
+
+    [Serializable]
+    public class FormeNeededStatusEvent : StatusGivenEvent
+    {
+        public HashSet<int> Forms;
+        public List<StatusGivenEvent> BaseEvents;
+
+        public FormeNeededStatusEvent() { Forms = new HashSet<int>(); BaseEvents = new List<StatusGivenEvent>(); }
+        public FormeNeededStatusEvent(StatusGivenEvent effects, params int[] forms)
+            : this()
+        {
+            BaseEvents.Add(effects);
+            foreach (int form in forms)
+                Forms.Add(form);
+        }
+        protected FormeNeededStatusEvent(FormeNeededStatusEvent other) : this()
+        {
+            foreach (int form in other.Forms)
+                Forms.Add(form);
+            foreach (StatusGivenEvent battleEffect in other.BaseEvents)
+                BaseEvents.Add((StatusGivenEvent)battleEffect.Clone());
+        }
+        public override GameEvent Clone() { return new FormeNeededStatusEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, StatusCheckContext context)
+        {
+            if (Forms.Contains(ownerChar.CurrentForm.Form))
+            {
+                foreach (StatusGivenEvent battleEffect in BaseEvents)
+                    yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
+            }
+        }
+    }
+
+
     [Serializable]
     public class StatusAnimEvent : StatusGivenEvent
     {
