@@ -7,6 +7,7 @@ using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Dev;
 using Newtonsoft.Json;
+using Avalonia.X11;
 
 namespace PMDC.Dungeon
 {
@@ -707,8 +708,10 @@ namespace PMDC.Dungeon
         }
 
     }
+
+
     [Serializable]
-    public class StatChangeCheck : StatusGivenEvent
+    public abstract class StatChangeCheckBase : StatusGivenEvent
     {
         public StringKey Message;
         public List<Stat> Stats;
@@ -717,12 +720,12 @@ namespace PMDC.Dungeon
         public bool IncludeSelf;
         public List<StatusAnimEvent> Anims;
 
-        public StatChangeCheck()
+        public StatChangeCheckBase()
         {
             Stats = new List<Stat>();
             Anims = new List<StatusAnimEvent>();
         }
-        public StatChangeCheck(List<Stat> stats, StringKey message, bool drop, bool boost, bool includeSelf)
+        public StatChangeCheckBase(List<Stat> stats, StringKey message, bool drop, bool boost, bool includeSelf)
         {
             Stats = stats;
             Message = message;
@@ -731,7 +734,7 @@ namespace PMDC.Dungeon
             IncludeSelf = includeSelf;
             Anims = new List<StatusAnimEvent>();
         }
-        public StatChangeCheck(List<Stat> stats, StringKey message, bool drop, bool boost, bool includeSelf, params StatusAnimEvent[] anims)
+        public StatChangeCheckBase(List<Stat> stats, StringKey message, bool drop, bool boost, bool includeSelf, params StatusAnimEvent[] anims)
         {
             Stats = stats;
             Message = message;
@@ -741,7 +744,7 @@ namespace PMDC.Dungeon
             Anims = new List<StatusAnimEvent>();
             Anims.AddRange(anims);
         }
-        protected StatChangeCheck(StatChangeCheck other)
+        protected StatChangeCheckBase(StatChangeCheckBase other)
         {
             Message = other.Message;
             Stats = new List<Stat>();
@@ -753,7 +756,6 @@ namespace PMDC.Dungeon
             foreach (StatusAnimEvent anim in other.Anims)
                 Anims.Add((StatusAnimEvent)anim.Clone());
         }
-        public override GameEvent Clone() { return new StatChangeCheck(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, StatusCheckContext context)
         {
@@ -778,22 +780,92 @@ namespace PMDC.Dungeon
                         }
                     }
                     if (block)
-                    {
-                        if (context.msg && Message.IsValid())
-                        {
-                            DungeonScene.Instance.LogMsg(Text.FormatGrammar(Message.ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName(), statChange.ChangeStat.ToLocal()));
-
-                            foreach (StatusAnimEvent anim in Anims)
-                                yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
-
-                        }
-                        context.CancelState.Cancel = true;
-                    }
+                        yield return CoroutineManager.Instance.StartCoroutine(BlockEffect(owner, ownerChar, context));
                 }
             }
             yield break;
         }
+
+        protected abstract IEnumerator<YieldInstruction> BlockEffect(GameEventOwner owner, Character ownerChar, StatusCheckContext context);
     }
+
+    [Serializable]
+    public class StatChangeCheck : StatChangeCheckBase
+    {
+        public StatChangeCheck()
+        {
+        }
+        public StatChangeCheck(List<Stat> stats, StringKey message, bool drop, bool boost, bool includeSelf)
+            : base(stats, message, drop, boost, includeSelf)
+        {
+        }
+
+        public StatChangeCheck(List<Stat> stats, StringKey message, bool drop, bool boost, bool includeSelf, params StatusAnimEvent[] anims)
+            : base(stats, message, drop, boost, includeSelf, anims)
+        {
+        }
+        protected StatChangeCheck(StatChangeCheck other)
+            : base(other)
+        {
+        }
+        public override GameEvent Clone() { return new StatChangeCheck(this); }
+
+        protected override IEnumerator<YieldInstruction> BlockEffect(GameEventOwner owner, Character ownerChar, StatusCheckContext context)
+        {
+            if (context.msg && Message.IsValid())
+            {
+                StatChangeState statChange = context.Status.StatusStates.GetWithDefault<StatChangeState>();
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(Message.ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName(), statChange.ChangeStat.ToLocal()));
+
+                foreach (StatusAnimEvent anim in Anims)
+                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
+
+            }
+            context.CancelState.Cancel = true;
+        }
+    }
+
+
+    [Serializable]
+    public class StatChangeReflect : StatChangeCheckBase
+    {
+        public StatChangeReflect()
+        {
+        }
+        public StatChangeReflect(List<Stat> stats, StringKey message, bool drop, bool boost, bool includeSelf)
+            : base(stats, message, drop, boost, includeSelf)
+        {
+        }
+
+        public StatChangeReflect(List<Stat> stats, StringKey message, bool drop, bool boost, bool includeSelf, params StatusAnimEvent[] anims)
+            : base(stats, message, drop, boost, includeSelf, anims)
+        {
+        }
+        protected StatChangeReflect(StatChangeReflect other)
+            : base(other)
+        {
+        }
+        public override GameEvent Clone() { return new StatChangeReflect(this); }
+
+        protected override IEnumerator<YieldInstruction> BlockEffect(GameEventOwner owner, Character ownerChar, StatusCheckContext context)
+        {
+            if (context.User != null)
+            {
+                if (context.msg && Message.IsValid())
+                {
+                    StatChangeState statChange = context.Status.StatusStates.GetWithDefault<StatChangeState>();
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(Message.ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName(), statChange.ChangeStat.ToLocal()));
+
+                    foreach (StatusAnimEvent anim in Anims)
+                        yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
+
+                }
+                yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(null, context.Status, null, false, true));
+                context.CancelState.Cancel = true;
+            }
+        }
+    }
+
 
     [Serializable]
     public class PreventAnyStatusCheck : StatusGivenEvent

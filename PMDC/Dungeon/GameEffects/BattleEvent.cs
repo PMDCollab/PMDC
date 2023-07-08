@@ -2632,6 +2632,47 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    [Serializable]
+    public class MoveStateNeededEvent : BattleEvent
+    {
+        [StringTypeConstraint(1, typeof(SkillState))]
+        public List<FlagType> States;
+        public List<BattleEvent> BaseEvents;
+
+        public MoveStateNeededEvent() { States = new List<FlagType>(); BaseEvents = new List<BattleEvent>(); }
+        public MoveStateNeededEvent(Type state, params BattleEvent[] effects) : this()
+        {
+            States.Add(new FlagType(state));
+            foreach (BattleEvent effect in effects)
+                BaseEvents.Add(effect);
+        }
+        protected MoveStateNeededEvent(MoveStateNeededEvent other) : this()
+        {
+            States.AddRange(other.States);
+            foreach (BattleEvent battleEffect in other.BaseEvents)
+                BaseEvents.Add((BattleEvent)battleEffect.Clone());
+        }
+        public override GameEvent Clone() { return new MoveStateNeededEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            bool hasState = false;
+            foreach (FlagType state in States)
+            {
+                if (context.Data.SkillStates.Contains(state.FullType))
+                    hasState = true;
+            }
+            if (hasState)
+            {
+                foreach (BattleEvent battleEffect in BaseEvents)
+                    yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
+            }
+            yield break;
+        }
+    }
+
+
     [Serializable]
     public class MultiplyMoveStateEvent : BattleEvent
     {
@@ -4046,13 +4087,22 @@ namespace PMDC.Dungeon
     [Serializable]
     public class EvadeDistanceEvent : BattleEvent
     {
-        public override GameEvent Clone() { return new EvadeDistanceEvent(); }
+        public bool Inverted;
+
+        public EvadeDistanceEvent() { }
+        public EvadeDistanceEvent(bool invert) { Inverted = invert; }
+        public EvadeDistanceEvent(EvadeDistanceEvent other)
+        {
+            Inverted = other.Inverted;
+        }
+
+        public override GameEvent Clone() { return new EvadeDistanceEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             if (context.ActionType == BattleActionType.Skill && context.Data.ID != DataManager.Instance.DefaultSkill)
             {
-                if (!ZoneManager.Instance.CurrentMap.InRange(context.StrikeStartTile, context.Target.CharLoc, 1) && context.Data.HitRate > -1)
+                if (ZoneManager.Instance.CurrentMap.InRange(context.StrikeStartTile, context.Target.CharLoc, 1) == Inverted && context.Data.HitRate > -1)
                 {
                     DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_AVOID").ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName()));
                     context.AddContextStateMult<AccMult>(false, -1, 1);
