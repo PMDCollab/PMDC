@@ -76,18 +76,34 @@ namespace PMDC
                 {
                     if (args[ii].ToLower() == "-dev")
                         dev = true;
+                    else if (args[ii].ToLower() == "-help")
+                    {
+                        Console.WriteLine("PMDO OPTIONS:");
+                        Console.WriteLine("-dev: Runs the game in dev mode.");
+                        Console.WriteLine("-lang [en/es/de/zh/ko]: Specify language.");
+                        Console.WriteLine("-guide: Print a strategy guide to GUIDE/ as html");
+                        Console.WriteLine("-csv: Print a strategy guide to GUIDE/ as csv");
+                        Console.WriteLine("-asset [path]: Specify a custom path for assets.");
+                        Console.WriteLine("-raw [path]: Specify a custom path for raw assets.");
+                        Console.WriteLine("-quest [folder]: Specify the folder in MODS/ to load as the quest.");
+                        Console.WriteLine("-mod [mod] [...]: Specify the list of folders in MODS/ to load as additional mods.");
+                        Console.WriteLine("-index [monster/skill/item/intrinsic/status/mapstatus/terrain/tile/zone/emote/autotile/element/growthgroup/skillgroup/ai/rank/skin/all]: Reindexes the selected list of data assets.");
+                        Console.WriteLine("-reserialize [monster/skill/item/intrinsic/status/mapstatus/terrain/tile/zone/emote/autotile/element/growthgroup/skillgroup/ai/rank/skin/all]: Reserializes the selected list of data assets.");
+                        Console.WriteLine("-convert [font/chara/portrait/tile/item/particle/beam/icon/object/bg/autotile/all]: Converts graphics from the raw asset folder and saves it to the asset folder.");
+                        return;
+                    }
                     else if (args[ii].ToLower() == "-play" && args.Length > ii + 1)
                     {
                         playInputs = args[ii + 1];
                         ii++;
                     }
+                    else if (args[ii].ToLower() == "-nolog")
+                        logInput = false;
                     else if (args[ii].ToLower() == "-lang" && args.Length > ii + 1)
                     {
                         langArgs = args[ii + 1];
                         ii++;
                     }
-                    else if (args[ii].ToLower() == "-nolog")
-                        logInput = false;
                     else if (args[ii].ToLower() == "-guide")
                         guideBook = true;
                     else if (args[ii].ToLower() == "-csv")
