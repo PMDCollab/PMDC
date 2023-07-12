@@ -1437,25 +1437,28 @@ namespace PMDC.Dungeon
         [JsonConverter(typeof(IntrinsicConverter))]
         [DataType(0, DataManager.DataType.Intrinsic, false)]
         public string AbilityID;
-        public ImpostorReviveEvent() { AbilityID = ""; }
-        public ImpostorReviveEvent(string abilityID) { AbilityID = abilityID; }
-        protected ImpostorReviveEvent(ImpostorReviveEvent other) { this.AbilityID = other.AbilityID; }
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string StatusID;
+        public ImpostorReviveEvent() { AbilityID = ""; StatusID = ""; }
+        public ImpostorReviveEvent(string abilityID, string statusID) { AbilityID = abilityID; StatusID = statusID; }
+        protected ImpostorReviveEvent(ImpostorReviveEvent other) { this.AbilityID = other.AbilityID; this.StatusID = other.StatusID; }
         public override GameEvent Clone() { return new ImpostorReviveEvent(this); }
         
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
             if (!context.User.Dead)
                 yield break;
-
-            if (context.User.CurrentForm.Species == context.User.BaseForm.Species)
+            
+            StatusEffect transform = context.User.GetStatusEffect(StatusID);
+            if (transform == null)
                 yield break;
-
+            
             foreach (string id in context.User.BaseIntrinsics)
             {
                 if (id == AbilityID)
                 {
                     context.User.OnRemove();
-                    context.User.HP = context.User.MaxHP;
+                    context.User.HP = Math.Max(transform.StatusStates.GetWithDefault<HPState>().HP / 2, 1);
                     context.User.Dead = false;
                     context.User.DefeatAt = "";
 

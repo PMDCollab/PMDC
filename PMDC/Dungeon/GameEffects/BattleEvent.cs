@@ -13633,15 +13633,19 @@ namespace PMDC.Dungeon
     public class TransformEvent : BattleEvent
     {
         public bool AffectTarget;
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string StatusID;
 
-        public TransformEvent() { }
-        public TransformEvent(bool affectTarget)
+        public TransformEvent() { StatusID = ""; }
+        public TransformEvent(bool affectTarget, string status)
         {
             AffectTarget = affectTarget;
+            StatusID = status;
         }
         protected TransformEvent(TransformEvent other)
         {
             AffectTarget = other.AffectTarget;
+            StatusID = other.StatusID;
         }
         public override GameEvent Clone() { return new TransformEvent(this); }
 
@@ -13653,37 +13657,51 @@ namespace PMDC.Dungeon
             if (target.Dead || user.Dead)
                 yield break;
 
-            if (target.BaseForm.Species != target.CurrentForm.Species)
+            StatusEffect transform = target.GetStatusEffect(StatusID);
+            if (transform != null)
+            {
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_ALREADY_TRANSFORMED").ToLocal(), target.GetDisplayName(false)));
-            else if (target.CurrentForm.Species == user.CurrentForm.Species)
+                yield break;
+            }
+            if (target.CurrentForm.Species == user.CurrentForm.Species)
             {
                 MonsterData entry = DataManager.Instance.GetMonster(target.CurrentForm.Species);
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_ALREADY_HAS_SPECIES").ToLocal(), target.GetDisplayName(false), entry.GetColoredName()));
+                yield break;
             }
-            else
+
+            int hp = target.HP;
+
+            target.Transform(user.CurrentForm);
+
+            //proxy stats
+            target.ProxyAtk = user.Atk;
+            target.ProxyDef = user.Def;
+            target.ProxyMAtk = user.MAtk;
+            target.ProxyMDef = user.MDef;
+            target.ProxySpeed = user.Speed;
+
+            //ability
+            for (int ii = 0; ii < CharData.MAX_INTRINSIC_SLOTS; ii++)
+                yield return CoroutineManager.Instance.StartCoroutine(target.ReplaceIntrinsic(ii, user.Intrinsics[ii].Element.ID, false, false));
+
+            //type
+            yield return CoroutineManager.Instance.StartCoroutine(target.ChangeElement(user.Element1, user.Element2, false, false));
+
+            //moves
+            for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
+                target.ChangeSkill(ii, user.Skills[ii].Element.SkillNum);
+
+            //set the status
+            if (!String.IsNullOrEmpty(StatusID))
             {
-                target.Transform(user.CurrentForm);
-
-                //proxy stats
-                target.ProxyAtk = user.Atk;
-                target.ProxyDef = user.Def;
-                target.ProxyMAtk = user.MAtk;
-                target.ProxyMDef = user.MDef;
-                target.ProxySpeed = user.Speed;
-
-                //ability
-                for (int ii = 0; ii < CharData.MAX_INTRINSIC_SLOTS; ii++)
-                    yield return CoroutineManager.Instance.StartCoroutine(target.ReplaceIntrinsic(ii, user.Intrinsics[ii].Element.ID, false, false));
-
-                //type
-                yield return CoroutineManager.Instance.StartCoroutine(target.ChangeElement(user.Element1, user.Element2, false, false));
-
-                //moves
-                for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
-                    target.ChangeSkill(ii, user.Skills[ii].Element.SkillNum);
-
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_TRANSFORM").ToLocal(), target.GetDisplayName(false), user.GetDisplayName(false)));
+                StatusEffect setStatus = new StatusEffect(StatusID);
+                setStatus.LoadFromData();
+                setStatus.StatusStates.Set(new HPState(hp));
+                yield return CoroutineManager.Instance.StartCoroutine(target.AddStatusEffect(null, setStatus, null, false, false));
             }
+
+            DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_TRANSFORM").ToLocal(), target.GetDisplayName(false), user.GetDisplayName(false)));
         }
     }
 
