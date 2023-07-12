@@ -2012,12 +2012,27 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WalkedThisTurnEvent : SingleCharEvent
     {
-        public override GameEvent Clone() { return new WalkedThisTurnEvent(); }
+        public bool AffectNonFocused;
+
+        public WalkedThisTurnEvent() { }
+        public WalkedThisTurnEvent(bool affectNonFocused)
+        {
+            AffectNonFocused = affectNonFocused;
+        }
+        protected WalkedThisTurnEvent(WalkedThisTurnEvent other)
+        {
+            AffectNonFocused = other.AffectNonFocused;
+        }
+        public override GameEvent Clone() { return new WalkedThisTurnEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
-            WalkedThisTurnState recent = ((StatusEffect)owner).StatusStates.GetWithDefault<WalkedThisTurnState>();
-            recent.Walked = true;
+            if (AffectNonFocused || DungeonScene.Instance.CurrentCharacter == context.User)
+            {
+                WalkedThisTurnState recent = ((StatusEffect)owner).StatusStates.GetWithDefault<WalkedThisTurnState>();
+                recent.Walked = true;
+            }
+
             yield break;
         }
     }
@@ -2026,21 +2041,24 @@ namespace PMDC.Dungeon
     public class PoisonSingleEvent : SingleCharEvent
     {
         public bool Toxic;
+        public bool AffectNonFocused;
 
         public PoisonSingleEvent() { }
-        public PoisonSingleEvent(bool toxic)
+        public PoisonSingleEvent(bool toxic, bool affectNonFocused)
         {
             Toxic = toxic;
+            AffectNonFocused = affectNonFocused;
         }
         protected PoisonSingleEvent(PoisonSingleEvent other)
         {
             Toxic = other.Toxic;
+            AffectNonFocused = other.AffectNonFocused;
         }
         public override GameEvent Clone() { return new PoisonSingleEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
-            if (!context.User.CharStates.Contains<MagicGuardState>())
+            if (!context.User.CharStates.Contains<MagicGuardState>() && AffectNonFocused || DungeonScene.Instance.CurrentCharacter == context.User)
             {
                 CountState countState = ((StatusEffect)owner).StatusStates.Get<CountState>();
                 if (Toxic && countState.Count < 16)
