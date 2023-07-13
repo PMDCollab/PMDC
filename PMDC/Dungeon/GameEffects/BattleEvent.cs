@@ -52,6 +52,35 @@ namespace PMDC.Dungeon
         }
     }
 
+
+
+    [Serializable]
+    public class MultiBattleEvent : BattleEvent
+    {
+        public List<BattleEvent> BaseEvents;
+
+        public MultiBattleEvent() { BaseEvents = new List<BattleEvent>(); }
+        public MultiBattleEvent(params BattleEvent[] effects)
+            : this()
+        {
+            foreach (BattleEvent battleEffect in effects)
+                BaseEvents.Add(battleEffect);
+        }
+        protected MultiBattleEvent(MultiBattleEvent other)
+            : this()
+        {
+            foreach (BattleEvent battleEffect in other.BaseEvents)
+                BaseEvents.Add((BattleEvent)battleEffect.Clone());
+        }
+        public override GameEvent Clone() { return new MultiBattleEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            foreach (BattleEvent battleEffect in BaseEvents)
+                yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
+        }
+    }
+
     [Serializable]
     public class AttemptHitEvent : BattleEvent
     {
