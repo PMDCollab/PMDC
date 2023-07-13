@@ -2013,13 +2013,24 @@ namespace PMDC.Dungeon
     [Serializable]
     public class BurnEvent : SingleCharEvent
     {
-        public override GameEvent Clone() { return new BurnEvent(); }
+        public int HPFraction;
+        
+        public BurnEvent() { }
+        public BurnEvent(int hpFraction)
+        {
+            HPFraction = hpFraction;
+        }
+        protected BurnEvent(BurnEvent other)
+        {
+            HPFraction = other.HPFraction;
+        }
+        public override GameEvent Clone() { return new BurnEvent(this); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
             AttackedThisTurnState recent = ((StatusEffect)owner).StatusStates.GetWithDefault<AttackedThisTurnState>();
             if (recent.Attacked && !context.User.CharStates.Contains<HeatproofState>() && !context.User.CharStates.Contains<MagicGuardState>())
             {
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(Math.Max(1, context.User.MaxHP / 8), false));
+                yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(Math.Max(1, context.User.MaxHP / HPFraction), false));
                 recent.Attacked = false;
             }
         }
@@ -2059,17 +2070,23 @@ namespace PMDC.Dungeon
     {
         public bool Toxic;
         public bool AffectNonFocused;
-
+        public int HPFraction;
+        public int RestoreHPFraction;
+        
         public PoisonSingleEvent() { }
-        public PoisonSingleEvent(bool toxic, bool affectNonFocused)
+        public PoisonSingleEvent(bool toxic, bool affectNonFocused, int hpFraction, int restoreHpFraction)
         {
             Toxic = toxic;
             AffectNonFocused = affectNonFocused;
+            HPFraction = hpFraction;
+            RestoreHPFraction = restoreHpFraction;
         }
         protected PoisonSingleEvent(PoisonSingleEvent other)
         {
             Toxic = other.Toxic;
             AffectNonFocused = other.AffectNonFocused;
+            HPFraction = other.HPFraction;
+            RestoreHPFraction = other.RestoreHPFraction;
         }
         public override GameEvent Clone() { return new PoisonSingleEvent(this); }
 
@@ -2083,12 +2100,12 @@ namespace PMDC.Dungeon
                 if (context.User.CharStates.Contains<PoisonHealState>())
                 {
                     DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_POISON_HEAL").ToLocal(), context.User.GetDisplayName(false)));
-                    yield return CoroutineManager.Instance.StartCoroutine(context.User.RestoreHP(Math.Max(1, context.User.MaxHP / 16)));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.RestoreHP(Math.Max(1, context.User.MaxHP / RestoreHPFraction)));
                 }
                 else
                 {
                     DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_POISONED").ToLocal(), context.User.GetDisplayName(false)));
-                    yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(Math.Max(1, (context.User.MaxHP * countState.Count) / 16)));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(Math.Max(1, (context.User.MaxHP * countState.Count) / HPFraction)));
                 }
             }
         }
@@ -2099,17 +2116,22 @@ namespace PMDC.Dungeon
     {
         public bool Toxic;
         public bool ReducedDamage;
+        public int HPFraction;
+        public int HealHPFraction;
 
         public PoisonEndEvent() { }
-        public PoisonEndEvent(bool toxic, bool reduce)
+        public PoisonEndEvent(bool toxic, bool reduce, int hpFraction, int healHpFraction)
         {
             Toxic = toxic;
             ReducedDamage = reduce;
+            HPFraction = hpFraction;
+            HealHPFraction = healHpFraction;
         }
         protected PoisonEndEvent(PoisonEndEvent other)
         {
             Toxic = other.Toxic;
             ReducedDamage = other.ReducedDamage;
+            HPFraction = other.HPFraction;
         }
         public override GameEvent Clone() { return new PoisonEndEvent(this); }
 
@@ -2125,7 +2147,7 @@ namespace PMDC.Dungeon
                 if (context.User.CharStates.Contains<PoisonHealState>())
                 {
                     DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_POISON_HEAL").ToLocal(), context.User.GetDisplayName(false)));
-                    yield return CoroutineManager.Instance.StartCoroutine(context.User.RestoreHP(Math.Max(1, context.User.MaxHP / 16)));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.RestoreHP(Math.Max(1, context.User.MaxHP / HealHPFraction)));
                 }
                 else
                 {
@@ -2133,7 +2155,7 @@ namespace PMDC.Dungeon
                     int ticks = countState.Count;
                     if (ReducedDamage)
                         ticks--;
-                    yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(Math.Max(1, (context.User.MaxHP * ticks) / 16)));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(Math.Max(1, (context.User.MaxHP * ticks) / HPFraction)));
                 }
             }
             recentAttack.Attacked = false;
@@ -2201,12 +2223,17 @@ namespace PMDC.Dungeon
     public class RegeneratorEvent : SingleCharEvent
     {
         public int Range;
+        public int HPFraction;
 
         public RegeneratorEvent() { }
-        public RegeneratorEvent(int range) { Range = range; }
+        public RegeneratorEvent(int range, int hpFraction) { 
+            Range = range;
+            HPFraction = hpFraction;
+        }
         protected RegeneratorEvent(RegeneratorEvent other)
         {
             Range = other.Range;
+            HPFraction = other.HPFraction;
         }
         public override GameEvent Clone() { return new RegeneratorEvent(this); }
 
@@ -2218,7 +2245,7 @@ namespace PMDC.Dungeon
                     yield break;
             }
             if (context.User.HP < context.User.MaxHP)
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.RestoreHP(Math.Max(1, context.User.MaxHP / 8), false));
+                yield return CoroutineManager.Instance.StartCoroutine(context.User.RestoreHP(Math.Max(1, context.User.MaxHP / HPFraction), false));
         }
     }
 
@@ -2226,12 +2253,19 @@ namespace PMDC.Dungeon
     public class RoyalVeilEvent : SingleCharEvent
     {
         public int Range;
+        public int HealHPFraction;
 
         public RoyalVeilEvent() { }
-        public RoyalVeilEvent(int range) { Range = range; }
+
+        public RoyalVeilEvent(int range, int healHpFraction)
+        {
+            Range = range;
+            HealHPFraction = healHpFraction;
+        }
         protected RoyalVeilEvent(RoyalVeilEvent other)
         {
             Range = other.Range;
+            HealHPFraction = other.HealHPFraction;
         }
         public override GameEvent Clone() { return new RoyalVeilEvent(this); }
 
@@ -2244,7 +2278,7 @@ namespace PMDC.Dungeon
                     if (!target.Dead && DungeonScene.Instance.GetMatchup(context.User, target) == Alignment.Friend)
                     {
                         if (target.HP < target.MaxHP)
-                            yield return CoroutineManager.Instance.StartCoroutine(target.RestoreHP(Math.Max(1, target.MaxHP / 16), false));
+                            yield return CoroutineManager.Instance.StartCoroutine(target.RestoreHP(Math.Max(1, target.MaxHP / HealHPFraction), false));
                     }
                 }
 
