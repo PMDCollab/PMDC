@@ -26,6 +26,12 @@ namespace PMDC.Dungeon
         public override GameplayState Clone() { return new SoundState(); }
     }
     [Serializable]
+    public class HealState : SkillState
+    {
+        public HealState() { }
+        public override GameplayState Clone() { return new HealState(); }
+    }
+    [Serializable]
     public class FistState : SkillState
     {
         public FistState() { }

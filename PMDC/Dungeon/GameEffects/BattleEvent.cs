@@ -2632,6 +2632,47 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    [Serializable]
+    public class MoveStateNeededEvent : BattleEvent
+    {
+        [StringTypeConstraint(1, typeof(SkillState))]
+        public List<FlagType> States;
+        public List<BattleEvent> BaseEvents;
+
+        public MoveStateNeededEvent() { States = new List<FlagType>(); BaseEvents = new List<BattleEvent>(); }
+        public MoveStateNeededEvent(Type state, params BattleEvent[] effects) : this()
+        {
+            States.Add(new FlagType(state));
+            foreach (BattleEvent effect in effects)
+                BaseEvents.Add(effect);
+        }
+        protected MoveStateNeededEvent(MoveStateNeededEvent other) : this()
+        {
+            States.AddRange(other.States);
+            foreach (BattleEvent battleEffect in other.BaseEvents)
+                BaseEvents.Add((BattleEvent)battleEffect.Clone());
+        }
+        public override GameEvent Clone() { return new MoveStateNeededEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            bool hasState = false;
+            foreach (FlagType state in States)
+            {
+                if (context.Data.SkillStates.Contains(state.FullType))
+                    hasState = true;
+            }
+            if (hasState)
+            {
+                foreach (BattleEvent battleEffect in BaseEvents)
+                    yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
+            }
+            yield break;
+        }
+    }
+
+
     [Serializable]
     public class MultiplyMoveStateEvent : BattleEvent
     {
@@ -4046,13 +4087,22 @@ namespace PMDC.Dungeon
     [Serializable]
     public class EvadeDistanceEvent : BattleEvent
     {
-        public override GameEvent Clone() { return new EvadeDistanceEvent(); }
+        public bool Inverted;
+
+        public EvadeDistanceEvent() { }
+        public EvadeDistanceEvent(bool invert) { Inverted = invert; }
+        public EvadeDistanceEvent(EvadeDistanceEvent other)
+        {
+            Inverted = other.Inverted;
+        }
+
+        public override GameEvent Clone() { return new EvadeDistanceEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             if (context.ActionType == BattleActionType.Skill && context.Data.ID != DataManager.Instance.DefaultSkill)
             {
-                if (!ZoneManager.Instance.CurrentMap.InRange(context.StrikeStartTile, context.Target.CharLoc, 1) && context.Data.HitRate > -1)
+                if (ZoneManager.Instance.CurrentMap.InRange(context.StrikeStartTile, context.Target.CharLoc, 1) == Inverted && context.Data.HitRate > -1)
                 {
                     DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_AVOID").ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName()));
                     context.AddContextStateMult<AccMult>(false, -1, 1);
@@ -13583,15 +13633,19 @@ namespace PMDC.Dungeon
     public class TransformEvent : BattleEvent
     {
         public bool AffectTarget;
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string StatusID;
 
-        public TransformEvent() { }
-        public TransformEvent(bool affectTarget)
+        public TransformEvent() { StatusID = ""; }
+        public TransformEvent(bool affectTarget, string status)
         {
             AffectTarget = affectTarget;
+            StatusID = status;
         }
         protected TransformEvent(TransformEvent other)
         {
             AffectTarget = other.AffectTarget;
+            StatusID = other.StatusID;
         }
         public override GameEvent Clone() { return new TransformEvent(this); }
 
@@ -13603,37 +13657,51 @@ namespace PMDC.Dungeon
             if (target.Dead || user.Dead)
                 yield break;
 
-            if (target.BaseForm.Species != target.CurrentForm.Species)
+            StatusEffect transform = target.GetStatusEffect(StatusID);
+            if (transform != null)
+            {
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_ALREADY_TRANSFORMED").ToLocal(), target.GetDisplayName(false)));
-            else if (target.CurrentForm.Species == user.CurrentForm.Species)
+                yield break;
+            }
+            if (target.CurrentForm.Species == user.CurrentForm.Species)
             {
                 MonsterData entry = DataManager.Instance.GetMonster(target.CurrentForm.Species);
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_ALREADY_HAS_SPECIES").ToLocal(), target.GetDisplayName(false), entry.GetColoredName()));
+                yield break;
             }
-            else
+
+            int hp = target.HP;
+
+            target.Transform(user.CurrentForm);
+
+            //proxy stats
+            target.ProxyAtk = user.Atk;
+            target.ProxyDef = user.Def;
+            target.ProxyMAtk = user.MAtk;
+            target.ProxyMDef = user.MDef;
+            target.ProxySpeed = user.Speed;
+
+            //ability
+            for (int ii = 0; ii < CharData.MAX_INTRINSIC_SLOTS; ii++)
+                yield return CoroutineManager.Instance.StartCoroutine(target.ReplaceIntrinsic(ii, user.Intrinsics[ii].Element.ID, false, false));
+
+            //type
+            yield return CoroutineManager.Instance.StartCoroutine(target.ChangeElement(user.Element1, user.Element2, false, false));
+
+            //moves
+            for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
+                target.ChangeSkill(ii, user.Skills[ii].Element.SkillNum);
+
+            //set the status
+            if (!String.IsNullOrEmpty(StatusID))
             {
-                target.Transform(user.CurrentForm);
-
-                //proxy stats
-                target.ProxyAtk = user.Atk;
-                target.ProxyDef = user.Def;
-                target.ProxyMAtk = user.MAtk;
-                target.ProxyMDef = user.MDef;
-                target.ProxySpeed = user.Speed;
-
-                //ability
-                for (int ii = 0; ii < CharData.MAX_INTRINSIC_SLOTS; ii++)
-                    yield return CoroutineManager.Instance.StartCoroutine(target.ReplaceIntrinsic(ii, user.Intrinsics[ii].Element.ID, false, false));
-
-                //type
-                yield return CoroutineManager.Instance.StartCoroutine(target.ChangeElement(user.Element1, user.Element2, false, false));
-
-                //moves
-                for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
-                    target.ChangeSkill(ii, user.Skills[ii].Element.SkillNum);
-
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_TRANSFORM").ToLocal(), target.GetDisplayName(false), user.GetDisplayName(false)));
+                StatusEffect setStatus = new StatusEffect(StatusID);
+                setStatus.LoadFromData();
+                setStatus.StatusStates.Set(new HPState(hp));
+                yield return CoroutineManager.Instance.StartCoroutine(target.AddStatusEffect(null, setStatus, null, false, false));
             }
+
+            DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_TRANSFORM").ToLocal(), target.GetDisplayName(false), user.GetDisplayName(false)));
         }
     }
 

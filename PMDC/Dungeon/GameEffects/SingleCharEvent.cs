@@ -1112,6 +1112,65 @@ namespace PMDC.Dungeon
     }
 
 
+
+
+    [Serializable]
+    public class MeteorFormeEvent : SingleCharEvent
+    {
+        [JsonConverter(typeof(MonsterConverter))]
+        [DataType(0, DataManager.DataType.Monster, false)]
+        public string ReqSpecies;
+        public int ResultForme;
+        public int FormeMult;
+        public int PercentHP;
+        public bool Below;
+
+        public MeteorFormeEvent() { ReqSpecies = ""; }
+        public MeteorFormeEvent(string reqSpecies, int resultForme, int formeMult, int percentHp, bool below)
+        {
+            ReqSpecies = reqSpecies;
+            ResultForme = resultForme;
+            FormeMult = formeMult;
+            PercentHP = percentHp;
+            Below = below;
+        }
+        protected MeteorFormeEvent(MeteorFormeEvent other) : this()
+        {
+            ReqSpecies = other.ReqSpecies;
+            ResultForme = other.ResultForme;
+            FormeMult = other.FormeMult;
+            PercentHP = other.PercentHP;
+            Below = other.Below;
+        }
+        public override GameEvent Clone() { return new MeteorFormeEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            if (context.User == null)
+                yield break;
+
+            if (context.User.CurrentForm.Species != ReqSpecies)
+                yield break;
+
+            //get the forme it should be in
+            bool compareThrough = false;
+            if (Below)
+                compareThrough = (context.User.HP * 100 <= context.User.MaxHP * PercentHP);
+            else
+                compareThrough = (context.User.HP * 100 > context.User.MaxHP * PercentHP);
+
+            if (ResultForme != context.User.CurrentForm.Form / FormeMult && compareThrough)
+            {
+                //transform it
+                context.User.Transform(new MonsterID(context.User.CurrentForm.Species, context.User.CurrentForm.Form % FormeMult + ResultForme * FormeMult, context.User.CurrentForm.Skin, context.User.CurrentForm.Gender));
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_FORM_CHANGE").ToLocal(), context.User.GetDisplayName(false)));
+            }
+
+            yield break;
+        }
+    }
+
+
     [Serializable]
     public class PreDeathEvent : SingleCharEvent
     {
@@ -1378,25 +1437,28 @@ namespace PMDC.Dungeon
         [JsonConverter(typeof(IntrinsicConverter))]
         [DataType(0, DataManager.DataType.Intrinsic, false)]
         public string AbilityID;
-        public ImpostorReviveEvent() { AbilityID = ""; }
-        public ImpostorReviveEvent(string abilityID) { AbilityID = abilityID; }
-        protected ImpostorReviveEvent(ImpostorReviveEvent other) { this.AbilityID = other.AbilityID; }
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string StatusID;
+        public ImpostorReviveEvent() { AbilityID = ""; StatusID = ""; }
+        public ImpostorReviveEvent(string abilityID, string statusID) { AbilityID = abilityID; StatusID = statusID; }
+        protected ImpostorReviveEvent(ImpostorReviveEvent other) { this.AbilityID = other.AbilityID; this.StatusID = other.StatusID; }
         public override GameEvent Clone() { return new ImpostorReviveEvent(this); }
         
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
             if (!context.User.Dead)
                 yield break;
-
-            if (context.User.CurrentForm.Species == context.User.BaseForm.Species)
+            
+            StatusEffect transform = context.User.GetStatusEffect(StatusID);
+            if (transform == null)
                 yield break;
-
+            
             foreach (string id in context.User.BaseIntrinsics)
             {
                 if (id == AbilityID)
                 {
                     context.User.OnRemove();
-                    context.User.HP = context.User.MaxHP;
+                    context.User.HP = Math.Max(transform.StatusStates.GetWithDefault<HPState>().HP / 2, 1);
                     context.User.Dead = false;
                     context.User.DefeatAt = "";
 
@@ -1819,16 +1881,33 @@ namespace PMDC.Dungeon
     [Serializable]
     public class LeechSeedEvent : SingleCharEvent
     {
-        public LeechSeedEvent() { }
-        public override GameEvent Clone() { return new LeechSeedEvent(); }
+        public StringKey Message;
+        public int Range;
+        public int HPFraction;
 
+        public LeechSeedEvent(StringKey message, int range, int hpFraction)
+        {
+            Message = message;
+            Range = range;
+            HPFraction = hpFraction;
+        }
+        
+        public LeechSeedEvent() { }
+        
+        protected LeechSeedEvent(LeechSeedEvent other)
+        {
+            Message = other.Message;
+            Range = other.Range;
+            HPFraction = other.HPFraction;
+        }
+        public override GameEvent Clone() { return new LeechSeedEvent(this); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
             if (context.User.CharStates.Contains<MagicGuardState>())
                 yield break;
                     
-            //check for someone within 4 tiles away; if there's no one, then remove the status
-            List<Character> targets = AreaAction.GetTargetsInArea(context.User, context.User.CharLoc, Alignment.Foe, 4);
+            //check for someone within X tiles away; if there's no one, then remove the status
+            List<Character> targets = AreaAction.GetTargetsInArea(context.User, context.User.CharLoc, Alignment.Foe, Range);
             int lowestDist = Int32.MaxValue;
             Character target = null;
             for (int ii = 0; ii < targets.Count; ii++)
@@ -1845,9 +1924,9 @@ namespace PMDC.Dungeon
                 yield return CoroutineManager.Instance.StartCoroutine(context.User.RemoveStatusEffect(((StatusEffect)owner).ID));
             else
             {
-                int seeddmg = Math.Max(1, context.User.MaxHP / 12);
+                int seeddmg = Math.Max(1, context.User.MaxHP / HPFraction);
 
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_LEECH_SEED").ToLocal(), context.User.GetDisplayName(false)));
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(Message.ToLocal(), context.User.GetDisplayName(false)));
                 
                 GameManager.Instance.BattleSE("DUN_Hit_Neutral");
                 if (!context.User.Unidentifiable)
@@ -1961,12 +2040,27 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WalkedThisTurnEvent : SingleCharEvent
     {
-        public override GameEvent Clone() { return new WalkedThisTurnEvent(); }
+        public bool AffectNonFocused;
+
+        public WalkedThisTurnEvent() { }
+        public WalkedThisTurnEvent(bool affectNonFocused)
+        {
+            AffectNonFocused = affectNonFocused;
+        }
+        protected WalkedThisTurnEvent(WalkedThisTurnEvent other)
+        {
+            AffectNonFocused = other.AffectNonFocused;
+        }
+        public override GameEvent Clone() { return new WalkedThisTurnEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
-            WalkedThisTurnState recent = ((StatusEffect)owner).StatusStates.GetWithDefault<WalkedThisTurnState>();
-            recent.Walked = true;
+            if (AffectNonFocused || DungeonScene.Instance.CurrentCharacter == context.User)
+            {
+                WalkedThisTurnState recent = ((StatusEffect)owner).StatusStates.GetWithDefault<WalkedThisTurnState>();
+                recent.Walked = true;
+            }
+
             yield break;
         }
     }
@@ -1977,25 +2071,28 @@ namespace PMDC.Dungeon
         public bool Toxic;
         public int HPFraction;
         public int RestoreHPFraction;
+        public bool AffectNonFocused;
         
         public PoisonSingleEvent() { }
-        public PoisonSingleEvent(bool toxic, int hpFraction, int restoreHpFraction)
+        public PoisonSingleEvent(bool toxic, int hpFraction, int restoreHpFraction, bool affectNonFocused)
         {
             Toxic = toxic;
             HPFraction = hpFraction;
             RestoreHPFraction = restoreHpFraction;
+            AffectNonFocused = affectNonFocused;
         }
         protected PoisonSingleEvent(PoisonSingleEvent other)
         {
             Toxic = other.Toxic;
             HPFraction = other.HPFraction;
             RestoreHPFraction = other.RestoreHPFraction;
+            AffectNonFocused = other.AffectNonFocused;
         }
         public override GameEvent Clone() { return new PoisonSingleEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
-            if (!context.User.CharStates.Contains<MagicGuardState>())
+            if (!context.User.CharStates.Contains<MagicGuardState>() && AffectNonFocused || DungeonScene.Instance.CurrentCharacter == context.User)
             {
                 CountState countState = ((StatusEffect)owner).StatusStates.Get<CountState>();
                 if (Toxic && countState.Count < 16)
