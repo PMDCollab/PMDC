@@ -2069,24 +2069,24 @@ namespace PMDC.Dungeon
     public class PoisonSingleEvent : SingleCharEvent
     {
         public bool Toxic;
+        public bool AffectNonFocused;
         public int HPFraction;
         public int RestoreHPFraction;
-        public bool AffectNonFocused;
         
         public PoisonSingleEvent() { }
-        public PoisonSingleEvent(bool toxic, int hpFraction, int restoreHpFraction, bool affectNonFocused)
+        public PoisonSingleEvent(bool toxic, bool affectNonFocused, int hpFraction, int restoreHpFraction)
         {
             Toxic = toxic;
+            AffectNonFocused = affectNonFocused;
             HPFraction = hpFraction;
             RestoreHPFraction = restoreHpFraction;
-            AffectNonFocused = affectNonFocused;
         }
         protected PoisonSingleEvent(PoisonSingleEvent other)
         {
             Toxic = other.Toxic;
+            AffectNonFocused = other.AffectNonFocused;
             HPFraction = other.HPFraction;
             RestoreHPFraction = other.RestoreHPFraction;
-            AffectNonFocused = other.AffectNonFocused;
         }
         public override GameEvent Clone() { return new PoisonSingleEvent(this); }
 
