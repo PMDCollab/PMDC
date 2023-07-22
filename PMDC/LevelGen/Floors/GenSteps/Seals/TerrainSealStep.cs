@@ -47,11 +47,15 @@ namespace PMDC.LevelGen
         {
             foreach (Loc loc in sealList.Keys)
             {
+                //Do nothing for unbreakables
+                if (map.UnbreakableTerrain.TileEquivalent(map.GetTile(loc)))
+                    continue;
+
                 switch (sealList[loc])
                 {
                     //lay down the blocks
                     case SealType.Blocked:
-                            map.SetTile(loc, new Tile(BorderTerrain));
+                        map.SetTile(loc, new Tile(BorderTerrain));
                         break;
                     case SealType.Locked:
                     case SealType.Key:
