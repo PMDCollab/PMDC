@@ -21,7 +21,7 @@ namespace PMDC.Dungeon
         private Character lastSeenChar;
 
         public AttackFoesPlan() { }
-        public AttackFoesPlan(AIFlags iq, AttackChoice attackPattern, PositionChoice positionPattern) : base(iq)
+        public AttackFoesPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, AttackChoice attackPattern, PositionChoice positionPattern) : base(iq, attackRange, statusRange, selfStatusRange)
         {
             AttackPattern = attackPattern;
             PositionPattern = positionPattern;
