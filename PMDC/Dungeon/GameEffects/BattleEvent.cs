@@ -14162,42 +14162,34 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
-    public class RemoveTerrainEvent : BattleEvent
+    public abstract class RemoveTerrainBaseEvent : BattleEvent
     {
-        [JsonConverter(typeof(TerrainSetConverter))]
-        public HashSet<string> TileTypes;
         [Sound(0)]
         public string RemoveSound;
         public FiniteEmitter RemoveAnim;
 
-        public RemoveTerrainEvent()
+        public RemoveTerrainBaseEvent()
         {
-            TileTypes = new HashSet<string>();
             RemoveAnim = new EmptyFiniteEmitter();
         }
-        public RemoveTerrainEvent(string removeSound, FiniteEmitter removeAnim, params string[] tileTypes)
+        public RemoveTerrainBaseEvent(string removeSound, FiniteEmitter removeAnim)
             : this()
         {
             RemoveSound = removeSound;
             RemoveAnim = removeAnim;
-            foreach (string tileType in tileTypes)
-                TileTypes.Add(tileType);
         }
-        protected RemoveTerrainEvent(RemoveTerrainEvent other) : this()
+        protected RemoveTerrainBaseEvent(RemoveTerrainBaseEvent other) : this()
         {
-            foreach (string tileType in other.TileTypes)
-                TileTypes.Add(tileType);
             RemoveSound = other.RemoveSound;
             RemoveAnim = (FiniteEmitter)other.RemoveAnim.Clone();
         }
-        public override GameEvent Clone() { return new RemoveTerrainEvent(this); }
+
+        protected abstract bool ShouldRemove(Tile tile);
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             Tile tile = ZoneManager.Instance.CurrentMap.GetTile(context.TargetTile);
-            if (tile == null)
-                yield break;
-            if (!TileTypes.Contains(tile.Data.ID))
+            if (!ShouldRemove(tile))
                 yield break;
 
             if (context.Target == null)
@@ -14213,6 +14205,81 @@ namespace PMDC.Dungeon
             Loc startLoc = context.TargetTile - new Loc(distance + 2);
             Loc sizeLoc = new Loc((distance + 2) * 2 + 1);
             ZoneManager.Instance.CurrentMap.MapModified(startLoc, sizeLoc);
+        }
+    }
+
+    [Serializable]
+    public class RemoveTerrainEvent : RemoveTerrainBaseEvent
+    {
+        [JsonConverter(typeof(TerrainSetConverter))]
+        public HashSet<string> TileTypes;
+
+        public RemoveTerrainEvent()
+        {
+            TileTypes = new HashSet<string>();
+        }
+        public RemoveTerrainEvent(string removeSound, FiniteEmitter removeAnim, params string[] tileTypes)
+            : base(removeSound, removeAnim)
+        {
+            TileTypes = new HashSet<string>();
+            foreach (string tileType in tileTypes)
+                TileTypes.Add(tileType);
+        }
+        protected RemoveTerrainEvent(RemoveTerrainEvent other) : base(other)
+        {
+            foreach (string tileType in other.TileTypes)
+                TileTypes.Add(tileType);
+        }
+        public override GameEvent Clone() { return new RemoveTerrainEvent(this); }
+
+
+        protected override bool ShouldRemove(Tile tile)
+        {
+            if (tile == null)
+                return false;
+            return TileTypes.Contains(tile.Data.ID);
+        }
+    }
+
+
+    [Serializable]
+    public class RemoveTerrainStateEvent : RemoveTerrainBaseEvent
+    {
+        [StringTypeConstraint(1, typeof(TerrainState))]
+        public List<FlagType> States;
+
+        public RemoveTerrainStateEvent()
+        {
+            States = new List<FlagType>();
+        }
+
+        public RemoveTerrainStateEvent(string removeSound, FiniteEmitter removeAnim, params FlagType[] flagTypes)
+            : base(removeSound, removeAnim)
+        {
+            States = new List<FlagType>();
+            States.AddRange(flagTypes);
+        }
+        protected RemoveTerrainStateEvent(RemoveTerrainStateEvent other) : base(other)
+        {
+            States = new List<FlagType>();
+            States.AddRange(other.States);
+        }
+        public override GameEvent Clone() { return new RemoveTerrainStateEvent(this); }
+
+
+        protected override bool ShouldRemove(Tile tile)
+        {
+            if (tile == null)
+                return false;
+
+            TerrainData terrain = DataManager.Instance.GetTerrain(tile.Data.ID);
+            
+            foreach (FlagType state in States)
+            {
+                if (terrain.TerrainStates.Contains(state.FullType))
+                    return true;
+            }
+            return false;
         }
     }
 
