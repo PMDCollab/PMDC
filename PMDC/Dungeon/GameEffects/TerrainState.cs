@@ -32,10 +32,10 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
-    public class WallState : TerrainState
+    public class WallTerrainState : TerrainState
     {
-        public WallState() { }
-        public override GameplayState Clone() { return new WallState(); }
+        public WallTerrainState() { }
+        public override GameplayState Clone() { return new WallTerrainState(); }
     }
 
     [Serializable]
