@@ -490,6 +490,9 @@ namespace PMDC
             DataEditor.AddEditor(new SpreadPlanQuotaEditor());
             DataEditor.AddEditor(new SpreadPlanBaseEditor());
 
+            DataEditor.AddEditor(new CombinedGridRoomStepEditor());
+            DataEditor.AddEditor(new BlobWaterStepEditor());
+            DataEditor.AddEditor(new PerlinWaterStepEditor());
             DataEditor.AddEditor(new ItemSpawnZoneStepEditor());
             DataEditor.AddEditor(new TeamSpawnZoneStepEditor());
             DataEditor.AddEditor(new TileSpawnZoneStepEditor());
