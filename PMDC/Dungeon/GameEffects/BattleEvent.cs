@@ -13459,6 +13459,28 @@ namespace PMDC.Dungeon
         }
     }
 
+
+
+    [Serializable]
+    public class SpeedSwapEvent : BattleEvent
+    {
+        public SpeedSwapEvent() { }
+        protected SpeedSwapEvent(SpeedSwapEvent other)
+        {
+        }
+        public override GameEvent Clone() { return new SpeedSwapEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            int speed = context.User.Speed;
+            context.User.ProxySpeed = context.Target.Speed;
+            context.Target.ProxySpeed = speed;
+            DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_STAT_SWAP_OTHER").ToLocal(), context.User.GetDisplayName(false),
+                Text.FormatGrammar(new StringKey("BASE_STAT").ToLocal(), Stat.Speed.ToLocal()), context.Target.GetDisplayName(false)));
+            yield break;
+        }
+    }
+
     [Serializable]
     public class PainSplitEvent : BattleEvent
     {
