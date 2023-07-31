@@ -538,6 +538,21 @@ namespace PMDC
 
             DataEditor.AddEditor(new TeamMemberSpawnEditor());
             DataEditor.AddEditor(new MobSpawnEditor());
+            DataEditor.AddEditor(new MobSpawnWeakEditor());
+            DataEditor.AddEditor(new MobSpawnAltColorEditor());
+            DataEditor.AddEditor(new MobSpawnMovesOffEditor());
+            DataEditor.AddEditor(new MobSpawnBoostEditor());
+            DataEditor.AddEditor(new MobSpawnScaledBoostEditor());
+            DataEditor.AddEditor(new MobSpawnItemEditor());
+            DataEditor.AddEditor(new MobSpawnInvEditor());
+            DataEditor.AddEditor(new MobSpawnLevelScaleEditor());
+            DataEditor.AddEditor(new MobSpawnLocEditor());
+            DataEditor.AddEditor(new MobSpawnUnrecruitableEditor());
+            DataEditor.AddEditor(new MobSpawnFoeConflictEditor());
+            DataEditor.AddEditor(new MobSpawnInteractableEditor());
+            DataEditor.AddEditor(new MobSpawnLuaTableEditor());
+            DataEditor.AddEditor(new MobSpawnDiscriminatorEditor());
+            DataEditor.AddEditor(new MobSpawnStatusEditor());
 
             DataEditor.AddEditor(new MapTilesEditor());
             DataEditor.AddEditor(new BaseEmitterEditor());
