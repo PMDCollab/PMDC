@@ -87,14 +87,23 @@ namespace RogueEssence.Dev
                     statBoosts.Add(String.Format("{0}: [{1}, {2}]", statName, bonusRange.Min, bonusRange.Max));
                 }
             }
-            return String.Format("Scaled stat boosts: {0}", String.Join(", ", statBoosts));
+            return String.Format("Level-scaled stat boosts: {0}", String.Join(", ", statBoosts));
         }
     }
     public class MobSpawnItemEditor : Editor<MobSpawnItem>
     {
         public override string GetString(MobSpawnItem obj, Type type, object[] attributes)
         {
-            return String.Format("Item: {0}", obj.Items.ToString());
+            String Item = "";
+            if (obj.Items.Count == 1)
+            {
+                Item = obj.Items.GetSpawn(0).ToString();
+            } 
+            else
+            {
+                Item = obj.Items.ToString();
+            }
+            return String.Format("Item: {0}", Item);
         }
     }
     public class MobSpawnInvEditor : Editor<MobSpawnInv>
@@ -120,7 +129,7 @@ namespace RogueEssence.Dev
     {
         public override string GetString(MobSpawnLoc obj, Type type, object[] attributes)
         {
-            return String.Format("Spawn location X:{0}, Y:{1}", obj.Loc.X, obj.Loc.Y);
+            return String.Format("Spawn at X:{0}, Y:{1}, facing {2}", obj.Loc.X, obj.Loc.Y, obj.Dir);
         }
     }
     public class MobSpawnUnrecruitableEditor : Editor<MobSpawnUnrecruitable>
