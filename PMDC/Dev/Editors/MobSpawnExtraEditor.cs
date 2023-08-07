@@ -30,7 +30,7 @@ namespace RogueEssence.Dev
     {
         public override string GetString(MobSpawnAltColor obj, Type type, object[] attributes)
         {
-            return String.Format("Shiny Chance: 1 in {0}", obj.Odds);
+            return String.Format("Shiny Chance: {0} in {1}", obj.Chance.Numerator, obj.Chance.Denominator);
         }
     }
     public class MobSpawnMovesOffEditor : Editor<MobSpawnMovesOff>

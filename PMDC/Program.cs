@@ -578,6 +578,7 @@ namespace PMDC
             DataEditor.AddEditor(new PriorityEditor());
             DataEditor.AddEditor(new SegLocEditor());
             DataEditor.AddEditor(new LocEditor());
+            DataEditor.AddEditor(new MultiplierEditor());
             DataEditor.AddEditor(new LoopedRandEditor());
             DataEditor.AddEditor(new PresetMultiRandEditor());
             DataEditor.AddEditor(new MoneySpawnRangeEditor(false, true));
