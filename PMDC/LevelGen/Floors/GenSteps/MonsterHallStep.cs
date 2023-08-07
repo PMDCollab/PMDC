@@ -305,7 +305,7 @@ namespace PMDC.LevelGen
                 {
                     if (chosenMobs.Count == 0)
                         break;
-                    MobSpawn copyMob = chosenMobs[chosenMobs.Count - 1];
+                    MobSpawn copyMob = chosenMobs[chosenMobs.Count - 1].Copy();
                     chosenMobs.RemoveAt(chosenMobs.Count - 1);
                     if (map.Rand.Next(ALT_COLOR_ODDS) == 0)
                     {
