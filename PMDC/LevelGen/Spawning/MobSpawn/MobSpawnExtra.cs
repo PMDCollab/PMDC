@@ -134,7 +134,7 @@ namespace PMDC.LevelGen
             if (Remove)
             {
                 for (int ii = StartAt; ii < Character.MAX_SKILL_SLOTS; ii++)
-                    newChar.DeleteSkill(StartAt);
+                    newChar.DeleteSkill(StartAt, false);
             }
             else
             {
