@@ -97,7 +97,6 @@ namespace PMDC.Dungeon
     }
 
 
-
     [Serializable]
     public class ReplaceStatusGroupEvent : MapStatusGivenEvent
     {

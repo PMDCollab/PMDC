@@ -718,6 +718,68 @@ namespace PMDC.Dungeon
         }
     }
 
+
+
+
+    [Serializable]
+    public class StanceChangeEvent : BattleEvent
+    {
+        [JsonConverter(typeof(MonsterConverter))]
+        [DataType(0, DataManager.DataType.Monster, false)]
+        public string ReqSpecies;
+
+        [DataType(0, DataManager.DataType.Skill, false)]
+        public string DefenseSkill;
+        public int DefenseForme;
+        public int AttackForme;
+
+        public StanceChangeEvent() { ReqSpecies = ""; DefenseSkill = ""; }
+        public StanceChangeEvent(string reqSpecies, string defenseSkill, int defenseForme, int attackForme)
+        {
+            ReqSpecies = reqSpecies;
+            DefenseSkill = defenseSkill;
+            DefenseForme = defenseForme;
+            AttackForme = attackForme;
+        }
+        protected StanceChangeEvent(StanceChangeEvent other) : this()
+        {
+            ReqSpecies = other.ReqSpecies;
+            DefenseSkill = other.DefenseSkill;
+            DefenseForme = other.DefenseForme;
+            AttackForme = other.AttackForme;
+        }
+        public override GameEvent Clone() { return new StanceChangeEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.User.CurrentForm.Species != ReqSpecies)
+                yield break;
+
+            if (context.ActionType == BattleActionType.Skill && context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS)
+            {
+                //get the forme it should be in
+                int forme = -1;
+
+                if (context.Data.Category == BattleData.SkillCategory.Physical || context.Data.Category == BattleData.SkillCategory.Magical)
+                {
+                    forme = AttackForme;
+                }
+                else if (context.Data.ID == DefenseSkill)
+                {
+                    forme = DefenseForme;
+                }
+
+                if (forme != -1 && forme != context.User.CurrentForm.Form)
+                {
+                    //transform it
+                    context.User.Transform(new MonsterID(context.User.CurrentForm.Species, forme, context.User.CurrentForm.Skin, context.User.CurrentForm.Gender));
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_FORM_CHANGE").ToLocal(), context.User.GetDisplayName(false)));
+                }
+            }
+            yield break;
+        }
+    }
+
     [Serializable]
     public abstract class InvokeBattleEvent : BattleEvent
     {
@@ -3749,22 +3811,28 @@ namespace PMDC.Dungeon
     [Serializable]
     public class ProtectEvent : BattleEvent
     {
+        /// <summary>
+        /// OBSOLETE
+        /// </summary>
+        [NonEdited]
         public List<BattleAnimEvent> Anims;
+
+        public List<BattleEvent> Effects;
 
         public ProtectEvent()
         {
-            Anims = new List<BattleAnimEvent>();
+            Effects = new List<BattleEvent>();
         }
-        public ProtectEvent(params BattleAnimEvent[] anims)
+        public ProtectEvent(params BattleEvent[] anims)
         {
-            Anims = new List<BattleAnimEvent>();
-            Anims.AddRange(anims);
+            Effects = new List<BattleEvent>();
+            Effects.AddRange(anims);
         }
         protected ProtectEvent(ProtectEvent other)
         {
-            Anims = new List<BattleAnimEvent>();
-            foreach (BattleAnimEvent anim in other.Anims)
-                Anims.Add((BattleAnimEvent)anim.Clone());
+            Effects = new List<BattleEvent>();
+            foreach (BattleEvent anim in other.Effects)
+                Effects.Add((BattleEvent)anim.Clone());
         }
         public override GameEvent Clone() { return new ProtectEvent(this); }
 
@@ -3774,12 +3842,23 @@ namespace PMDC.Dungeon
             {
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_PROTECT").ToLocal(), context.Target.GetDisplayName(false)));
 
-                foreach (BattleAnimEvent anim in Anims)
+                foreach (BattleEvent anim in Effects)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
 
                 context.AddContextStateMult<AccMult>(false, -1, 1);
             }
             yield break;
+        }
+
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            //TODO: remove on v1.1
+            if (Serializer.OldVersion < new Version(0, 7, 15) && Anims != null)
+            {
+                Effects = new List<BattleEvent>();
+                Effects.AddRange(Anims);
+            }
         }
     }
 
