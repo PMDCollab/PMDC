@@ -21,5 +21,9 @@ namespace RogueEssence.Dev
         {
             return String.Format("{0}: '{1}'", "Show Floor Name", obj.Name);
         }
+        public override string GetTypeString()
+        {
+            return "Present Floor";
+        }
     }
 }
