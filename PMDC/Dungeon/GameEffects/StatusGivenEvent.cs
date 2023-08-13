@@ -916,6 +916,27 @@ namespace PMDC.Dungeon
 
 
 
+
+    [Serializable]
+    public class AddStatusContextStateEvent : StatusGivenEvent
+    {
+        public ContextState AddedState;
+
+        public AddStatusContextStateEvent() { }
+        public AddStatusContextStateEvent(ContextState state) { AddedState = state; }
+        protected AddStatusContextStateEvent(AddStatusContextStateEvent other)
+        {
+            AddedState = other.AddedState.Clone<ContextState>();
+        }
+        public override GameEvent Clone() { return new AddStatusContextStateEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, StatusCheckContext context)
+        {
+            context.ContextStates.Set(AddedState.Clone<ContextState>());
+            yield break;
+        }
+    }
+
     [Serializable]
     public class ExceptionStatusContextEvent : StatusGivenEvent
     {
@@ -2000,6 +2021,14 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new ShareBeforeStatusAddsEvent(); }
 
         protected override PriorityList<StatusGivenEvent> GetEvents(ItemData entry) => entry.BeforeStatusAdds;
+    }
+
+    [Serializable]
+    public class ShareBeforeStatusAddingsEvent : ShareEquipStatusEvent
+    {
+        public override GameEvent Clone() { return new ShareBeforeStatusAddingsEvent(); }
+
+        protected override PriorityList<StatusGivenEvent> GetEvents(ItemData entry) => entry.BeforeStatusAddings;
     }
 
     [Serializable]

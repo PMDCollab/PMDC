@@ -5880,7 +5880,7 @@ namespace PMDC.Dungeon
                         recentHitStatus = new StatusEffect(RecentHitStatusID);
                         recentHitStatus.LoadFromData();
                         recentHitStatus.StatusStates.GetWithDefault<StackState>().Stack = 1;
-                        yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, recentHitStatus, null));
+                        yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, recentHitStatus));
                     }
                     else
                         recentHitStatus.StatusStates.GetWithDefault<StackState>().Stack = recentHitStatus.StatusStates.GetWithDefault<StackState>().Stack + 1;
@@ -5895,7 +5895,7 @@ namespace PMDC.Dungeon
                         recentCritStatus = new StatusEffect(CritStatusID);
                         recentCritStatus.LoadFromData();
                         recentCritStatus.StatusStates.GetWithDefault<StackState>().Stack = 1;
-                        yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, recentCritStatus, null));
+                        yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, recentCritStatus));
                     }
                     else
                         recentCritStatus.StatusStates.GetWithDefault<StackState>().Stack = recentCritStatus.StatusStates.GetWithDefault<StackState>().Stack + 1;
@@ -5907,7 +5907,7 @@ namespace PMDC.Dungeon
                     StatusEffect otherStatus = new StatusEffect(OtherHitStatusID);
                     otherStatus.LoadFromData();
                     otherStatus.StatusStates.GetWithDefault<IDState>().ID = context.Data.ID;
-                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, otherStatus, null));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, otherStatus));
                 }
 
                 if (context.User.MemberTeam.MapFaction != context.Target.MemberTeam.MapFaction)
@@ -5916,7 +5916,7 @@ namespace PMDC.Dungeon
                     targetStatus.LoadFromData();
                     targetStatus.TargetChar = context.User;
                     targetStatus.StatusStates.GetWithDefault<HPState>().HP = dmg;
-                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, targetStatus, null));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, targetStatus));
                 }
             }
         }
@@ -5973,7 +5973,7 @@ namespace PMDC.Dungeon
                 StatusEffect lastSlotStatus = new StatusEffect(LastSlotStatusID);
                 lastSlotStatus.LoadFromData();
                 lastSlotStatus.StatusStates.GetWithDefault<SlotState>().Slot = context.UsageSlot;
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, lastSlotStatus, null));
+                yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, lastSlotStatus));
 
 
                 StatusEffect testStatus = context.User.GetStatusEffect(LastMoveStatusID);
@@ -5990,27 +5990,27 @@ namespace PMDC.Dungeon
                     //start new repetition
                     StatusEffect newRepeatStatus = new StatusEffect(RepeatStatusID);
                     newRepeatStatus.LoadFromData();
-                    yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, newRepeatStatus, null));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, newRepeatStatus));
                 }
 
                 StatusEffect lastMoveStatus = new StatusEffect(LastMoveStatusID);
                 lastMoveStatus.LoadFromData();
                 lastMoveStatus.StatusStates.GetWithDefault<IDState>().ID = context.Data.ID;
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, lastMoveStatus, null));
+                yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, lastMoveStatus));
 
                 foreach (Character ally in context.User.GetSeenCharacters(Alignment.Friend))
                 {
                     StatusEffect allyStatus = new StatusEffect(AllyStatusID);
                     allyStatus.LoadFromData();
                     allyStatus.StatusStates.GetWithDefault<IDState>().ID = context.Data.ID;
-                    yield return CoroutineManager.Instance.StartCoroutine(ally.AddStatusEffect(context.User, allyStatus, null));
+                    yield return CoroutineManager.Instance.StartCoroutine(ally.AddStatusEffect(context.User, allyStatus));
                 }
 
                 if (context.GetContextStateInt<AttackHitTotal>(true, 0) == 0)
                 {
                     StatusEffect missedAllStatus = new StatusEffect(MissedAllID);
                     missedAllStatus.LoadFromData();
-                    yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, missedAllStatus, null));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, missedAllStatus));
                 }
                 else
                 {
@@ -6109,7 +6109,7 @@ namespace PMDC.Dungeon
             setStatus.LoadFromData();
             setStatus.StatusStates.Set(new StackState(Stack));
 
-            yield return CoroutineManager.Instance.StartCoroutine(target.AddStatusEffect(Anonymous ? null : context.User, setStatus, Anonymous ? null : context.ContextStates));
+            yield return CoroutineManager.Instance.StartCoroutine(target.AddStatusEffect(Anonymous ? null : context.User, setStatus));
         }
 
         private int modStat(int value, string status, Character target)
@@ -9579,16 +9579,11 @@ namespace PMDC.Dungeon
                 foreach (BattleAnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
 
-                yield return CoroutineManager.Instance.StartCoroutine(target.AddStatusEffect(Anonymous ? null : origin, status, Anonymous ? null : context.ContextStates, !SilentCheck, true));
+                yield return CoroutineManager.Instance.StartCoroutine(target.AddStatusEffect(Anonymous ? null : origin, status, null, !SilentCheck, true));
             }
             else
             {
                 StatusCheckContext statusContext = new StatusCheckContext(Anonymous ? null : origin, target, status, false);
-                if (!Anonymous)
-                {
-                    foreach (ContextState state in context.ContextStates)
-                        statusContext.ContextStates.Set(state.Clone<ContextState>());
-                }
 
                 yield return CoroutineManager.Instance.StartCoroutine(target.BeforeStatusCheck(statusContext));
                 if (statusContext.CancelState.Cancel)
@@ -13191,7 +13186,7 @@ namespace PMDC.Dungeon
             foreach (string statusID in badStatuses)
                 yield return CoroutineManager.Instance.StartCoroutine(context.Target.RemoveStatusEffect(statusID, false));
 
-            yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, status, context.ContextStates, false));
+            yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, status, false));
 
             DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_REST").ToLocal(), context.Target.GetDisplayName(false)));
 
@@ -13208,7 +13203,9 @@ namespace PMDC.Dungeon
                 //do not check pending status
 
                 //check everything else
-                foreach (PassiveContext effectContext in context.Target.IteratePassives(GameEventPriority.USER_PORT_PRIORITY))
+                foreach (PassiveContext effectContext in context.User.IteratePassives(GameEventPriority.USER_PORT_PRIORITY))
+                    effectContext.AddEventsToQueue(queue, maxPriority, ref nextPriority, effectContext.EventData.BeforeStatusAddings, null);
+                foreach (PassiveContext effectContext in context.Target.IteratePassives(GameEventPriority.TARGET_PORT_PRIORITY))
                     effectContext.AddEventsToQueue<StatusGivenEvent>(queue, maxPriority, ref nextPriority, effectContext.EventData.BeforeStatusAdds, null);
             };
             foreach (EventQueueElement<StatusGivenEvent> effect in DungeonScene.IterateEvents<StatusGivenEvent>(function))
@@ -13611,7 +13608,7 @@ namespace PMDC.Dungeon
                     StatusEffect status = new StatusEffect(statusID);
                     status.LoadFromData();
                     status.StatusStates.GetWithDefault<StackState>().Stack = testStatus.StatusStates.GetWithDefault<StackState>().Stack;
-                    yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, status, context.ContextStates, false));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, status, false));
                 }
             }
             DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_BUFF_COPY").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
@@ -13661,14 +13658,14 @@ namespace PMDC.Dungeon
                     StatusEffect status = new StatusEffect(statusID);
                     status.LoadFromData();
                     status.StatusStates.GetWithDefault<StackState>().Stack = userStack;
-                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.Target, status, context.ContextStates, false));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.Target, status, false));
                 }
                 if (targetStack != 0)
                 {
                     StatusEffect status = new StatusEffect(statusID);
                     status.LoadFromData();
                     status.StatusStates.GetWithDefault<StackState>().Stack = targetStack;
-                    yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, status, context.ContextStates, false));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, status, false));
                 }
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_BUFF_SWAP").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false), DataManager.Instance.GetStatus(statusID).GetColoredName()));
             }
@@ -13737,7 +13734,7 @@ namespace PMDC.Dungeon
                     }
                     if (Remove)
                         yield return CoroutineManager.Instance.StartCoroutine(context.User.RemoveStatusEffect(status.ID, false));
-                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, newStatus, context.ContextStates));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, newStatus));
                 }
             }
         }
@@ -13828,7 +13825,7 @@ namespace PMDC.Dungeon
                 StatusEffect setStatus = new StatusEffect(StatusID);
                 setStatus.LoadFromData();
                 setStatus.StatusStates.Set(new HPState(hp));
-                yield return CoroutineManager.Instance.StartCoroutine(target.AddStatusEffect(null, setStatus, null, false, false));
+                yield return CoroutineManager.Instance.StartCoroutine(target.AddStatusEffect(null, setStatus, false));
             }
 
             DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_TRANSFORM").ToLocal(), target.GetDisplayName(false), user.GetDisplayName(false)));

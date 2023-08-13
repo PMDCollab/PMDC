@@ -240,6 +240,9 @@ namespace PMDC.Dungeon
             foreach (var effect in entry.BeforeStatusAdds)
                 if (effect.Key != Priority.Zero)
                     return false;
+            foreach (var effect in entry.BeforeStatusAddings)
+                if (effect.Key != Priority.Zero)
+                    return false;
             foreach (var effect in entry.OnStatusAdds)
                 if (effect.Key != Priority.Zero)
                     return false;
