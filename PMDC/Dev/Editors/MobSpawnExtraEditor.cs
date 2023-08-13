@@ -23,7 +23,11 @@ namespace RogueEssence.Dev
     {
         public override string GetString(MobSpawnWeak obj, Type type, object[] attributes)
         {
-            return "Weakened";
+            return "Half HP and 35% belly";
+        }
+        public override string GetTypeString()
+        {
+            return "Low Health and Belly";
         }
     }
     public class MobSpawnAltColorEditor : Editor<MobSpawnAltColor>
@@ -32,12 +36,20 @@ namespace RogueEssence.Dev
         {
             return String.Format("Shiny Chance: {0} in {1}", obj.Chance.Numerator, obj.Chance.Denominator);
         }
+        public override string GetTypeString()
+        {
+            return "Shiny Chance";
+        }
     }
     public class MobSpawnMovesOffEditor : Editor<MobSpawnMovesOff>
     {
         public override string GetString(MobSpawnMovesOff obj, Type type, object[] attributes)
         {
             return String.Format("Moves disabled after slot {0}", obj.StartAt);
+        }
+        public override string GetTypeString()
+        {
+            return "Disable Moves";
         }
     }
     public class MobSpawnBoostEditor : Editor<MobSpawnBoost>
@@ -62,6 +74,10 @@ namespace RogueEssence.Dev
                 }
             }
             return String.Format("Stat boosts: {0}", String.Join(", ", statBoosts));
+        }
+        public override string GetTypeString()
+        {
+            return "Stat Boosts";
         }
     }
     public class MobSpawnScaledBoostEditor : Editor<MobSpawnScaledBoost>
@@ -89,6 +105,10 @@ namespace RogueEssence.Dev
             }
             return String.Format("Level-scaled stat boosts: {0}", String.Join(", ", statBoosts));
         }
+        public override string GetTypeString()
+        {
+            return "Level-Scaled Stat Boosts";
+        }
     }
     public class MobSpawnItemEditor : Editor<MobSpawnItem>
     {
@@ -105,6 +125,10 @@ namespace RogueEssence.Dev
             }
             return String.Format("Item: {0}", Item);
         }
+        public override string GetTypeString()
+        {
+            return "Held Item";
+        }
     }
     public class MobSpawnInvEditor : Editor<MobSpawnInv>
     {
@@ -117,12 +141,20 @@ namespace RogueEssence.Dev
             }
             return String.Format("Inventory: {0}", String.Join(", ", inventory));
         }
+        public override string GetTypeString()
+        {
+            return "Inventory";
+        }
     }
     public class MobSpawnLevelScaleEditor : Editor<MobSpawnLevelScale>
     {
         public override string GetString(MobSpawnLevelScale obj, Type type, object[] attributes)
         {
             return String.Format("Scale level to floor starting at floor {0}", obj.StartFromID);
+        }
+        public override string GetTypeString()
+        {
+            return "Floor-Scaled Level";
         }
     }
     public class MobSpawnLocEditor : Editor<MobSpawnLoc>
@@ -131,10 +163,18 @@ namespace RogueEssence.Dev
         {
             return String.Format("Spawn at X:{0}, Y:{1}, facing {2}", obj.Loc.X, obj.Loc.Y, obj.Dir);
         }
+        public override string GetTypeString()
+        {
+            return "Position and Orientation";
+        }
     }
     public class MobSpawnUnrecruitableEditor : Editor<MobSpawnUnrecruitable>
     {
         public override string GetString(MobSpawnUnrecruitable obj, Type type, object[] attributes)
+        {
+            return "Unrecruitable";
+        }
+        public override string GetTypeString()
         {
             return "Unrecruitable";
         }
@@ -144,6 +184,10 @@ namespace RogueEssence.Dev
         public override string GetString(MobSpawnFoeConflict obj, Type type, object[] attributes)
         {
             return "Attacks Enemies";
+        }
+        public override string GetTypeString()
+        {
+            return "Aggressive";
         }
     }
     public class MobSpawnInteractableEditor : Editor<MobSpawnInteractable>
@@ -157,6 +201,10 @@ namespace RogueEssence.Dev
             }
             return String.Format("Interactions: {0}", String.Join(", ", interactionEventNames));
         }
+        public override string GetTypeString()
+        {
+            return "Interactions";
+        }
     }
     public class MobSpawnLuaTableEditor : Editor<MobSpawnLuaTable>
     {
@@ -164,12 +212,20 @@ namespace RogueEssence.Dev
         {
             return "Custom Lua Script";
         }
+        public override string GetTypeString()
+        {
+            return "Lua Scripting";
+        }
     }
     public class MobSpawnDiscriminatorEditor : Editor<MobSpawnDiscriminator>
     {
         public override string GetString(MobSpawnDiscriminator obj, Type type, object[] attributes)
         {
-            return String.Format("Decriminator ID: {0}", obj.Discriminator);
+            return String.Format("Descriminator ID: {0}", obj.Discriminator);
+        }
+        public override string GetTypeString()
+        {
+            return "Descriminator";
         }
     }
     public class MobSpawnStatusEditor : Editor<MobSpawnStatus>
@@ -183,6 +239,10 @@ namespace RogueEssence.Dev
                 EntrySummary summary = DataManager.Instance.DataIndices[DataManager.DataType.Status].Get(obj.Statuses.GetSpawn(0).ID);
                 return string.Format("Status: {0}", summary.Name.ToLocal());
             }
+        }
+        public override string GetTypeString()
+        {
+            return "Status";
         }
     }
 }
