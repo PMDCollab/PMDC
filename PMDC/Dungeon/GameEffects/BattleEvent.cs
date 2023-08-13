@@ -15238,7 +15238,7 @@ namespace PMDC.Dungeon
         {
             MonsterID formData = context.Target.BaseForm;
             BaseMonsterForm form = DataManager.Instance.GetMonster(formData.Species).Forms[formData.Form];
-            if (Elements.Contains(context.Target.Element1) || Elements.Contains(context.Target.Element2))
+            if (Elements.Contains(form.Element1) || Elements.Contains(form.Element2))
                 return 35;
             else
                 return -50;
@@ -15556,6 +15556,7 @@ namespace PMDC.Dungeon
                 }
 
                 yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Escaped));
+                context.TurnCancel.Cancel = true;
             }
         }
     }
