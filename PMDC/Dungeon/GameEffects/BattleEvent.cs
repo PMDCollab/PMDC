@@ -14604,9 +14604,11 @@ namespace PMDC.Dungeon
         [DataType(0, DataManager.DataType.Monster, false)]
         public string Species;
 
+        public bool IncludeTemp;
+
         public FormChoiceEvent() { Species = ""; }
         public FormChoiceEvent(string species) { Species = species; }
-        public FormChoiceEvent(FormChoiceEvent other) { Species = other.Species; }
+        public FormChoiceEvent(FormChoiceEvent other) { Species = other.Species; IncludeTemp = other.IncludeTemp; }
         public override GameEvent Clone() { return new FormChoiceEvent(this); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
@@ -14624,7 +14626,7 @@ namespace PMDC.Dungeon
                         BaseMonsterForm form = entry.Forms[ii];
                         if (!form.Released)
                             continue;
-                        if (form.Temporary)
+                        if (!IncludeTemp && form.Temporary)
                             continue;
                         eligibleForms.Add(ii);
                     }
