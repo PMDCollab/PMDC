@@ -74,10 +74,7 @@ namespace PMDC.Dungeon
                     testStatus.StatusStates.GetWithDefault<IDState>().ID == context.Data.ID &&
                     repeatStatus.StatusStates.GetWithDefault<RecentState>() != null)
                 {
-                    //increment repetition
-                    repeatStatus.StatusStates.GetWithDefault<CountState>().Count++;
-                    //reset turn counter
-                    repeatStatus.StatusStates.GetWithDefault<CountDownState>().Counter = 0;
+                    //fall through
                 }
                 else
                 {
@@ -3240,7 +3237,8 @@ namespace PMDC.Dungeon
             if (EveryTurn && repeatStatus.StatusStates.GetWithDefault<CountDownState>().Counter > 1)
                 yield break;
 
-            context.AddContextStateMult<DmgMult>(false, Math.Min(Maximum, Denominator + repeatStatus.StatusStates.GetWithDefault<CountState>().Count), Denominator);
+            int repetitions = repeatStatus.StatusStates.GetWithDefault<CountState>().Count;
+            context.AddContextStateMult<DmgMult>(false, Math.Min(Maximum, Denominator + repetitions), Denominator);
         }
     }
 
@@ -5993,6 +5991,9 @@ namespace PMDC.Dungeon
     {
         [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
+        public string RepeatStatusID;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
         public string AllyStatusID;
         [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
@@ -6000,16 +6001,19 @@ namespace PMDC.Dungeon
 
         public UsePostEvent()
         {
+            RepeatStatusID = "";
             AllyStatusID = "";
             MissedAllID = "";
         }
-        public UsePostEvent(string allyStatusID, string missedAllID)
+        public UsePostEvent(string repeatStatusID, string allyStatusID, string missedAllID)
         {
+            RepeatStatusID = repeatStatusID;
             AllyStatusID = allyStatusID;
             MissedAllID = missedAllID;
         }
         protected UsePostEvent(UsePostEvent other)
         {
+            RepeatStatusID = other.RepeatStatusID;
             AllyStatusID = other.AllyStatusID;
             MissedAllID = other.MissedAllID;
         }
@@ -6019,6 +6023,16 @@ namespace PMDC.Dungeon
         {
             if (context.ActionType == BattleActionType.Skill && context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS)
             {
+                StatusEffect repeatStatus = context.User.GetStatusEffect(RepeatStatusID);
+                if (repeatStatus.StatusStates.GetWithDefault<RecentState>() != null)
+                {
+                    //increment repetition
+                    repeatStatus.StatusStates.GetWithDefault<CountState>().Count++;
+                    //reset turn counter
+                    repeatStatus.StatusStates.GetWithDefault<CountDownState>().Counter = 0;
+                }
+
+
                 foreach (Character ally in context.User.GetSeenCharacters(Alignment.Friend))
                 {
                     StatusEffect allyStatus = new StatusEffect(AllyStatusID);
