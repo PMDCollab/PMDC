@@ -7,6 +7,7 @@ using RogueEssence;
 using RogueEssence.Data;
 using RogueEssence.Dev;
 using Newtonsoft.Json;
+using PMDC.Dungeon;
 
 namespace PMDC.Data
 {
@@ -243,6 +244,118 @@ namespace PMDC.Data
             return false;
         }
     }
+
+    [Serializable]
+    public class EvoMoveUse : PromoteDetail
+    {
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string LastMoveStatusID;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string MoveRepeatStatusID;
+
+        [JsonConverter(typeof(SkillConverter))]
+        [DataType(0, DataManager.DataType.Skill, false)]
+        public string MoveNum;
+
+        public int Amount;
+
+        public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_SKILL_USE").ToLocal(), DataManager.Instance.GetSkill(MoveNum).GetColoredName(), Amount); }
+        public override bool GetReq(Character character)
+        {
+            StatusEffect moveStatus = character.GetStatusEffect(LastMoveStatusID);
+            StatusEffect repeatStatus = character.GetStatusEffect(MoveRepeatStatusID);
+            if (moveStatus == null || repeatStatus == null)
+                return false;
+            if (moveStatus.StatusStates.GetWithDefault<IDState>().ID != MoveNum)
+                return false;
+            return repeatStatus.StatusStates.GetWithDefault<CountState>().Count >= Amount;
+        }
+    }
+
+    [Serializable]
+    public class EvoKillCount : PromoteDetail
+    {
+        public int Amount;
+
+        public override string GetReqString() { return ""; }
+        public override bool GetReq(Character character)
+        {
+            //foreach (SlotSkill move in character.BaseSkills)
+            //{
+            //    if (move.SkillNum == MoveNum)
+            //        return true;
+            //}
+            return false;
+        }
+    }
+
+    [Serializable]
+    public class EvoMoney : PromoteDetail
+    {
+        public int Amount;
+
+        public override string GetReqString() { return ""; }
+        public override bool GetReq(Character character)
+        {
+            //foreach (SlotSkill move in character.BaseSkills)
+            //{
+            //    if (move.SkillNum == MoveNum)
+            //        return true;
+            //}
+            return false;
+        }
+    }
+
+    [Serializable]
+    public class EvoWalk : PromoteDetail
+    {
+        public override string GetReqString() { return ""; }
+        public override bool GetReq(Character character)
+        {
+            //foreach (SlotSkill move in character.BaseSkills)
+            //{
+            //    if (move.SkillNum == MoveNum)
+            //        return true;
+            //}
+            return false;
+        }
+    }
+
+
+    [Serializable]
+    public class EvoRescue : PromoteDetail
+    {
+        public override string GetReqString() { return ""; }
+        public override bool GetReq(Character character)
+        {
+            //foreach (SlotSkill move in character.BaseSkills)
+            //{
+            //    if (move.SkillNum == MoveNum)
+            //        return true;
+            //}
+            return false;
+        }
+    }
+
+    [Serializable]
+    public class EvoTookDamage : PromoteDetail
+    {
+        public int Amount;
+
+        public override string GetReqString() { return ""; }
+        public override bool GetReq(Character character)
+        {
+            //foreach (SlotSkill move in character.BaseSkills)
+            //{
+            //    if (move.SkillNum == MoveNum)
+            //        return true;
+            //}
+            return false;
+        }
+    }
+
     [Serializable]
     public class EvoForm : PromoteDetail
     {

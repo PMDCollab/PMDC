@@ -82,6 +82,11 @@ namespace PMDC.Dungeon
         {
             return Species.GetHashCode() ^ Item.GetHashCode();
         }
+
+        public override string ToString()
+        {
+            return String.Format("{0}:{1}", Item, Species);
+        }
     }
 
     [Serializable]
@@ -233,6 +238,9 @@ namespace PMDC.Dungeon
             //    return false;
 
             foreach (var effect in entry.BeforeStatusAdds)
+                if (effect.Key != Priority.Zero)
+                    return false;
+            foreach (var effect in entry.BeforeStatusAddings)
                 if (effect.Key != Priority.Zero)
                     return false;
             foreach (var effect in entry.OnStatusAdds)

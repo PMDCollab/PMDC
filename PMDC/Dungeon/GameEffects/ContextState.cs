@@ -533,30 +533,4 @@ namespace PMDC.Dungeon
         public override GameplayState Clone() { return new DustState(); }
     }
     
-    [Serializable]  
-    public class MoveLearnState : ContextState  
-    {  
-        public string MoveLearn;  
-        public int ReplaceSlot;  
-        public MoveLearnState() { }  
-        protected MoveLearnState(MoveLearnState other)  
-        {  
-            MoveLearn = other.MoveLearn;  
-            ReplaceSlot = other.ReplaceSlot;  
-        }  
-        public override GameplayState Clone() { return new MoveLearnState(this); }  
-    }    
-    
-    [Serializable]  
-    public class MoveDeleteState : ContextState  
-    {  
-        public int MoveDelete;  
-        public MoveDeleteState() { }  
-        public MoveDeleteState(int slot) { MoveDelete = slot; }  
-        protected MoveDeleteState(MoveDeleteState other)  
-        {           
-            MoveDelete = other.MoveDelete;  
-        }        
-        public override GameplayState Clone() { return new MoveDeleteState(this); }  
-    }
 }

@@ -66,7 +66,7 @@ namespace PMDC.Dungeon
                 StatusEffect lastSlotStatus = new StatusEffect(LastSlotStatusID);
                 lastSlotStatus.LoadFromData();
                 lastSlotStatus.StatusStates.GetWithDefault<SlotState>().Slot = context.UsageSlot;
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, lastSlotStatus, null));
+                yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, lastSlotStatus));
 
                 StatusEffect testStatus = context.User.GetStatusEffect(LastMoveStatusID);
                 StatusEffect repeatStatus = context.User.GetStatusEffect(RepeatStatusID);
@@ -84,13 +84,13 @@ namespace PMDC.Dungeon
                     //start new repetition
                     StatusEffect newRepeatStatus = new StatusEffect(RepeatStatusID);
                     newRepeatStatus.LoadFromData();
-                    yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, newRepeatStatus, null));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, newRepeatStatus));
                 }
 
                 StatusEffect lastMoveStatus = new StatusEffect(LastMoveStatusID);
                 lastMoveStatus.LoadFromData();
                 lastMoveStatus.StatusStates.GetWithDefault<IDState>().ID = context.Data.ID;
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, lastMoveStatus, null));
+                yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, lastMoveStatus));
             }
             else
             {
@@ -116,6 +116,35 @@ namespace PMDC.Dungeon
             context.ContextStates.Set(new TargetLevel(context.Target.Level));
 
             yield break;
+        }
+    }
+
+
+
+    [Serializable]
+    public class MultiBattleEvent : BattleEvent
+    {
+        public List<BattleEvent> BaseEvents;
+
+        public MultiBattleEvent() { BaseEvents = new List<BattleEvent>(); }
+        public MultiBattleEvent(params BattleEvent[] effects)
+            : this()
+        {
+            foreach (BattleEvent battleEffect in effects)
+                BaseEvents.Add(battleEffect);
+        }
+        protected MultiBattleEvent(MultiBattleEvent other)
+            : this()
+        {
+            foreach (BattleEvent battleEffect in other.BaseEvents)
+                BaseEvents.Add((BattleEvent)battleEffect.Clone());
+        }
+        public override GameEvent Clone() { return new MultiBattleEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            foreach (BattleEvent battleEffect in BaseEvents)
+                yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
         }
     }
 
@@ -753,6 +782,68 @@ namespace PMDC.Dungeon
             {
                 yield return CoroutineManager.Instance.StartCoroutine(target.ChangeElement(context.Data.Element, DataManager.Instance.DefaultElement));
             }
+        }
+    }
+
+
+
+
+    [Serializable]
+    public class StanceChangeEvent : BattleEvent
+    {
+        [JsonConverter(typeof(MonsterConverter))]
+        [DataType(0, DataManager.DataType.Monster, false)]
+        public string ReqSpecies;
+
+        [DataType(0, DataManager.DataType.Skill, false)]
+        public string DefenseSkill;
+        public int DefenseForme;
+        public int AttackForme;
+
+        public StanceChangeEvent() { ReqSpecies = ""; DefenseSkill = ""; }
+        public StanceChangeEvent(string reqSpecies, string defenseSkill, int defenseForme, int attackForme)
+        {
+            ReqSpecies = reqSpecies;
+            DefenseSkill = defenseSkill;
+            DefenseForme = defenseForme;
+            AttackForme = attackForme;
+        }
+        protected StanceChangeEvent(StanceChangeEvent other) : this()
+        {
+            ReqSpecies = other.ReqSpecies;
+            DefenseSkill = other.DefenseSkill;
+            DefenseForme = other.DefenseForme;
+            AttackForme = other.AttackForme;
+        }
+        public override GameEvent Clone() { return new StanceChangeEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.User.CurrentForm.Species != ReqSpecies)
+                yield break;
+
+            if (context.ActionType == BattleActionType.Skill && context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS)
+            {
+                //get the forme it should be in
+                int forme = -1;
+
+                if (context.Data.Category == BattleData.SkillCategory.Physical || context.Data.Category == BattleData.SkillCategory.Magical)
+                {
+                    forme = AttackForme;
+                }
+                else if (context.Data.ID == DefenseSkill)
+                {
+                    forme = DefenseForme;
+                }
+
+                if (forme != -1 && forme != context.User.CurrentForm.Form)
+                {
+                    //transform it
+                    context.User.Transform(new MonsterID(context.User.CurrentForm.Species, forme, context.User.CurrentForm.Skin, context.User.CurrentForm.Gender));
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_FORM_CHANGE").ToLocal(), context.User.GetDisplayName(false)));
+                }
+            }
+            yield break;
         }
     }
 
@@ -2699,6 +2790,47 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    [Serializable]
+    public class MoveStateNeededEvent : BattleEvent
+    {
+        [StringTypeConstraint(1, typeof(SkillState))]
+        public List<FlagType> States;
+        public List<BattleEvent> BaseEvents;
+
+        public MoveStateNeededEvent() { States = new List<FlagType>(); BaseEvents = new List<BattleEvent>(); }
+        public MoveStateNeededEvent(Type state, params BattleEvent[] effects) : this()
+        {
+            States.Add(new FlagType(state));
+            foreach (BattleEvent effect in effects)
+                BaseEvents.Add(effect);
+        }
+        protected MoveStateNeededEvent(MoveStateNeededEvent other) : this()
+        {
+            States.AddRange(other.States);
+            foreach (BattleEvent battleEffect in other.BaseEvents)
+                BaseEvents.Add((BattleEvent)battleEffect.Clone());
+        }
+        public override GameEvent Clone() { return new MoveStateNeededEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            bool hasState = false;
+            foreach (FlagType state in States)
+            {
+                if (context.Data.SkillStates.Contains(state.FullType))
+                    hasState = true;
+            }
+            if (hasState)
+            {
+                foreach (BattleEvent battleEffect in BaseEvents)
+                    yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
+            }
+            yield break;
+        }
+    }
+
+
     [Serializable]
     public class MultiplyMoveStateEvent : BattleEvent
     {
@@ -3746,22 +3878,28 @@ namespace PMDC.Dungeon
     [Serializable]
     public class ProtectEvent : BattleEvent
     {
+        /// <summary>
+        /// OBSOLETE
+        /// </summary>
+        [NonEdited]
         public List<BattleAnimEvent> Anims;
+
+        public List<BattleEvent> Effects;
 
         public ProtectEvent()
         {
-            Anims = new List<BattleAnimEvent>();
+            Effects = new List<BattleEvent>();
         }
-        public ProtectEvent(params BattleAnimEvent[] anims)
+        public ProtectEvent(params BattleEvent[] anims)
         {
-            Anims = new List<BattleAnimEvent>();
-            Anims.AddRange(anims);
+            Effects = new List<BattleEvent>();
+            Effects.AddRange(anims);
         }
         protected ProtectEvent(ProtectEvent other)
         {
-            Anims = new List<BattleAnimEvent>();
-            foreach (BattleAnimEvent anim in other.Anims)
-                Anims.Add((BattleAnimEvent)anim.Clone());
+            Effects = new List<BattleEvent>();
+            foreach (BattleEvent anim in other.Effects)
+                Effects.Add((BattleEvent)anim.Clone());
         }
         public override GameEvent Clone() { return new ProtectEvent(this); }
 
@@ -3771,12 +3909,23 @@ namespace PMDC.Dungeon
             {
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_PROTECT").ToLocal(), context.Target.GetDisplayName(false)));
 
-                foreach (BattleAnimEvent anim in Anims)
+                foreach (BattleEvent anim in Effects)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
 
                 context.AddContextStateMult<AccMult>(false, -1, 1);
             }
             yield break;
+        }
+
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            //TODO: remove on v1.1
+            if (Serializer.OldVersion < new Version(0, 7, 15) && Anims != null)
+            {
+                Effects = new List<BattleEvent>();
+                Effects.AddRange(Anims);
+            }
         }
     }
 
@@ -4113,13 +4262,22 @@ namespace PMDC.Dungeon
     [Serializable]
     public class EvadeDistanceEvent : BattleEvent
     {
-        public override GameEvent Clone() { return new EvadeDistanceEvent(); }
+        public bool Inverted;
+
+        public EvadeDistanceEvent() { }
+        public EvadeDistanceEvent(bool invert) { Inverted = invert; }
+        public EvadeDistanceEvent(EvadeDistanceEvent other)
+        {
+            Inverted = other.Inverted;
+        }
+
+        public override GameEvent Clone() { return new EvadeDistanceEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             if (context.ActionType == BattleActionType.Skill && context.Data.ID != DataManager.Instance.DefaultSkill)
             {
-                if (!ZoneManager.Instance.CurrentMap.InRange(context.StrikeStartTile, context.Target.CharLoc, 1) && context.Data.HitRate > -1)
+                if (ZoneManager.Instance.CurrentMap.InRange(context.StrikeStartTile, context.Target.CharLoc, 1) == Inverted && context.Data.HitRate > -1)
                 {
                     DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_AVOID").ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName()));
                     context.AddContextStateMult<AccMult>(false, -1, 1);
@@ -5789,7 +5947,7 @@ namespace PMDC.Dungeon
                         recentHitStatus = new StatusEffect(RecentHitStatusID);
                         recentHitStatus.LoadFromData();
                         recentHitStatus.StatusStates.GetWithDefault<StackState>().Stack = 1;
-                        yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, recentHitStatus, null));
+                        yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, recentHitStatus));
                     }
                     else
                         recentHitStatus.StatusStates.GetWithDefault<StackState>().Stack = recentHitStatus.StatusStates.GetWithDefault<StackState>().Stack + 1;
@@ -5804,7 +5962,7 @@ namespace PMDC.Dungeon
                         recentCritStatus = new StatusEffect(CritStatusID);
                         recentCritStatus.LoadFromData();
                         recentCritStatus.StatusStates.GetWithDefault<StackState>().Stack = 1;
-                        yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, recentCritStatus, null));
+                        yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, recentCritStatus));
                     }
                     else
                         recentCritStatus.StatusStates.GetWithDefault<StackState>().Stack = recentCritStatus.StatusStates.GetWithDefault<StackState>().Stack + 1;
@@ -5816,7 +5974,7 @@ namespace PMDC.Dungeon
                     StatusEffect otherStatus = new StatusEffect(OtherHitStatusID);
                     otherStatus.LoadFromData();
                     otherStatus.StatusStates.GetWithDefault<IDState>().ID = context.Data.ID;
-                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, otherStatus, null));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, otherStatus));
                 }
 
                 if (context.User.MemberTeam.MapFaction != context.Target.MemberTeam.MapFaction)
@@ -5825,7 +5983,7 @@ namespace PMDC.Dungeon
                     targetStatus.LoadFromData();
                     targetStatus.TargetChar = context.User;
                     targetStatus.StatusStates.GetWithDefault<HPState>().HP = dmg;
-                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, targetStatus, null));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, targetStatus));
                 }
             }
         }
@@ -5866,14 +6024,14 @@ namespace PMDC.Dungeon
                     StatusEffect allyStatus = new StatusEffect(AllyStatusID);
                     allyStatus.LoadFromData();
                     allyStatus.StatusStates.GetWithDefault<IDState>().ID = context.Data.ID;
-                    yield return CoroutineManager.Instance.StartCoroutine(ally.AddStatusEffect(context.User, allyStatus, null));
+                    yield return CoroutineManager.Instance.StartCoroutine(ally.AddStatusEffect(context.User, allyStatus));
                 }
 
                 if (context.GetContextStateInt<AttackHitTotal>(true, 0) == 0)
                 {
                     StatusEffect missedAllStatus = new StatusEffect(MissedAllID);
                     missedAllStatus.LoadFromData();
-                    yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, missedAllStatus, null));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, missedAllStatus));
                 }
                 else
                 {
@@ -5965,7 +6123,7 @@ namespace PMDC.Dungeon
             setStatus.LoadFromData();
             setStatus.StatusStates.Set(new StackState(Stack));
 
-            yield return CoroutineManager.Instance.StartCoroutine(target.AddStatusEffect(Anonymous ? null : context.User, setStatus, Anonymous ? null : context.ContextStates));
+            yield return CoroutineManager.Instance.StartCoroutine(target.AddStatusEffect(Anonymous ? null : context.User, setStatus));
         }
 
         private int modStat(int value, string status, Character target)
@@ -9435,16 +9593,11 @@ namespace PMDC.Dungeon
                 foreach (BattleAnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
 
-                yield return CoroutineManager.Instance.StartCoroutine(target.AddStatusEffect(Anonymous ? null : origin, status, Anonymous ? null : context.ContextStates, !SilentCheck, true));
+                yield return CoroutineManager.Instance.StartCoroutine(target.AddStatusEffect(Anonymous ? null : origin, status, null, !SilentCheck, true));
             }
             else
             {
                 StatusCheckContext statusContext = new StatusCheckContext(Anonymous ? null : origin, target, status, false);
-                if (!Anonymous)
-                {
-                    foreach (ContextState state in context.ContextStates)
-                        statusContext.ContextStates.Set(state.Clone<ContextState>());
-                }
 
                 yield return CoroutineManager.Instance.StartCoroutine(target.BeforeStatusCheck(statusContext));
                 if (statusContext.CancelState.Cancel)
@@ -13047,7 +13200,7 @@ namespace PMDC.Dungeon
             foreach (string statusID in badStatuses)
                 yield return CoroutineManager.Instance.StartCoroutine(context.Target.RemoveStatusEffect(statusID, false));
 
-            yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, status, context.ContextStates, false));
+            yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, status, false));
 
             DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_REST").ToLocal(), context.Target.GetDisplayName(false)));
 
@@ -13064,7 +13217,9 @@ namespace PMDC.Dungeon
                 //do not check pending status
 
                 //check everything else
-                foreach (PassiveContext effectContext in context.Target.IteratePassives(GameEventPriority.USER_PORT_PRIORITY))
+                foreach (PassiveContext effectContext in context.User.IteratePassives(GameEventPriority.USER_PORT_PRIORITY))
+                    effectContext.AddEventsToQueue(queue, maxPriority, ref nextPriority, effectContext.EventData.BeforeStatusAddings, null);
+                foreach (PassiveContext effectContext in context.Target.IteratePassives(GameEventPriority.TARGET_PORT_PRIORITY))
                     effectContext.AddEventsToQueue<StatusGivenEvent>(queue, maxPriority, ref nextPriority, effectContext.EventData.BeforeStatusAdds, null);
             };
             foreach (EventQueueElement<StatusGivenEvent> effect in DungeonScene.IterateEvents<StatusGivenEvent>(function))
@@ -13394,6 +13549,28 @@ namespace PMDC.Dungeon
         }
     }
 
+
+
+    [Serializable]
+    public class SpeedSwapEvent : BattleEvent
+    {
+        public SpeedSwapEvent() { }
+        protected SpeedSwapEvent(SpeedSwapEvent other)
+        {
+        }
+        public override GameEvent Clone() { return new SpeedSwapEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            int speed = context.User.Speed;
+            context.User.ProxySpeed = context.Target.Speed;
+            context.Target.ProxySpeed = speed;
+            DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_STAT_SWAP_OTHER").ToLocal(), context.User.GetDisplayName(false),
+                Text.FormatGrammar(new StringKey("BASE_STAT").ToLocal(), Stat.Speed.ToLocal()), context.Target.GetDisplayName(false)));
+            yield break;
+        }
+    }
+
     [Serializable]
     public class PainSplitEvent : BattleEvent
     {
@@ -13445,7 +13622,7 @@ namespace PMDC.Dungeon
                     StatusEffect status = new StatusEffect(statusID);
                     status.LoadFromData();
                     status.StatusStates.GetWithDefault<StackState>().Stack = testStatus.StatusStates.GetWithDefault<StackState>().Stack;
-                    yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, status, context.ContextStates, false));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, status, false));
                 }
             }
             DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_BUFF_COPY").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
@@ -13495,14 +13672,14 @@ namespace PMDC.Dungeon
                     StatusEffect status = new StatusEffect(statusID);
                     status.LoadFromData();
                     status.StatusStates.GetWithDefault<StackState>().Stack = userStack;
-                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.Target, status, context.ContextStates, false));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.Target, status, false));
                 }
                 if (targetStack != 0)
                 {
                     StatusEffect status = new StatusEffect(statusID);
                     status.LoadFromData();
                     status.StatusStates.GetWithDefault<StackState>().Stack = targetStack;
-                    yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, status, context.ContextStates, false));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.AddStatusEffect(context.User, status, false));
                 }
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_BUFF_SWAP").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false), DataManager.Instance.GetStatus(statusID).GetColoredName()));
             }
@@ -13571,7 +13748,7 @@ namespace PMDC.Dungeon
                     }
                     if (Remove)
                         yield return CoroutineManager.Instance.StartCoroutine(context.User.RemoveStatusEffect(status.ID, false));
-                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, newStatus, context.ContextStates));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, newStatus));
                 }
             }
         }
@@ -13597,15 +13774,19 @@ namespace PMDC.Dungeon
     public class TransformEvent : BattleEvent
     {
         public bool AffectTarget;
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string StatusID;
 
-        public TransformEvent() { }
-        public TransformEvent(bool affectTarget)
+        public TransformEvent() { StatusID = ""; }
+        public TransformEvent(bool affectTarget, string status)
         {
             AffectTarget = affectTarget;
+            StatusID = status;
         }
         protected TransformEvent(TransformEvent other)
         {
             AffectTarget = other.AffectTarget;
+            StatusID = other.StatusID;
         }
         public override GameEvent Clone() { return new TransformEvent(this); }
 
@@ -13617,37 +13798,51 @@ namespace PMDC.Dungeon
             if (target.Dead || user.Dead)
                 yield break;
 
-            if (target.BaseForm.Species != target.CurrentForm.Species)
+            StatusEffect transform = target.GetStatusEffect(StatusID);
+            if (transform != null)
+            {
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_ALREADY_TRANSFORMED").ToLocal(), target.GetDisplayName(false)));
-            else if (target.CurrentForm.Species == user.CurrentForm.Species)
+                yield break;
+            }
+            if (target.CurrentForm.Species == user.CurrentForm.Species)
             {
                 MonsterData entry = DataManager.Instance.GetMonster(target.CurrentForm.Species);
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_ALREADY_HAS_SPECIES").ToLocal(), target.GetDisplayName(false), entry.GetColoredName()));
+                yield break;
             }
-            else
+
+            int hp = target.HP;
+
+            target.Transform(user.CurrentForm);
+
+            //proxy stats
+            target.ProxyAtk = user.Atk;
+            target.ProxyDef = user.Def;
+            target.ProxyMAtk = user.MAtk;
+            target.ProxyMDef = user.MDef;
+            target.ProxySpeed = user.Speed;
+
+            //ability
+            for (int ii = 0; ii < CharData.MAX_INTRINSIC_SLOTS; ii++)
+                yield return CoroutineManager.Instance.StartCoroutine(target.ReplaceIntrinsic(ii, user.Intrinsics[ii].Element.ID, false, false));
+
+            //type
+            yield return CoroutineManager.Instance.StartCoroutine(target.ChangeElement(user.Element1, user.Element2, false, false));
+
+            //moves
+            for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
+                target.ChangeSkill(ii, user.Skills[ii].Element.SkillNum);
+
+            //set the status
+            if (!String.IsNullOrEmpty(StatusID))
             {
-                target.Transform(user.CurrentForm);
-
-                //proxy stats
-                target.ProxyAtk = user.Atk;
-                target.ProxyDef = user.Def;
-                target.ProxyMAtk = user.MAtk;
-                target.ProxyMDef = user.MDef;
-                target.ProxySpeed = user.Speed;
-
-                //ability
-                for (int ii = 0; ii < CharData.MAX_INTRINSIC_SLOTS; ii++)
-                    yield return CoroutineManager.Instance.StartCoroutine(target.ReplaceIntrinsic(ii, user.Intrinsics[ii].Element.ID, false, false));
-
-                //type
-                yield return CoroutineManager.Instance.StartCoroutine(target.ChangeElement(user.Element1, user.Element2, false, false));
-
-                //moves
-                for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
-                    target.ChangeSkill(ii, user.Skills[ii].Element.SkillNum);
-
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_TRANSFORM").ToLocal(), target.GetDisplayName(false), user.GetDisplayName(false)));
+                StatusEffect setStatus = new StatusEffect(StatusID);
+                setStatus.LoadFromData();
+                setStatus.StatusStates.Set(new HPState(hp));
+                yield return CoroutineManager.Instance.StartCoroutine(target.AddStatusEffect(null, setStatus, false));
             }
+
+            DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_TRANSFORM").ToLocal(), target.GetDisplayName(false), user.GetDisplayName(false)));
         }
     }
 
@@ -14079,42 +14274,34 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
-    public class RemoveTerrainEvent : BattleEvent
+    public abstract class RemoveTerrainBaseEvent : BattleEvent
     {
-        [JsonConverter(typeof(TerrainSetConverter))]
-        public HashSet<string> TileTypes;
         [Sound(0)]
         public string RemoveSound;
         public FiniteEmitter RemoveAnim;
 
-        public RemoveTerrainEvent()
+        public RemoveTerrainBaseEvent()
         {
-            TileTypes = new HashSet<string>();
             RemoveAnim = new EmptyFiniteEmitter();
         }
-        public RemoveTerrainEvent(string removeSound, FiniteEmitter removeAnim, params string[] tileTypes)
+        public RemoveTerrainBaseEvent(string removeSound, FiniteEmitter removeAnim)
             : this()
         {
             RemoveSound = removeSound;
             RemoveAnim = removeAnim;
-            foreach (string tileType in tileTypes)
-                TileTypes.Add(tileType);
         }
-        protected RemoveTerrainEvent(RemoveTerrainEvent other) : this()
+        protected RemoveTerrainBaseEvent(RemoveTerrainBaseEvent other) : this()
         {
-            foreach (string tileType in other.TileTypes)
-                TileTypes.Add(tileType);
             RemoveSound = other.RemoveSound;
             RemoveAnim = (FiniteEmitter)other.RemoveAnim.Clone();
         }
-        public override GameEvent Clone() { return new RemoveTerrainEvent(this); }
+
+        protected abstract bool ShouldRemove(Tile tile);
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             Tile tile = ZoneManager.Instance.CurrentMap.GetTile(context.TargetTile);
-            if (tile == null)
-                yield break;
-            if (!TileTypes.Contains(tile.Data.ID))
+            if (!ShouldRemove(tile))
                 yield break;
 
             if (context.Target == null)
@@ -14130,6 +14317,81 @@ namespace PMDC.Dungeon
             Loc startLoc = context.TargetTile - new Loc(distance + 2);
             Loc sizeLoc = new Loc((distance + 2) * 2 + 1);
             ZoneManager.Instance.CurrentMap.MapModified(startLoc, sizeLoc);
+        }
+    }
+
+    [Serializable]
+    public class RemoveTerrainEvent : RemoveTerrainBaseEvent
+    {
+        [JsonConverter(typeof(TerrainSetConverter))]
+        public HashSet<string> TileTypes;
+
+        public RemoveTerrainEvent()
+        {
+            TileTypes = new HashSet<string>();
+        }
+        public RemoveTerrainEvent(string removeSound, FiniteEmitter removeAnim, params string[] tileTypes)
+            : base(removeSound, removeAnim)
+        {
+            TileTypes = new HashSet<string>();
+            foreach (string tileType in tileTypes)
+                TileTypes.Add(tileType);
+        }
+        protected RemoveTerrainEvent(RemoveTerrainEvent other) : base(other)
+        {
+            foreach (string tileType in other.TileTypes)
+                TileTypes.Add(tileType);
+        }
+        public override GameEvent Clone() { return new RemoveTerrainEvent(this); }
+
+
+        protected override bool ShouldRemove(Tile tile)
+        {
+            if (tile == null)
+                return false;
+            return TileTypes.Contains(tile.Data.ID);
+        }
+    }
+
+
+    [Serializable]
+    public class RemoveTerrainStateEvent : RemoveTerrainBaseEvent
+    {
+        [StringTypeConstraint(1, typeof(TerrainState))]
+        public List<FlagType> States;
+
+        public RemoveTerrainStateEvent()
+        {
+            States = new List<FlagType>();
+        }
+
+        public RemoveTerrainStateEvent(string removeSound, FiniteEmitter removeAnim, params FlagType[] flagTypes)
+            : base(removeSound, removeAnim)
+        {
+            States = new List<FlagType>();
+            States.AddRange(flagTypes);
+        }
+        protected RemoveTerrainStateEvent(RemoveTerrainStateEvent other) : base(other)
+        {
+            States = new List<FlagType>();
+            States.AddRange(other.States);
+        }
+        public override GameEvent Clone() { return new RemoveTerrainStateEvent(this); }
+
+
+        protected override bool ShouldRemove(Tile tile)
+        {
+            if (tile == null)
+                return false;
+
+            TerrainData terrain = DataManager.Instance.GetTerrain(tile.Data.ID);
+            
+            foreach (FlagType state in States)
+            {
+                if (terrain.TerrainStates.Contains(state.FullType))
+                    return true;
+            }
+            return false;
         }
     }
 
@@ -14356,9 +14618,11 @@ namespace PMDC.Dungeon
         [DataType(0, DataManager.DataType.Monster, false)]
         public string Species;
 
+        public bool IncludeTemp;
+
         public FormChoiceEvent() { Species = ""; }
         public FormChoiceEvent(string species) { Species = species; }
-        public FormChoiceEvent(FormChoiceEvent other) { Species = other.Species; }
+        public FormChoiceEvent(FormChoiceEvent other) { Species = other.Species; IncludeTemp = other.IncludeTemp; }
         public override GameEvent Clone() { return new FormChoiceEvent(this); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
@@ -14376,7 +14640,7 @@ namespace PMDC.Dungeon
                         BaseMonsterForm form = entry.Forms[ii];
                         if (!form.Released)
                             continue;
-                        if (form.Temporary)
+                        if (!IncludeTemp && form.Temporary)
                             continue;
                         eligibleForms.Add(ii);
                     }
@@ -14987,7 +15251,7 @@ namespace PMDC.Dungeon
         {
             MonsterID formData = context.Target.BaseForm;
             BaseMonsterForm form = DataManager.Instance.GetMonster(formData.Species).Forms[formData.Form];
-            if (Elements.Contains(context.Target.Element1) || Elements.Contains(context.Target.Element2))
+            if (Elements.Contains(form.Element1) || Elements.Contains(form.Element2))
                 return 35;
             else
                 return -50;
@@ -15305,6 +15569,7 @@ namespace PMDC.Dungeon
                 }
 
                 yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Escaped));
+                context.TurnCancel.Cancel = true;
             }
         }
     }

@@ -9,7 +9,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class BossPlan : AttackFoesPlan
     {
-        public BossPlan(AIFlags iq, AIPlan.AttackChoice attackPattern, PositionChoice positionPattern) : base(iq, attackPattern, positionPattern) { }
+        public BossPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, AIPlan.AttackChoice attackPattern, PositionChoice positionPattern) : base(iq, attackRange, statusRange, selfStatusRange, attackPattern, positionPattern) { }
         protected BossPlan(BossPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new BossPlan(this); }
 

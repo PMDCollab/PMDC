@@ -11,6 +11,7 @@ using RogueEssence.Script;
 using NLua;
 using System.Linq;
 using PMDC.Dungeon;
+using System.Runtime.Serialization;
 
 namespace PMDC.LevelGen
 {
@@ -49,24 +50,31 @@ namespace PMDC.LevelGen
     public class MobSpawnAltColor : MobSpawnExtra
     {
         /// <summary>
-        /// One-in-this chance.
+        /// Fractional chance of occurrence.
         /// </summary>
+        [FractionLimit(0, 0, 0)]
+        public Multiplier Chance;
+        
+        /// <summary>
+        /// OBSOLETE
+        /// </summary>
+        [NonEdited]
         public int Odds;
 
         public MobSpawnAltColor() { }
         public MobSpawnAltColor(int odds)
         {
-            Odds = odds;
+            Chance = new Multiplier(1, odds);
         }
         public MobSpawnAltColor(MobSpawnAltColor other)
         {
-            Odds = other.Odds;
+            Chance = other.Chance;
         }
         public override MobSpawnExtra Copy() { return new MobSpawnAltColor(this); }
 
         public override void ApplyFeature(IMobSpawnMap map, Character newChar)
         {
-            if (Odds > 0 && map.Rand.Next(Odds) == 0)
+            if (Chance.Denominator > 0 && map.Rand.Next(Chance.Denominator) < Chance.Numerator)
             {
                 SkinTableState table = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<SkinTableState>();
                 newChar.BaseForm.Skin = table.AltColor;
@@ -78,7 +86,18 @@ namespace PMDC.LevelGen
 
         public override string ToString()
         {
-            return string.Format("{0}: 1/{1}", this.GetType().GetFormattedTypeName(), Odds);
+            return string.Format("{0}: {1}", this.GetType().GetFormattedTypeName(), Chance);
+        }
+
+
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            //TODO: Remove in v1.1
+            if (Serializer.OldVersion < new Version(0, 7, 15))
+            {
+                Chance = new Multiplier(1, Odds);
+            }
         }
     }
 
@@ -115,7 +134,7 @@ namespace PMDC.LevelGen
             if (Remove)
             {
                 for (int ii = StartAt; ii < Character.MAX_SKILL_SLOTS; ii++)
-                    newChar.DeleteSkill(StartAt);
+                    newChar.DeleteSkill(StartAt, false);
             }
             else
             {

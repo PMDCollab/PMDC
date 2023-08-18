@@ -76,18 +76,34 @@ namespace PMDC
                 {
                     if (args[ii].ToLower() == "-dev")
                         dev = true;
+                    else if (args[ii].ToLower() == "-help")
+                    {
+                        Console.WriteLine("PMDO OPTIONS:");
+                        Console.WriteLine("-dev: Runs the game in dev mode.");
+                        Console.WriteLine("-lang [en/es/de/zh/ko]: Specify language.");
+                        Console.WriteLine("-guide: Print a strategy guide to GUIDE/ as html");
+                        Console.WriteLine("-csv: Print a strategy guide to GUIDE/ as csv");
+                        Console.WriteLine("-asset [path]: Specify a custom path for assets.");
+                        Console.WriteLine("-raw [path]: Specify a custom path for raw assets.");
+                        Console.WriteLine("-quest [folder]: Specify the folder in MODS/ to load as the quest.");
+                        Console.WriteLine("-mod [mod] [...]: Specify the list of folders in MODS/ to load as additional mods.");
+                        Console.WriteLine("-index [monster/skill/item/intrinsic/status/mapstatus/terrain/tile/zone/emote/autotile/element/growthgroup/skillgroup/ai/rank/skin/all]: Reindexes the selected list of data assets.");
+                        Console.WriteLine("-reserialize [monster/skill/item/intrinsic/status/mapstatus/terrain/tile/zone/emote/autotile/element/growthgroup/skillgroup/ai/rank/skin/all]: Reserializes the selected list of data assets.");
+                        Console.WriteLine("-convert [font/chara/portrait/tile/item/particle/beam/icon/object/bg/autotile/all]: Converts graphics from the raw asset folder and saves it to the asset folder.");
+                        return;
+                    }
                     else if (args[ii].ToLower() == "-play" && args.Length > ii + 1)
                     {
                         playInputs = args[ii + 1];
                         ii++;
                     }
+                    else if (args[ii].ToLower() == "-nolog")
+                        logInput = false;
                     else if (args[ii].ToLower() == "-lang" && args.Length > ii + 1)
                     {
                         langArgs = args[ii + 1];
                         ii++;
                     }
-                    else if (args[ii].ToLower() == "-nolog")
-                        logInput = false;
                     else if (args[ii].ToLower() == "-guide")
                         guideBook = true;
                     else if (args[ii].ToLower() == "-csv")
@@ -474,6 +490,9 @@ namespace PMDC
             DataEditor.AddEditor(new SpreadPlanQuotaEditor());
             DataEditor.AddEditor(new SpreadPlanBaseEditor());
 
+            DataEditor.AddEditor(new CombinedGridRoomStepEditor());
+            DataEditor.AddEditor(new BlobWaterStepEditor());
+            DataEditor.AddEditor(new PerlinWaterStepEditor());
             DataEditor.AddEditor(new ItemSpawnZoneStepEditor());
             DataEditor.AddEditor(new TeamSpawnZoneStepEditor());
             DataEditor.AddEditor(new TileSpawnZoneStepEditor());
@@ -509,6 +528,7 @@ namespace PMDC
 
             DataEditor.AddEditor(new RoomGenCrossEditor());
             DataEditor.AddEditor(new SizedRoomGenEditor());
+            DataEditor.AddEditor(new RoomGenDefaultEditor());
 
             DataEditor.AddEditor(new BasePowerStateEditor());
             DataEditor.AddEditor(new AdditionalEffectStateEditor());
@@ -519,6 +539,21 @@ namespace PMDC
 
             DataEditor.AddEditor(new TeamMemberSpawnEditor());
             DataEditor.AddEditor(new MobSpawnEditor());
+            DataEditor.AddEditor(new MobSpawnWeakEditor());
+            DataEditor.AddEditor(new MobSpawnAltColorEditor());
+            DataEditor.AddEditor(new MobSpawnMovesOffEditor());
+            DataEditor.AddEditor(new MobSpawnBoostEditor());
+            DataEditor.AddEditor(new MobSpawnScaledBoostEditor());
+            DataEditor.AddEditor(new MobSpawnItemEditor());
+            DataEditor.AddEditor(new MobSpawnInvEditor());
+            DataEditor.AddEditor(new MobSpawnLevelScaleEditor());
+            DataEditor.AddEditor(new MobSpawnLocEditor());
+            DataEditor.AddEditor(new MobSpawnUnrecruitableEditor());
+            DataEditor.AddEditor(new MobSpawnFoeConflictEditor());
+            DataEditor.AddEditor(new MobSpawnInteractableEditor());
+            DataEditor.AddEditor(new MobSpawnLuaTableEditor());
+            DataEditor.AddEditor(new MobSpawnDiscriminatorEditor());
+            DataEditor.AddEditor(new MobSpawnStatusEditor());
 
             DataEditor.AddEditor(new MapTilesEditor());
             DataEditor.AddEditor(new BaseEmitterEditor());
@@ -544,6 +579,7 @@ namespace PMDC
             DataEditor.AddEditor(new PriorityEditor());
             DataEditor.AddEditor(new SegLocEditor());
             DataEditor.AddEditor(new LocEditor());
+            DataEditor.AddEditor(new MultiplierEditor());
             DataEditor.AddEditor(new LoopedRandEditor());
             DataEditor.AddEditor(new PresetMultiRandEditor());
             DataEditor.AddEditor(new MoneySpawnRangeEditor(false, true));
@@ -559,6 +595,7 @@ namespace PMDC
             //TODO: there is no parameterless interface for hashset
             //so instead we have to do the painful process of manually adding every hashset of every type we actually use.  ugh
             DataEditor.AddEditor(new HashSetEditor<int>());
+            DataEditor.AddEditor(new HashSetEditor<string>());
 
             DataEditor.AddEditor(new ArrayEditor());
             DataEditor.AddEditor(new DictionaryEditor());
