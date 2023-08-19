@@ -21,16 +21,29 @@
   <PropertyGroup>
     <ApplicationIcon>Resources\Icon.ico</ApplicationIcon>
   </PropertyGroup>
+  
   <ItemGroup Condition="'$(RuntimeIdentifier)' != ''">
     <Content Include="runtimes\$(RuntimeIdentifier)\native\*" Link="%(FileName)%(Extension)">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup Condition="'$(RuntimeIdentifier)' != ''">
+    <Content Include="..\RogueEssence\NLua\packages\KeraLua.1.0.29\runtimes\$(RuntimeIdentifier)\native\*" Link="%(FileName)%(Extension)">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+  
   <ItemGroup Condition="'$(RuntimeIdentifier)' == ''">
     <Content Include="runtimes\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == ''">
+  <None Include="..\RogueEssence\NLua\packages\KeraLua.1.0.29\runtimes\**\*" 
+        CopyToOutputDirectory="PreserveNewest"
+        LinkBase="runtimes\" />
+  </ItemGroup>
+  
   <ItemGroup>
     <None Include="..\..\DumpAsset\**\*" Exclude="..\..\DumpAsset\.git;..\..\DumpAsset\.gitignore">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
