@@ -96,6 +96,18 @@ namespace PMDC.Dungeon
                     repeatStatus.StatusStates.Remove<RecentState>();
             }
         }
+
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            //TODO: remove on v1.1
+            if (Serializer.OldVersion < new Version(0, 7, 16))
+            {
+                LastSlotStatusID = "last_used_move_slot";
+                LastMoveStatusID = "last_used_move";
+                RepeatStatusID = "times_move_used";
+            }
+        }
     }
 
     [Serializable]
