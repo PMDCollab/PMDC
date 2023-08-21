@@ -6036,7 +6036,7 @@ namespace PMDC.Dungeon
             if (context.ActionType == BattleActionType.Skill && context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS)
             {
                 StatusEffect repeatStatus = context.User.GetStatusEffect(RepeatStatusID);
-                if (repeatStatus.StatusStates.GetWithDefault<RecentState>() != null)
+                if (repeatStatus != null && repeatStatus.StatusStates.GetWithDefault<RecentState>() != null)
                 {
                     //increment repetition
                     repeatStatus.StatusStates.GetWithDefault<CountState>().Count++;
@@ -10285,16 +10285,15 @@ namespace PMDC.Dungeon
             int damageDone = context.GetContextStateInt<TotalDamageDealt>(true, 0);
             if (damageDone > 0)
             {
-                int heal = Math.Max(1, damageDone / DrainFraction);
-
-                if (context.GlobalContextStates.Contains<TaintedDrain>())
+                TaintedDrain taintedDrain;
+                if (context.GlobalContextStates.TryGet<TaintedDrain>(out taintedDrain))
                 {
                     GameManager.Instance.BattleSE("DUN_Toxic");
                     DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_LIQUID_OOZE").ToLocal(), context.User.GetDisplayName(false)));
-                    yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(heal * 4));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(Math.Max(1, damageDone * taintedDrain.Mult / DrainFraction)));
                 }
                 else
-                    yield return CoroutineManager.Instance.StartCoroutine(context.User.RestoreHP(heal));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.RestoreHP(Math.Max(1, damageDone / DrainFraction)));
             }
         }
     }

@@ -1938,11 +1938,12 @@ namespace PMDC.Dungeon
 
                 yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(seeddmg, false));
 
-                if (context.User.CharStates.Contains<DrainDamageState>())
+                DrainDamageState drainDamage;
+                if (context.User.CharStates.TryGet<DrainDamageState>(out drainDamage))
                 {
                     GameManager.Instance.BattleSE("DUN_Toxic");
                     DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_LIQUID_OOZE").ToLocal(), target.GetDisplayName(false)));
-                    yield return CoroutineManager.Instance.StartCoroutine(target.InflictDamage(seeddmg * 4, false));
+                    yield return CoroutineManager.Instance.StartCoroutine(target.InflictDamage(seeddmg * drainDamage.Mult, false));
                 }
                 else if (target.HP < target.MaxHP)
                 {

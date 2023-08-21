@@ -41,8 +41,11 @@ namespace PMDC.Dungeon
     [Serializable]
     public class DrainDamageState : CharState
     {
+        public int Mult;
         public DrainDamageState() { }
-        public override GameplayState Clone() { return new DrainDamageState(); }
+        public DrainDamageState(int mult) { Mult = mult; }
+        public DrainDamageState(DrainDamageState other) { Mult = other.Mult; }
+        public override GameplayState Clone() { return new DrainDamageState(this); }
     }
 
     [Serializable]
