@@ -597,6 +597,8 @@ namespace PMDC
             DataEditor.AddEditor(new HashSetEditor<int>());
             DataEditor.AddEditor(new HashSetEditor<string>());
 
+            DataEditor.AddEditor(new StringKeyEditor());
+
             DataEditor.AddEditor(new ArrayEditor());
             DataEditor.AddEditor(new DictionaryEditor());
             DataEditor.AddEditor(new NoDupeListEditor());
