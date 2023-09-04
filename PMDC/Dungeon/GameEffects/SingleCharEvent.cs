@@ -5807,7 +5807,6 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
-
             yield return new WaitUntil(DungeonScene.Instance.AnimationsOver);
 
             Rect bounds = GetBounds(owner, ownerChar, context.User);
