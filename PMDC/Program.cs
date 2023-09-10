@@ -220,7 +220,7 @@ namespace PMDC
                     }
                 }
 
-                DiagManager.Instance.SetupGamepad();
+                DiagManager.Instance.SetupInputs();
                 GraphicsManager.InitParams();
 
                 DiagManager.Instance.DevMode = dev;
