@@ -13897,12 +13897,14 @@ namespace PMDC.Dungeon
                 yield break;
 
             MonsterData candidateDex = DataManager.Instance.GetMonster(context.Target.CurrentForm.Species);
+            BaseMonsterForm candidateForm = candidateDex.Forms[context.Target.CurrentForm.Form];
 
             if (!String.IsNullOrEmpty(candidateDex.PromoteFrom))
             {
                 string prevName = context.Target.GetDisplayName(false);
                 MonsterID prevoData = context.Target.CurrentForm;
                 prevoData.Species = candidateDex.PromoteFrom;
+                prevoData.Form = candidateForm.PromoteForm;
                 context.Target.Transform(prevoData);
 
                 MonsterData dex = DataManager.Instance.GetMonster(context.Target.CurrentForm.Species);

@@ -3688,7 +3688,7 @@ namespace PMDC.Dungeon
                     {
                         foreach (PromoteDetail detail in entry.Promotions[ii].Details)
                         {
-                            if (detail.IsHardReq() && !detail.GetReq(character))
+                            if (detail.IsHardReq() && !detail.GetReq(character, true))
                             {
                                 hardReq = true;
                                 break;
@@ -3764,8 +3764,7 @@ namespace PMDC.Dungeon
             MonsterData entry = DataManager.Instance.GetMonster(branch.Result);
             MonsterID newData = character.BaseForm;
             newData.Species = branch.Result;
-            if (newData.Form >= entry.Forms.Count)
-                newData.Form = 0;
+            branch.BeforePromote(character, true, ref newData);
             character.Promote(newData);
             branch.OnPromote(character, true, bypass);
             if (bypass)
