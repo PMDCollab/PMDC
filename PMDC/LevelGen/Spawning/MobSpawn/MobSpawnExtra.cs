@@ -358,6 +358,7 @@ namespace PMDC.LevelGen
         /// <summary>
         /// The floor to start scaling level at.
         /// </summary>
+        [IntRange(0, true)]
         public int StartFromID;
 
         /// <summary>

@@ -661,6 +661,9 @@ namespace PMDC.Dungeon
     [Serializable]
     public class FractionDamageEvent : SingleCharEvent
     {
+        /// <summary>
+        /// How much HP damage to inflict as a fraction of the target's total HP.
+        /// </summary>
         public int HPFraction;
         public string Message;
 
@@ -688,6 +691,9 @@ namespace PMDC.Dungeon
     [Serializable]
     public class FractionHealEvent : SingleCharEvent
     {
+        /// <summary>
+        /// How much HP to heal as a fraction of the target's total HP.
+        /// </summary>
         public int HPFraction;
         public StringKey Message;
 

@@ -23,11 +23,11 @@ namespace RogueEssence.Dev
     {
         public override string GetString(MobSpawnWeak obj, Type type, object[] attributes)
         {
-            return "Half HP and 35% belly";
+            return "Half PP and 35% belly";
         }
         public override string GetTypeString()
         {
-            return "Low Health and Belly";
+            return "Low PP and Belly";
         }
     }
     public class MobSpawnAltColorEditor : Editor<MobSpawnAltColor>
@@ -150,7 +150,7 @@ namespace RogueEssence.Dev
     {
         public override string GetString(MobSpawnLevelScale obj, Type type, object[] attributes)
         {
-            return String.Format("Scale level to floor starting at floor {0}", obj.StartFromID);
+            return String.Format("Scale level to floor starting at floor {0}", obj.StartFromID + 1);
         }
         public override string GetTypeString()
         {
