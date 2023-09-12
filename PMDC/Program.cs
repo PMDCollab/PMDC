@@ -606,6 +606,7 @@ namespace PMDC
             DataEditor.AddEditor(new EnumEditor());
             DataEditor.AddEditor(new GuidEditor());
             DataEditor.AddEditor(new StringEditor());
+            DataEditor.AddEditor(new CharEditor());
             DataEditor.AddEditor(new DoubleEditor());
             DataEditor.AddEditor(new SingleEditor());
             DataEditor.AddEditor(new BooleanEditor());
