@@ -5127,6 +5127,8 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
+            if (context.User.Dead)
+                yield break;
             if ((context.Data.Category == BattleData.SkillCategory.Physical || context.Data.Category == BattleData.SkillCategory.Magical)
                 && DungeonScene.Instance.GetMatchup(context.User, context.Target) == Alignment.Foe
                 && !context.User.CharStates.Contains<MagicGuardState>())
@@ -6737,6 +6739,8 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
+            if (context.User.Dead)
+                yield break;
             if (context.UsageSlot == BattleContext.FORCED_SLOT)
                 yield break;
 
@@ -11088,6 +11092,8 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
+            if (context.User.Dead)
+                yield break;
             if (!context.User.CharStates.Contains<MagicGuardState>())
             {
                 if (Msg.IsValid())

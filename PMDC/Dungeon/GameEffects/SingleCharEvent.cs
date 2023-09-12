@@ -706,6 +706,9 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
+            if (context.User.Dead)
+                yield break;
+
             if (context.User.HP < context.User.MaxHP)
             {
                 if (Message.IsValid())
@@ -1763,6 +1766,8 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
+            if (context.User.Dead)
+                yield break;
             CountDownState counter = ((StatusEffect)owner).StatusStates.GetWithDefault<CountDownState>();
             if (counter.Counter < 0)
                 yield break;
@@ -1807,6 +1812,8 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
+            if (context.User.Dead)
+                yield break;
             if (context.User.CharStates.Contains<MagicGuardState>())
                 yield break;
             
@@ -1859,6 +1866,9 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
+            if (context.User.Dead)
+                yield break;
+
             StatusEffect sleep = context.User.GetStatusEffect(SleepID);
             if (sleep != null)
             {
@@ -1904,6 +1914,8 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
             if (context.User.CharStates.Contains<MagicGuardState>())
+                yield break;
+            if (context.User.Dead)
                 yield break;
                     
             //check for someone within X tiles away; if there's no one, then remove the status
@@ -2028,6 +2040,9 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new BurnEvent(this); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
+            if (context.User.Dead)
+                yield break;
+
             AttackedThisTurnState recent = ((StatusEffect)owner).StatusStates.GetWithDefault<AttackedThisTurnState>();
             if (recent.Attacked && !context.User.CharStates.Contains<HeatproofState>() && !context.User.CharStates.Contains<MagicGuardState>())
             {
@@ -2093,6 +2108,9 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
+            if (context.User.Dead)
+                yield break;
+
             if (!context.User.CharStates.Contains<MagicGuardState>() && AffectNonFocused || DungeonScene.Instance.CurrentCharacter == context.User)
             {
                 CountState countState = ((StatusEffect)owner).StatusStates.Get<CountState>();
@@ -2138,6 +2156,9 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
+            if (context.User.Dead)
+                yield break;
+
             AttackedThisTurnState recentAttack = ((StatusEffect)owner).StatusStates.GetWithDefault<AttackedThisTurnState>();
             WalkedThisTurnState recentWalk = ((StatusEffect)owner).StatusStates.GetWithDefault<WalkedThisTurnState>();
             if (!recentAttack.Attacked && !recentWalk.Walked && !context.User.CharStates.Contains<MagicGuardState>())
@@ -2240,6 +2261,9 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
+            if (context.User.Dead)
+                yield break;
+
             foreach (Character target in ZoneManager.Instance.CurrentMap.GetCharsInFillRect(context.User.CharLoc, Rect.FromPointRadius(context.User.CharLoc, Range)))
             {
                 if (!target.Dead && DungeonScene.Instance.GetMatchup(context.User, target) == Alignment.Foe)
