@@ -514,6 +514,7 @@ namespace PMDC
             DataEditor.AddEditor(new TeamStepSpawnerEditor());
             DataEditor.AddEditor(new StepSpawnerEditor());
 
+            DataEditor.AddEditor(new GridPathGridEditor());
             DataEditor.AddEditor(new GridPathCircleEditor());
             DataEditor.AddEditor(new GridPathBranchEditor());
 
