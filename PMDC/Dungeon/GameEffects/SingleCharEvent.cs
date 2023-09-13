@@ -1434,6 +1434,7 @@ namespace PMDC.Dungeon
         [OnDeserialized]
         internal void OnDeserializedMethod(StreamingContext context)
         {
+            //TODO: delete in v1.1
             if (Serializer.OldVersion < new Version(0, 7, 0))
                 PowerCurve = 3;
         }
@@ -4200,14 +4201,18 @@ namespace PMDC.Dungeon
     [Serializable]
     public class BattlePositionEvent : SingleCharEvent
     {
+        public LocRay8[] StartLocs;
+
+        // TODO: Delete in v1.1
+        [NonEdited]
         public Loc[] Positions;
 
-        public BattlePositionEvent() { Positions = new Loc[0]; }
-        public BattlePositionEvent(params Loc[] positions) { Positions = positions; }
+        public BattlePositionEvent() { StartLocs = new LocRay8[0]; }
+        public BattlePositionEvent(params LocRay8[] positions) { StartLocs = positions; }
         public BattlePositionEvent(BattlePositionEvent other)
         {
-            Positions = new Loc[other.Positions.Length];
-            other.Positions.CopyTo(Positions, 0);
+            StartLocs = new LocRay8[other.StartLocs.Length];
+            other.StartLocs.CopyTo(StartLocs, 0);
         }
         public override GameEvent Clone() { return new BattlePositionEvent(this); }
 
@@ -4231,8 +4236,12 @@ namespace PMDC.Dungeon
         
         public void MoveChar(Character character, int total_alive)
         {
-            if (total_alive < Positions.Length)
-                character.CharLoc = ZoneManager.Instance.CurrentMap.EntryPoints[0].Loc + Positions[total_alive];
+            character.CharDir = ZoneManager.Instance.CurrentMap.EntryPoints[0].Dir;
+            if (total_alive < StartLocs.Length)
+            {
+                character.CharLoc = ZoneManager.Instance.CurrentMap.EntryPoints[0].Loc + StartLocs[total_alive].Loc;
+                character.CharDir = StartLocs[total_alive].Dir;
+            }
             else //default to close to leader
             {
                 Loc? result = ZoneManager.Instance.CurrentMap.GetClosestTileForChar(character, ZoneManager.Instance.CurrentMap.EntryPoints[0].Loc);
@@ -4241,7 +4250,17 @@ namespace PMDC.Dungeon
                 else
                     character.CharLoc = ZoneManager.Instance.CurrentMap.EntryPoints[0].Loc;
             }
-            character.CharDir = ZoneManager.Instance.CurrentMap.EntryPoints[0].Dir;
+        }
+
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            if (Serializer.OldVersion < new Version(0, 7, 17) && Positions != null)
+            {
+                StartLocs = new LocRay8[Positions.Length];
+                for (int ii = 0; ii < StartLocs.Length; ii++)
+                    StartLocs[ii] = new LocRay8(Positions[ii], Dir8.Up);
+            }
         }
     }
 
