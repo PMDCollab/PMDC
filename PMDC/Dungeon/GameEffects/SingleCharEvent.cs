@@ -15,6 +15,7 @@ using RogueEssence.Script;
 using System.Linq;
 using Newtonsoft.Json;
 using System.Runtime.Serialization;
+using System.IO;
 
 namespace PMDC.Dungeon
 {
@@ -1284,19 +1285,34 @@ namespace PMDC.Dungeon
                     }
                     else
                     {
+                        MonsterData monsterData = DataManager.Instance.GetMonster(context.User.BaseForm.Species);
+                        MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[context.User.BaseForm.Form];
+                        //if (DataManager.Instance.CurrentReplay != null)
+                        //{
+                        //    using (StreamWriter writer = new StreamWriter(DiagManager.LOG_PATH + "EXP.txt", true))
+                        //        writer.WriteLine(String.Format("{0},{1},{2},{3},{4}", ZoneManager.Instance.CurrentZoneID, ZoneManager.Instance.CurrentMapID.Segment, ZoneManager.Instance.CurrentMapID.ID, monsterForm.ExpYield, context.User.Level));
+                        //}
+                        
                         for (int ii = 0; ii < DungeonScene.Instance.ActiveTeam.Players.Count; ii++)
                         {
                             if (ii >= DungeonScene.Instance.GainedEXP.Count)
                                 DungeonScene.Instance.GainedEXP.Add(0);
 
-                            int exp = GetExp(owner, context.User, DungeonScene.Instance.ActiveTeam.Players[ii], DungeonScene.Instance.GainedEXP[ii]);
+                            Character recipient = DungeonScene.Instance.ActiveTeam.Players[ii];
+                            int effectiveLevel = recipient.Level;
+                            string growth = DataManager.Instance.GetMonster(recipient.BaseForm.Species).EXPTable;
+                            GrowthData growthData = DataManager.Instance.GetGrowth(growth);
+                            while (effectiveLevel < DataManager.Instance.Start.MaxLevel && recipient.EXP + DungeonScene.Instance.GainedEXP[ii] >= growthData.GetExpTo(recipient.Level, effectiveLevel + 1))
+                                effectiveLevel++;
+
+                            int exp = GetExp(monsterForm.ExpYield, context.User.Level, effectiveLevel);
                             DungeonScene.Instance.GainedEXP[ii] += exp;
                         }
                         for (int ii = 0; ii < DungeonScene.Instance.ActiveTeam.Assembly.Count; ii++)
                         {
                             if (!DungeonScene.Instance.ActiveTeam.Assembly[ii].Absentee)
                             {
-                                int exp = GetExp(owner, context.User, DungeonScene.Instance.ActiveTeam.Assembly[ii], 0);
+                                int exp = GetExp(monsterForm.ExpYield, context.User.Level, DungeonScene.Instance.ActiveTeam.Assembly[ii].Level);
                                 handoutAssemblyExp(DungeonScene.Instance.ActiveTeam.Assembly[ii], exp);
                             }
                         }
@@ -1328,7 +1344,7 @@ namespace PMDC.Dungeon
             }
         }
 
-        protected abstract int GetExp(GameEventOwner owner, Character defeatedChar, Character recipient, int currentlyGainedExp);
+        public abstract int GetExp(int expYield, int defeatedLv, int recipientLv);
     }
 
     /// <summary>
@@ -1349,16 +1365,9 @@ namespace PMDC.Dungeon
         }
         public override GameEvent Clone() { return new HandoutScaledExpEvent(this); }
 
-        protected override int GetExp(GameEventOwner owner, Character defeatedChar, Character recipient, int currentlyGainedExp)
+        public override int GetExp(int expYield, int defeatedLv, int recipientLv)
         {
-            MonsterData monsterData = DataManager.Instance.GetMonster(defeatedChar.BaseForm.Species);
-            MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[defeatedChar.BaseForm.Form];
-            return expFormula(monsterForm.ExpYield, defeatedChar.Level);
-        }
-
-        private int expFormula(int expYield, int level)
-        {
-            return (int)((ulong)expYield * (ulong)Numerator * (ulong)level / (ulong)Denominator) + 1;
+            return (int)((ulong)expYield * (ulong)Numerator * (ulong)defeatedLv / (ulong)Denominator) + 1;
         }
     }
 
@@ -1371,63 +1380,119 @@ namespace PMDC.Dungeon
         public HandoutConstantExpEvent() { }
         public override GameEvent Clone() { return new HandoutConstantExpEvent(); }
 
-        protected override int GetExp(GameEventOwner owner, Character defeatedChar, Character recipient, int currentlyGainedExp)
+        public override int GetExp(int expYield, int defeatedLv, int recipientLv)
         {
-            MonsterData monsterData = DataManager.Instance.GetMonster(defeatedChar.BaseForm.Species);
-            MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[defeatedChar.BaseForm.Form];
-            return monsterForm.ExpYield;
+            return expYield;
         }
+    }
+
+
+    /// <summary>
+    /// Uses one formula when the recipient's level is at or lower than the defeated level
+    /// And another when it's higher
+    /// </summary>
+    [Serializable]
+    public class HandoutPiecewiseExpEvent : HandoutExpEvent
+    {
+        /// <summary>
+        /// Minimum level for target's level to be counted at
+        /// </summary>
+        public int ScaleMin;
+
+        /// <summary>
+        /// Added level for the target to be counted at
+        /// </summary>
+        public int ScaleAdd;
+
+        public HandoutExpEvent UnderleveledHandout;
+
+        public HandoutExpEvent OverleveledHandout;
+
+        public HandoutPiecewiseExpEvent() { }
+        public HandoutPiecewiseExpEvent(int scaleMin, int scaleAdd, HandoutExpEvent lowHandout, HandoutExpEvent highHandout)
+        {
+            ScaleMin = scaleMin;
+            ScaleAdd = scaleAdd;
+            UnderleveledHandout = lowHandout;
+            OverleveledHandout = highHandout;
+        }
+        protected HandoutPiecewiseExpEvent(HandoutPiecewiseExpEvent other)
+        {
+            ScaleMin = other.ScaleMin;
+            ScaleAdd = other.ScaleAdd;
+            UnderleveledHandout = (HandoutExpEvent)other.UnderleveledHandout.Clone();
+            OverleveledHandout = (HandoutExpEvent)other.OverleveledHandout.Clone();
+        }
+        public override GameEvent Clone() { return new HandoutPiecewiseExpEvent(this); }
+
+        public override int GetExp(int expYield, int defeatedLv, int recipientLv)
+        {
+            int recipientScaleLv = Math.Max(ScaleMin, recipientLv);
+            int scaleLevel = Math.Max(ScaleMin, defeatedLv + ScaleAdd);
+            if (scaleLevel >= recipientScaleLv)
+                return UnderleveledHandout.GetExp(expYield, scaleLevel, recipientScaleLv);
+            else
+                return OverleveledHandout.GetExp(expYield, scaleLevel, recipientScaleLv);
+        }
+
     }
 
     /// <summary>
     /// EXP handed out to each team member is scaled based on the team member's level relative to the defeated enemy's level.
-    /// BaseEXP * Numerator * (2 * EnemyLv + LevelBuffer) ^ 3 / (EnemyLv + PlayerLv + LevelBuffer) ^ 3 / Denominator + 1
+    /// BaseEXP * Numerator * (2 * EnemyLv + LevelBuffer) ^ PowerCurve / (EnemyLv + PlayerLv + LevelBuffer) ^ PowerCurve / Denominator + 1
     /// </summary>
     [Serializable]
     public class HandoutRelativeExpEvent : HandoutExpEvent
     {
+        /// <summary>
+        /// Numerator of ratio
+        /// </summary>
         public int Numerator;
+
+        /// <summary>
+        /// Denominator for ratio
+        /// </summary>
         public int Denominator;
+
+        /// <summary>
+        /// Number to add to numerator and denominator to buffer the ratio
+        /// </summary>
         public int LevelBuffer;
-        public int ScaleMin;
+
+        /// <summary>
+        /// Exponent when underleveled
+        /// </summary>
         public int PowerCurve;
+
+
         public HandoutRelativeExpEvent() { }
-        public HandoutRelativeExpEvent(int numerator, int denominator, int levelBuffer, int scaleMin, int powerCurve) { Numerator = numerator; Denominator = denominator; LevelBuffer = levelBuffer; ScaleMin = scaleMin; PowerCurve = powerCurve; }
+        public HandoutRelativeExpEvent(int numerator, int denominator, int levelBuffer, int powerCurve)
+        {
+            Numerator = numerator;
+            Denominator = denominator;
+            LevelBuffer = levelBuffer;
+            PowerCurve = powerCurve;
+        }
         protected HandoutRelativeExpEvent(HandoutRelativeExpEvent other)
         {
             this.Numerator = other.Numerator;
             this.Denominator = other.Denominator;
             this.LevelBuffer = other.LevelBuffer;
-            this.ScaleMin = other.ScaleMin;
             this.PowerCurve = other.PowerCurve;
         }
         public override GameEvent Clone() { return new HandoutRelativeExpEvent(this); }
 
-        protected override int GetExp(GameEventOwner owner, Character defeatedChar, Character recipient, int currentlyGainedExp)
+        public override int GetExp(int expYield, int defeatedLv, int recipientLv)
         {
-            int levelDiff = 0;
-            string growth = DataManager.Instance.GetMonster(recipient.BaseForm.Species).EXPTable;
-            GrowthData growthData = DataManager.Instance.GetGrowth(growth);
-            while (recipient.Level + levelDiff < DataManager.Instance.Start.MaxLevel && recipient.EXP + currentlyGainedExp >= growthData.GetExpTo(recipient.Level, recipient.Level + levelDiff + 1))
-                levelDiff++;
-
-            MonsterData monsterData = DataManager.Instance.GetMonster(defeatedChar.BaseForm.Species);
-            MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[defeatedChar.BaseForm.Form];
-            return expFormula(monsterForm.ExpYield, defeatedChar.Level, recipient.Level + levelDiff);
-        }
-
-        private int expFormula(int expYield, int level, int recipientLv)
-        {
-            recipientLv = Math.Max(ScaleMin, recipientLv);
-            int scaleLevel = Math.Max(ScaleMin, level);
-            int multNum = 2 * scaleLevel + LevelBuffer;
-            int multDen = recipientLv + scaleLevel + LevelBuffer;
-            ulong exp = (ulong)expYield * (ulong)Numerator * (ulong)level;
+            int multNum = 2 * defeatedLv + LevelBuffer;
+            int multDen = recipientLv + defeatedLv + LevelBuffer;
+            ulong exp = (ulong)expYield * (ulong)Numerator * (ulong)defeatedLv;
             for (int ii = 0; ii < PowerCurve; ii++)
                 exp *= (ulong)multNum;
             for (int ii = 0; ii < PowerCurve; ii++)
                 exp /= (ulong)multDen;
             exp /= (ulong)Denominator;
+
             return (int)exp + 1;
         }
 
@@ -1435,8 +1500,107 @@ namespace PMDC.Dungeon
         internal void OnDeserializedMethod(StreamingContext context)
         {
             //TODO: delete in v1.1
-            if (Serializer.OldVersion < new Version(0, 7, 0))
+            if (PowerCurve == 0 && Serializer.OldVersion < new Version(0, 7, 0))
                 PowerCurve = 3;
+        }
+    }
+
+    /// <summary>
+    /// EXP handed out to each team member is scaled based on the team member's level relative to the defeated enemy's level.
+    /// BaseEXP * Numerator * LevelBuffer / (PlayerLv - EnemyLv + LevelBuffer) / Denominator + 1
+    /// This means it cannot be applied to situations where PlayerLv is LevelBuffer levels lower than EnemyLv due to div by 0
+    /// </summary>
+    [Serializable]
+    public class HandoutHarmonicExpEvent : HandoutExpEvent
+    {
+        /// <summary>
+        /// Numerator of ratio
+        /// </summary>
+        public int Numerator;
+
+        /// <summary>
+        /// Denominator for ratio
+        /// </summary>
+        public int Denominator;
+
+        /// <summary>
+        /// Number to add to numerator and denominator to buffer the ratio
+        /// </summary>
+        public int LevelBuffer;
+
+        public HandoutHarmonicExpEvent() { }
+        public HandoutHarmonicExpEvent(int numerator, int denominator, int levelBuffer)
+        {
+            Numerator = numerator;
+            Denominator = denominator;
+            LevelBuffer = levelBuffer;
+        }
+        protected HandoutHarmonicExpEvent(HandoutHarmonicExpEvent other)
+        {
+            this.Numerator = other.Numerator;
+            this.Denominator = other.Denominator;
+            this.LevelBuffer = other.LevelBuffer;
+        }
+        public override GameEvent Clone() { return new HandoutHarmonicExpEvent(this); }
+
+        public override int GetExp(int expYield, int defeatedLv, int recipientLv)
+        {
+            int levelDiff = recipientLv - defeatedLv;
+            ulong exp = (ulong)expYield * (ulong)Numerator * (ulong)defeatedLv * (ulong)LevelBuffer;
+            exp /= (ulong)(LevelBuffer + levelDiff);
+            exp /= (ulong)Denominator;
+
+            return (int)exp + 1;
+        }
+    }
+
+
+    /// <summary>
+    /// EXP handed out to each team member is scaled based on the team member's level relative to the defeated enemy's level.
+    /// BaseEXP * Numerator * (EnemyLv - PlayerLv + LevelBuffer) / (LevelBuffer) / Denominator + 1
+    /// Will drop to 0 if PlayerLv is LevelBuffer levels higher than EnemyLv
+    /// </summary>
+    [Serializable]
+    public class HandoutStackExpEvent : HandoutExpEvent
+    {
+        /// <summary>
+        /// Numerator of ratio
+        /// </summary>
+        public int Numerator;
+
+        /// <summary>
+        /// Denominator for ratio
+        /// </summary>
+        public int Denominator;
+
+        /// <summary>
+        /// Number to add to numerator and denominator to buffer the ratio
+        /// </summary>
+        public int LevelBuffer;
+
+        public HandoutStackExpEvent() { }
+        public HandoutStackExpEvent(int numerator, int denominator, int levelBuffer)
+        {
+            Numerator = numerator;
+            Denominator = denominator;
+            LevelBuffer = levelBuffer;
+        }
+        protected HandoutStackExpEvent(HandoutStackExpEvent other)
+        {
+            this.Numerator = other.Numerator;
+            this.Denominator = other.Denominator;
+            this.LevelBuffer = other.LevelBuffer;
+        }
+        public override GameEvent Clone() { return new HandoutStackExpEvent(this); }
+
+        public override int GetExp(int expYield, int defeatedLv, int recipientLv)
+        {
+            int levelDiff = defeatedLv - recipientLv;
+            ulong exp = (ulong)expYield * (ulong)Numerator * (ulong)defeatedLv * (ulong)(levelDiff + LevelBuffer);
+            exp /= (ulong)LevelBuffer;
+            exp /= (ulong)Denominator;
+
+            return (int)exp + 1;
         }
     }
 
