@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Win32;
 using RogueElements;
+using System.Xml.Linq;
 
 namespace MapGenTest
 {
@@ -21,10 +22,97 @@ namespace MapGenTest
 
         static List<ExpLog> Logs;
 
+        static List<(HandoutExpEvent expEvent, string name)> Handouts;
+
+        public static void InitHandouts()
+        {
+            Handouts = new List<(HandoutExpEvent expEvent, string name)>();
+            {
+                Handouts.Add((new HandoutRelativeExpEvent(1, 7, 10, 2), String.Format("ORIGINAL")));
+            }
+            {
+                HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 5, 2);
+                HandoutExpEvent high = new HandoutRelativeExpEvent(1, 7, 5, 4);
+
+                Handouts.Add((new HandoutPiecewiseExpEvent(5, 0, low, high), String.Format("HIGHER POWER OVERLEVEL")));
+            }
+            //{
+            //    HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 5, 2);
+            //    HandoutExpEvent high = new HandoutRelativeExpEvent(1, 7, 0, 4);
+
+            //    Handouts.Add((new HandoutPiecewiseExpEvent(5, 0, low, high), String.Format("HIGHER POWER NO BUFFER OVERLEVEL")));
+            //}
+            {
+                HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 10, 2);
+                HandoutExpEvent high = new HandoutRelativeExpEvent(1, 15, 10, 2);
+
+                Handouts.Add((new HandoutPiecewiseExpEvent(5, 0, low, high), String.Format("HIGHER DIV OVERLEVEL")));
+            }
+            //{
+            //    HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 10, 0);
+            //    HandoutExpEvent high = new HandoutRelativeExpEvent(1, 15, 10, 0);
+
+            //    Handouts.Add((new HandoutPiecewiseExpEvent(5, 0, low, high), String.Format("HIGHER DIV OVERLEVEL UNSCALED")));
+            //}
+            {
+                HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 10, 2);
+                HandoutExpEvent high = new HandoutRelativeExpEvent(1, 15, 10, 4);
+
+                Handouts.Add((new HandoutPiecewiseExpEvent(5, 0, low, high), String.Format("HIGHER DIV + POWER OVERLEVEL")));
+            }
+            //{
+            //    HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 10, 2);
+            //    HandoutExpEvent high = new HandoutRelativeExpEvent(1, 15, 0, 4);
+
+            //    Handouts.Add((new HandoutPiecewiseExpEvent(5, 0, low, high), String.Format("HIGHER DIV + POWER OVERLEVEL NO BUFFER")));
+            //}
+            //{
+            //    HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 0, 3);
+            //    HandoutExpEvent high = new HandoutRelativeExpEvent(1, 7, 0, 3);
+
+            //    Handouts.Add((new HandoutPiecewiseExpEvent(5, 5, low, high), String.Format("5-LEVEL OVERLEVEL, OLD POWER NO BUFFER")));
+            //}
+            {
+                HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 0, 2);
+                HandoutExpEvent high = new HandoutRelativeExpEvent(1, 7, 0, 4);
+
+                Handouts.Add((new HandoutPiecewiseExpEvent(5, 5, low, high), String.Format("5-LEVEL OVERLEVEL, POWER NO BUFFER")));
+            }
+            {
+                HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 0, 2);
+                HandoutExpEvent high = new HandoutRelativeExpEvent(1, 15, 0, 4);
+
+                Handouts.Add((new HandoutPiecewiseExpEvent(5, 5, low, high), String.Format("5-LEVEL OVERLEVEL, DIV + POWER OVERLEVEL NO BUFFER")));
+            }
+            {
+                HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 10, 2);
+                HandoutExpEvent high = new HandoutHarmonicExpEvent(1, 7, 5);
+
+                Handouts.Add((new HandoutPiecewiseExpEvent(5, 0, low, high), String.Format("POWER HARMONIC")));
+            }
+            //{
+            //    HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 0, 2);
+            //    HandoutExpEvent high = new HandoutHarmonicExpEvent(1, 7, 5);
+
+            //    Handouts.Add((new HandoutPiecewiseExpEvent(5, 0, low, high), String.Format("POWER HARMONIC NO BUFFER")));
+            //}
+            {
+                HandoutExpEvent low = new HandoutStackExpEvent(1, 7, 5);
+                HandoutExpEvent high = new HandoutHarmonicExpEvent(1, 7, 5);
+
+                Handouts.Add((new HandoutPiecewiseExpEvent(5, 0, low, high), String.Format("STACK HARMONIC")));
+            }
+            {
+                HandoutExpEvent low = new HandoutStackExpEvent(1, 7, 5);
+                HandoutExpEvent high = new HandoutHarmonicExpEvent(1, 7, 5);
+
+                Handouts.Add((new HandoutPiecewiseExpEvent(5, 5, low, high), String.Format("STACK HARMONIC OFFSET")));
+            }
+        }
+
         public static void Run()
         {
             Logs = new List<ExpLog>();
-
 
             foreach (string dir in Directory.GetFiles(EXP_DIR))
             {
@@ -42,13 +130,15 @@ namespace MapGenTest
                         int id = Int32.Parse(cols[2]);
                         int expYield = Int32.Parse(cols[3]);
                         int level = Int32.Parse(cols[4]);
+                        SegLoc loc = new SegLoc(segment, id);
                         if (!log.Zone.IsValid())
-                            log.Zone = new ZoneLoc(zone, new SegLoc(segment, id));
-                        log.Exps.Add((expYield, level));
+                            log.Zone = new ZoneLoc(zone, loc);
+                        log.Exps.Add((loc, expYield, level));
                     }
                 }
                 Logs.Add(log);
             }
+            InitHandouts();
 
             int offset = 0;
             string state = "Logs";
@@ -118,112 +208,114 @@ namespace MapGenTest
 
                 TestExp(log);
 
+                Console.WriteLine();
+
+                List<string> growthKeys = DataManager.Instance.DataIndices[DataManager.DataType.GrowthGroup].GetOrderedKeys(false);
+                for (int ii = 0; ii < growthKeys.Count; ii++)
+                    Console.WriteLine(String.Format("{0}) {1}", ii, growthKeys[ii]));
+
+                int growthIndex = -1;
 
                 ConsoleKeyInfo key = Console.ReadKey();
                 if (key.Key == ConsoleKey.Escape)
                     break;
+
+                if (key.KeyChar >= '0' && key.KeyChar <= '9')
+                    growthIndex = key.KeyChar - '0';
+
+                if (growthIndex >= 0 && growthIndex < growthKeys.Count)
+                {
+                    LevelLogMenu(state, log, growthKeys[growthIndex]);
+                }
+            }
+        }
+
+        public static void LevelLogMenu(string state, ExpLog log, string growth)
+        {
+            state = growth;
+            while (true)
+            {
+                Console.Clear();
+                Console.WriteLine(state);
+                Console.WriteLine("Showing full history for one growth|ESC=Exit");
+
+                Console.WriteLine();
+
+                List<List<int>> floorList = new List<List<int>>();
+                {
+                    List<string> indices = new List<string>();
+                    for (int ii = 0; ii < Handouts.Count; ii++)
+                    {
+                        Console.WriteLine(String.Format("{0}) {1}", ii, Handouts[ii].name));
+                        List<int> levelLog = GetLevelLog(Handouts[ii].expEvent, log, growth);
+                        floorList.Add(levelLog);
+                        indices.Add(String.Format("{0,4}", ii.ToString()));
+                    }
+                    Console.WriteLine(" F|" + String.Join("|", indices.ToArray()));
+                }
+
+                for (int ii = 0; ii < floorList[0].Count; ii++)
+                {
+                    List<string> indices = new List<string>();
+                    for (int jj = 0; jj < floorList.Count; jj++)
+                        indices.Add(String.Format("{0,4}", floorList[jj][ii].ToString()));
+                    Console.WriteLine(String.Format("{0,2}|", ii) + String.Join("|", indices.ToArray()));
+                }
+
+                ConsoleKeyInfo key = Console.ReadKey();
+                if (key.Key == ConsoleKey.Escape)
+                    break;
+
             }
         }
 
         public static void TestExp(ExpLog log)
         {
             Console.WriteLine(String.Format("{0,4}|{1,4}|{2,4}|{3,4}|{4,4}|{5,4}", "err", "fast", "fluc", "mfst", "mslo", "slow"));
-            {
-                ReportTestExp(new HandoutRelativeExpEvent(1, 7, 10, 2), log, "ORIGINAL");
-            }
-            {
-                HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 5, 2);
-                HandoutExpEvent high = new HandoutRelativeExpEvent(1, 7, 5, 4);
 
-                ReportTestExp(new HandoutPiecewiseExpEvent(5, 0, low, high), log, "HIGHER POWER OVERLEVEL");
-            }
+            foreach ((HandoutExpEvent expEvent, string name) handout in Handouts)
             {
-                HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 5, 2);
-                HandoutExpEvent high = new HandoutRelativeExpEvent(1, 7, 0, 4);
-
-                ReportTestExp(new HandoutPiecewiseExpEvent(5, 0, low, high), log, "HIGHER POWER NO BUFFER OVERLEVEL");
-            }
-            {
-                HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 10, 2);
-                HandoutExpEvent high = new HandoutRelativeExpEvent(1, 15, 10, 2);
-
-                ReportTestExp(new HandoutPiecewiseExpEvent(5, 0, low, high), log, "HIGHER DIV OVERLEVEL");
-            }
-            {
-                HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 10, 0);
-                HandoutExpEvent high = new HandoutRelativeExpEvent(1, 15, 10, 0);
-
-                ReportTestExp(new HandoutPiecewiseExpEvent(5, 0, low, high), log, "HIGHER DIV OVERLEVEL UNSCALED");
-            }
-            {
-                HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 10, 2);
-                HandoutExpEvent high = new HandoutRelativeExpEvent(1, 15, 10, 4);
-
-                ReportTestExp(new HandoutPiecewiseExpEvent(5, 0, low, high), log, "HIGHER DIV + POWER OVERLEVEL");
-            }
-            {
-                HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 10, 2);
-                HandoutExpEvent high = new HandoutRelativeExpEvent(1, 15, 0, 4);
-
-                ReportTestExp(new HandoutPiecewiseExpEvent(5, 0, low, high), log, "HIGHER DIV + POWER OVERLEVEL NO BUFFER");
-            }
-            {
-                HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 0, 3);
-                HandoutExpEvent high = new HandoutRelativeExpEvent(1, 7, 0, 3);
-
-                ReportTestExp(new HandoutPiecewiseExpEvent(5, 5, low, high), log, "5-LEVEL OVERLEVEL, OLD POWER NO BUFFER");
-            }
-            {
-                HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 0, 2);
-                HandoutExpEvent high = new HandoutRelativeExpEvent(1, 7, 0, 4);
-
-                ReportTestExp(new HandoutPiecewiseExpEvent(5, 5, low, high), log, "5-LEVEL OVERLEVEL, POWER NO BUFFER");
-            }
-            {
-                HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 0, 2);
-                HandoutExpEvent high = new HandoutRelativeExpEvent(1, 15, 0, 4);
-
-                ReportTestExp(new HandoutPiecewiseExpEvent(5, 5, low, high), log, "5-LEVEL OVERLEVEL, DIV + POWER OVERLEVEL NO BUFFER");
-            }
-            {
-                HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 10, 2);
-                HandoutExpEvent high = new HandoutHarmonicExpEvent(1, 7, 5);
-
-                ReportTestExp(new HandoutPiecewiseExpEvent(5, 0, low, high), log, "POWER HARMONIC");
-            }
-            {
-                HandoutExpEvent low = new HandoutStackExpEvent(1, 7, 5);
-                HandoutExpEvent high = new HandoutHarmonicExpEvent(1, 7, 5);
-
-                ReportTestExp(new HandoutPiecewiseExpEvent(5, 0, low, high), log, "STACK HARMONIC");
+                List<int> growthResults = new List<int>();
+                foreach (string growth in DataManager.Instance.DataIndices[DataManager.DataType.GrowthGroup].GetOrderedKeys(false))
+                {
+                    List<int> levelLog = GetLevelLog(handout.expEvent, log, growth);
+                    growthResults.Add(levelLog[levelLog.Count - 1]);
+                }
+                Console.WriteLine(String.Format("{0,4}|{1,4}|{2,4}|{3,4}|{4,4}|{5,4}  //{6}", growthResults[0], growthResults[1], growthResults[2], growthResults[3], growthResults[4], growthResults[5], handout.name));
             }
         }
-        public static void ReportTestExp(HandoutExpEvent expEvent, ExpLog log, string comment)
+
+        public static List<int> GetLevelLog(HandoutExpEvent expEvent, ExpLog log, string growth)
         {
+            List<int> levelLog = new List<int>();
+
             string zoneId = log.Zone.ID;
             ZoneEntrySummary zoneSummary = (ZoneEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Zone].Get(zoneId);
 
-            List<int> growthResults = new List<int>();
-            foreach (string growth in DataManager.Instance.DataIndices[DataManager.DataType.GrowthGroup].GetOrderedKeys(false))
+            int recipientLv = zoneSummary.Level+20;
+            GrowthData growthData = DataManager.Instance.GetGrowth(growth);
+            int gainedExp = 0;
+
+            SegLoc currentLoc = log.Exps[0].segLoc;
+            foreach ((SegLoc segLoc, int expYield, int level) exp in log.Exps)
             {
-                int recipientLv = zoneSummary.Level;
-                GrowthData growthData = DataManager.Instance.GetGrowth(growth);
-                int gainedExp = 0;
-
-                foreach ((int expYield, int level) exp in log.Exps)
+                if (!exp.segLoc.Equals(currentLoc))
                 {
-                    int gain = expEvent.GetExp(exp.expYield, exp.level, recipientLv);
-                    gainedExp += gain;
-
-                    while (recipientLv < DataManager.Instance.Start.MaxLevel && gainedExp >= growthData.GetExpTo(recipientLv, recipientLv + 1))
-                    {
-                        gainedExp -= growthData.GetExpTo(recipientLv, recipientLv + 1);
-                        recipientLv++;
-                    }
+                    levelLog.Add(recipientLv);
+                    currentLoc = exp.segLoc;
                 }
-                growthResults.Add(recipientLv);
+                int gain = expEvent.GetExp(exp.expYield, exp.level, recipientLv);
+                gainedExp += gain;
+
+                while (recipientLv < DataManager.Instance.Start.MaxLevel && gainedExp >= growthData.GetExpTo(recipientLv, recipientLv + 1))
+                {
+                    gainedExp -= growthData.GetExpTo(recipientLv, recipientLv + 1);
+                    recipientLv++;
+                }
             }
-            Console.WriteLine(String.Format("{0,4}|{1,4}|{2,4}|{3,4}|{4,4}|{5,4}  //{6}", growthResults[0], growthResults[1], growthResults[2], growthResults[3], growthResults[4], growthResults[5], comment));
+            levelLog.Add(recipientLv);
+
+            return levelLog;
         }
 
 
@@ -238,12 +330,12 @@ namespace MapGenTest
     {
         public string Name;
         public ZoneLoc Zone;
-        public List<(int expYield, int level)> Exps;
+        public List<(SegLoc segLoc, int expYield, int level)> Exps;
 
         public ExpLog()
         {
             Zone = ZoneLoc.Invalid;
-            Exps = new List<(int expYield, int level)>();
+            Exps = new List<(SegLoc segLoc, int expYield, int level)>();
         }
     }
 }
