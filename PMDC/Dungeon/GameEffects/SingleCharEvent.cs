@@ -5394,8 +5394,6 @@ namespace PMDC.Dungeon
                 ZoneManager.Instance.CurrentMap.Items.Add(spawnItems[ii]);
 
             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(0));
-            
-            ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
         }
 
     }
@@ -5506,7 +5504,7 @@ namespace PMDC.Dungeon
             }
 
             //force everyone to skip their turn
-            ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
+            DungeonScene.Instance.SkipRemainingTurns();
 
             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(0));
         }
@@ -5597,8 +5595,6 @@ namespace PMDC.Dungeon
                 ZoneManager.Instance.CurrentMap.Items.Add(spawnItems[ii]);
 
             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(0));
-            
-            ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
         }
 
     }
@@ -5714,7 +5710,7 @@ namespace PMDC.Dungeon
             }
 
             //force everyone to skip their turn
-            ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
+            DungeonScene.Instance.SkipRemainingTurns();
 
             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(0));
         }
@@ -6071,7 +6067,7 @@ namespace PMDC.Dungeon
 
             //force everyone to skip their turn for this entire session
             if (NeedTurnEnd)
-                ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
+                DungeonScene.Instance.SkipRemainingTurns();
         }
     }
 
@@ -6400,7 +6396,7 @@ namespace PMDC.Dungeon
 
 
             SongState song = ((EffectTile)owner).TileStates.GetWithDefault<SongState>();
-            if (song.Song != null)
+            if (song != null)
                 GameManager.Instance.BGM(song.Song, true);
 
             //trigger their map entry methods
@@ -6417,7 +6413,7 @@ namespace PMDC.Dungeon
             }
 
             //force everyone to skip their turn for this entire session
-            ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
+            DungeonScene.Instance.SkipRemainingTurns();
         }
 
 
