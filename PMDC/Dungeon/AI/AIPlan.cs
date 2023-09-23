@@ -1743,6 +1743,24 @@ namespace PMDC.Dungeon
                         return 0;
                 }
             }
+            foreach (BattleEvent effect in entry.Data.OnHits.EnumerateInOrder())
+            {
+                if (effect is ThrowBackEvent)
+                {
+                    //this is only reserved for AI that doesnt mind friendly fire
+                    if ((IQ & AIFlags.PlayerSense) == AIFlags.None && DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
+                    {
+                        ThrowBackEvent throwEvent = (ThrowBackEvent)effect;
+                        //check if throwing the (ally) target will hit an enemy
+                        Dir8 throwDir = DirExt.ApproximateDir8(target.CharLoc - controlledChar.CharLoc);
+                        Loc? throwTarget = ThrowAction.GetTarget(controlledChar, controlledChar.CharLoc, throwDir, true, throwEvent.Distance, Alignment.Foe, target);
+                        if (throwTarget != null)
+                            return 100;
+                        else
+                            return 0;
+                    }
+                }
+            }
             if (moveIndex == "present")//Present; if an ally, use healing calculations; NOTE: specialized AI code!
             {
                 if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
@@ -2160,6 +2178,18 @@ namespace PMDC.Dungeon
                         //assume always pointed at foe, always detrimental
                         if (!target.HasElement(((AddElementEvent)effect).TargetElement))
                             return -100;
+                        return 0;
+                    }
+                    else if (effect is ChangeToElementEvent)
+                    {
+                        //assume always always detrimental to foe, always beneficial to ally
+                        if (!target.HasElement(((ChangeToElementEvent)effect).TargetElement))
+                        {
+                            if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
+                                return 50;
+                            else//this is just a hack to prevent enemies from throwing type-changers but still use type-changing move on opponents
+                                return -defaultVal;
+                        }
                         return 0;
                     }
                     else if (effect is RestEvent)
