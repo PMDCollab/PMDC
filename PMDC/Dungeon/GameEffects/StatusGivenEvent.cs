@@ -8,6 +8,7 @@ using RogueEssence.Dungeon;
 using RogueEssence.Dev;
 using Newtonsoft.Json;
 using Avalonia.X11;
+using DynamicData;
 
 namespace PMDC.Dungeon
 {
@@ -93,7 +94,30 @@ namespace PMDC.Dungeon
     }
 
 
-    
+
+    [Serializable]
+    public class StatusCountdownCheck : StatusGivenEvent
+    {
+        public StatusCountdownCheck() { }
+        public override GameEvent Clone() { return new StatusCountdownCheck(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, StatusCheckContext context)
+        {
+            if (owner == context.Status)
+            {
+                CountDownState countdown = context.Status.StatusStates.GetWithDefault<CountDownState>();
+
+                StatusEffect existingStatus = context.Target.GetStatusEffect(context.Status.ID);
+                if (existingStatus != null)
+                {
+                    int counter = existingStatus.StatusStates.GetWithDefault<CountDownState>().Counter;
+                    countdown.Counter = counter - 1;
+                }
+            }
+            yield break;
+        }
+    }
+
 
     [Serializable]
     public abstract class StatusStackCheck : StatusGivenEvent
@@ -1046,6 +1070,58 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    [Serializable]
+    public class PerishStatusEvent : StatusGivenEvent
+    {
+        public StringKey Message;
+        public bool Delay;
+        public List<StatusAnimEvent> Anims;
+
+        public PerishStatusEvent()
+        {
+            Anims = new List<StatusAnimEvent>();
+        }
+        public PerishStatusEvent(StringKey message, bool delay, params StatusAnimEvent[] anims)
+        {
+            Message = message;
+            Delay = delay;
+            Anims = new List<StatusAnimEvent>();
+            Anims.AddRange(anims);
+        }
+        protected PerishStatusEvent(PerishStatusEvent other)
+        {
+            Message = other.Message;
+            Delay = other.Delay;
+            Anims = new List<StatusAnimEvent>();
+            foreach (StatusAnimEvent anim in other.Anims)
+                Anims.Add((StatusAnimEvent)anim.Clone());
+        }
+        public override GameEvent Clone() { return new PerishStatusEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, StatusCheckContext context)
+        {
+            if (context.Status != owner)
+                yield break;
+            if (context.User.Dead)
+                yield break;
+            CountDownState counter = ((StatusEffect)owner).StatusStates.GetWithDefault<CountDownState>();
+
+            DungeonScene.Instance.LogMsg(Text.FormatGrammar(Message.ToLocal(), context.Target.GetDisplayName(false), counter.Counter));
+            if (Delay)
+                yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(10));
+
+            if (counter.Counter <= 0)
+            {
+                yield return CoroutineManager.Instance.StartCoroutine(context.User.RemoveStatusEffect(((StatusEffect)owner).ID, false));
+
+                foreach (StatusAnimEvent anim in Anims)
+                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
+                GameManager.Instance.BattleSE("DUN_Hit_Super_Effective");
+                yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(-1));
+            }
+        }
+    }
 
     [Serializable]
     public class WeatherNeededStatusEvent : StatusGivenEvent

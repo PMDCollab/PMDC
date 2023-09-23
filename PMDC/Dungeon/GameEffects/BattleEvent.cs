@@ -6725,15 +6725,21 @@ namespace PMDC.Dungeon
     public class PoisonEvent : BattleEvent
     {
         public bool Toxic;
+        public int HPFraction;
+        public int RestoreHPFraction;
 
         public PoisonEvent() { }
-        public PoisonEvent(bool toxic)
+        public PoisonEvent(bool toxic, int hpFraction, int restoreHpFraction)
         {
             Toxic = toxic;
+            HPFraction = hpFraction;
+            RestoreHPFraction = restoreHpFraction;
         }
         protected PoisonEvent(PoisonEvent other)
         {
             Toxic = other.Toxic;
+            HPFraction = other.HPFraction;
+            RestoreHPFraction = other.RestoreHPFraction;
         }
         public override GameEvent Clone() { return new PoisonEvent(this); }
 
@@ -6747,17 +6753,17 @@ namespace PMDC.Dungeon
             if (!context.User.CharStates.Contains<MagicGuardState>())
             {
                 CountState countState = ((StatusEffect)owner).StatusStates.Get<CountState>();
-                if (Toxic && countState.Count < 16)
+                if (Toxic && countState.Count < HPFraction)
                     countState.Count++;
                 if (context.User.CharStates.Contains<PoisonHealState>())
                 {
                     DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_POISON_HEAL").ToLocal(), context.User.GetDisplayName(false)));
-                    yield return CoroutineManager.Instance.StartCoroutine(context.User.RestoreHP(Math.Max(1, context.User.MaxHP / 12)));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.RestoreHP(Math.Max(1, context.User.MaxHP / RestoreHPFraction)));
                 }
                 else
                 {
                     DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_POISONED").ToLocal(), context.User.GetDisplayName(false)));
-                    yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(Math.Max(1, (context.User.MaxHP * countState.Count) / 16)));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(Math.Max(1, (context.User.MaxHP * countState.Count) / HPFraction)));
                 }
             }
         }

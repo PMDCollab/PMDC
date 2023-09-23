@@ -1919,42 +1919,6 @@ namespace PMDC.Dungeon
         }
     }
 
-    [Serializable]
-    public class PerishEvent : SingleCharEvent
-    {
-        public int Mult;
-
-        public PerishEvent() { }
-        public PerishEvent(int mult)
-        {
-            Mult = mult;
-        }
-        protected PerishEvent(PerishEvent other)
-        {
-            Mult = other.Mult;
-        }
-        public override GameEvent Clone() { return new PerishEvent(this); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
-        {
-            if (context.User.Dead)
-                yield break;
-            CountDownState counter = ((StatusEffect)owner).StatusStates.GetWithDefault<CountDownState>();
-            if (counter.Counter < 0)
-                yield break;
-
-            counter.Counter--;
-
-            if (counter.Counter % Mult == 0)
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_PERISH_COUNT").ToLocal(), context.User.GetDisplayName(false), counter.Counter / Mult));
-            if (counter.Counter <= 0)
-            {
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.RemoveStatusEffect(((StatusEffect)owner).ID, false));
-                GameManager.Instance.BattleSE("DUN_Hit_Super_Effective");
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(-1));
-            }
-        }
-    }
 
     [Serializable]
     public class PartialTrapEvent : SingleCharEvent
@@ -2285,7 +2249,7 @@ namespace PMDC.Dungeon
             if (!context.User.CharStates.Contains<MagicGuardState>() && AffectNonFocused || DungeonScene.Instance.CurrentCharacter == context.User)
             {
                 CountState countState = ((StatusEffect)owner).StatusStates.Get<CountState>();
-                if (Toxic && countState.Count < 16)
+                if (Toxic && countState.Count < HPFraction)
                     countState.Count++;
                 if (context.User.CharStates.Contains<PoisonHealState>())
                 {
@@ -2335,7 +2299,7 @@ namespace PMDC.Dungeon
             if (!recentAttack.Attacked && !recentWalk.Walked && !context.User.CharStates.Contains<MagicGuardState>())
             {
                 CountState countState = ((StatusEffect)owner).StatusStates.Get<CountState>();
-                if (Toxic && countState.Count < 16)
+                if (Toxic && countState.Count < HPFraction)
                     countState.Count++;
                 if (context.User.CharStates.Contains<PoisonHealState>())
                 {

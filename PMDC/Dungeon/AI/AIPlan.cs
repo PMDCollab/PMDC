@@ -1223,6 +1223,15 @@ namespace PMDC.Dungeon
                                         updateDistanceTargetHash(controlledChar, endHash, seenChar, right.GetLoc() + dir.GetLoc() * range);
                                     }
                                     break;
+                                case OffsetAction.OffsetArea.Cross:
+                                    {
+                                        updateDistanceTargetHash(controlledChar, endHash, seenChar, dir.GetLoc() * range);
+                                        updateDistanceTargetHash(controlledChar, endHash, seenChar, Dir8.Down.GetLoc() + dir.GetLoc() * range);
+                                        updateDistanceTargetHash(controlledChar, endHash, seenChar, Dir8.Left.GetLoc() + dir.GetLoc() * range);
+                                        updateDistanceTargetHash(controlledChar, endHash, seenChar, Dir8.Up.GetLoc() + dir.GetLoc() * range);
+                                        updateDistanceTargetHash(controlledChar, endHash, seenChar, Dir8.Right.GetLoc() + dir.GetLoc() * range);
+                                    }
+                                    break;
                                 case OffsetAction.OffsetArea.Area:
                                     {
                                         for (int xx = -1; xx <= 1; xx++)
