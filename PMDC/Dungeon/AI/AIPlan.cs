@@ -1807,11 +1807,6 @@ namespace PMDC.Dungeon
                 if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
                     return 0;
             }
-            else if (moveIndex == "aqua_ring")//aqua ring; use only if damaged; NOTE: specialized AI code!
-            {
-                if (target.HP * 4 / 3 > target.MaxHP)
-                    return 0;
-            }
             else if (moveIndex == "counter" && (IQ & AIFlags.KnowsMatchups) == AIFlags.None)//counter; do not use if mirror coat status exists and has more than 1 turn left; NOTE: specialized AI code!
             {
                 StatusEffect mutexStatus = controlledChar.GetStatusEffect("mirror_coat");
@@ -2307,10 +2302,20 @@ namespace PMDC.Dungeon
                                 if (!statusTarget.HasElement("ghost"))
                                     addedWorth = 100;
                             }
-                            else if (giveEffect.StatusID == "leech_seed" && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//immobilize NOTE: specialized code!
+                            else if (giveEffect.StatusID == "leech_seed" && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//leech seed NOTE: specialized code!
                             {
                                 if (!statusTarget.HasElement("grass"))
                                     addedWorth = 100;
+                            }
+                            else if (giveEffect.StatusID == "aqua_ring")
+                            {
+                                if (target.HP <= target.MaxHP * 3 / 4)
+                                    addedWorth = (target.MaxHP - target.HP) * 100 / target.MaxHP;
+                            }
+                            else if (giveEffect.StatusID == "regeneration")
+                            {
+                                if (target.HP <= target.MaxHP * 3 / 4)
+                                    addedWorth = (target.MaxHP - target.HP) * 100 / target.MaxHP;
                             }
                             else if (giveEffect.StatusID == "disable")//disable NOTE: specialized code!
                             {
