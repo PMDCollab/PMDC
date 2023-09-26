@@ -14372,6 +14372,7 @@ namespace PMDC.Dungeon
         }
         protected RemoveTerrainEvent(RemoveTerrainEvent other) : base(other)
         {
+            TileTypes = new HashSet<string>();
             foreach (string tileType in other.TileTypes)
                 TileTypes.Add(tileType);
         }
