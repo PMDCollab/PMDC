@@ -103,6 +103,12 @@ namespace MapGenTest
                 Handouts.Add((new HandoutPiecewiseExpEvent(5, 0, low, high), String.Format("STACK HARMONIC")));
             }
             {
+                HandoutExpEvent low = new HandoutStackExpEvent(1, 7, 7);
+                HandoutExpEvent high = new HandoutHarmonicExpEvent(1, 7, 7);
+
+                Handouts.Add((new HandoutPiecewiseExpEvent(5, 0, low, high), String.Format("STACK HARMONIC GRADUAL")));
+            }
+            {
                 HandoutExpEvent low = new HandoutStackExpEvent(1, 7, 5);
                 HandoutExpEvent high = new HandoutHarmonicExpEvent(1, 7, 5);
 
@@ -292,7 +298,7 @@ namespace MapGenTest
             string zoneId = log.Zone.ID;
             ZoneEntrySummary zoneSummary = (ZoneEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Zone].Get(zoneId);
 
-            int recipientLv = zoneSummary.Level+20;
+            int recipientLv = zoneSummary.Level;
             GrowthData growthData = DataManager.Instance.GetGrowth(growth);
             int gainedExp = 0;
 
