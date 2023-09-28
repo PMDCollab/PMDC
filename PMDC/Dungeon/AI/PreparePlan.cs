@@ -51,7 +51,7 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
-    public class PrepareWithLeaderPlan : AIPlan
+    public class PrepareWithLeaderPlan : FollowLeaderPlan
     {
         public AttackChoice AttackPattern;
 
@@ -68,9 +68,13 @@ namespace PMDC.Dungeon
 
         public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
-            //pre-check to confirm correct positioning
-            if (!closestToHighestLeader(controlledChar))
-                return null;
+            GameAction baseAction = base.Think(controlledChar, preThink, rand);
+
+            //behave like followLeader normally
+            if (baseAction != null && baseAction.Type != GameAction.ActionType.Wait)
+                return baseAction;
+
+            //but if we have no place to walk, try to attack a foe from where we are
 
             bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
             Character target = null;
