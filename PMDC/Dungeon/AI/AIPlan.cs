@@ -2325,7 +2325,13 @@ namespace PMDC.Dungeon
                             else if (giveEffect.StatusID == "decoy")//substitute; not necessarily a bad status, but treated like one
                                 addedWorth = -100;
                             else
-                                addedWorth = 100;
+                            {
+                                //for any other effect, assume it has a negative effect on foes, and positive effect on allies 
+                                if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
+                                    return 100;
+                                else
+                                    return -100;
+                            }
                         }
 
                         if (statusData.StatusStates.Contains<BadStatusState>())
