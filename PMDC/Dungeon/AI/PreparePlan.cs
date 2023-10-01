@@ -95,7 +95,7 @@ namespace PMDC.Dungeon
                     return attackCommand;
             }
 
-            return null;
+            return baseAction;
         }
 
         /// <summary>

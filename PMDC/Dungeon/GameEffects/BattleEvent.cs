@@ -10224,7 +10224,7 @@ namespace PMDC.Dungeon
             if (learn)
                 context.User.ReplaceSkill(moveIndex, moveSlot, DataManager.Instance.Save.GetDefaultEnable(moveIndex));
             else
-                context.User.ChangeSkill(moveSlot, moveIndex);
+                context.User.ChangeSkill(moveSlot, moveIndex, -1);
             if (!group)
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_SKETCH").ToLocal(), context.User.GetDisplayName(false), entry.GetIconName()));
         }
@@ -10236,14 +10236,17 @@ namespace PMDC.Dungeon
         [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
         public string LastMoveStatusID;
+        public int NewMoveCharges;
 
         public MimicBattleEvent() { LastMoveStatusID = ""; }
-        public MimicBattleEvent(string prevMoveID)
+        public MimicBattleEvent(string prevMoveID, int newMoveCharges)
         {
             LastMoveStatusID = prevMoveID;
+            NewMoveCharges = newMoveCharges;
         }
         protected MimicBattleEvent(MimicBattleEvent other)
         {
+            NewMoveCharges = other.NewMoveCharges;
             LastMoveStatusID = other.LastMoveStatusID;
         }
         public override GameEvent Clone() { return new MimicBattleEvent(this); }
@@ -10268,7 +10271,7 @@ namespace PMDC.Dungeon
                         yield break;
                     }
                 }
-                context.User.ChangeSkill(context.UsageSlot, chosenMove);
+                context.User.ChangeSkill(context.UsageSlot, chosenMove, NewMoveCharges);
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_MIMIC").ToLocal(), context.User.GetDisplayName(false), entry.GetIconName()));
             }
             else
@@ -13818,16 +13821,20 @@ namespace PMDC.Dungeon
         [DataType(0, DataManager.DataType.Status, false)]
         public string StatusID;
 
+        public int TransformCharges;
+
         public TransformEvent() { StatusID = ""; }
-        public TransformEvent(bool affectTarget, string status)
+        public TransformEvent(bool affectTarget, string status, int transformCharges)
         {
             AffectTarget = affectTarget;
             StatusID = status;
+            TransformCharges = transformCharges;
         }
         protected TransformEvent(TransformEvent other)
         {
             AffectTarget = other.AffectTarget;
             StatusID = other.StatusID;
+            TransformCharges = other.TransformCharges;
         }
         public override GameEvent Clone() { return new TransformEvent(this); }
 
@@ -13872,7 +13879,7 @@ namespace PMDC.Dungeon
 
             //moves
             for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
-                target.ChangeSkill(ii, user.Skills[ii].Element.SkillNum);
+                target.ChangeSkill(ii, user.Skills[ii].Element.SkillNum, TransformCharges);
 
             //set the status
             if (!String.IsNullOrEmpty(StatusID))
@@ -13891,17 +13898,24 @@ namespace PMDC.Dungeon
     public class DevolveEvent : BattleEvent
     {
         public bool SilentCheck;
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string StatusID;
         public List<BattleAnimEvent> Anims;
+        public int TransformCharges;
 
         public DevolveEvent() { Anims = new List<BattleAnimEvent>(); }
-        public DevolveEvent(bool silentCheck, params BattleAnimEvent[] anims) : this()
+        public DevolveEvent(bool silentCheck, string status, int transformCharges, params BattleAnimEvent[] anims) : this()
         {
             SilentCheck = silentCheck;
+            StatusID = status;
+            TransformCharges = transformCharges;
             Anims.AddRange(anims);
         }
         public DevolveEvent(DevolveEvent other) : this()
         {
             SilentCheck = other.SilentCheck;
+            StatusID = other.StatusID;
+            TransformCharges = other.TransformCharges;
             foreach (BattleAnimEvent anim in other.Anims)
                 Anims.Add((BattleAnimEvent)anim.Clone());
         }
@@ -13917,6 +13931,8 @@ namespace PMDC.Dungeon
 
             if (!String.IsNullOrEmpty(candidateDex.PromoteFrom))
             {
+                int hp = context.Target.HP;
+
                 string prevName = context.Target.GetDisplayName(false);
                 MonsterID prevoData = context.Target.CurrentForm;
                 prevoData.Species = candidateDex.PromoteFrom;
@@ -13930,10 +13946,20 @@ namespace PMDC.Dungeon
                 for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
                 {
                     if (ii < final_moves.Count)
-                        context.Target.ChangeSkill(ii, final_moves[ii]);
+                        context.Target.ChangeSkill(ii, final_moves[ii], TransformCharges);
                     else
-                        context.Target.ChangeSkill(ii, "");
+                        context.Target.ChangeSkill(ii, "", -1);
                 }
+
+                //set the status
+                if (!String.IsNullOrEmpty(StatusID))
+                {
+                    StatusEffect setStatus = new StatusEffect(StatusID);
+                    setStatus.LoadFromData();
+                    setStatus.StatusStates.Set(new HPState(hp));
+                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(null, setStatus, false));
+                }
+
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_DEVOLVE").ToLocal(), prevName, dex.GetColoredName()));
 
                 foreach (BattleAnimEvent anim in Anims)

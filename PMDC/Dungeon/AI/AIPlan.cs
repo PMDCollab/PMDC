@@ -1310,8 +1310,12 @@ namespace PMDC.Dungeon
                 }
             }
             //check for moves that want to wait until within range
-            if (skillIndex == "razor_wind")//wait until enemy is wihin two tiles of razor wind's hitbox, to prevent immediate walk-away; NOTE: specialized AI code!
+            if (skillIndex == "razor_wind")//wait until enemy is two+ tiles deep in the hitbox, to prevent immediate walk-away; NOTE: specialized AI code!
                 rangeMod--;
+            else if (skillIndex == "draco_meteor")//wait until enemy is two+ tiles deep in the hitbox, to catch potential partners
+                rangeMod--;
+            else if (skillIndex == "magnitude")//wait until enemy is three+ tiles deep in the hitbox, to increase damage output
+                rangeMod -= 2;
 
             rangeMod = Math.Min(Math.Max(-3, rangeMod), 3);
 
