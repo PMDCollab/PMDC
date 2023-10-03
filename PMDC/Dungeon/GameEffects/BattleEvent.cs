@@ -4236,30 +4236,34 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
-    public class ChanceEvadeEvent : BattleEvent
+    public class CustomHitRateEvent : BattleEvent
     {
         public int Numerator;
         public int Denominator;
 
-        public ChanceEvadeEvent()
+        public CustomHitRateEvent()
         { }
-        public ChanceEvadeEvent(int numerator, int denominator)
+        public CustomHitRateEvent(int numerator, int denominator)
         {
             Numerator = numerator;
             Denominator = denominator;
         }
-        protected ChanceEvadeEvent(ChanceEvadeEvent other) : this()
+        protected CustomHitRateEvent(CustomHitRateEvent other) : this()
         {
             Numerator = other.Numerator;
             Denominator = other.Denominator;
         }
-        public override GameEvent Clone() { return new ChanceEvadeEvent(this); }
+        public override GameEvent Clone() { return new CustomHitRateEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             if (context.Data.HitRate > -1)
             {
                 if (DataManager.Instance.Save.Rand.Next(0, Denominator) < Numerator)
+                {
+                    context.Data.HitRate = -1;
+                }
+                else
                 {
                     DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_MISS").ToLocal(), context.Target.GetDisplayName(false)));
                     context.AddContextStateMult<AccMult>(false, -1, 1);
@@ -6616,7 +6620,7 @@ namespace PMDC.Dungeon
             int damage = context.GetContextStateInt<DamageDealt>(0);
             bool hit = context.ContextStates.Contains<AttackHit>();
             bool recent = ((StatusEffect)owner).StatusStates.Contains<RecentState>();
-            if (!recent)//don't immediately count down after status is inflicted
+            if (!recent && context.Target != context.User)//don't immediately count down after status is inflicted
             {
                 if (damage > 0)
                 {
