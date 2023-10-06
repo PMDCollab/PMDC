@@ -10848,15 +10848,22 @@ namespace PMDC.Dungeon
     public class RemoveOnActionEvent : BattleEvent
     {
         public bool ShowMessage;
+        public bool WaitAnimations;
 
         public RemoveOnActionEvent() { }
         public RemoveOnActionEvent(bool showMessage)
         {
             ShowMessage = showMessage;
         }
+        public RemoveOnActionEvent(bool showMessage, bool waitAnimations)
+        {
+            ShowMessage = showMessage;
+            WaitAnimations = waitAnimations;
+        }
         protected RemoveOnActionEvent(RemoveOnActionEvent other)
         {
             ShowMessage = other.ShowMessage;
+            WaitAnimations = other.WaitAnimations;
         }
         public override GameEvent Clone() { return new RemoveOnActionEvent(this); }
 
@@ -10864,6 +10871,9 @@ namespace PMDC.Dungeon
         {
             if (context.UsageSlot == BattleContext.FORCED_SLOT)
                 yield break;
+
+            if (WaitAnimations)
+                yield return new WaitUntil(DungeonScene.Instance.AnimationsOver);
 
             yield return CoroutineManager.Instance.StartCoroutine(context.User.RemoveStatusEffect(((StatusEffect)owner).ID, ShowMessage));
         }
