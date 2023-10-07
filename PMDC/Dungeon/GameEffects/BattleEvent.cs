@@ -5104,7 +5104,11 @@ namespace PMDC.Dungeon
                     }
 
                     if (deduction > 0)
+                    {
                         yield return CoroutineManager.Instance.StartCoroutine(context.User.DeductCharges(context.UsageSlot, deduction, true, false, true));
+                        if (context.User.Skills[context.UsageSlot].Element.Charges == 0)
+                            context.SkillUsedUp.Skill = context.User.Skills[context.UsageSlot].Element.SkillNum;
+                    }
                 }
             }
         }
@@ -7779,7 +7783,10 @@ namespace PMDC.Dungeon
                 {
                     if (status.StatusStates.Contains<MajorStatusState>())
                     {
-                        DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_DMG_BOOST_ANY_STATUS").ToLocal()));
+                        if (AffectTarget)
+                            DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_DMG_BOOST_ANY_STATUS_OTHER").ToLocal()));
+                        else
+                            DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_DMG_BOOST_ANY_STATUS").ToLocal()));
                         basePower.Power *= Numerator;
                         basePower.Power /= Denominator;
                         break;
