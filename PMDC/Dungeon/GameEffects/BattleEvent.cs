@@ -15422,7 +15422,7 @@ namespace PMDC.Dungeon
             }
 
 
-            if (context.Target.Unrecruitable)
+            if (context.Target.Unrecruitable || context.Target.MemberTeam is ExplorerTeam)
             {
                 EmoteData emoteData = DataManager.Instance.GetEmote("angry");
                 context.Target.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 1));

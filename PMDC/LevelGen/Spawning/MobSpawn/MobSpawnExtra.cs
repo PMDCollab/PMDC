@@ -673,8 +673,7 @@ namespace PMDC.LevelGen
 
         public override void ApplyFeature(IMobSpawnMap map, Character newChar)
         {
-            if (newChar.MemberTeam is MonsterTeam)
-                newChar.Unrecruitable = true;
+            newChar.Unrecruitable = true;
             newChar.BaseForm.Skin = DataManager.Instance.DefaultSkin;
             newChar.CurrentForm = newChar.BaseForm;
         }
