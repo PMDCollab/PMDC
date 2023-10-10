@@ -1460,6 +1460,7 @@ namespace PMDC.Dungeon
         public CombatAction HitboxAction;
         public ExplosionData Explosion;
         public BattleData NewData;
+        [StringKey(0, true)]
         public StringKey Msg;
         public bool AffectTarget;
 
@@ -5354,6 +5355,7 @@ namespace PMDC.Dungeon
     public class PreventActionEvent : BattleEvent
     {
         public HashSet<BattleActionType> Actions;
+        [StringKey(0, true)]
         public StringKey Message;
 
         public PreventActionEvent() { Actions = new HashSet<BattleActionType>(); }
@@ -5391,6 +5393,7 @@ namespace PMDC.Dungeon
 
         [StringTypeConstraint(1, typeof(ItemState))]
         public HashSet<FlagType> ExceptTypes;
+        [StringKey(0, true)]
         public StringKey Message;
 
         public PreventItemActionEvent() { ExceptTypes = new HashSet<FlagType>(); }
@@ -5435,6 +5438,7 @@ namespace PMDC.Dungeon
 
         [StringTypeConstraint(1, typeof(ItemState))]
         public HashSet<FlagType> ExceptTypes;
+        [StringKey(0, true)]
         public StringKey Message;
 
         public PreventItemParalysisEvent() { ExceptTypes = new HashSet<FlagType>(); }
@@ -5482,6 +5486,7 @@ namespace PMDC.Dungeon
     {
         [StringTypeConstraint(1, typeof(ItemState))]
         public HashSet<FlagType> UseTypes;
+        [StringKey(0, true)]
         public StringKey Message;
 
         public PreventItemUseEvent() { UseTypes = new HashSet<FlagType>(); }
@@ -5550,6 +5555,7 @@ namespace PMDC.Dungeon
         [JsonConverter(typeof(ItemListConverter))]
         [DataType(1, DataManager.DataType.Item, false)]
         public List<string> UseTypes;
+        [StringKey(0, true)]
         public StringKey Message;
 
         public PreventItemIndexEvent() { UseTypes = new List<string>(); }
@@ -6485,6 +6491,7 @@ namespace PMDC.Dungeon
     public class CantAttackTargetEvent : BattleEvent
     {
         public bool Invert;
+        [StringKey(0, true)]
         public StringKey Message;
 
         public CantAttackTargetEvent() { }
@@ -6575,6 +6582,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class BoundEvent : BattleEvent
     {
+        [StringKey(0, true)]
         public StringKey Message;
 
         public BoundEvent() { }
@@ -7932,6 +7940,7 @@ namespace PMDC.Dungeon
         public ContextState AddedState;
         public bool Global;
         public bool AffectTarget;
+        [StringKey(0, true)]
         public StringKey Message;
         public List<BattleAnimEvent> Anims;
 
@@ -9565,6 +9574,8 @@ namespace PMDC.Dungeon
         public bool AffectTarget;
         public bool SilentCheck;
         public bool Anonymous;
+
+        [StringKey(0, true)]
         public StringKey TriggerMsg;
         public List<BattleAnimEvent> Anims;
 
@@ -9982,6 +9993,7 @@ namespace PMDC.Dungeon
         [DataType(0, DataManager.DataType.MapStatus, false)]
         public string StatusID;
         public int Counter;
+        [StringKey(0, true)]
         public StringKey MsgOverride;
 
         [StringTypeConstraint(1, typeof(CharState))]
@@ -10716,6 +10728,7 @@ namespace PMDC.Dungeon
         [StringTypeConstraint(1, typeof(StatusState))]
         public List<FlagType> States;
         public bool AffectTarget;
+        [StringKey(0, true)]
         public StringKey Msg;
 
         public ReverseStateStatusBattleEvent() { States = new List<FlagType>(); }
@@ -10768,6 +10781,7 @@ namespace PMDC.Dungeon
         public List<FlagType> States;
 
         public bool AffectTarget;
+        [StringKey(0, true)]
         public StringKey Msg;
 
         public List<BattleAnimEvent> Anims;
@@ -11102,6 +11116,7 @@ namespace PMDC.Dungeon
     public class ChipDamageEvent : BattleEvent
     {
         public int HPFraction;
+        [StringKey(0, true)]
         public StringKey Msg;
         public bool VFX;
         public bool SkipAction;
@@ -11227,6 +11242,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WrapTrapEvent : BattleEvent
     {
+        [StringKey(0, true)]
         public StringKey Message;
         public List<AnimEvent> Anims;
         [FrameType(0, false)]
@@ -11619,6 +11635,7 @@ namespace PMDC.Dungeon
     {
         public int Distance;
         public bool AffectTarget;
+        [StringKey(0, true)]
         public StringKey TriggerMsg;
 
         public RandomWarpEvent() { }
@@ -11752,6 +11769,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class WarpHereEvent : BattleEvent
     {
+        [StringKey(0, true)]
         public StringKey Msg;
         public bool AffectTarget;
 
@@ -12232,6 +12250,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class MugItemEvent : ItemMetaEvent
     {
+        [StringKey(0, true)]
         public StringKey Message;
         public bool SilentCheck;
 
@@ -12285,6 +12304,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class DropItemEvent : ItemMetaEvent
     {
+        [StringKey(0, true)]
         public StringKey Message;
         public bool SilentCheck;
 
@@ -13503,6 +13523,7 @@ namespace PMDC.Dungeon
     public class ReflectAbilityEvent : BattleEvent
     {
         public bool AffectTarget;
+        [StringKey(0, true)]
         public StringKey Msg;
 
         public ReflectAbilityEvent() { }

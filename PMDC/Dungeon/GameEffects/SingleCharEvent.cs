@@ -704,6 +704,7 @@ namespace PMDC.Dungeon
         /// How much HP to heal as a fraction of the target's total HP.
         /// </summary>
         public int HPFraction;
+        [StringKey(0, true)]
         public StringKey Message;
 
         public FractionHealEvent() { }
@@ -881,6 +882,7 @@ namespace PMDC.Dungeon
         public bool SilentCheck;
         [SubGroup]
         public StateCollection<StatusState> States;
+        [StringKey(0, true)]
         public StringKey TriggerMsg;
         [Sound(0)]
         public string TriggerSound;
@@ -989,6 +991,7 @@ namespace PMDC.Dungeon
         public CombatAction HitboxAction;
         public ExplosionData Explosion;
         public BattleData NewData;
+        [StringKey(0, true)]
         public StringKey Msg;
 
         public InvokeAttackEvent() { }
@@ -1931,6 +1934,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class PartialTrapEvent : SingleCharEvent
     {
+        [StringKey(0, true)]
         public StringKey Message;
         public List<AnimEvent> Anims;
 
@@ -2479,6 +2483,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class CureAllEvent : SingleCharEvent
     {
+        [StringKey(0, true)]
         public StringKey Message;
         public List<AnimEvent> Anims;
 
@@ -2874,6 +2879,7 @@ namespace PMDC.Dungeon
         [DataType(0, DataManager.DataType.MapStatus, false)]
         public string StatusID;
         public int Counter;
+        [StringKey(0, true)]
         public StringKey MsgOverride;
 
         public GiveMapStatusSingleEvent() { StatusID = ""; }

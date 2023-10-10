@@ -422,6 +422,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class SameStatusCheck : StatusGivenEvent
     {
+        [StringKey(0, true)]
         public StringKey Message;
 
         public SameStatusCheck() { }
@@ -452,6 +453,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class SameTargetedStatusCheck : StatusGivenEvent
     {
+        [StringKey(0, true)]
         public StringKey Message;
 
         public SameTargetedStatusCheck() { }
@@ -482,6 +484,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class OKStatusCheck : StatusGivenEvent
     {
+        [StringKey(0, true)]
         public StringKey Message;
 
         public OKStatusCheck() { }
@@ -515,6 +518,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class EmptySlotStatusCheck : StatusGivenEvent
     {
+        [StringKey(0, true)]
         public StringKey Message;
 
         public EmptySlotStatusCheck() { }
@@ -546,6 +550,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class GenderStatusCheck : StatusGivenEvent
     {
+        [StringKey(0, true)]
         public StringKey Message;
 
         public GenderStatusCheck() { }
@@ -580,6 +585,7 @@ namespace PMDC.Dungeon
         [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
         public string Element;
+        [StringKey(0, true)]
         public StringKey Message;
 
         public TypeCheck() { Element = ""; }
@@ -615,6 +621,7 @@ namespace PMDC.Dungeon
         [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
         public string StatusID;
+        [StringKey(0, true)]
         public StringKey Message;
 
         public List<StatusAnimEvent> Anims;
@@ -676,6 +683,7 @@ namespace PMDC.Dungeon
     {
         [StringTypeConstraint(1, typeof(StatusState))]
         public List<FlagType> States;
+        [StringKey(0, true)]
         public StringKey Message;
         public List<StatusAnimEvent> Anims;
 
@@ -737,6 +745,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public abstract class StatChangeCheckBase : StatusGivenEvent
     {
+        [StringKey(0, true)]
         public StringKey Message;
         public List<Stat> Stats;
         public bool Drop;

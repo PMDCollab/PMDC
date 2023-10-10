@@ -210,6 +210,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class Infiltrator : ContextState
     {
+        [StringKey(0, true)]
         public StringKey Msg;
         public Infiltrator() { }
         public Infiltrator(StringKey msg) { Msg = msg; }
