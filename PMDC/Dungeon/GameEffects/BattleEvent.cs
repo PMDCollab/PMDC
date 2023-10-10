@@ -15497,7 +15497,12 @@ namespace PMDC.Dungeon
                         EmoteData emoteData = DataManager.Instance.GetEmote("glowing");
                         context.Target.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 2));
                         yield return new WaitForFrames(40);
-                        yield return CoroutineManager.Instance.StartCoroutine(context.Target.StartAnim(new CharAnimPose(context.Target.CharLoc, context.Target.CharDir, 50, 0)));
+
+                        int poseId = 50;
+                        CharSheet sheet = GraphicsManager.GetChara(context.Target.Appearance.ToCharID());
+                        int fallbackIndex = sheet.GetReferencedAnimIndex(poseId);
+                        if (fallbackIndex == poseId)
+                            yield return CoroutineManager.Instance.StartCoroutine(context.Target.StartAnim(new CharAnimPose(context.Target.CharLoc, context.Target.CharDir, poseId, 0)));
 
                         //check against inventory capacity violation
                         if (!String.IsNullOrEmpty(context.Target.EquippedItem.ID) && DungeonScene.Instance.ActiveTeam.MaxInv == DungeonScene.Instance.ActiveTeam.GetInvCount())
