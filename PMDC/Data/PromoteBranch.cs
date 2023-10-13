@@ -7,6 +7,7 @@ using RogueEssence;
 using RogueEssence.Data;
 using RogueEssence.Dev;
 using Newtonsoft.Json;
+using PMDC.Dungeon;
 
 namespace PMDC.Data
 {
@@ -16,7 +17,7 @@ namespace PMDC.Data
         public int Level;
 
         public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_LEVEL").ToLocal(), Level); }
-        public override bool GetReq(Character character)
+        public override bool GetReq(Character character, bool inDungeon)
         {
             return character.Level >= Level;
         }
@@ -30,47 +31,51 @@ namespace PMDC.Data
 
         public override string GiveItem { get { return ItemNum; } }
         public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_ITEM").ToLocal(), DataManager.Instance.GetItem(ItemNum).GetColoredName()); }
-        public override bool GetGroundReq(Character character)
+        
+        public override bool GetReq(Character character, bool inDungeon)
         {
-            if (character.EquippedItem.ID == ItemNum)
-                return true;
-
-            foreach (InvItem item in character.MemberTeam.EnumerateInv())
+            if (inDungeon)
             {
-                if (item.ID == ItemNum)
+                if (character.EquippedItem.ID == ItemNum && !character.EquippedItem.Cursed)
                     return true;
+            }
+            else
+            {
+                if (character.EquippedItem.ID == ItemNum)
+                    return true;
+
+                foreach (InvItem item in character.MemberTeam.EnumerateInv())
+                {
+                    if (item.ID == ItemNum)
+                        return true;
+                }
             }
             return false;
         }
-        public override bool GetReq(Character character)
-        {
-            if (character.EquippedItem.ID == ItemNum && !character.EquippedItem.Cursed)
-                return true;
 
-            return false;
-        }
-        public override void OnGroundPromote(Character character)
+        public override void OnPromote(Character character, bool inDungeon)
         {
-            if (character.EquippedItem.ID == ItemNum)
-                character.SilentDequipItem();
+            if (inDungeon)
+            {
+                if (character.EquippedItem.ID == ItemNum && !character.EquippedItem.Cursed)
+                    character.SilentDequipItem();
+            }
             else
             {
-                for (int ii = 0; ii < character.MemberTeam.GetInvCount(); ii++)
+                if (character.EquippedItem.ID == ItemNum)
+                    character.SilentDequipItem();
+                else
                 {
-                    if (character.MemberTeam.GetInv(ii).ID == ItemNum)
+                    for (int ii = 0; ii < character.MemberTeam.GetInvCount(); ii++)
                     {
-                        character.MemberTeam.RemoveFromInv(ii);
-                        break;
+                        if (character.MemberTeam.GetInv(ii).ID == ItemNum)
+                        {
+                            character.MemberTeam.RemoveFromInv(ii);
+                            break;
+                        }
                     }
                 }
             }
-        }
-
-        public override void OnPromote(Character character)
-        {
-            if (character.EquippedItem.ID == ItemNum && !character.EquippedItem.Cursed)
-                character.SilentDequipItem();
-            
         }
     }
     [Serializable]
@@ -85,7 +90,7 @@ namespace PMDC.Data
         }
 
         public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_ALLIES").ToLocal(), Allies); }
-        public override bool GetReq(Character character)
+        public override bool GetReq(Character character, bool inDungeon)
         {
             ExplorerTeam team = character.MemberTeam as ExplorerTeam;
 
@@ -112,7 +117,7 @@ namespace PMDC.Data
         public TimeOfDay Time;
 
         public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_TIME").ToLocal(), Time.ToLocal()); }
-        public override bool GetReq(Character character)
+        public override bool GetReq(Character character, bool inDungeon)
         {
             return DataManager.Instance.Save.Time != TimeOfDay.Unknown && (DataManager.Instance.Save.Time == Time || (TimeOfDay)(((int)DataManager.Instance.Save.Time + 1) % 4) == Time);
         }
@@ -124,10 +129,12 @@ namespace PMDC.Data
         [DataType(0, DataManager.DataType.MapStatus, false)]
         public string Weather;
 
-        public override bool GetGroundReq(Character character) { return false; }
         public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_MAP").ToLocal(), DataManager.Instance.GetMapStatus(Weather).GetColoredName()); }
-        public override bool GetReq(Character character)
+        public override bool GetReq(Character character, bool inDungeon)
         {
+            if (!inDungeon)
+                return false;
+
             return ZoneManager.Instance.CurrentMap.Status.ContainsKey(Weather);
         }
     }
@@ -145,7 +152,7 @@ namespace PMDC.Data
             else
                 return Text.FormatGrammar(new StringKey("EVO_REQ_ATK_DEF_EQUAL").ToLocal());
         }
-        public override bool GetReq(Character character)
+        public override bool GetReq(Character character, bool inDungeon)
         {
             return character.BaseAtk.CompareTo(character.BaseDef) == AtkDefComparison;
         }
@@ -162,7 +169,7 @@ namespace PMDC.Data
         {
             return Text.FormatGrammar(new StringKey("EVO_REQ_CRITS").ToLocal(), Stack);
         }
-        public override bool GetReq(Character character)
+        public override bool GetReq(Character character, bool inDungeon)
         {
             StatusEffect status;
             if (character.StatusEffects.TryGetValue(CritStatus, out status))
@@ -185,7 +192,7 @@ namespace PMDC.Data
         {
             return Text.FormatGrammar(new StringKey("EVO_REQ_STAT_BOOST").ToLocal(), DataManager.Instance.GetStatus(StatBoostStatus).GetColoredName());
         }
-        public override bool GetReq(Character character)
+        public override bool GetReq(Character character, bool inDungeon)
         {
             StatusEffect status;
             if (character.StatusEffects.TryGetValue(StatBoostStatus, out status))
@@ -205,7 +212,7 @@ namespace PMDC.Data
         public string MoveNum;
 
         public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_SKILL").ToLocal(), DataManager.Instance.GetSkill(MoveNum).GetColoredName()); }
-        public override bool GetReq(Character character)
+        public override bool GetReq(Character character, bool inDungeon)
         {
             foreach (SlotSkill move in character.BaseSkills)
             {
@@ -229,7 +236,7 @@ namespace PMDC.Data
             ElementData elementEntry = DataManager.Instance.GetElement(MoveElement);
             return Text.FormatGrammar(new StringKey("EVO_REQ_SKILL_ELEMENT").ToLocal(), elementEntry.GetColoredName());
         }
-        public override bool GetReq(Character character)
+        public override bool GetReq(Character character, bool inDungeon)
         {
             foreach (SlotSkill move in character.BaseSkills)
             {
@@ -243,6 +250,118 @@ namespace PMDC.Data
             return false;
         }
     }
+
+    [Serializable]
+    public class EvoMoveUse : PromoteDetail
+    {
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string LastMoveStatusID;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string MoveRepeatStatusID;
+
+        [JsonConverter(typeof(SkillConverter))]
+        [DataType(0, DataManager.DataType.Skill, false)]
+        public string MoveNum;
+
+        public int Amount;
+
+        public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_SKILL_USE").ToLocal(), DataManager.Instance.GetSkill(MoveNum).GetColoredName(), Amount); }
+        public override bool GetReq(Character character, bool inDungeon)
+        {
+            StatusEffect moveStatus = character.GetStatusEffect(LastMoveStatusID);
+            StatusEffect repeatStatus = character.GetStatusEffect(MoveRepeatStatusID);
+            if (moveStatus == null || repeatStatus == null)
+                return false;
+            if (moveStatus.StatusStates.GetWithDefault<IDState>().ID != MoveNum)
+                return false;
+            return repeatStatus.StatusStates.GetWithDefault<CountState>().Count >= Amount;
+        }
+    }
+
+    [Serializable]
+    public class EvoKillCount : PromoteDetail
+    {
+        public int Amount;
+
+        public override string GetReqString() { return ""; }
+        public override bool GetReq(Character character, bool inDungeon)
+        {
+            //foreach (SlotSkill move in character.BaseSkills)
+            //{
+            //    if (move.SkillNum == MoveNum)
+            //        return true;
+            //}
+            return false;
+        }
+    }
+
+    [Serializable]
+    public class EvoMoney : PromoteDetail
+    {
+        public int Amount;
+
+        public override string GetReqString() { return ""; }
+        public override bool GetReq(Character character, bool inDungeon)
+        {
+            //foreach (SlotSkill move in character.BaseSkills)
+            //{
+            //    if (move.SkillNum == MoveNum)
+            //        return true;
+            //}
+            return false;
+        }
+    }
+
+    [Serializable]
+    public class EvoWalk : PromoteDetail
+    {
+        public override string GetReqString() { return ""; }
+        public override bool GetReq(Character character, bool inDungeon)
+        {
+            //foreach (SlotSkill move in character.BaseSkills)
+            //{
+            //    if (move.SkillNum == MoveNum)
+            //        return true;
+            //}
+            return false;
+        }
+    }
+
+
+    [Serializable]
+    public class EvoRescue : PromoteDetail
+    {
+        public override string GetReqString() { return ""; }
+        public override bool GetReq(Character character, bool inDungeon)
+        {
+            //foreach (SlotSkill move in character.BaseSkills)
+            //{
+            //    if (move.SkillNum == MoveNum)
+            //        return true;
+            //}
+            return false;
+        }
+    }
+
+    [Serializable]
+    public class EvoTookDamage : PromoteDetail
+    {
+        public int Amount;
+
+        public override string GetReqString() { return ""; }
+        public override bool GetReq(Character character, bool inDungeon)
+        {
+            //foreach (SlotSkill move in character.BaseSkills)
+            //{
+            //    if (move.SkillNum == MoveNum)
+            //        return true;
+            //}
+            return false;
+        }
+    }
+
     [Serializable]
     public class EvoForm : PromoteDetail
     {
@@ -255,7 +374,7 @@ namespace PMDC.Data
         }
 
         public override bool IsHardReq() { return true; }
-        public override bool GetReq(Character character)
+        public override bool GetReq(Character character, bool inDungeon)
         {
             return character.BaseForm.Form == ReqForm;
         }
@@ -272,7 +391,7 @@ namespace PMDC.Data
         }
 
         public override bool IsHardReq() { return true; }
-        public override bool GetReq(Character character)
+        public override bool GetReq(Character character, bool inDungeon)
         {
             return character.BaseForm.Gender == ReqGender;
         }
@@ -292,7 +411,7 @@ namespace PMDC.Data
                 return Text.FormatGrammar(new StringKey("EVO_REQ_HUNGER_HIGH").ToLocal());
         }
 
-        public override bool GetReq(Character character)
+        public override bool GetReq(Character character, bool inDungeon)
         {
             return Hungry ? (character.Fullness == 0) : (character.Fullness >= 110);
         }
@@ -310,14 +429,16 @@ namespace PMDC.Data
             TileElement = element;
         }
 
-        public override bool GetGroundReq(Character character) { return false; }
         public override string GetReqString()
         {
             ElementData elementEntry = DataManager.Instance.GetElement(TileElement);
             return Text.FormatGrammar(new StringKey("EVO_REQ_TILE_ELEMENT").ToLocal(), elementEntry.GetColoredName());
         }
-        public override bool GetReq(Character character)
+        public override bool GetReq(Character character, bool inDungeon)
         {
+            if (!inDungeon)
+                return false;
+
             if (GameManager.Instance.CurrentScene == DungeonScene.Instance)
                 return ZoneManager.Instance.CurrentMap.Element == TileElement;
             return false;
@@ -331,7 +452,7 @@ namespace PMDC.Data
         public string Species;
 
         public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_ALLY_SPECIES").ToLocal(), DataManager.Instance.GetMonster(Species).GetColoredName()); }
-        public override bool GetReq(Character character)
+        public override bool GetReq(Character character, bool inDungeon)
         {
             foreach (Character partner in character.MemberTeam.Players)
             {
@@ -355,7 +476,7 @@ namespace PMDC.Data
             ElementData elementEntry = DataManager.Instance.GetElement(PartnerElement);
             return Text.FormatGrammar(new StringKey("EVO_REQ_ALLY_ELEMENT").ToLocal(), elementEntry.GetColoredName());
         }
-        public override bool GetReq(Character character)
+        public override bool GetReq(Character character, bool inDungeon)
         {
             foreach (Character partner in character.MemberTeam.Players)
             {
@@ -373,13 +494,11 @@ namespace PMDC.Data
         [DataType(0, DataManager.DataType.Monster, false)]
         public string ShedSpecies;
 
-        public override void OnGroundPromote(Character character)
+        public override void OnPromote(Character character, bool inDungeon)
         {
+            if (!inDungeon)
+                return;
 
-        }
-
-        public override void OnPromote(Character character)
-        {
             ExplorerTeam team = character.MemberTeam as ExplorerTeam;
             if (team == null)
                 return;
@@ -458,26 +577,25 @@ namespace PMDC.Data
             Form = form;
         }
 
-        public override void OnPromote(Character character)
+        public override void BeforePromote(Character character, bool inDungeon, ref MonsterID result)
         {
-            MonsterData data = DataManager.Instance.GetMonster(character.BaseForm.Species);
+            MonsterData data = DataManager.Instance.GetMonster(result.Species);
             if (!data.Forms[Form].Released)
                 return;
 
             //set forme depending on location
             foreach (PromoteDetail detail in Conditions)
             {
-                if (!detail.GetReq(character))
+                if (!detail.GetReq(character, inDungeon))
                     return;
             }
-            character.BaseForm.Form = Form;
-            character.RestoreForm();
+            result.Form = Form;
         }
     }
     [Serializable]
     public class EvoFormLocOrigin : PromoteDetail
     {
-        public override void OnPromote(Character character)
+        public override void OnPromote(Character character, bool inDungeon)
         {
             //set forme depending on capture location
         }
@@ -485,12 +603,12 @@ namespace PMDC.Data
     [Serializable]
     public class EvoFormCream : PromoteDetail
     {
-        public override bool GetReq(Character character)
+        public override bool GetReq(Character character, bool inDungeon)
         {
             return false;
         }
 
-        public override void OnPromote(Character character)
+        public override void OnPromote(Character character, bool inDungeon)
         {
             //functions as an item check, AND sets the forme
             //set forme depending on ???
@@ -501,12 +619,12 @@ namespace PMDC.Data
     {
         public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_ITEM").ToLocal(), "???"); }
 
-        public override bool GetReq(Character character)
+        public override bool GetReq(Character character, bool inDungeon)
         {
             return false;
         }
 
-        public override void OnPromote(Character character)
+        public override void OnPromote(Character character, bool inDungeon)
         {
             //functions as an item check, AND sets the forme
             //set forme depending on the item donated
@@ -523,12 +641,12 @@ namespace PMDC.Data
             return Text.FormatGrammar(new StringKey("EVO_REQ_TILE_ELEMENT").ToLocal(), "???");
         }
 
-        public override bool GetReq(Character character)
+        public override bool GetReq(Character character, bool inDungeon)
         {
             return false;
         }
 
-        public override void OnPromote(Character character)
+        public override void OnPromote(Character character, bool inDungeon)
         {
             //functions as a terrain check, AND sets the forme
         }
@@ -543,7 +661,7 @@ namespace PMDC.Data
         public int Divisor;
 
         public override bool IsHardReq() { return true; }
-        public override bool GetReq(Character character)
+        public override bool GetReq(Character character, bool inDungeon)
         {
             return character.Discriminator % Divisor == Mod;
         }
@@ -552,7 +670,7 @@ namespace PMDC.Data
     public class EvoTrade : PromoteDetail
     {
         public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_TRADE").ToLocal()); }
-        public override bool GetReq(Character character)
+        public override bool GetReq(Character character, bool inDungeon)
         {
             return true; //character.TradeHistory.Count > 0;
         }

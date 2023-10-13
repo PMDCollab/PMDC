@@ -220,7 +220,7 @@ namespace PMDC
                     }
                 }
 
-                DiagManager.Instance.SetupGamepad();
+                DiagManager.Instance.SetupInputs();
                 GraphicsManager.InitParams();
 
                 DiagManager.Instance.DevMode = dev;
@@ -490,6 +490,9 @@ namespace PMDC
             DataEditor.AddEditor(new SpreadPlanQuotaEditor());
             DataEditor.AddEditor(new SpreadPlanBaseEditor());
 
+            DataEditor.AddEditor(new CombinedGridRoomStepEditor());
+            DataEditor.AddEditor(new BlobWaterStepEditor());
+            DataEditor.AddEditor(new PerlinWaterStepEditor());
             DataEditor.AddEditor(new ItemSpawnZoneStepEditor());
             DataEditor.AddEditor(new TeamSpawnZoneStepEditor());
             DataEditor.AddEditor(new TileSpawnZoneStepEditor());
@@ -511,6 +514,7 @@ namespace PMDC
             DataEditor.AddEditor(new TeamStepSpawnerEditor());
             DataEditor.AddEditor(new StepSpawnerEditor());
 
+            DataEditor.AddEditor(new GridPathGridEditor());
             DataEditor.AddEditor(new GridPathCircleEditor());
             DataEditor.AddEditor(new GridPathBranchEditor());
 
@@ -525,6 +529,7 @@ namespace PMDC
 
             DataEditor.AddEditor(new RoomGenCrossEditor());
             DataEditor.AddEditor(new SizedRoomGenEditor());
+            DataEditor.AddEditor(new RoomGenDefaultEditor());
 
             DataEditor.AddEditor(new BasePowerStateEditor());
             DataEditor.AddEditor(new AdditionalEffectStateEditor());
@@ -535,6 +540,21 @@ namespace PMDC
 
             DataEditor.AddEditor(new TeamMemberSpawnEditor());
             DataEditor.AddEditor(new MobSpawnEditor());
+            DataEditor.AddEditor(new MobSpawnWeakEditor());
+            DataEditor.AddEditor(new MobSpawnAltColorEditor());
+            DataEditor.AddEditor(new MobSpawnMovesOffEditor());
+            DataEditor.AddEditor(new MobSpawnBoostEditor());
+            DataEditor.AddEditor(new MobSpawnScaledBoostEditor());
+            DataEditor.AddEditor(new MobSpawnItemEditor());
+            DataEditor.AddEditor(new MobSpawnInvEditor());
+            DataEditor.AddEditor(new MobSpawnLevelScaleEditor());
+            DataEditor.AddEditor(new MobSpawnLocEditor());
+            DataEditor.AddEditor(new MobSpawnUnrecruitableEditor());
+            DataEditor.AddEditor(new MobSpawnFoeConflictEditor());
+            DataEditor.AddEditor(new MobSpawnInteractableEditor());
+            DataEditor.AddEditor(new MobSpawnLuaTableEditor());
+            DataEditor.AddEditor(new MobSpawnDiscriminatorEditor());
+            DataEditor.AddEditor(new MobSpawnStatusEditor());
 
             DataEditor.AddEditor(new MapTilesEditor());
             DataEditor.AddEditor(new BaseEmitterEditor());
@@ -560,6 +580,7 @@ namespace PMDC
             DataEditor.AddEditor(new PriorityEditor());
             DataEditor.AddEditor(new SegLocEditor());
             DataEditor.AddEditor(new LocEditor());
+            DataEditor.AddEditor(new MultiplierEditor());
             DataEditor.AddEditor(new LoopedRandEditor());
             DataEditor.AddEditor(new PresetMultiRandEditor());
             DataEditor.AddEditor(new MoneySpawnRangeEditor(false, true));
@@ -577,6 +598,8 @@ namespace PMDC
             DataEditor.AddEditor(new HashSetEditor<int>());
             DataEditor.AddEditor(new HashSetEditor<string>());
 
+            DataEditor.AddEditor(new StringKeyEditor());
+
             DataEditor.AddEditor(new ArrayEditor());
             DataEditor.AddEditor(new DictionaryEditor());
             DataEditor.AddEditor(new NoDupeListEditor());
@@ -584,6 +607,7 @@ namespace PMDC
             DataEditor.AddEditor(new EnumEditor());
             DataEditor.AddEditor(new GuidEditor());
             DataEditor.AddEditor(new StringEditor());
+            DataEditor.AddEditor(new CharEditor());
             DataEditor.AddEditor(new DoubleEditor());
             DataEditor.AddEditor(new SingleEditor());
             DataEditor.AddEditor(new BooleanEditor());

@@ -86,8 +86,11 @@ namespace PMDC.Dungeon
     [Serializable]
     public class TaintedDrain : ContextState
     {
+        public int Mult;
         public TaintedDrain() { }
-        public override GameplayState Clone() { return new TaintedDrain(); }
+        public TaintedDrain(int mult) { Mult = mult; }
+        public TaintedDrain(TaintedDrain other) { Mult = other.Mult; }
+        public override GameplayState Clone() { return new TaintedDrain(this); }
     }
 
     [Serializable]

@@ -15,7 +15,7 @@ namespace PMDC.Dungeon
         public AttackChoice AttackPattern;
 
         public PreparePlan() { }
-        public PreparePlan(AIFlags iq, AttackChoice attackPattern) : base(iq)
+        public PreparePlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, AttackChoice attackPattern) : base(iq, attackRange, statusRange, selfStatusRange)
         {
             AttackPattern = attackPattern;
         }
@@ -56,7 +56,7 @@ namespace PMDC.Dungeon
         public AttackChoice AttackPattern;
 
         public PrepareWithLeaderPlan() { }
-        public PrepareWithLeaderPlan(AIFlags iq, AttackChoice attackPattern) : base(iq)
+        public PrepareWithLeaderPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, AttackChoice attackPattern) : base(iq, attackRange, statusRange, selfStatusRange)
         {
             AttackPattern = attackPattern;
         }
@@ -171,7 +171,7 @@ namespace PMDC.Dungeon
         public string FirstMoveStatus;
 
         public PreBuffPlan() { }
-        public PreBuffPlan(AIFlags iq, string firstMoveStatus) : base(iq)
+        public PreBuffPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, string firstMoveStatus) : base(iq, attackRange, statusRange, selfStatusRange)
         {
             FirstMoveStatus = firstMoveStatus;
         }
@@ -216,7 +216,7 @@ namespace PMDC.Dungeon
         public string FirstMoveStatus;
 
         public LeadSkillPlan() { FirstMoveStatus = ""; }
-        public LeadSkillPlan(AIFlags iq, string firstMoveStatus) : base(iq)
+        public LeadSkillPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, string firstMoveStatus) : base(iq, attackRange, statusRange, selfStatusRange)
         {
             FirstMoveStatus = firstMoveStatus;
         }

@@ -4,7 +4,7 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>PMDC</RootNamespace>
     <AssemblyName>PMDC</AssemblyName>
-    <AssemblyVersion>0.7.13</AssemblyVersion>
+    <AssemblyVersion>0.7.17</AssemblyVersion>
     <AssemblyCopyright>Audino 2023</AssemblyCopyright>
     <TargetFramework>net6.0</TargetFramework>
     <Deterministic>true</Deterministic>
@@ -21,16 +21,19 @@
   <PropertyGroup>
     <ApplicationIcon>Resources\Icon.ico</ApplicationIcon>
   </PropertyGroup>
+  
   <ItemGroup Condition="'$(RuntimeIdentifier)' != ''">
     <Content Include="runtimes\$(RuntimeIdentifier)\native\*" Link="%(FileName)%(Extension)">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
   </ItemGroup>
+  
   <ItemGroup Condition="'$(RuntimeIdentifier)' == ''">
     <Content Include="runtimes\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  
   <ItemGroup>
     <None Include="..\..\DumpAsset\**\*" Exclude="..\..\DumpAsset\.git;..\..\DumpAsset\.gitignore">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>

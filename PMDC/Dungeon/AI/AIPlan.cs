@@ -4,6 +4,7 @@ using RogueElements;
 using RogueEssence.Data;
 using RogueEssence;
 using RogueEssence.Dungeon;
+using System.Runtime.Serialization;
 
 namespace PMDC.Dungeon
 {
@@ -63,6 +64,20 @@ namespace PMDC.Dungeon
         /// </summary>
         public AIFlags IQ;
 
+        public int AttackRange;
+        public int StatusRange;
+        public int SelfStatusRange;
+
+
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            if (Serializer.OldVersion < new Version(0, 7, 14))
+            {
+                SelfStatusRange = 4;
+            }
+        }
+
         public enum AttackChoice
         {
             /// <summary>
@@ -110,9 +125,20 @@ namespace PMDC.Dungeon
             this.IQ = iq;
         }
 
+        public AIPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange)
+        {
+            this.IQ = iq;
+            this.AttackRange = attackRange;
+            this.StatusRange = statusRange;
+            this.SelfStatusRange = selfStatusRange;
+        }
+
         protected AIPlan(AIPlan other)
         {
             IQ = other.IQ;
+            SelfStatusRange = other.SelfStatusRange;
+            StatusRange = other.StatusRange;
+            AttackRange = other.AttackRange;
         }
 
         /// <summary>
@@ -1197,6 +1223,15 @@ namespace PMDC.Dungeon
                                         updateDistanceTargetHash(controlledChar, endHash, seenChar, right.GetLoc() + dir.GetLoc() * range);
                                     }
                                     break;
+                                case OffsetAction.OffsetArea.Cross:
+                                    {
+                                        updateDistanceTargetHash(controlledChar, endHash, seenChar, dir.GetLoc() * range);
+                                        updateDistanceTargetHash(controlledChar, endHash, seenChar, Dir8.Down.GetLoc() + dir.GetLoc() * range);
+                                        updateDistanceTargetHash(controlledChar, endHash, seenChar, Dir8.Left.GetLoc() + dir.GetLoc() * range);
+                                        updateDistanceTargetHash(controlledChar, endHash, seenChar, Dir8.Up.GetLoc() + dir.GetLoc() * range);
+                                        updateDistanceTargetHash(controlledChar, endHash, seenChar, Dir8.Right.GetLoc() + dir.GetLoc() * range);
+                                    }
+                                    break;
                                 case OffsetAction.OffsetArea.Area:
                                     {
                                         for (int xx = -1; xx <= 1; xx++)
@@ -1587,7 +1622,7 @@ namespace PMDC.Dungeon
 
         protected int GetBattleValue(Character controlledChar, BattleData data, List<Character> seenChars, Character target, int rangeMod, int defaultVal)
         {
-            int delta = GetTargetBattleDataEffect(controlledChar, data, seenChars, target, 0, 1, defaultVal);
+            int delta = GetTargetBattleDataEffectWithRangeLimit(controlledChar, data, seenChars, target, 0, 1, defaultVal);
 
             return AlignTargetEffect(controlledChar, data, target, delta);
         }
@@ -1708,6 +1743,24 @@ namespace PMDC.Dungeon
                         return 0;
                 }
             }
+            foreach (BattleEvent effect in entry.Data.OnHits.EnumerateInOrder())
+            {
+                if (effect is ThrowBackEvent)
+                {
+                    //this is only reserved for AI that doesnt mind friendly fire
+                    if ((IQ & AIFlags.PlayerSense) == AIFlags.None && DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
+                    {
+                        ThrowBackEvent throwEvent = (ThrowBackEvent)effect;
+                        //check if throwing the (ally) target will hit an enemy
+                        Dir8 throwDir = DirExt.ApproximateDir8(target.CharLoc - controlledChar.CharLoc);
+                        Loc? throwTarget = ThrowAction.GetTarget(controlledChar, controlledChar.CharLoc, throwDir, true, throwEvent.Distance, Alignment.Foe, target);
+                        if (throwTarget != null)
+                            return 100;
+                        else
+                            return 0;
+                    }
+                }
+            }
             if (moveIndex == "present")//Present; if an ally, use healing calculations; NOTE: specialized AI code!
             {
                 if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
@@ -1752,11 +1805,6 @@ namespace PMDC.Dungeon
             else if (moveIndex == "perish_song")//perish song; don't care if it hits self or allies; NOTE: specialized AI code!
             {
                 if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
-                    return 0;
-            }
-            else if (moveIndex == "aqua_ring")//aqua ring; use only if damaged; NOTE: specialized AI code!
-            {
-                if (target.HP * 4 / 3 > target.MaxHP)
                     return 0;
             }
             else if (moveIndex == "counter" && (IQ & AIFlags.KnowsMatchups) == AIFlags.None)//counter; do not use if mirror coat status exists and has more than 1 turn left; NOTE: specialized AI code!
@@ -1829,7 +1877,52 @@ namespace PMDC.Dungeon
                 return 0;
             }
 
-            return GetTargetBattleDataEffect(controlledChar, entry.Data, seenChars, target, rangeMod, entry.Strikes, defaultVal);
+            return GetTargetBattleDataEffectWithRangeLimit(controlledChar, entry.Data, seenChars, target, rangeMod, entry.Strikes, defaultVal);
+        }
+
+        protected int GetTargetBattleDataEffectWithRangeLimit(Character controlledChar, BattleData data, List<Character> seenChars, Character target, int rangeMod, int strikes, int defaultVal)
+        {
+            int delta = GetTargetBattleDataEffect(controlledChar, data, seenChars, target, 0, 1, defaultVal);
+
+            //special case for self-buffing
+            if (controlledChar.GetStatusEffect("last_targeted_by") == null)
+            {
+                Alignment targetAlignment = DungeonScene.Instance.GetMatchup(controlledChar, target);
+                if (data.Category == BattleData.SkillCategory.Status || data.Category == BattleData.SkillCategory.None)
+                {
+                    if (delta > 0 && targetAlignment != Alignment.Foe)
+                    {
+                        //do not self-buff if more than X tiles away and hasnt been attacked yet
+                        if (SelfStatusRange > 0 && getClosestFoeDistance(controlledChar, seenChars) > SelfStatusRange)
+                            delta = 0;
+                    }
+                    else if (delta < 0 && targetAlignment == Alignment.Foe)
+                    {
+                        //do not debuff if more than X tiles away and hasnt been attacked yet
+                        if (StatusRange > 0 && getClosestFoeDistance(controlledChar, seenChars) > StatusRange)
+                            delta = 0;
+                    }
+                }
+                else if (targetAlignment == Alignment.Foe)
+                {
+                    //do not attack if more than X tiles away and hasnt been attacked yet
+                    if (AttackRange > 0 && getClosestFoeDistance(controlledChar, seenChars) > AttackRange)
+                        delta = 0;
+                }
+            }
+
+            return delta;
+        }
+
+        protected int getClosestFoeDistance(Character controlledChar, List<Character> seenChars)
+        {
+            int nearestEnemy = Int32.MaxValue;
+            foreach (Character character in seenChars)
+            {
+                if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Foe)
+                    nearestEnemy = Math.Min(nearestEnemy, ZoneManager.Instance.CurrentMap.GetClosestDist8(character.CharLoc, controlledChar.CharLoc));
+            }
+            return nearestEnemy;
         }
 
         protected int GetTargetBattleDataEffect(Character controlledChar, BattleData data, List<Character> seenChars, Character target, int rangeMod, int strikes, int defaultVal)
@@ -2082,6 +2175,18 @@ namespace PMDC.Dungeon
                             return -100;
                         return 0;
                     }
+                    else if (effect is ChangeToElementEvent)
+                    {
+                        //assume always always detrimental to foe, always beneficial to ally
+                        if (!target.HasElement(((ChangeToElementEvent)effect).TargetElement))
+                        {
+                            if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
+                                return 50;
+                            else//this is just a hack to prevent enemies from throwing type-changers but still use type-changing move on opponents
+                                return -defaultVal;
+                        }
+                        return 0;
+                    }
                     else if (effect is RestEvent)
                     {
                         int healHP = target.MaxHP;
@@ -2159,30 +2264,6 @@ namespace PMDC.Dungeon
                             if (existingStatus != null)
                                 existingStack = existingStatus.StatusStates.GetWithDefault<StackState>().Stack;
                             addedWorth = calculateStatusStackWorth(giveEffect.StatusID, stackEffect.Stack, existingStack);
-
-                            //special case for non-bosses
-                            if ((IQ & AIFlags.KnowsMatchups) == AIFlags.None)
-                            {
-                                //special case for self-buffing
-                                if (addedWorth > 0 && DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
-                                {
-                                    //do not self-buff if more than 4 tiles away and hasnt been attacked yet
-                                    if (controlledChar.GetStatusEffect("last_targeted_by") == null)
-                                    {
-                                        bool nearEnemy = false;
-                                        foreach (Character character in seenChars)
-                                        {
-                                            if (DungeonScene.Instance.GetMatchup(controlledChar, character) == Alignment.Foe && ZoneManager.Instance.CurrentMap.InRange(character.CharLoc, controlledChar.CharLoc, 4))
-                                            {
-                                                nearEnemy = true;
-                                                break;
-                                            }
-                                        }
-                                        if (!nearEnemy)
-                                            addedWorth = 0;
-                                    }
-                                }
-                            }
                         }
                         else if (existingStatus == null)
                         {
@@ -2221,10 +2302,20 @@ namespace PMDC.Dungeon
                                 if (!statusTarget.HasElement("ghost"))
                                     addedWorth = 100;
                             }
-                            else if (giveEffect.StatusID == "leech_seed" && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//immobilize NOTE: specialized code!
+                            else if (giveEffect.StatusID == "leech_seed" && (IQ & AIFlags.KnowsMatchups) != AIFlags.None)//leech seed NOTE: specialized code!
                             {
                                 if (!statusTarget.HasElement("grass"))
                                     addedWorth = 100;
+                            }
+                            else if (giveEffect.StatusID == "aqua_ring")
+                            {
+                                if (target.HP <= target.MaxHP * 3 / 4)
+                                    addedWorth = (target.MaxHP - target.HP) * 100 / target.MaxHP;
+                            }
+                            else if (giveEffect.StatusID == "regeneration")
+                            {
+                                if (target.HP <= target.MaxHP * 3 / 4)
+                                    addedWorth = (target.MaxHP - target.HP) * 100 / target.MaxHP;
                             }
                             else if (giveEffect.StatusID == "disable")//disable NOTE: specialized code!
                             {
@@ -2257,7 +2348,7 @@ namespace PMDC.Dungeon
             {
 
                 //here, we check to make sure the attack can affect the target
-                //x100 if it does something
+                //x100 if it does something helpful
                 //x-100 if it does something bad
                 //x0 if it does nothing
                 int power = 0;

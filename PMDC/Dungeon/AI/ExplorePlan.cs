@@ -32,11 +32,12 @@ namespace PMDC.Dungeon
             return base.Think(controlledChar, preThink, rand);
         }
     }
+
     [Serializable]
     public class ExplorePlan : AIPlan
     {
         [NonSerialized]
-        private List<Loc> goalPath;
+        protected List<Loc> goalPath;
         [NonSerialized]
         public List<Loc> LocHistory;
         public ExplorePlan(AIFlags iq) : base(iq)
@@ -110,7 +111,7 @@ namespace PMDC.Dungeon
 
             goalPath = new List<Loc>();
             //if it isn't find a new end loc
-            List<Loc> seenExits = GetAreaExits(controlledChar);
+            List<Loc> seenExits = GetDestinations(controlledChar);
 
             if (seenExits.Count == 0)
                 return null;
@@ -168,5 +169,9 @@ namespace PMDC.Dungeon
             return SelectChoiceFromPath(controlledChar, goalPath);
         }
 
+        protected virtual List<Loc> GetDestinations(Character controlledChar)
+        {
+            return GetAreaExits(controlledChar);
+        }
     }
 }

@@ -21,12 +21,20 @@ namespace RogueEssence.Dev
         {
             return String.Format("Power: {0}", obj.Power);
         }
+        public override string GetTypeString()
+        {
+            return "Power";
+        }
     }
     public class AdditionalEffectStateEditor : Editor<AdditionalEffectState>
     {
         public override string GetString(AdditionalEffectState obj, Type type, object[] attributes)
         {
             return String.Format("Effect Chance: {0}%", obj.EffectChance);
+        }
+        public override string GetTypeString()
+        {
+            return "Effect Chance";
         }
     }
 }

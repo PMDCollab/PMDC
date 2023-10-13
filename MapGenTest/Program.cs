@@ -6,6 +6,11 @@ using RogueEssence.Content;
 using RogueEssence.Script;
 using System.Runtime.Versioning;
 using PMDC.Dev;
+using RogueEssence.Dungeon;
+using System.Collections.Generic;
+using System.IO;
+using PMDC.Dungeon;
+using System.Xml.Linq;
 
 namespace MapGenTest
 {
@@ -21,7 +26,7 @@ namespace MapGenTest
             DiagManager.InitInstance();
             Serializer.InitSettings(new SerializerContractResolver(), new UpgradeBinder());
             //DiagManager.Instance.DevMode = true;
-
+            bool testExp = false;
             for (int ii = 1; ii < args.Length; ii++)
             {
                 if (args[ii] == "-asset")
@@ -34,6 +39,16 @@ namespace MapGenTest
                     PathMod.DEV_PATH = System.IO.Path.GetFullPath(PathMod.ExePath + args[ii + 1]);
                     ii++;
                 }
+                else if (args[ii] == "-exp")
+                {
+                    //run exp test
+                    testExp = true;
+                }
+                else if (args[ii] == "-expdir")
+                {
+                    ExpTester.EXP_DIR = System.IO.Path.GetFullPath(PathMod.ExePath + args[ii + 1]);
+                    ii++;
+                }
             }
 
             GraphicsManager.InitParams();
@@ -43,13 +58,20 @@ namespace MapGenTest
             DataManager.InitInstance();
             DataManager.Instance.InitData();
 
-            GenContextDebug.OnInit += ExampleDebug.Init;
-            GenContextDebug.OnStep += ExampleDebug.OnStep;
-            GenContextDebug.OnStepIn += ExampleDebug.StepIn;
-            GenContextDebug.OnStepOut += ExampleDebug.StepOut;
-            GenContextDebug.OnError += ExampleDebug.OnError;
+            if (testExp)
+            {
+                ExpTester.Run();
+            }
+            else
+            {
+                GenContextDebug.OnInit += ExampleDebug.Init;
+                GenContextDebug.OnStep += ExampleDebug.OnStep;
+                GenContextDebug.OnStepIn += ExampleDebug.StepIn;
+                GenContextDebug.OnStepOut += ExampleDebug.StepOut;
+                GenContextDebug.OnError += ExampleDebug.OnError;
 
-            Example.Run();
+                Example.Run();
+            }
 
             Console.Clear();
             Console.WriteLine("Bye.");
@@ -63,5 +85,7 @@ namespace MapGenTest
             Console.WindowHeight = Console.LargestWindowHeight;
             //Console.OutputEncoding = Encoding.UTF8;
         }
+
+
     }
 }

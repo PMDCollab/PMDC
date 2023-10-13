@@ -98,7 +98,9 @@ namespace PMDC.Data
             SkinTableState table = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<SkinTableState>();
             if (table.AltColorOdds == 0)
                 return DataManager.Instance.DefaultSkin;
-            return (rand.Next(table.AltColorOdds) == 0) ? table.AltColor : DataManager.Instance.DefaultSkin;
+            if (rand.Next(table.AltColorOdds) == 0)
+                return table.AltColor;
+            return DataManager.Instance.DefaultSkin;
         }
 
         public override int GetPersonalityType(int discriminator)

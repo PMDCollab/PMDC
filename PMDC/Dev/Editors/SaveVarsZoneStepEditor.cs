@@ -21,5 +21,10 @@ namespace RogueEssence.Dev
         {
             return "Handle Rescues";
         }
+
+        public override string GetTypeString()
+        {
+            return "Handle Rescues";
+        }
     }
 }

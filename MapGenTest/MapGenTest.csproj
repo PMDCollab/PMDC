@@ -16,6 +16,7 @@
     <Compile Include="DebugState.cs" />
     <Compile Include="Example\Example.cs" />
     <Compile Include="ExampleDebug.cs" />
+    <Compile Include="ExpTester.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -32,5 +32,9 @@ namespace RogueEssence.Dev
 
             return String.Format("Spread {0} Houses", housePrefix);
         }
+        public override string GetTypeString()
+        {
+            return "Spread Houses";
+        }
     }
 }
