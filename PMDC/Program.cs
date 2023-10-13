@@ -302,6 +302,7 @@ namespace PMDC
                     DiagManager.Instance.LogError(new Exception("Errors detected in mod load:\n" + String.Join("", errorMsgs.ToArray())));
                     DiagManager.Instance.LogInfo(String.Format("The game will continue execution with mods loaded, but order will be broken!"));
                 }
+                DiagManager.Instance.PrintModSettings();
 
 
                 if (playInputs != null)
