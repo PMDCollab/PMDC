@@ -6,6 +6,7 @@ using RogueEssence.Dev;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using System.Runtime.Serialization;
+using PMDC.Dev;
 
 namespace PMDC.Dungeon
 {
@@ -53,6 +54,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class SpeciesMobilityEvent : RefreshEvent
     {
+        [JsonConverter(typeof(MobilityTableConverter))]
         [RogueEssence.Dev.MonsterID(1, false, true, true, true)]
         public Dictionary<MonsterID, TerrainData.Mobility> IDPair;
 
