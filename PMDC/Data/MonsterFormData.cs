@@ -19,39 +19,92 @@ namespace PMDC.Data
     {
         public const int MAX_STAT_BOOST = 128;
 
+        /// <summary>
+        /// What generation it was introduced in
+        /// </summary>
         public int Generation;
 
+        /// <summary>
+        /// How often it appears as genderless (weight)
+        /// </summary>
         public int GenderlessWeight;
+
+        /// <summary>
+        /// How often it appears as male (weight)
+        /// </summary>
         public int MaleWeight;
+
+        /// <summary>
+        /// How often it appears as female (weight)
+        /// </summary>
         public int FemaleWeight;
 
+        /// <summary>
+        /// Base HP stat
+        /// </summary>
         public int BaseHP;
 
+        /// <summary>
+        /// Base attack stat
+        /// </summary>
         public int BaseAtk;
 
+        /// <summary>
+        /// Base defense stat
+        /// </summary>
         [SharedRow]
         public int BaseDef;
 
+        /// <summary>
+        /// Base special attack stat
+        /// </summary>
         public int BaseMAtk;
 
+        /// <summary>
+        /// Base special defense stat
+        /// </summary>
         [SharedRow]
         public int BaseMDef;
 
+        /// <summary>
+        /// Base speed stat
+        /// </summary>
         public int BaseSpeed;
 
+        /// <summary>
+        /// Base EXP yield
+        /// </summary>
         public int ExpYield;
 
+        /// <summary>
+        /// species/form height
+        /// </summary>
         public double Height;
 
+        /// <summary>
+        /// species/form weight
+        /// </summary>
         [SharedRow]
         public double Weight;
 
+        /// <summary>
+        /// Possible personalities (advanced)
+        /// </summary>
         public List<byte> Personalities;
 
+        /// <summary>
+        /// Moves learned by TM
+        /// </summary>
         public List<LearnableSkill> TeachSkills;
 
+        /// <summary>
+        /// Egg moves
+        /// </summary>
         public List<LearnableSkill> SharedSkills;
 
+        /// <summary>
+        /// Tutor moves
+        /// </summary>
         public List<LearnableSkill> SecretSkills;
 
         public MonsterFormData()
@@ -83,6 +136,14 @@ namespace PMDC.Data
                     return 0;
             }
         }
+
+        /// <summary>
+        /// Calculates stat based on level, stat type, and bonus
+        /// </summary>
+        /// <param name="level"></param>
+        /// <param name="stat"></param>
+        /// <param name="bonus"></param>
+        /// <returns></returns>
         public override int GetStat(int level, Stat stat, int bonus)
         {
             int curStat = getMinStat(level, stat);
@@ -93,6 +154,11 @@ namespace PMDC.Data
             return Math.Max(1, curStat + bonus * statDiff / MonsterFormData.MAX_STAT_BOOST);
         }
 
+        /// <summary>
+        /// Rolls a random skin (shinyness) this monster can spawn with
+        /// </summary>
+        /// <param name="rand"></param>
+        /// <returns></returns>
         public override string RollSkin(IRandom rand)
         {
             SkinTableState table = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<SkinTableState>();
@@ -103,11 +169,21 @@ namespace PMDC.Data
             return DataManager.Instance.DefaultSkin;
         }
 
+        /// <summary>
+        /// Gets a personality type given an integer (advanced)
+        /// </summary>
+        /// <param name="discriminator"></param>
+        /// <returns></returns>
         public override int GetPersonalityType(int discriminator)
         {
             return Personalities[discriminator / 256 % Personalities.Count];
         }
 
+        /// <summary>
+        /// Rolls a possible gender this monster can spawn as
+        /// </summary>
+        /// <param name="rand"></param>
+        /// <returns></returns>
         public override Gender RollGender(IRandom rand)
         {
             int totalWeight = FemaleWeight + MaleWeight + GenderlessWeight;
@@ -121,6 +197,12 @@ namespace PMDC.Data
             return Gender.Genderless;
         }
 
+        /// <summary>
+        /// Rolls a random ability this monster can spawn as.  No hidden abilities.
+        /// </summary>
+        /// <param name="rand"></param>
+        /// <param name="bounds"></param>
+        /// <returns></returns>
         public override string RollIntrinsic(IRandom rand, int bounds)
         {
             List<string> abilities = new List<string>();
@@ -134,7 +216,10 @@ namespace PMDC.Data
         }
 
 
-
+        /// <summary>
+        /// Gets the possible genders that can be rolled
+        /// </summary>
+        /// <returns></returns>
         public override List<Gender> GetPossibleGenders()
         {
             List<Gender> genders = new List<Gender>();
@@ -148,7 +233,10 @@ namespace PMDC.Data
             return genders;
         }
 
-
+        /// <summary>
+        /// Gets the possible skins that can be rolled
+        /// </summary>
+        /// <returns></returns>
         public override List<string> GetPossibleSkins()
         {
             List<string> colors = new List<string>();
@@ -160,6 +248,10 @@ namespace PMDC.Data
             return colors;
         }
 
+        /// <summary>
+        /// Gets the possible intrinsic slots that can be rolled
+        /// </summary>
+        /// <returns></returns>
         public override List<int> GetPossibleIntrinsicSlots()
         {
             List<int> abilities = new List<int>();
@@ -196,7 +288,11 @@ namespace PMDC.Data
             }
         }
 
-
+        /// <summary>
+        /// Gets its max stat for a given stat type
+        /// </summary>
+        /// <param name="stat"></param>
+        /// <returns></returns>
         public override int GetMaxStat(Stat stat)
         {
             switch (stat)
@@ -268,7 +364,11 @@ namespace PMDC.Data
                 return 21;
         }
 
-
+        /// <summary>
+        /// Checks if it can learn the skill
+        /// </summary>
+        /// <param name="skill"></param>
+        /// <returns></returns>
         public override bool CanLearnSkill(string skill)
         {
             if (LevelSkills.FindIndex(a => a.Skill == skill) > -1)
