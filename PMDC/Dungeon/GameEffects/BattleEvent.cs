@@ -14590,6 +14590,16 @@ namespace PMDC.Dungeon
                 Loc wrappedLoc = ZoneManager.Instance.CurrentMap.WrapLoc(context.TargetTile);
                 for (int ii = ZoneManager.Instance.CurrentMap.Items.Count - 1; ii >= 0; ii--)
                 {
+                    bool delete = true;
+                    if (!ZoneManager.Instance.CurrentMap.Items[ii].IsMoney)
+                    {
+                        ItemData itemData = DataManager.Instance.GetItem(ZoneManager.Instance.CurrentMap.Items[ii].Value);
+                        if (itemData.CannotDrop)
+                            delete = false;
+                    }
+                    if (!delete)
+                        continue;
+
                     if (ZoneManager.Instance.CurrentMap.Items[ii].TileLoc == wrappedLoc)
                         ZoneManager.Instance.CurrentMap.Items.RemoveAt(ii);
                 }
