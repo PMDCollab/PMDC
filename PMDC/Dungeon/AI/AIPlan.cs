@@ -2250,6 +2250,10 @@ namespace PMDC.Dungeon
                             return -100;
                         return 0;
                     }
+                    else if (effect is SketchBattleEvent)
+                    {
+                        return -100;
+                    }
                     else if (effect is PowerTrickEvent)
                     {
                         if (target.ProxyAtk == -1 || target.ProxyDef == -1)

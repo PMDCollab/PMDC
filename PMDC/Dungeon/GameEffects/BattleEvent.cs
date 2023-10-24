@@ -10211,7 +10211,7 @@ namespace PMDC.Dungeon
             if (String.IsNullOrEmpty(LastMoveStatusID))
             {
                 bool learn = (context.ActionType == BattleActionType.Skill && context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS && context.User.Skills[context.UsageSlot].BackRef > -1);
-                for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
+                for (int ii = CharData.MAX_SKILL_SLOTS-1; ii >= 0; ii--)
                     sketchMove(context, context.Target.BaseSkills[ii].SkillNum, ii, learn, true);
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_SKETCH").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
                 yield break;
@@ -10231,7 +10231,10 @@ namespace PMDC.Dungeon
 
         private void sketchMove(BattleContext context, string moveIndex, int moveSlot, bool learn, bool group)
         {
-            SkillData entry = DataManager.Instance.GetSkill(moveIndex);
+            SkillData entry = null;
+
+            if (!String.IsNullOrEmpty(moveIndex))
+                entry = DataManager.Instance.GetSkill(moveIndex);
 
             if (!group)
             {
@@ -10245,7 +10248,12 @@ namespace PMDC.Dungeon
                 }
             }
             if (learn)
-                context.User.ReplaceSkill(moveIndex, moveSlot, DataManager.Instance.Save.GetDefaultEnable(moveIndex));
+            {
+                if (!String.IsNullOrEmpty(moveIndex))
+                    context.User.ReplaceSkill(moveIndex, moveSlot, DataManager.Instance.Save.GetDefaultEnable(moveIndex));
+                else
+                    context.User.DeleteSkill(moveSlot);
+            }
             else
                 context.User.ChangeSkill(moveSlot, moveIndex, -1);
             if (!group)
