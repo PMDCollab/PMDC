@@ -15704,6 +15704,7 @@ namespace PMDC.Dungeon
                 }
 
                 yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Escaped));
+                context.CancelState.Cancel = true;
                 context.TurnCancel.Cancel = true;
             }
         }
