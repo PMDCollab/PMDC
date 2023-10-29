@@ -478,7 +478,7 @@ namespace PMDC.Dungeon
         {
             Character target = (AffectTarget ? context.Target : context.User);
             int damage = context.GetContextStateInt<DamageDealt>(0);
-            if (damage > 0 && ownerChar != context.User)
+            if (damage > 0 && ownerChar != context.User && !context.ContextStates.Contains<FollowUp>())
             {
                 //the attack needs to face the foe, and *auto-target*
                 Dir8 attackDir = ZoneManager.Instance.CurrentMap.GetClosestDir8(ownerChar.CharLoc, target.CharLoc);

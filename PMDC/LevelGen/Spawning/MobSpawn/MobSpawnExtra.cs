@@ -298,6 +298,229 @@ namespace PMDC.LevelGen
 
 
     /// <summary>
+    /// Spawn the mob with a box containing an exclusive item.
+    /// </summary>
+    [Serializable]
+    public abstract class MobSpawnExclBase : MobSpawnExtra
+    {
+        public IntRange Rarity;
+
+        /// <summary>
+        /// Type of box
+        /// </summary>
+        [DataType(0, DataManager.DataType.Item, false)]
+        public string Box;
+
+        /// <summary>
+        /// Only give it the item on map generation.
+        /// Respawns that occur after the map is generated do not get the item.
+        /// </summary>
+        public bool MapStartOnly;
+
+        public MobSpawnExclBase()
+        {
+            Box = "";
+        }
+        public MobSpawnExclBase(string box, IntRange rarity, bool startOnly) : this()
+        {
+            Box = box;
+            MapStartOnly = startOnly;
+            Rarity = rarity;
+        }
+
+        public MobSpawnExclBase(MobSpawnExclBase other) : this()
+        {
+            MapStartOnly = other.MapStartOnly;
+            Rarity = other.Rarity;
+            Box = other.Box;
+        }
+
+        public override void ApplyFeature(IMobSpawnMap map, Character newChar)
+        {
+            if (MapStartOnly && map.Begun)
+                return;
+
+            RarityData rarity = DataManager.Instance.UniversalData.Get<RarityData>();
+            List<string> possibleItems = new List<string>();
+            foreach (string baseSpecies in GetPossibleSpecies(map, newChar))
+            {
+                for (int ii = Rarity.Min; ii < Rarity.Max; ii++)
+                {
+                    Dictionary<int, List<string>> rarityTable;
+                    if (rarity.RarityMap.TryGetValue(baseSpecies, out rarityTable))
+                    {
+                        if (rarityTable.ContainsKey(ii))
+                        {
+                            foreach (string item in rarityTable[ii])
+                            {
+                                EntrySummary summary = DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(item);
+                                if (summary.Released)
+                                    possibleItems.Add(item);
+                            }
+                        }
+                    }
+                }
+            }
+
+            InvItem equip = new InvItem(Box);
+            equip.HiddenValue = possibleItems[map.Rand.Next(possibleItems.Count)];
+            newChar.EquippedItem = equip;
+        }
+
+        protected abstract IEnumerable<string> GetPossibleSpecies(IMobSpawnMap map, Character newChar);
+
+        public override string ToString()
+        {
+            return string.Format("{0}: {1}*", this.GetType().GetFormattedTypeName(), Rarity.ToString());
+        }
+    }
+
+
+    [Serializable]
+    public class MobSpawnExclFamily : MobSpawnExclBase
+    {
+        public MobSpawnExclFamily()
+        { }
+        public MobSpawnExclFamily(string box, IntRange rarity, bool startOnly) : base(box, rarity, startOnly)
+        { }
+
+        public MobSpawnExclFamily(MobSpawnExclFamily other) : base(other)
+        { }
+
+        public override MobSpawnExtra Copy() { return new MobSpawnExclFamily(this); }
+
+        protected override IEnumerable<string> GetPossibleSpecies(IMobSpawnMap map, Character newChar)
+        {
+            //check prevos
+            string prevo = newChar.BaseForm.Species;
+            while (!String.IsNullOrEmpty(prevo))
+            {
+                yield return prevo;
+                MonsterData data = DataManager.Instance.GetMonster(prevo);
+                prevo = data.PromoteFrom;
+            }
+
+            string baseStage = newChar.BaseForm.Species;
+            foreach (string evo in recurseEvos(baseStage))
+                yield return evo;
+        }
+
+        private IEnumerable<string> recurseEvos(string baseStage)
+        {
+            MonsterData data = DataManager.Instance.GetMonster(baseStage);
+            foreach (PromoteBranch branch in data.Promotions)
+            {
+                yield return branch.Result;
+                foreach (string evo in recurseEvos(branch.Result))
+                    yield return evo;
+            }
+        }
+    }
+
+
+    [Serializable]
+    public class MobSpawnExclAny : MobSpawnExclBase
+    {
+        [DataType(1, DataManager.DataType.Monster, false)]
+        public HashSet<string> ExceptFor { get; set; }
+
+
+        public MobSpawnExclAny()
+        {
+            ExceptFor = new HashSet<string>();
+        }
+        public MobSpawnExclAny(string box, HashSet<string> exceptFor, IntRange rarity, bool startOnly) : base(box, rarity, startOnly)
+        {
+            ExceptFor = exceptFor;
+        }
+
+        public MobSpawnExclAny(MobSpawnExclAny other) : base(other)
+        {
+            ExceptFor = new HashSet<string>();
+            foreach (string except in other.ExceptFor)
+                ExceptFor.Add(except);
+        }
+
+        public override MobSpawnExtra Copy() { return new MobSpawnExclAny(this); }
+
+        protected override IEnumerable<string> GetPossibleSpecies(IMobSpawnMap map, Character newChar)
+        {
+            MonsterFeatureData feature = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
+            //iterate all species that have that element, except for
+            foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Monster].GetOrderedKeys(true))
+            {
+                if (ExceptFor.Contains(key))
+                    continue;
+                EntrySummary summary = DataManager.Instance.DataIndices[DataManager.DataType.Monster].Get(key);
+                if (!summary.Released)
+                    continue;
+
+                Dictionary<int, FormFeatureSummary> species;
+                if (!feature.FeatureData.TryGetValue(key, out species))
+                    continue;
+                FormFeatureSummary form;
+                if (!species.TryGetValue(0, out form))
+                    continue;
+
+                yield return key;
+            }
+        }
+    }
+
+
+    [Serializable]
+    public class MobSpawnExclElement : MobSpawnExclBase
+    {
+        [DataType(1, DataManager.DataType.Monster, false)]
+        public HashSet<string> ExceptFor { get; set; }
+
+
+        public MobSpawnExclElement()
+        {
+            ExceptFor = new HashSet<string>();
+        }
+        public MobSpawnExclElement(string box, HashSet<string> exceptFor, IntRange rarity, bool startOnly) : base(box, rarity, startOnly)
+        {
+            ExceptFor = exceptFor;
+        }
+
+        public MobSpawnExclElement(MobSpawnExclElement other) : base(other)
+        {
+            ExceptFor = new HashSet<string>();
+            foreach (string except in other.ExceptFor)
+                ExceptFor.Add(except);
+        }
+
+        public override MobSpawnExtra Copy() { return new MobSpawnExclElement(this); }
+
+        protected override IEnumerable<string> GetPossibleSpecies(IMobSpawnMap map, Character newChar)
+        {
+            MonsterFeatureData feature = DataManager.Instance.UniversalData.Get<MonsterFeatureData>();
+            //iterate all species that have that element, except for
+            foreach (string key in DataManager.Instance.DataIndices[DataManager.DataType.Monster].GetOrderedKeys(true))
+            {
+                if (ExceptFor.Contains(key))
+                    continue;
+                EntrySummary summary = DataManager.Instance.DataIndices[DataManager.DataType.Monster].Get(key);
+                if (!summary.Released)
+                    continue;
+
+                Dictionary<int, FormFeatureSummary> species;
+                if (!feature.FeatureData.TryGetValue(key, out species))
+                    continue;
+                FormFeatureSummary form;
+                if (!species.TryGetValue(0, out form))
+                    continue;
+
+                if (form.Element1 == newChar.Element1 || form.Element2 == newChar.Element1 ||
+                    form.Element1 == newChar.Element2 || form.Element2 == newChar.Element2)
+                    yield return key;
+            }
+        }
+    }
+
+
+    /// <summary>
     /// Spawn the mob with its inventory filled with the specified items.
     /// Inventory items are not dropped when the mob is defeated.
     /// </summary>
@@ -450,8 +673,7 @@ namespace PMDC.LevelGen
 
         public override void ApplyFeature(IMobSpawnMap map, Character newChar)
         {
-            if (newChar.MemberTeam is MonsterTeam)
-                newChar.Unrecruitable = true;
+            newChar.Unrecruitable = true;
             newChar.BaseForm.Skin = DataManager.Instance.DefaultSkin;
             newChar.CurrentForm = newChar.BaseForm;
         }

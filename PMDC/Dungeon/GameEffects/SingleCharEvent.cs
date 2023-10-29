@@ -15,6 +15,7 @@ using RogueEssence.Script;
 using System.Linq;
 using Newtonsoft.Json;
 using System.Runtime.Serialization;
+using System.IO;
 
 namespace PMDC.Dungeon
 {
@@ -500,12 +501,20 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
+            yield return new WaitUntil(DungeonScene.Instance.AnimationsOver);
+
             foreach (AnimEvent anim in Anims)
                 yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
 
-            foreach (Character target in ZoneManager.Instance.CurrentMap.GetCharsInFillRect(context.User.CharLoc, Rect.FromPointRadius(context.User.CharLoc, Range)))
+            if (!context.User.Dead)
             {
-                if (!context.User.Dead && DungeonScene.Instance.GetMatchup(context.User, target) != Alignment.Foe)
+                List<Character> eligibleTargets = new List<Character>();
+                foreach (Character target in ZoneManager.Instance.CurrentMap.GetCharsInFillRect(context.User.CharLoc, Rect.FromPointRadius(context.User.CharLoc, Range)))
+                {
+                    if (DungeonScene.Instance.GetMatchup(context.User, target) != Alignment.Foe)
+                        eligibleTargets.Add(target);
+                }
+                foreach(Character target in eligibleTargets)
                     yield return CoroutineManager.Instance.StartCoroutine(target.InflictDamage(((StatusEffect)owner).StatusStates.GetWithDefault<HPState>().HP));
             }
         }
@@ -695,6 +704,7 @@ namespace PMDC.Dungeon
         /// How much HP to heal as a fraction of the target's total HP.
         /// </summary>
         public int HPFraction;
+        [StringKey(0, true)]
         public StringKey Message;
 
         public FractionHealEvent() { }
@@ -872,6 +882,7 @@ namespace PMDC.Dungeon
         public bool SilentCheck;
         [SubGroup]
         public StateCollection<StatusState> States;
+        [StringKey(0, true)]
         public StringKey TriggerMsg;
         [Sound(0)]
         public string TriggerSound;
@@ -980,6 +991,7 @@ namespace PMDC.Dungeon
         public CombatAction HitboxAction;
         public ExplosionData Explosion;
         public BattleData NewData;
+        [StringKey(0, true)]
         public StringKey Msg;
 
         public InvokeAttackEvent() { }
@@ -1284,19 +1296,34 @@ namespace PMDC.Dungeon
                     }
                     else
                     {
+                        MonsterData monsterData = DataManager.Instance.GetMonster(context.User.BaseForm.Species);
+                        MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[context.User.BaseForm.Form];
+                        //if (DataManager.Instance.CurrentReplay != null)
+                        //{
+                        //    using (StreamWriter writer = new StreamWriter(DiagManager.LOG_PATH + "EXP.txt", true))
+                        //        writer.WriteLine(String.Format("{0},{1},{2},{3},{4}", ZoneManager.Instance.CurrentZoneID, ZoneManager.Instance.CurrentMapID.Segment, ZoneManager.Instance.CurrentMapID.ID, monsterForm.ExpYield, context.User.Level));
+                        //}
+                        
                         for (int ii = 0; ii < DungeonScene.Instance.ActiveTeam.Players.Count; ii++)
                         {
                             if (ii >= DungeonScene.Instance.GainedEXP.Count)
                                 DungeonScene.Instance.GainedEXP.Add(0);
 
-                            int exp = GetExp(owner, context.User, DungeonScene.Instance.ActiveTeam.Players[ii], DungeonScene.Instance.GainedEXP[ii]);
+                            Character recipient = DungeonScene.Instance.ActiveTeam.Players[ii];
+                            int effectiveLevel = recipient.Level;
+                            string growth = DataManager.Instance.GetMonster(recipient.BaseForm.Species).EXPTable;
+                            GrowthData growthData = DataManager.Instance.GetGrowth(growth);
+                            while (effectiveLevel < DataManager.Instance.Start.MaxLevel && recipient.EXP + DungeonScene.Instance.GainedEXP[ii] >= growthData.GetExpTo(recipient.Level, effectiveLevel + 1))
+                                effectiveLevel++;
+
+                            int exp = GetExp(monsterForm.ExpYield, context.User.Level, effectiveLevel);
                             DungeonScene.Instance.GainedEXP[ii] += exp;
                         }
                         for (int ii = 0; ii < DungeonScene.Instance.ActiveTeam.Assembly.Count; ii++)
                         {
                             if (!DungeonScene.Instance.ActiveTeam.Assembly[ii].Absentee)
                             {
-                                int exp = GetExp(owner, context.User, DungeonScene.Instance.ActiveTeam.Assembly[ii], 0);
+                                int exp = GetExp(monsterForm.ExpYield, context.User.Level, DungeonScene.Instance.ActiveTeam.Assembly[ii].Level);
                                 handoutAssemblyExp(DungeonScene.Instance.ActiveTeam.Assembly[ii], exp);
                             }
                         }
@@ -1328,7 +1355,7 @@ namespace PMDC.Dungeon
             }
         }
 
-        protected abstract int GetExp(GameEventOwner owner, Character defeatedChar, Character recipient, int currentlyGainedExp);
+        public abstract int GetExp(int expYield, int defeatedLv, int recipientLv);
     }
 
     /// <summary>
@@ -1349,16 +1376,9 @@ namespace PMDC.Dungeon
         }
         public override GameEvent Clone() { return new HandoutScaledExpEvent(this); }
 
-        protected override int GetExp(GameEventOwner owner, Character defeatedChar, Character recipient, int currentlyGainedExp)
+        public override int GetExp(int expYield, int defeatedLv, int recipientLv)
         {
-            MonsterData monsterData = DataManager.Instance.GetMonster(defeatedChar.BaseForm.Species);
-            MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[defeatedChar.BaseForm.Form];
-            return expFormula(monsterForm.ExpYield, defeatedChar.Level);
-        }
-
-        private int expFormula(int expYield, int level)
-        {
-            return (int)((ulong)expYield * (ulong)Numerator * (ulong)level / (ulong)Denominator) + 1;
+            return (int)((ulong)expYield * (ulong)Numerator * (ulong)defeatedLv / (ulong)Denominator) + 1;
         }
     }
 
@@ -1371,63 +1391,119 @@ namespace PMDC.Dungeon
         public HandoutConstantExpEvent() { }
         public override GameEvent Clone() { return new HandoutConstantExpEvent(); }
 
-        protected override int GetExp(GameEventOwner owner, Character defeatedChar, Character recipient, int currentlyGainedExp)
+        public override int GetExp(int expYield, int defeatedLv, int recipientLv)
         {
-            MonsterData monsterData = DataManager.Instance.GetMonster(defeatedChar.BaseForm.Species);
-            MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[defeatedChar.BaseForm.Form];
-            return monsterForm.ExpYield;
+            return expYield;
         }
+    }
+
+
+    /// <summary>
+    /// Uses one formula when the recipient's level is at or lower than the defeated level
+    /// And another when it's higher
+    /// </summary>
+    [Serializable]
+    public class HandoutPiecewiseExpEvent : HandoutExpEvent
+    {
+        /// <summary>
+        /// Minimum level for target's level to be counted at
+        /// </summary>
+        public int ScaleMin;
+
+        /// <summary>
+        /// Added level for the target to be counted at
+        /// </summary>
+        public int ScaleAdd;
+
+        public HandoutExpEvent UnderleveledHandout;
+
+        public HandoutExpEvent OverleveledHandout;
+
+        public HandoutPiecewiseExpEvent() { }
+        public HandoutPiecewiseExpEvent(int scaleMin, int scaleAdd, HandoutExpEvent lowHandout, HandoutExpEvent highHandout)
+        {
+            ScaleMin = scaleMin;
+            ScaleAdd = scaleAdd;
+            UnderleveledHandout = lowHandout;
+            OverleveledHandout = highHandout;
+        }
+        protected HandoutPiecewiseExpEvent(HandoutPiecewiseExpEvent other)
+        {
+            ScaleMin = other.ScaleMin;
+            ScaleAdd = other.ScaleAdd;
+            UnderleveledHandout = (HandoutExpEvent)other.UnderleveledHandout.Clone();
+            OverleveledHandout = (HandoutExpEvent)other.OverleveledHandout.Clone();
+        }
+        public override GameEvent Clone() { return new HandoutPiecewiseExpEvent(this); }
+
+        public override int GetExp(int expYield, int defeatedLv, int recipientLv)
+        {
+            int recipientScaleLv = Math.Max(ScaleMin, recipientLv);
+            int scaleLevel = Math.Max(ScaleMin, defeatedLv + ScaleAdd);
+            if (scaleLevel >= recipientScaleLv)
+                return UnderleveledHandout.GetExp(expYield, scaleLevel, recipientScaleLv);
+            else
+                return OverleveledHandout.GetExp(expYield, scaleLevel, recipientScaleLv);
+        }
+
     }
 
     /// <summary>
     /// EXP handed out to each team member is scaled based on the team member's level relative to the defeated enemy's level.
-    /// BaseEXP * Numerator * (2 * EnemyLv + LevelBuffer) ^ 3 / (EnemyLv + PlayerLv + LevelBuffer) ^ 3 / Denominator + 1
+    /// BaseEXP * Numerator * (2 * EnemyLv + LevelBuffer) ^ PowerCurve / (EnemyLv + PlayerLv + LevelBuffer) ^ PowerCurve / Denominator + 1
     /// </summary>
     [Serializable]
     public class HandoutRelativeExpEvent : HandoutExpEvent
     {
+        /// <summary>
+        /// Numerator of ratio
+        /// </summary>
         public int Numerator;
+
+        /// <summary>
+        /// Denominator for ratio
+        /// </summary>
         public int Denominator;
+
+        /// <summary>
+        /// Number to add to numerator and denominator to buffer the ratio
+        /// </summary>
         public int LevelBuffer;
-        public int ScaleMin;
+
+        /// <summary>
+        /// Exponent when underleveled
+        /// </summary>
         public int PowerCurve;
+
+
         public HandoutRelativeExpEvent() { }
-        public HandoutRelativeExpEvent(int numerator, int denominator, int levelBuffer, int scaleMin, int powerCurve) { Numerator = numerator; Denominator = denominator; LevelBuffer = levelBuffer; ScaleMin = scaleMin; PowerCurve = powerCurve; }
+        public HandoutRelativeExpEvent(int numerator, int denominator, int levelBuffer, int powerCurve)
+        {
+            Numerator = numerator;
+            Denominator = denominator;
+            LevelBuffer = levelBuffer;
+            PowerCurve = powerCurve;
+        }
         protected HandoutRelativeExpEvent(HandoutRelativeExpEvent other)
         {
             this.Numerator = other.Numerator;
             this.Denominator = other.Denominator;
             this.LevelBuffer = other.LevelBuffer;
-            this.ScaleMin = other.ScaleMin;
             this.PowerCurve = other.PowerCurve;
         }
         public override GameEvent Clone() { return new HandoutRelativeExpEvent(this); }
 
-        protected override int GetExp(GameEventOwner owner, Character defeatedChar, Character recipient, int currentlyGainedExp)
+        public override int GetExp(int expYield, int defeatedLv, int recipientLv)
         {
-            int levelDiff = 0;
-            string growth = DataManager.Instance.GetMonster(recipient.BaseForm.Species).EXPTable;
-            GrowthData growthData = DataManager.Instance.GetGrowth(growth);
-            while (recipient.Level + levelDiff < DataManager.Instance.Start.MaxLevel && recipient.EXP + currentlyGainedExp >= growthData.GetExpTo(recipient.Level, recipient.Level + levelDiff + 1))
-                levelDiff++;
-
-            MonsterData monsterData = DataManager.Instance.GetMonster(defeatedChar.BaseForm.Species);
-            MonsterFormData monsterForm = (MonsterFormData)monsterData.Forms[defeatedChar.BaseForm.Form];
-            return expFormula(monsterForm.ExpYield, defeatedChar.Level, recipient.Level + levelDiff);
-        }
-
-        private int expFormula(int expYield, int level, int recipientLv)
-        {
-            recipientLv = Math.Max(ScaleMin, recipientLv);
-            int scaleLevel = Math.Max(ScaleMin, level);
-            int multNum = 2 * scaleLevel + LevelBuffer;
-            int multDen = recipientLv + scaleLevel + LevelBuffer;
-            ulong exp = (ulong)expYield * (ulong)Numerator * (ulong)level;
+            int multNum = 2 * defeatedLv + LevelBuffer;
+            int multDen = recipientLv + defeatedLv + LevelBuffer;
+            ulong exp = (ulong)expYield * (ulong)Numerator * (ulong)defeatedLv;
             for (int ii = 0; ii < PowerCurve; ii++)
                 exp *= (ulong)multNum;
             for (int ii = 0; ii < PowerCurve; ii++)
                 exp /= (ulong)multDen;
             exp /= (ulong)Denominator;
+
             return (int)exp + 1;
         }
 
@@ -1435,8 +1511,107 @@ namespace PMDC.Dungeon
         internal void OnDeserializedMethod(StreamingContext context)
         {
             //TODO: delete in v1.1
-            if (Serializer.OldVersion < new Version(0, 7, 0))
+            if (PowerCurve == 0 && Serializer.OldVersion < new Version(0, 7, 0))
                 PowerCurve = 3;
+        }
+    }
+
+    /// <summary>
+    /// EXP handed out to each team member is scaled based on the team member's level relative to the defeated enemy's level.
+    /// BaseEXP * Numerator * LevelBuffer / (PlayerLv - EnemyLv + LevelBuffer) / Denominator + 1
+    /// This means it cannot be applied to situations where PlayerLv is LevelBuffer levels lower than EnemyLv due to div by 0
+    /// </summary>
+    [Serializable]
+    public class HandoutHarmonicExpEvent : HandoutExpEvent
+    {
+        /// <summary>
+        /// Numerator of ratio
+        /// </summary>
+        public int Numerator;
+
+        /// <summary>
+        /// Denominator for ratio
+        /// </summary>
+        public int Denominator;
+
+        /// <summary>
+        /// Number to add to numerator and denominator to buffer the ratio
+        /// </summary>
+        public int LevelBuffer;
+
+        public HandoutHarmonicExpEvent() { }
+        public HandoutHarmonicExpEvent(int numerator, int denominator, int levelBuffer)
+        {
+            Numerator = numerator;
+            Denominator = denominator;
+            LevelBuffer = levelBuffer;
+        }
+        protected HandoutHarmonicExpEvent(HandoutHarmonicExpEvent other)
+        {
+            this.Numerator = other.Numerator;
+            this.Denominator = other.Denominator;
+            this.LevelBuffer = other.LevelBuffer;
+        }
+        public override GameEvent Clone() { return new HandoutHarmonicExpEvent(this); }
+
+        public override int GetExp(int expYield, int defeatedLv, int recipientLv)
+        {
+            int levelDiff = recipientLv - defeatedLv;
+            ulong exp = (ulong)expYield * (ulong)Numerator * (ulong)defeatedLv * (ulong)LevelBuffer;
+            exp /= (ulong)(LevelBuffer + levelDiff);
+            exp /= (ulong)Denominator;
+
+            return (int)exp + 1;
+        }
+    }
+
+
+    /// <summary>
+    /// EXP handed out to each team member is scaled based on the team member's level relative to the defeated enemy's level.
+    /// BaseEXP * Numerator * (EnemyLv - PlayerLv + LevelBuffer) / (LevelBuffer) / Denominator + 1
+    /// Will drop to 0 if PlayerLv is LevelBuffer levels higher than EnemyLv
+    /// </summary>
+    [Serializable]
+    public class HandoutStackExpEvent : HandoutExpEvent
+    {
+        /// <summary>
+        /// Numerator of ratio
+        /// </summary>
+        public int Numerator;
+
+        /// <summary>
+        /// Denominator for ratio
+        /// </summary>
+        public int Denominator;
+
+        /// <summary>
+        /// Number to add to numerator and denominator to buffer the ratio
+        /// </summary>
+        public int LevelBuffer;
+
+        public HandoutStackExpEvent() { }
+        public HandoutStackExpEvent(int numerator, int denominator, int levelBuffer)
+        {
+            Numerator = numerator;
+            Denominator = denominator;
+            LevelBuffer = levelBuffer;
+        }
+        protected HandoutStackExpEvent(HandoutStackExpEvent other)
+        {
+            this.Numerator = other.Numerator;
+            this.Denominator = other.Denominator;
+            this.LevelBuffer = other.LevelBuffer;
+        }
+        public override GameEvent Clone() { return new HandoutStackExpEvent(this); }
+
+        public override int GetExp(int expYield, int defeatedLv, int recipientLv)
+        {
+            int levelDiff = defeatedLv - recipientLv;
+            ulong exp = (ulong)expYield * (ulong)Numerator * (ulong)defeatedLv * (ulong)(levelDiff + LevelBuffer);
+            exp /= (ulong)LevelBuffer;
+            exp /= (ulong)Denominator;
+
+            return (int)exp + 1;
         }
     }
 
@@ -1755,46 +1930,11 @@ namespace PMDC.Dungeon
         }
     }
 
-    [Serializable]
-    public class PerishEvent : SingleCharEvent
-    {
-        public int Mult;
-
-        public PerishEvent() { }
-        public PerishEvent(int mult)
-        {
-            Mult = mult;
-        }
-        protected PerishEvent(PerishEvent other)
-        {
-            Mult = other.Mult;
-        }
-        public override GameEvent Clone() { return new PerishEvent(this); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
-        {
-            if (context.User.Dead)
-                yield break;
-            CountDownState counter = ((StatusEffect)owner).StatusStates.GetWithDefault<CountDownState>();
-            if (counter.Counter < 0)
-                yield break;
-
-            counter.Counter--;
-
-            if (counter.Counter % Mult == 0)
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_PERISH_COUNT").ToLocal(), context.User.GetDisplayName(false), counter.Counter / Mult));
-            if (counter.Counter <= 0)
-            {
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.RemoveStatusEffect(((StatusEffect)owner).ID, false));
-                GameManager.Instance.BattleSE("DUN_Hit_Super_Effective");
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(-1));
-            }
-        }
-    }
 
     [Serializable]
     public class PartialTrapEvent : SingleCharEvent
     {
+        [StringKey(0, true)]
         public StringKey Message;
         public List<AnimEvent> Anims;
 
@@ -2121,7 +2261,7 @@ namespace PMDC.Dungeon
             if (!context.User.CharStates.Contains<MagicGuardState>() && AffectNonFocused || DungeonScene.Instance.CurrentCharacter == context.User)
             {
                 CountState countState = ((StatusEffect)owner).StatusStates.Get<CountState>();
-                if (Toxic && countState.Count < 16)
+                if (Toxic && countState.Count < HPFraction)
                     countState.Count++;
                 if (context.User.CharStates.Contains<PoisonHealState>())
                 {
@@ -2171,7 +2311,7 @@ namespace PMDC.Dungeon
             if (!recentAttack.Attacked && !recentWalk.Walked && !context.User.CharStates.Contains<MagicGuardState>())
             {
                 CountState countState = ((StatusEffect)owner).StatusStates.Get<CountState>();
-                if (Toxic && countState.Count < 16)
+                if (Toxic && countState.Count < HPFraction)
                     countState.Count++;
                 if (context.User.CharStates.Contains<PoisonHealState>())
                 {
@@ -2343,6 +2483,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class CureAllEvent : SingleCharEvent
     {
+        [StringKey(0, true)]
         public StringKey Message;
         public List<AnimEvent> Anims;
 
@@ -2738,6 +2879,7 @@ namespace PMDC.Dungeon
         [DataType(0, DataManager.DataType.MapStatus, false)]
         public string StatusID;
         public int Counter;
+        [StringKey(0, true)]
         public StringKey MsgOverride;
 
         public GiveMapStatusSingleEvent() { StatusID = ""; }
@@ -3606,34 +3748,38 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
             EffectTile effectTile = (EffectTile)owner;
-            DangerState danger = effectTile.TileStates.Get<DangerState>();
-            if (danger.Danger)
+            DangerState danger;
+            if (effectTile.TileStates.TryGet<DangerState>(out danger))
             {
-                if (DataManager.Instance.CurrentReplay != null)
+                if (danger.Danger)
                 {
-                    int index = DataManager.Instance.CurrentReplay.ReadUI();
-                    if (index == -1)
+                    if (DataManager.Instance.CurrentReplay != null)
                     {
-                        context.CancelState.Cancel = true;
-                        context.TurnCancel.Cancel = true;
+                        int index = DataManager.Instance.CurrentReplay.ReadUI();
+                        if (index == -1)
+                        {
+                            context.CancelState.Cancel = true;
+                            context.TurnCancel.Cancel = true;
+                        }
                     }
-                }
-                else
-                {
-                    int index = 0;
-                    DialogueBox box = MenuManager.Instance.CreateQuestion(Text.FormatKey("MSG_DANGER_CONFIRM"),
-                            () => { },
-                            () => {
-                                context.CancelState.Cancel = true;
-                                context.TurnCancel.Cancel = true;
-                                index = -1;
-                            });
+                    else
+                    {
+                        int index = 0;
+                        DialogueBox box = MenuManager.Instance.CreateQuestion(Text.FormatKey("MSG_DANGER_CONFIRM"),
+                                () => { },
+                                () =>
+                                {
+                                    context.CancelState.Cancel = true;
+                                    context.TurnCancel.Cancel = true;
+                                    index = -1;
+                                });
 
-                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(box));
+                        yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(box));
 
-                    if (DataManager.Instance.CurrentReplay == null)
-                        DataManager.Instance.LogUIPlay(index);
+                        if (DataManager.Instance.CurrentReplay == null)
+                            DataManager.Instance.LogUIPlay(index);
 
+                    }
                 }
             }
         }
@@ -3948,7 +4094,7 @@ namespace PMDC.Dungeon
                         GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, new SegLoc(ZoneManager.Instance.CurrentMapID.Segment, ZoneManager.Instance.CurrentMapID.ID + 1)));
                     }
                     else
-                        yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
+                        yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared, false));
                 }
             }
             else if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
@@ -3998,10 +4144,10 @@ namespace PMDC.Dungeon
                         if (endSegment >= 0 && endFloor >= 0 && endSegment < ZoneManager.Instance.CurrentZone.Segments.Count && (ZoneManager.Instance.CurrentZone.Segments[endSegment].FloorCount < 0 || endFloor < ZoneManager.Instance.CurrentZone.Segments[endSegment].FloorCount))
                             GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, new SegLoc(endSegment, endFloor)), false, destState.PreserveMusic);
                         else
-                            yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
+                            yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared, destState.PreserveMusic));
                     }
                     else if (!destState.Dest.IsValid())
-                        yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
+                        yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared, destState.PreserveMusic));
                     else//go to a designated dungeon structure
                     {
                         yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeOut(false));
@@ -4098,10 +4244,10 @@ namespace PMDC.Dungeon
                         if (endSegment >= 0 && endFloor >= 0 && endSegment < ZoneManager.Instance.CurrentZone.Segments.Count && (ZoneManager.Instance.CurrentZone.Segments[endSegment].FloorCount < 0 || endFloor < ZoneManager.Instance.CurrentZone.Segments[endSegment].FloorCount))
                             GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, new SegLoc(endSegment, endFloor)));
                         else
-                            yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
+                            yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared, destState.PreserveMusic));
                     }
                     else if (!destState.Dest.IsValid())
-                        yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared));
+                        yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.EndSegment(GameProgress.ResultType.Cleared, destState.PreserveMusic));
                     else//go to a designated dungeon structure
                     {
                         GameManager.Instance.SceneOutcome = GameManager.Instance.MoveToZone(new ZoneLoc(ZoneManager.Instance.CurrentZoneID, destState.Dest));
@@ -4178,15 +4324,23 @@ namespace PMDC.Dungeon
     public class PrepareCameraEvent : SingleCharEvent
     {
         public Loc CamCenter;
+        public bool Relative;
 
         public PrepareCameraEvent() { }
         public PrepareCameraEvent(Loc loc) { CamCenter = loc; }
-        protected PrepareCameraEvent(PrepareCameraEvent other) { CamCenter = other.CamCenter; }
+        protected PrepareCameraEvent(PrepareCameraEvent other)
+        {
+            CamCenter = other.CamCenter;
+            Relative = other.Relative;
+        }
         public override GameEvent Clone() { return new PrepareCameraEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
-            ZoneManager.Instance.CurrentMap.ViewCenter = CamCenter;
+            if (Relative)
+                ZoneManager.Instance.CurrentMap.ViewOffset = CamCenter;
+            else
+                ZoneManager.Instance.CurrentMap.ViewCenter = CamCenter;
             yield break;
         }
     }
@@ -5266,8 +5420,6 @@ namespace PMDC.Dungeon
                 ZoneManager.Instance.CurrentMap.Items.Add(spawnItems[ii]);
 
             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(0));
-            
-            ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
         }
 
     }
@@ -5378,7 +5530,7 @@ namespace PMDC.Dungeon
             }
 
             //force everyone to skip their turn
-            ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
+            DungeonScene.Instance.SkipRemainingTurns();
 
             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(0));
         }
@@ -5469,8 +5621,6 @@ namespace PMDC.Dungeon
                 ZoneManager.Instance.CurrentMap.Items.Add(spawnItems[ii]);
 
             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(0));
-            
-            ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
         }
 
     }
@@ -5586,7 +5736,7 @@ namespace PMDC.Dungeon
             }
 
             //force everyone to skip their turn
-            ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
+            DungeonScene.Instance.SkipRemainingTurns();
 
             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(0));
         }
@@ -5943,7 +6093,7 @@ namespace PMDC.Dungeon
 
             //force everyone to skip their turn for this entire session
             if (NeedTurnEnd)
-                ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
+                DungeonScene.Instance.SkipRemainingTurns();
         }
     }
 
@@ -6272,7 +6422,7 @@ namespace PMDC.Dungeon
 
 
             SongState song = ((EffectTile)owner).TileStates.GetWithDefault<SongState>();
-            if (song.Song != null)
+            if (song != null)
                 GameManager.Instance.BGM(song.Song, true);
 
             //trigger their map entry methods
@@ -6289,7 +6439,7 @@ namespace PMDC.Dungeon
             }
 
             //force everyone to skip their turn for this entire session
-            ZoneManager.Instance.CurrentMap.CurrentTurnMap.SkipRemainingTurns();
+            DungeonScene.Instance.SkipRemainingTurns();
         }
 
 

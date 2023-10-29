@@ -12,6 +12,7 @@ namespace PMDC.Dungeon
     {
         public FollowLeaderPlan() { }
         public FollowLeaderPlan(AIFlags iq) : base(iq) { }
+        public FollowLeaderPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange) : base(iq, attackRange, statusRange, selfStatusRange) { }
         protected FollowLeaderPlan(FollowLeaderPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new FollowLeaderPlan(this); }
 

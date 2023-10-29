@@ -6,6 +6,7 @@ using RogueEssence.Dev;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using System.Runtime.Serialization;
+using PMDC.Dev;
 
 namespace PMDC.Dungeon
 {
@@ -53,6 +54,8 @@ namespace PMDC.Dungeon
     [Serializable]
     public class SpeciesMobilityEvent : RefreshEvent
     {
+        [JsonConverter(typeof(MobilityTableConverter))]
+        [RogueEssence.Dev.MonsterID(1, false, true, true, true)]
         public Dictionary<MonsterID, TerrainData.Mobility> IDPair;
 
         public SpeciesMobilityEvent()
@@ -73,25 +76,25 @@ namespace PMDC.Dungeon
             MonsterID testID = character.CurrentForm;
             if (IDPair.TryGetValue(testID, out mobility))
             {
-                character.Mobility |= mobility;
+                character.Mobility = mobility;
                 return;
             }
             testID.Gender = Gender.Unknown;
             if (IDPair.TryGetValue(testID, out mobility))
             {
-                character.Mobility |= mobility;
+                character.Mobility = mobility;
                 return;
             }
             testID.Skin = "";
             if (IDPair.TryGetValue(testID, out mobility))
             {
-                character.Mobility |= mobility;
+                character.Mobility = mobility;
                 return;
             }
             testID.Form = -1;
             if (IDPair.TryGetValue(testID, out mobility))
             {
-                character.Mobility |= mobility;
+                character.Mobility = mobility;
                 return;
             }
         }

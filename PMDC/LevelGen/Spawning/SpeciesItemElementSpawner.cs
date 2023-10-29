@@ -53,7 +53,7 @@ namespace PMDC.LevelGen
                 if (!species.TryGetValue(0, out form))
                     continue;
 
-                if (form.Element1 == Element || form.Element2 == Element)
+                if (Element == DataManager.Instance.DefaultElement || form.Element1 == Element || form.Element2 == Element)
                     yield return key;
             }
         }
