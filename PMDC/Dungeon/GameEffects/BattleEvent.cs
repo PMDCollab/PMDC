@@ -15,16 +15,29 @@ using Newtonsoft.Json;
 
 namespace PMDC.Dungeon
 {
+    /// <summary>
+    /// Event that occurs before the user does an action
+    /// </summary>
     [Serializable]
     public class PreActionEvent : BattleEvent
     {
-
+        /// <summary>
+        /// The status that will store the last used slot
+        /// </summary>
         [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
         public string LastSlotStatusID;
+        
+        /// <summary>
+        /// The status that will store the last used move
+        /// </summary>
         [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
         public string LastMoveStatusID;
+        
+        /// <summary>
+        /// The status that will store how many times the same move was used 
+        /// </summary>
         [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
         public string RepeatStatusID;
@@ -110,6 +123,11 @@ namespace PMDC.Dungeon
         }
     }
 
+    
+    /// <summary>
+    /// Event that occurs before the target takes the hit
+    /// This sets the target's level which defense stat they will use 
+    /// </summary>
     [Serializable]
     public class PreHitEvent : BattleEvent
     {
@@ -127,13 +145,16 @@ namespace PMDC.Dungeon
             yield break;
         }
     }
-
-
-
+    
+    /// <summary>
+    /// Event that groups multiple battle events into one event
+    /// </summary>
     [Serializable]
     public class MultiBattleEvent : BattleEvent
     {
-        
+        /// <summary>
+        /// The list of battle events to apply
+        /// </summary>
         public List<BattleEvent> BaseEvents;
 
         public MultiBattleEvent() { BaseEvents = new List<BattleEvent>(); }
@@ -158,6 +179,10 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that calculates whether the target is hit, taking consideration into the move accuracy,
+    /// the user's accuracy boost, whether the moved missed last turn, etc.
+    /// </summary>
     [Serializable]
     public class AttemptHitEvent : BattleEvent
     {
@@ -237,6 +262,10 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that occurs when a move is used from the menu
+    /// This sets the battle context data from the move and checks if the user has enough PP and the move is not disabled 
+    /// </summary>
     [Serializable]
     public class PreSkillEvent : BattleEvent
     {
@@ -291,6 +320,10 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that occurs when an item is used from the menu
+    /// This sets the battle context data from the item and checks if the item is sticky
+    /// </summary>
     [Serializable]
     public class PreItemEvent : BattleEvent
     {
@@ -368,6 +401,10 @@ namespace PMDC.Dungeon
     }
 
 
+    /// <summary>
+    /// Event that occurs when an item is thrown from the menu
+    /// This sets different battle context data depending if the item is sticky, whether the item is thrown in an arc, etc
+    /// </summary>
     [Serializable]
     public class PreThrowEvent : BattleEvent
     {
@@ -505,10 +542,20 @@ namespace PMDC.Dungeon
     }
 
 
+    /// <summary>
+    /// Event that converts a SingleCharEvent to a battle event
+    /// </summary>
     [Serializable]
     public class BattlelessEvent : BattleEvent
     {
+        /// <summary>
+        /// The SingleCharEvent being converted
+        /// </summary>
         public SingleCharEvent BaseEvent;
+        
+        /// <summary>
+        /// Whether to affect the targer or user
+        /// </summary>
         public bool AffectTarget;
 
         public BattlelessEvent() { }
@@ -531,11 +578,26 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that displays the dialogue when interacting with an NPC
+    /// This event should usually be placed inside the NPC's MobSpawnInteractable spawn feature
+    /// </summary>
     [Serializable]
     public class NpcDialogueBattleEvent : BattleEvent
     {
+        /// <summary>
+        /// The message displayed when interacting with the NPC
+        /// </summary>
         public StringKey Message;
+        
+        /// <summary>
+        /// Whether to display the speaker portrait
+        /// </summary>
         public bool HideSpeaker;
+        
+        /// <summary>
+        /// The portrait emotion
+        /// </summary>
         public EmoteStyle Emote;
 
         public NpcDialogueBattleEvent() { }
@@ -572,11 +634,25 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that logs a StringKey message to the dungeon log 
+    /// </summary>
     [Serializable]
     public class BattleLogBattleEvent : BattleEvent
     {
+        /// <summary>
+        /// The message displayed in the dungeon log 
+        /// </summary>
         public StringKey Message;
+        
+        /// <summary>
+        /// Whether to have short delay after displaying the message
+        /// </summary>
         public bool Delay;
+        
+        /// <summary>
+        /// Whether to use the target or user name when formatting the message
+        /// </summary>
         public bool UseTarget;
 
         public BattleLogBattleEvent() { }
@@ -607,10 +683,20 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that logs a string message to the dungeon log
+    /// </summary>
     [Serializable]
     public class FormatLogLocalEvent : BattleEvent
     {
+        /// <summary>
+        /// The message displayed in the dungeon log 
+        /// </summary>
         public string Message;
+
+        /// <summary>
+        /// Whether to have short delay after displaying the message
+        /// </summary>
         public bool Delay;
 
         public FormatLogLocalEvent() { }
@@ -635,15 +721,32 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that applies a VFX on a character
+    /// </summary>
     [Serializable]
     public class BattleAnimEvent : BattleEvent
     {
+        /// <summary>
+        /// The particle VFX 
+        /// </summary>
         public FiniteEmitter Emitter;
 
         //TODO: make this into BattleFX?
+        /// <summary>
+        /// The sound effect of the VFX
+        /// </summary>
         [Sound(0)]
         public string Sound;
+        
+        /// <summary>
+        /// Whether to apply the VFX on the target or user
+        /// </summary>
         public bool AffectTarget;
+        
+        /// <summary>
+        /// The delay after the VFX
+        /// </summary>
         public int Delay;
 
         public BattleAnimEvent()
@@ -682,13 +785,31 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that reflects all damaging moves to nearby foes
+    /// </summary>
     [Serializable]
     public class ReflectAllEvent : BattleEvent
     {
 
+        /// <summary>
+        /// The numerator of the damage reflected
+        /// </summary>
         public int Numerator;
+        
+        /// <summary>
+        /// The denominator of the damage reflected
+        /// </summary>
         public int Denominator;
+        
+        /// <summary>
+        /// Enemies within the radius will be dealt the reflected damage
+        /// </summary>
         public int Range;
+        
+        /// <summary>
+        /// The list of battle VFXs played if the condition is met
+        /// </summary>
         public List<BattleAnimEvent> Anims;
 
         public ReflectAllEvent() { Anims = new List<BattleAnimEvent>(); }
@@ -1978,12 +2099,12 @@ namespace PMDC.Dungeon
     public class AbsorbWeaknessEvent : BattleEvent
     {
         /// <summary>
-        /// The list of battle events that play if the condition is met
+        /// The list of battle events applied if the condition is met
         /// </summary>
         public List<BattleEvent> BaseEvents;
 
         /// <summary>
-        /// The VFX that plays if the condition is met
+        /// The particle VFX that plays if the condition is met
         /// </summary>
         public FiniteEmitter Emitter;
         
@@ -2220,7 +2341,7 @@ namespace PMDC.Dungeon
         public int Denominator;
         
         /// <summary>
-        /// The list of battle animations that play if the condition is met
+        /// The list of battle VFXs played if the condition is met
         /// </summary>
         public List<BattleAnimEvent> Anims;
         
@@ -2302,7 +2423,7 @@ namespace PMDC.Dungeon
         public int Denominator;
         
         /// <summary>
-        /// The list of battle animations that play if the condition is met
+        /// The list of battle VFXs played if the condition is met
         /// </summary>
         public List<BattleAnimEvent> Anims;
         
@@ -2382,7 +2503,7 @@ namespace PMDC.Dungeon
         public int Denominator;
         
         /// <summary>
-        /// The list of battle animations that play if the type matches
+        /// The list of battle VFXs played if the type matches
         /// </summary>
         public List<BattleAnimEvent> Anims;
 
@@ -2559,7 +2680,7 @@ namespace PMDC.Dungeon
         public bool AffectTarget;
         
         /// <summary>
-        /// The list of battle events that play if the condition is met
+        /// The list of battle events applied if the condition is met
         /// </summary>
         public List<BattleEvent> BaseEvents;
 
@@ -2960,7 +3081,7 @@ namespace PMDC.Dungeon
         public int Denominator;
         
         /// <summary>
-        /// The list of battle animations that play if the condition is met
+        /// The list of battle VFXs played if the condition is met
         /// </summary>
         public List<BattleAnimEvent> Anims;
 
@@ -3016,7 +3137,7 @@ namespace PMDC.Dungeon
     {
     
         /// <summary>
-        /// Battle event that plays if the condition is met
+        /// Battle event that applies if the condition is met
         /// </summary>
         public BattleEvent BaseEvent;
 
@@ -3138,7 +3259,7 @@ namespace PMDC.Dungeon
         public int Denominator;
         
         /// <summary>
-        /// The list of battle animations that play if the condition is met
+        /// The list of battle VFXs played if the condition is met
         /// </summary>
         public List<BattleAnimEvent> Anims;
 
@@ -3250,7 +3371,7 @@ namespace PMDC.Dungeon
         public List<FlagType> States;
         
         /// <summary>
-        /// The list of battle events that play if the condition is met
+        /// The list of battle events applied if the condition is met
         /// </summary>
         public List<BattleEvent> BaseEvents;
 
@@ -3695,7 +3816,7 @@ namespace PMDC.Dungeon
         public int Denominator;
         
         /// <summary>
-        /// The list of battle events that play
+        /// The list of battle events that will be applied
         /// </summary>
         public List<BattleEvent> Anims;
 
@@ -3904,7 +4025,7 @@ namespace PMDC.Dungeon
         public int Denominator;
         
         /// <summary>
-        /// The list of battle animations that play if the move type matches
+        /// The list of battle VFXs played if the move type matches
         /// </summary>
         public List<BattleAnimEvent> Anims;
 
@@ -4009,7 +4130,7 @@ namespace PMDC.Dungeon
     public class WonderGuardEvent : BattleEvent
     {
         /// <summary>
-        /// The list of battle animations that play if the move type matches
+        /// The list of battle VFXs played if the move type matches
         /// </summary>
         public List<BattleAnimEvent> Anims;
 
@@ -4157,7 +4278,7 @@ namespace PMDC.Dungeon
         public int Denominator;
         
         /// <summary>
-        /// The list of battle animations played if the condition is met
+        /// The list of battle VFXs played if the condition is met
         /// </summary>
         public List<BattleAnimEvent> Anims;
         
@@ -4674,7 +4795,7 @@ namespace PMDC.Dungeon
         public List<BattleAnimEvent> Anims;
 
         /// <summary>
-        /// The list of battle events that plays if the condition is met
+        /// The list of battle events applied if the condition is met
         /// </summary>
         public List<BattleEvent> Effects;
 
@@ -5021,7 +5142,7 @@ namespace PMDC.Dungeon
         public List<FlagType> States;
         
         /// <summary>
-        /// The list of battle animations that play if the move type matches
+        /// The list of battle VFXs played if the move type matches
         /// </summary>
         public List<BattleAnimEvent> Anims;
 
@@ -5193,7 +5314,7 @@ namespace PMDC.Dungeon
         public BattleData.SkillCategory Category;
         
         /// <summary>
-        /// The list of battle animations that play if the condition is met
+        /// The list of battle VFXs played if the condition is met
         /// </summary>
         public List<BattleAnimEvent> Anims;
 
@@ -5546,7 +5667,7 @@ namespace PMDC.Dungeon
     {
         
         /// <summary>
-        /// The list of battle animations played if the condition is met
+        /// The list of battle VFXs played if the condition is met
         /// </summary>
         public List<BattleAnimEvent> Anims;
 
@@ -5797,7 +5918,7 @@ namespace PMDC.Dungeon
         public BattleData.SkillCategory Category;
         
         /// <summary>
-        /// The list of battle animations played if the condition is met
+        /// The list of battle VFXs played if the condition is met
         /// </summary>
         public List<BattleAnimEvent> Anims;
 
@@ -5870,7 +5991,7 @@ namespace PMDC.Dungeon
         public int Denominator;
         
         /// <summary>
-        /// The list of battle animations played if the condition is met
+        /// The list of battle VFXs played if the condition is met
         /// </summary>
         public List<BattleAnimEvent> Anims;
 
@@ -5932,7 +6053,7 @@ namespace PMDC.Dungeon
         public int Denominator;
         
         /// <summary>
-        /// The list of battle animations played if the condition is met
+        /// The list of battle VFXs played if the condition is met
         /// </summary>
         public List<BattleAnimEvent> Anims;
 
@@ -5985,7 +6106,7 @@ namespace PMDC.Dungeon
         public StringKey Msg
         
         /// <summary>
-        /// The list of battle animations played if the condition is met
+        /// The list of battle VFXs played if the condition is met
         /// </summary>
         public List<BattleAnimEvent> Anims;
 
@@ -6034,7 +6155,7 @@ namespace PMDC.Dungeon
         public StringKey Msg;
         
         /// <summary>
-        /// The list of battle animations played if the condition is met
+        /// The list of battle VFXs played if the condition is met
         /// </summary
         public List<BattleAnimEvent> Anims;
 
@@ -6158,7 +6279,7 @@ namespace PMDC.Dungeon
     {
         
         /// <summary>
-        /// The list of battle animations played if the condition is met
+        /// The list of battle VFXs played if the condition is met
         /// </summary>
         public List<BattleAnimEvent> Anims;
 
@@ -6212,7 +6333,7 @@ namespace PMDC.Dungeon
         public bool Global;
         
         /// <summary>
-        /// Battle event that plays if the condition is met
+        /// Battle event that applies if the condition is met
         /// </summary>
         public BattleEvent BaseEvent;
 
@@ -6254,7 +6375,7 @@ namespace PMDC.Dungeon
         public bool ExceptionMsg;
         
         /// <summary>
-        /// The list of battle events that plays if the condition is met
+        /// The list of battle events applied if the condition is met
         /// </summary>
         public List<BattleEvent> BaseEvents;
 
@@ -6306,7 +6427,7 @@ namespace PMDC.Dungeon
         public bool CheckTarget;
         
         /// <summary>
-        /// Battle event that plays if the condition is met
+        /// Battle event that applies if the condition is met
         /// </summary>
         public BattleEvent BaseEvent;
 
@@ -6420,7 +6541,7 @@ namespace PMDC.Dungeon
     public class MultiScaleEvent : BattleEvent
     {
         /// <summary>
-        /// The list of battle animations played if the condition is met
+        /// The list of battle VFXs played if the condition is met
         /// </summary>
         public List<BattleAnimEvent> Anims;
 
@@ -7643,7 +7764,7 @@ namespace PMDC.Dungeon
         public bool AffectTarget;
 
         /// <summary>
-        /// The list of battle events that plays if the condition is met
+        /// The list of battle events applied if the condition is met
         /// </summary>
         public List<BattleEvent> BaseEvents;
 
@@ -7681,7 +7802,7 @@ namespace PMDC.Dungeon
     }
 
     /// <summary>
-    /// Event used specifically by statuses that removes it when the character receives damage
+    /// Event used specifically by statuses and removes itself when the character receives damage
     /// </summary>
     [Serializable]
     public class RemoveOnDamageEvent : BattleEvent
@@ -8042,7 +8163,7 @@ namespace PMDC.Dungeon
     public class ParalysisEvent : BattleEvent
     {
         /// <summary>
-        /// The list of battle animations played if the condition is met
+        /// The list of battle VFXs played if the condition is met
         /// </summary>
         public List<BattleAnimEvent> Anims;
 
@@ -9542,7 +9663,7 @@ namespace PMDC.Dungeon
         public StringKey Message;
         
         /// <summary>
-        /// The list of battle animations played if the condition is met
+        /// The list of battle VFXs played if the condition is met
         /// </summary>
         public List<BattleAnimEvent> Anims;
 
@@ -10986,7 +11107,7 @@ namespace PMDC.Dungeon
     {
         //can be used for hit-consequence effects
         /// <summary>
-        /// The battle event that will be applied if the condition is met 
+        /// The battle event that applies if the condition is met
         /// </summary>
         public BattleEvent BaseEvent;
         
@@ -11030,7 +11151,7 @@ namespace PMDC.Dungeon
     {
         //can be used for hit-consequence effects
         /// <summary>
-        /// The battle event that will be applied if the condition is met 
+        /// The battle event that applies if the condition is met 
         /// </summary>
         public BattleEvent BaseEvent;
 
@@ -11068,7 +11189,7 @@ namespace PMDC.Dungeon
         public List<string> ExceptItems;
         
         /// <summary>
-        /// The battle event that will be applied if the condition is met 
+        /// The battle event that applies if the condition is met 
         /// </summary>
         public BattleEvent BaseEvent;
 
@@ -11108,7 +11229,7 @@ namespace PMDC.Dungeon
     {
         //can be used for hit-consequence effects
         /// <summary>
-        /// The battle event that will be applied if the condition is met 
+        /// The battle event that applies if the condition is met 
         /// </summary>
         public BattleEvent BaseEvent;
 
@@ -11471,7 +11592,7 @@ namespace PMDC.Dungeon
         public StringKey TriggerMsg;
         
         /// <summary>
-        /// The list of battle animations played if the condition is met
+        /// The list of battle VFXs played if the condition is met
         /// </summary> 
         public List<BattleAnimEvent> Anims;
 
@@ -12916,7 +13037,7 @@ namespace PMDC.Dungeon
         public StringKey Msg;
         
         /// <summary>
-        /// The list of battle animations played if the condition is met
+        /// The list of battle VFXs played if the condition is met
         /// </summary>
         public List<BattleAnimEvent> Anims;
 
@@ -13035,11 +13156,21 @@ namespace PMDC.Dungeon
         }
     }
     
+    /// <summary>
+    /// Event that applies a battle event if the status does not contain one of the specified status states 
+    /// </summary>
     [Serializable]
     public class ExceptionStatusEvent : BattleEvent
     {
+        /// <summary>
+        /// The list of status states to check for
+        /// </summary>
         [StringTypeConstraint(1, typeof(StatusState))]
         public List<FlagType> States;
+        
+        /// <summary>
+        /// Battle event that applies if the condition is met
+        /// </summary>
         public BattleEvent BaseEvent;
 
         public ExceptionStatusEvent() { States = new List<FlagType>(); }
@@ -13065,9 +13196,17 @@ namespace PMDC.Dungeon
 
     }
 
+    /// <summary>
+    /// Event that decreases the counter in the status's CountDownState when the character does an action
+    /// The status is removed when the countdown reaches 0
+    /// This event can only be used on statuses
+    /// </summary>
     [Serializable]
     public class CountDownOnActionEvent : BattleEvent
     {
+        /// <summary>
+        /// Whether to display the message when the status is removed 
+        /// </summary>
         public bool ShowMessage;
 
         public CountDownOnActionEvent() { }
@@ -13092,10 +13231,20 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that removes any statuses with the BadStatusState status state of nearby characters 
+    /// </summary>
     [Serializable]
     public class HealSurroundingsEvent : BattleEvent
     {
+        /// <summary>
+        /// The message displayed if the bad status is cured
+        /// </summary>
         public StringKey Message;
+        
+        /// <summary>
+        /// The list of battle VFXs played if the condition is met
+        /// </summary>
         public List<AnimEvent> Anims;
 
         public HealSurroundingsEvent() { Anims = new List<AnimEvent>(); }
@@ -13145,9 +13294,15 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that recoil damage to the user based on how much damage was dealt
+    /// </summary>
     [Serializable]
     public class DamageRecoilEvent : RecoilEvent
     {
+        /// <summary>
+        /// The value dividing the total damage dealt representing the recoil damage
+        /// </summary>
         public int Fraction;
 
         public DamageRecoilEvent() { }
@@ -13164,11 +13319,22 @@ namespace PMDC.Dungeon
             return Math.Max(1, damageDone / Fraction);
         }
     }
-
+    
+    /// <summary>
+    /// Event that deals recoil damage to the user if the move landed
+    /// </summary>
     [Serializable]
     public class HPRecoilEvent : RecoilEvent
     {
+        
+        /// <summary>
+        /// The value dividing the user's HP representing the recoil damage
+        /// </summary>
         public int Fraction;
+        
+        /// <summary>
+        /// Whether to use the user's max HP or current HP
+        /// </summary>
         public bool MaxHP;
 
         public HPRecoilEvent() { }
@@ -13221,9 +13387,16 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that deals recoil damage to the user if the move missed
+    /// </summary>
     [Serializable]
     public class CrashLandEvent : BattleEvent
     {
+            
+        /// <summary>
+        /// The value dividing the user's max HP representing the recoil damage
+        /// </summary>
         public int HPFraction;
 
         public CrashLandEvent() { }
@@ -13247,12 +13420,31 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that deals damage based on the specified fraction of the character's max HP 
+    /// </summary>
     [Serializable]
     public class ChipDamageEvent : BattleEvent
     {
+        
+        /// <summary>
+        /// The value dividing the character's max HP
+        /// </summary>
         public int HPFraction;
+        
+        /// <summary>
+        /// The message displayed in the dungeon log 
+        /// </summary>
         public StringKey Msg;
+        
+        /// <summary>
+        /// Whether to play the VFX associated with this event
+        /// </summary>
         public bool VFX;
+        
+        /// <summary>
+        /// Whether to the skip the damage animation  
+        /// </summary>
         public bool SkipAction;
 
         public ChipDamageEvent() { }
@@ -13293,10 +13485,17 @@ namespace PMDC.Dungeon
         }
     }
 
-
+    /// <summary>
+    /// Event that deals damage based on the specified fraction of the character's max HP
+    /// This event should only be used on trap tiles
+    /// </summary>
     [Serializable]
     public class IndirectDamageEvent : BattleEvent
     {
+        
+        /// <summary>
+        /// The value dividing the character's max HP
+        /// </summary>
         public int HPFraction;
 
         public IndirectDamageEvent() { }
@@ -13326,13 +13525,23 @@ namespace PMDC.Dungeon
         }
     }
 
-
+    /// <summary>
+    /// Event that deals damage based on the specified fraction of the character's max HP and the type effectiveness
+    /// This event should only be used on trap tiles
+    /// </summary>
     [Serializable]
     public class IndirectElementDamageEvent : BattleEvent
     {
+        /// <summary>
+        /// The matchup type
+        /// </summary>
         [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
         public string Element;
+        
+        /// <summary>
+        /// The value dividing the character's max HP
+        /// </summary>
         public int HPFraction;
 
         public IndirectElementDamageEvent() { Element = ""; }
@@ -13371,13 +13580,27 @@ namespace PMDC.Dungeon
             }
         }
     }
-
-
+    
+    /// <summary>
+    /// Event that deals damage based on the value in the HPState status state and skips the character's turn
+    /// This event can only be used on statuses 
+    /// </summary>
     [Serializable]
     public class WrapTrapEvent : BattleEvent
     {
+        /// <summary>
+        /// The message displayed in the dungeon log 
+        /// </summary>
         public StringKey Message;
+        
+        /// <summary>
+        /// The list of battle VFXs played when the character is trapped
+        /// </summary>
         public List<AnimEvent> Anims;
+        
+        /// <summary>
+        /// The animation index played when the character is trapped
+        /// </summary>
         [FrameType(0, false)]
         public int CharAnim;
 
@@ -13426,11 +13649,16 @@ namespace PMDC.Dungeon
             context.CancelState.Cancel = true;
         }
     }
-
-
+    
+    /// <summary>
+    /// Event the sets the character's HP to 1 
+    /// </summary>
     [Serializable]
     public class HPTo1Event : BattleEvent
     {
+        /// <summary>
+        /// Whether to affect the target or user
+        /// </summary>
         public bool AffectTarget;
 
         public HPTo1Event() { }
@@ -13453,9 +13681,15 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event the sets the PP of all the character's move to 1 
+    /// </summary>
     [Serializable]
     public class PPTo1Event : BattleEvent
     {
+        /// <summary>
+        /// Whether to affect the target or user
+        /// </summary>
         public bool AffectTarget;
 
         public PPTo1Event() { }
@@ -13483,10 +13717,20 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that makes the user hop by the specified distance
+    /// </summary>
     [Serializable]
     public class HopEvent : BattleEvent
     {
+        /// <summary>
+        /// The total distance to hop
+        /// </summary>
         public int Distance;
+        
+        /// <summary>
+        /// Whether to hop forwards or backwards
+        /// </summary>
         public bool Reverse;
 
         public HopEvent() { }
@@ -13517,9 +13761,15 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that transport the user and nearby allies to the tile directly in front of another character or wall
+    /// </summary>
     [Serializable]
     public class PounceEvent : BattleEvent
     {
+        /// <summary>
+        /// The radius that allies must be within in order to pounce
+        /// </summary>
         public int AllyRadius;
         public PounceEvent()
         { }
@@ -13564,6 +13814,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that makes the target warp in front of the user
+    /// </summary>
     [Serializable]
     public class LureEvent : BattleEvent
     {
@@ -13583,9 +13836,15 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that knocks the target back by the specified distance
+    /// </summary>
     [Serializable]
     public class KnockBackEvent : BattleEvent
     {
+        /// <summary>
+        /// The distance to knock back
+        /// </summary>
         public int Distance;
 
         public KnockBackEvent() { }
@@ -13614,10 +13873,20 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that throws the target backwards by the specified distance 
+    /// </summary>
     [Serializable]
     public class ThrowBackEvent : BattleEvent
     {
+        /// <summary>
+        /// The distance to throw the target back
+        /// </summary>
         public int Distance;
+        
+        /// <summary>
+        /// The event calculating how much damage the target will take
+        /// </summary>
         public CalculatedDamageEvent HitEvent;
 
         public ThrowBackEvent() { }
@@ -13651,6 +13920,9 @@ namespace PMDC.Dungeon
 
         private class ThrowTargetContext
         {
+            /// <summary>
+            /// The total damage the target will take
+            /// </summary>
             public int Damage;
             public ThrowTargetContext(int damage)
             {
@@ -13674,9 +13946,16 @@ namespace PMDC.Dungeon
 
     }
 
+    /// <summary>
+    /// Event that knocks back all characters within 1-tile away by the specified distance
+    /// </summary>
     [Serializable]
     public class LaunchAllEvent : BattleEvent
     {
+        
+        /// <summary>
+        /// The distance to knock back
+        /// </summary>
         public int Distance;
 
         public LaunchAllEvent() { }
@@ -13716,11 +13995,21 @@ namespace PMDC.Dungeon
             }
         }
     }
-
+    
+    /// <summary>
+    /// Event that warps a character and nearby allies to a random location within the specified distance
+    /// </summary>
     [Serializable]
     public class RandomGroupWarpEvent : BattleEvent
     {
+        /// <summary>
+        /// The max warp distance 
+        /// </summary>
         public int Distance;
+        
+        /// <summary>
+        /// Whether to affect the target or user
+        /// </summary>
         public bool AffectTarget;
 
         public RandomGroupWarpEvent() { }
@@ -13763,11 +14052,26 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that warps a character to a random location within the specified distance
+    /// </summary>
     [Serializable]
     public class RandomWarpEvent : BattleEvent
     {
+        
+        /// <summary>
+        /// The max warp distance 
+        /// </summary>
         public int Distance;
+        
+        /// <summary>
+        /// Whether to affect the target or user
+        /// </summary>
         public bool AffectTarget;
+
+        /// <summary>
+        /// The message displayed in the dungeon log 
+        /// </summary>
         public StringKey TriggerMsg;
 
         public RandomWarpEvent() { }
@@ -13810,14 +14114,26 @@ namespace PMDC.Dungeon
         }
     }
 
-
+    /// <summary>
+    /// Event that warps the character nearby the stairs
+    /// </summary>
     [Serializable]
     public class WarpToEndEvent : BattleEvent
     {
+        /// <summary>
+        /// The max warp distance to check for the end point
+        /// </summary>
         public int Distance;
+        
+        /// <summary>
+        /// The max distance away the character will be from the end point
+        /// </summary>
         public int DiffRange;
+        
+        
         public bool AffectTarget;
 
+        
         public WarpToEndEvent() { }
         public WarpToEndEvent(int distance, int diff, bool affectTarget)
         {
@@ -13898,10 +14214,20 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that warps the user nearby the target
+    /// </summary>
     [Serializable]
     public class WarpHereEvent : BattleEvent
     {
+        /// <summary>
+        /// The message displayed in the dungeon log 
+        /// </summary>
         public StringKey Msg;
+        
+        /// <summary>
+        /// Whether to warp the target nearby the user
+        /// </summary>
         public bool AffectTarget;
 
         public WarpHereEvent() { }
@@ -13936,6 +14262,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that warps the character to one of its nearby allies
+    /// </summary>
     [Serializable]
     public class WarpToAllyEvent : BattleEvent
     {
@@ -13972,15 +14301,37 @@ namespace PMDC.Dungeon
             }
         }
     }
-
-
+    
+    /// <summary>
+    /// Event that warps allies to the user that are within the specified distance 
+    /// </summary>
     [Serializable]
     public class WarpAlliesInEvent : BattleEvent
     {
+        
+        /// <summary>
+        /// The max distance that allies can be summoned from
+        /// </summary>
         public int Distance;
+        
+        /// <summary>
+        /// The max amount of allies to summon
+        /// </summary>
         public int Amount;
+        
+        /// <summary>
+        /// Whether to warp the furthest allies
+        /// </summary>
         public bool FarthestFirst;
+        
+        /// <summary>
+        /// Whether to print a fail message if no allies are warped
+        /// </summary>
         public bool SilentFail;
+        
+        /// <summary>
+        /// The message displayed in the dungeon log if an ally was warped
+        /// </summary>
         public StringKey Msg;
 
         public WarpAlliesInEvent() { }
@@ -14027,10 +14378,21 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that warps enemies to the user that are within the specified distance 
+    /// </summary>
     [Serializable]
     public class WarpFoesToTileEvent : BattleEvent
     {
+        
+        /// <summary>
+        /// The max amount of allies to summon
+        /// </summary>
         public int Amount;
+        
+        /// <summary>
+        /// The max distance that enemies can be summoned from
+        /// </summary>
         public int Distance;
 
         public WarpFoesToTileEvent() { }
@@ -14063,6 +14425,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that causes the user to swap places with the target
+    /// </summary>
     [Serializable]
     public class SwitcherEvent : BattleEvent
     {
@@ -14094,16 +14459,27 @@ namespace PMDC.Dungeon
         }
     }
 
-
+    /// <summary>
+    /// Event that converts an item to another item
+    /// </summary>
     [Serializable]
     public class ItemRestoreEvent : BattleEvent
     {
+        /// <summary>
+        /// Whether or not the item needs to be held for the effect to work 
+        /// </summary>
         public bool HeldOnly;
 
+        /// <summary>
+        /// The item being converted
+        /// </summary>
         [JsonConverter(typeof(ItemConverter))]
         [DataType(0, DataManager.DataType.Item, false)]
         public string ItemIndex;
-
+        
+        /// <summary>
+        /// The list of possible items to convert to 
+        /// </summary>
         [JsonConverter(typeof(ItemListConverter))]
         [DataType(1, DataManager.DataType.Item, false)]
         public List<string> DefaultItems;
@@ -14173,11 +14549,16 @@ namespace PMDC.Dungeon
             yield break;
         }
     }
-
-
+    
+    /// <summary>
+    /// Event that reduces the damage of a different type depending on the held item 
+    /// </summary>
     [Serializable]
     public class PlateProtectEvent : BattleEvent
     {
+        /// <summary>
+        /// The item mapped to a type
+        /// </summary>
         [JsonConverter(typeof(ElementItemDictConverter))]
         [DataType(1, DataManager.DataType.Element, false)]
         [DataType(2, DataManager.DataType.Item, false)]
@@ -14224,9 +14605,16 @@ namespace PMDC.Dungeon
 
 
 
+    /// <summary>
+    /// Event that spawns an enemy from a fake item
+    /// This should only be used in a MapEffectStep
+    /// </summary>
     [Serializable]
     public class FakeItemBattleEvent : BattleEvent
     {
+        /// <summary>
+        /// The fake item mapped to an enemy
+        /// </summary>
         [JsonConverter(typeof(ItemFakeTableConverter))]
         public Dictionary<ItemFake, MobSpawn> SpawnTable;
 
@@ -14272,16 +14660,30 @@ namespace PMDC.Dungeon
             }
         }
     }
-
+    
     [Serializable]
     public abstract class ItemMetaEvent : BattleEvent
     {
+        /// <summary>
+        /// Whether to select the highest price item or not
+        /// </summary>
         public bool TopDown;
+        
+        /// <summary>
+        /// Whether or not the item needs to be held for the effect to work 
+        /// </summary
         public bool HeldOnly;
 
+        /// <summary>
+        /// The item to check for first, regardless of price 
+        /// </summary>
         [JsonConverter(typeof(ItemConverter))]
         [DataType(0, DataManager.DataType.Item, false)]
         public string PriorityItem;
+        
+        /// <summary>
+        /// If the item has one of the specified ItemStates, then it be picked
+        /// </summary>
         [StringTypeConstraint(1, typeof(ItemState))]
         public HashSet<FlagType> States;
 
@@ -14374,10 +14776,20 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that pulls all items held by enemies to the user
+    /// </summary>
     [Serializable]
     public class MugItemEvent : ItemMetaEvent
     {
+        /// <summary>
+        /// The message displayed in the dungeon log 
+        /// </summary>
         public StringKey Message;
+        
+        /// <summary>
+        /// Whether to display a message if the item cannot be taken 
+        /// </summary
         public bool SilentCheck;
 
         public MugItemEvent() { }
@@ -14427,10 +14839,20 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that causes the character to drop their item
+    /// </summary>
     [Serializable]
     public class DropItemEvent : ItemMetaEvent
     {
+        /// <summary>
+        /// The message displayed in the dungeon log 
+        /// </summary>
         public StringKey Message;
+
+        /// <summary>
+        /// Whether to display a message if the item cannot be dropped
+        /// </summary
         public bool SilentCheck;
 
         public DropItemEvent() { }
@@ -14474,6 +14896,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that causes the target's item to fly off
+    /// </summary>
     [Serializable]
     public class KnockItemEvent : ItemMetaEvent
     {
@@ -14604,9 +15029,15 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that transforms the character's item to another item
+    /// </summary>
     [Serializable]
     public class TransformItemEvent : ItemMetaEvent
     {
+        /// <summary>
+        /// The item to transform to
+        /// </summary>
         [JsonConverter(typeof(ItemConverter))]
         [DataType(0, DataManager.DataType.Item, false)]
         public string NewItem;
@@ -14666,9 +15097,15 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that makes the character's item sticky or unsticks it
+    /// </summary>
     [Serializable]
     public class SetItemStickyEvent : ItemMetaEvent
     {
+        /// <summary>
+        /// Whether to make the item sticky or unsticks it
+        /// </summary>
         public bool Sticky;
 
         public SetItemStickyEvent() { }
@@ -14737,7 +15174,10 @@ namespace PMDC.Dungeon
             yield break;
         }
     }
-
+    
+    /// <summary>
+    /// Event that destroy's the character item
+    /// </summary>
     [Serializable]
     public class DestroyItemEvent : ItemMetaEvent
     {
@@ -14769,11 +15209,26 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event the causes the user to steal the target's item
+    /// </summary>
     [Serializable]
     public class StealItemEvent : ItemMetaEvent
     {
+
+        /// <summary>
+        /// The message displayed in the dungeon log 
+        /// </summary>
         public StringKey Message;
+        
+        /// <summary>
+        /// Whether the character attacked instead steals the item
+        /// </summary>
         public bool AffectTarget;
+        
+        /// <summary>
+        /// Whether to display a message if the item cannot be dropped
+        /// </summary
         public bool SilentCheck;
 
         public StealItemEvent() { }
@@ -14885,8 +15340,10 @@ namespace PMDC.Dungeon
             }
         }
     }
-
-
+    
+    /// <summary>
+    /// Event that causes the user to steal the target's item and replaced the item they are currently holding
+    /// </summary>
     [Serializable]
     public class BegItemEvent : ItemMetaEvent
     {
@@ -14994,6 +15451,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that causes the user to exchange items with the target
+    /// </summary>
     [Serializable]
     public class TrickItemEvent : ItemMetaEvent
     {
@@ -15048,6 +15508,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that unsticks all the team's items. 
+    /// </summary>
     [Serializable]
     public class CleanseTeamEvent : BattleEvent
     {
@@ -15076,6 +15539,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that causes the user to exchange items with the target, unless the inventory is full
+    /// </summary>
     [Serializable]
     public class SwitchHeldItemEvent : BattleEvent
     {
@@ -15131,10 +15597,20 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that causes the character to use the enemy's item
+    /// </summary>
     [Serializable]
     public class UseFoeItemEvent : ItemMetaEvent
     {
+        /// <summary>
+        /// Whether the attacker uses the held item. Otherwise, the enemy uses the attacker's held item.
+        /// </summary>
         public bool AffectTarget;
+
+        /// <summary>
+        /// Whether to display a message if the item cannot be dropped
+        /// </summary
         public bool SilentCheck;
 
         public UseFoeItemEvent() { }
@@ -15267,6 +15743,9 @@ namespace PMDC.Dungeon
     }
 
 
+    /// <summary>
+    /// Event that removes the user's held item and sets the item in the context
+    /// </summary>
     [Serializable]
     public class HeldItemMoveEvent : BattleEvent
     {
@@ -15297,6 +15776,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that causes the user to pass the held item to the target
+    /// </summary>
     [Serializable]
     public class BestowItemEvent : BattleEvent
     {
@@ -15346,8 +15828,10 @@ namespace PMDC.Dungeon
             }
         }
     }
-
-
+    
+    /// <summary>
+    /// Event that causes the character to equip the item in the BattleContext
+    /// </summary>
     [Serializable]
     public class CatchItemEvent : BattleEvent
     {
@@ -15366,11 +15850,16 @@ namespace PMDC.Dungeon
             yield break;
         }
     }
-
-
+    
+    /// <summary>
+    /// Event that applies the specified status to the character and restores them to full HP
+    /// </summary>
     [Serializable]
     public class RestEvent : BattleEvent
     {
+        /// <summary>
+        /// The status to apply
+        /// </summary>
         [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
         public string SleepID;
@@ -15442,9 +15931,16 @@ namespace PMDC.Dungeon
     }
 
 
+    /// <summary>
+    /// Event that converts the character to the specified type
+    /// </summary>
     [Serializable]
     public class ChangeToElementEvent : BattleEvent
     {
+        
+        /// <summary>
+        /// The type to convert to
+        /// </summary>
         [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
         public string TargetElement;
@@ -15472,9 +15968,15 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that adds the specified type to the target's type
+    /// </summary>
     [Serializable]
     public class AddElementEvent : BattleEvent
     {
+        /// <summary>
+        /// The type to add
+        /// </summary>
         [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
         public string TargetElement;
@@ -15501,10 +16003,16 @@ namespace PMDC.Dungeon
             }
         }
     }
-
+    
+    /// <summary>
+    /// Event that removes the specified type from the target
+    /// </summary>
     [Serializable]
     public class RemoveElementEvent : BattleEvent
     {
+        /// <summary>
+        /// The type to remove
+        /// </summary>
         [JsonConverter(typeof(ElementConverter))]
         [DataType(0, DataManager.DataType.Element, false)]
         public string TargetElement;
@@ -15541,9 +16049,16 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that changes the character's type based on the current map status
+    /// </summary>
     [Serializable]
     public class NatureElementEvent : BattleEvent
     {
+    
+        /// <summary>
+        /// The map status mapped to a type
+        /// </summary>
         [JsonConverter(typeof(MapStatusElementDictConverter))]
         [DataType(1, DataManager.DataType.MapStatus, false)]
         [DataType(2, DataManager.DataType.Element, false)]
@@ -15581,13 +16096,27 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that changes the character's ability to the specified ability
+    /// </summary>
     [Serializable]
     public class ChangeToAbilityEvent : BattleEvent
     {
+        /// <summary>
+        /// The ability to change to
+        /// </summary>
         [JsonConverter(typeof(IntrinsicConverter))]
         [DataType(0, DataManager.DataType.Intrinsic, false)]
         public string TargetAbility;
+        
+        /// <summary>
+        /// Whether to affect the target or user
+        /// </summary>
         public bool AffectTarget;
+        
+        /// <summary>
+        /// Whether to display a message if the ability failed to change 
+        /// </summary>
         public bool SilentCheck;
 
         public ChangeToAbilityEvent() { TargetAbility = ""; }
@@ -15617,11 +16146,16 @@ namespace PMDC.Dungeon
             yield return CoroutineManager.Instance.StartCoroutine(target.ReplaceIntrinsic(0, TargetAbility, true, false));
         }
     }
-
-
+    
+    /// <summary>
+    /// Event that removes the specified ability of the character
+    /// </summary>
     [Serializable]
     public class RemoveAbilityEvent : BattleEvent
     {
+        /// <summary>
+        /// The ability to check for
+        /// </summary>
         [JsonConverter(typeof(IntrinsicConverter))]
         [DataType(0, DataManager.DataType.Intrinsic, false)]
         public string TargetAbility;
@@ -15644,10 +16178,20 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that causes the user copy the ability of the target
+    /// </summary>
     [Serializable]
     public class ReflectAbilityEvent : BattleEvent
     {
+        /// <summary>
+        /// Whether the target copies the ability of the user
+        /// </summary>
         public bool AffectTarget;
+        
+        /// <summary>
+        /// The message displayed in the dungeon log 
+        /// </summary>
         public StringKey Msg;
 
         public ReflectAbilityEvent() { }
@@ -15674,6 +16218,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that causes the user to swap abilities with the target
+    /// </summary>
     [Serializable]
     public class SwapAbilityEvent : BattleEvent
     {
@@ -15693,6 +16240,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that causes the character to swap its attack with its defense stats
+    /// </summary>
     [Serializable]
     public class PowerTrickEvent : BattleEvent
     {
@@ -15709,11 +16259,16 @@ namespace PMDC.Dungeon
             yield break;
         }
     }
-
-
+    
+    /// <summary>
+    /// Event that averages the defense or attack stats of the user and target
+    /// </summary>
     [Serializable]
     public class StatSplitEvent : BattleEvent
     {
+        /// <summary>
+        /// Whether to split the attack stats instead
+        /// </summary>
         public bool AttackStats;
 
         public StatSplitEvent() { }
@@ -15758,9 +16313,10 @@ namespace PMDC.Dungeon
             yield break;
         }
     }
-
-
-
+    
+    /// <summary>
+    /// Event that causes the user to swap its speed stat with the target
+    /// </summary>
     [Serializable]
     public class SpeedSwapEvent : BattleEvent
     {
@@ -15781,6 +16337,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that adds the user's and target's HP, then splits the combined HP
+    /// </summary>
     [Serializable]
     public class PainSplitEvent : BattleEvent
     {
@@ -15796,11 +16355,16 @@ namespace PMDC.Dungeon
             yield break;
         }
     }
-
-
+    
+    /// <summary>
+    /// Event that causes the user to copy the stat boosts/drops of the target
+    /// </summary>
     [Serializable]
     public class ReflectStatsEvent : BattleEvent
     {
+        /// <summary>
+        /// The list of stats to copy from the target
+        /// </summary>
         [JsonConverter(typeof(StatusSetConverter))]
         [DataType(1, DataManager.DataType.Status, false)]
         public HashSet<string> StatusIDs;
@@ -15838,12 +16402,17 @@ namespace PMDC.Dungeon
             DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_BUFF_COPY").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
         }
     }
-
-
-
+    
+    /// <summary>
+    /// Event that causes the user to swap stat changes with the target
+    /// </summary>
     [Serializable]
     public class SwapStatsEvent : BattleEvent
     {
+        
+        /// <summary>
+        /// The list of stats swap with the target
+        /// </summary>
         [JsonConverter(typeof(StatusSetConverter))]
         [DataType(1, DataManager.DataType.Status, false)]
         public HashSet<string> StatusIDs;
@@ -15896,13 +16465,36 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that causes the user to transfer statuses to the target
+    /// </summary>
     [Serializable]
     public class TransferStatusEvent : BattleEvent
     {
+        /// <summary>
+        /// Whether to remove the original statuses from the user
+        /// </summary>
         public bool Remove;
+        
+        /// <summary>
+        /// Whether to transfer statuses that have the MajorStatusState status state
+        /// </summary>
         public bool MajorStatus;
+        
+        
+        /// <summary>
+        /// Whether to transfer statuses that have the MajorStatusState status state
+        /// </summary>
         public bool MinorStatus;
+        
+        /// <summary>
+        /// Whether to transfer statuses that have the BadStatusState status state
+        /// </summary>
         public bool BadStatus;
+        
+        /// <summary>
+        /// Whether to transfer good statuses
+        /// </summary>
         public bool GoodStatus;
 
 
@@ -15963,8 +16555,10 @@ namespace PMDC.Dungeon
             }
         }
     }
-
-
+    
+    /// <summary>
+    /// Event that restores the character back to its original form
+    /// </summary>
     [Serializable]
     public class RestoreFormEvent : BattleEvent
     {
@@ -15978,12 +16572,21 @@ namespace PMDC.Dungeon
             context.Target.RestoreForm();
         }
     }
-
-
+    
+    /// <summary>
+    /// Event that causes the user to transform to the target
+    /// </summary>
     [Serializable]
     public class TransformEvent : BattleEvent
     {
+        /// <summary>
+        /// Whether the target transforms to the user instead
+        /// </summary>
         public bool AffectTarget;
+        
+        /// <summary>
+        /// The transformed status
+        /// </summary>
         [DataType(0, DataManager.DataType.Status, false)]
         public string StatusID;
 
@@ -16056,10 +16659,20 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that devolves the target
+    /// </summary>
     [Serializable]
     public class DevolveEvent : BattleEvent
     {
+        /// <summary>
+        /// Whether to display a message if the target cannot devolve
+        /// </summary>
         public bool SilentCheck;
+        
+        /// <summary>
+        /// The list of battle VFXs played if the condition is met
+        /// </summary>
         public List<BattleAnimEvent> Anims;
 
         public DevolveEvent() { Anims = new List<BattleAnimEvent>(); }
@@ -16116,8 +16729,10 @@ namespace PMDC.Dungeon
             }
         }
     }
-
-
+    
+    /// <summary>
+    /// Event that turns the target into an item from the current map's spawn pool
+    /// </summary>
     [Serializable]
     public class ItemizerEvent : BattleEvent
     {
@@ -16143,6 +16758,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that causes the item to land where the strike hitbox ended
+    /// </summary>
     [Serializable]
     public class LandItemEvent : BattleEvent
     {
@@ -16158,6 +16776,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that pulls unclaimed items on the floor to the user.
+    /// </summary>
     [Serializable]
     public class TrawlEvent : BattleEvent
     {
@@ -16225,6 +16846,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that sets the character and tile sight to be clear
+    /// </summary>
     [Serializable]
     public class LuminousEvent : BattleEvent
     {
@@ -16238,6 +16862,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that hints all unexplored locations on the map
+    /// </summary>
     [Serializable]
     public class MapOutEvent : BattleEvent
     {
@@ -16254,11 +16881,16 @@ namespace PMDC.Dungeon
 
         }
     }
-
-
+    
+    /// <summary>
+    /// Event that hints all unexplored locations on the map within the specified radius
+    /// </summary>
     [Serializable]
     public class MapOutRadiusEvent : BattleEvent
     {
+        /// <summary>
+        /// The radius around the user to hint
+        /// </summary>
         public int Radius;
 
         public MapOutRadiusEvent() { }
@@ -16299,6 +16931,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that reveals the tile and queues its affects
+    /// </summary>
     [Serializable]
     public class TilePostEvent : BattleEvent
     {
@@ -16354,9 +16989,15 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that sets the ground tile with the specified trap 
+    /// </summary>
     [Serializable]
     public class SetTrapEvent : BattleEvent
     {
+        /// <summary>
+        /// The trap being added 
+        /// </summary>
         [JsonConverter(typeof(TileConverter))]
         [DataType(0, DataManager.DataType.Tile, false)]
         public string TrapID;
@@ -16386,9 +17027,15 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that sets the ground tile with the specified trap at the character's location 
+    /// </summary>
     [Serializable]
     public class CounterTrapEvent : BattleEvent
     {
+        /// <summary>
+        /// The trap being added 
+        /// </summary>
         [JsonConverter(typeof(TileConverter))]
         [DataType(0, DataManager.DataType.Tile, false)]
         public string TrapID;
@@ -16417,9 +17064,16 @@ namespace PMDC.Dungeon
             }
         }
     }
+    
+    /// <summary>
+    /// Event that triggers the effects of the trap tile
+    /// </summary>
     [Serializable]
     public class TriggerTrapEvent : BattleEvent
     {
+        /// <summary>
+        /// The trap to ignore triggering
+        /// </summary>
         [DataType(0, DataManager.DataType.Tile, false)]
         public string ExceptID;
 
@@ -16449,6 +17103,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that makes the trap revealed
+    /// </summary>
     [Serializable]
     public class RevealTrapEvent : BattleEvent
     {
@@ -16465,6 +17122,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that removes the trap
+    /// </summary>
     [Serializable]
     public class RemoveTrapEvent : BattleEvent
     {
@@ -16484,12 +17144,19 @@ namespace PMDC.Dungeon
             }
         }
     }
-
+    
     [Serializable]
     public abstract class RemoveTerrainBaseEvent : BattleEvent
     {
+        /// <summary>
+        /// The remove terrain SFX
+        /// </summary>
         [Sound(0)]
         public string RemoveSound;
+        
+        /// <summary>
+        /// The particle VFX
+        /// </summary>
         public FiniteEmitter RemoveAnim;
 
         public RemoveTerrainBaseEvent()
@@ -16532,9 +17199,15 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that removes the specified terrain and replaces it with a floor tile, replacing it with a floor tile
+    /// </summary>
     [Serializable]
     public class RemoveTerrainEvent : RemoveTerrainBaseEvent
     {
+        /// <summary>
+        /// The list of terrains that can be removed
+        /// </summary>
         [JsonConverter(typeof(TerrainSetConverter))]
         public HashSet<string> TileTypes;
 
@@ -16564,8 +17237,10 @@ namespace PMDC.Dungeon
             return TileTypes.Contains(tile.Data.ID);
         }
     }
-
-
+    
+    /// <summary>
+    /// Event that removes the terrain if it contains one of the specified TerrainStates, replacing it with a floor tile
+    /// </summary>
     [Serializable]
     public class RemoveTerrainStateEvent : RemoveTerrainBaseEvent
     {
@@ -16607,6 +17282,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that removes the specified terrain and the area around it, replacing it with a floor tile
+    /// </summary>
     [Serializable]
     public class ShatterTerrainEvent : BattleEvent
     {
@@ -16662,9 +17340,15 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that destroys the item on the tile
+    /// </summary>
     [Serializable]
     public class RemoveItemEvent : BattleEvent
     {
+        /// <summary>
+        /// Whether the item isn't destroyed if the tile has a terrain
+        /// </summary>
         public bool BlockedByTerrain;
 
         public RemoveItemEvent()
@@ -16696,9 +17380,10 @@ namespace PMDC.Dungeon
             }
         }
     }
-
-
-
+    
+    /// <summary>
+    /// Event that checks if the tile can be unlocked by checking if the item matches in the UnlockState tile state 
+    /// </summary>
     [Serializable]
     public class KeyCheckEvent : BattleEvent
     {
@@ -16743,6 +17428,10 @@ namespace PMDC.Dungeon
             yield break;
         }
     }
+    
+    /// <summary>
+    /// Event that applies the effects of the unlockable tile if the item matches in the UnlockState tile state 
+    /// </summary>
     [Serializable]
     public class KeyUnlockEvent : BattleEvent
     {
@@ -16770,6 +17459,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that teaches the user the move in the item's ItemIDState
+    /// </summary>
     [Serializable]
     public class TMEvent : BattleEvent
     {
@@ -16823,13 +17515,22 @@ namespace PMDC.Dungeon
 
     }
 
+    /// <summary>
+    /// Event that prompts the user which form to change to and sets the value in SwitchFormContext
+    /// </summary>
     [Serializable]
     public class FormChoiceEvent : BattleEvent
     {
+        /// <summary>
+        /// The required species for this event to have effect 
+        /// </summary>
         [JsonConverter(typeof(MonsterConverter))]
         [DataType(0, DataManager.DataType.Monster, false)]
         public string Species;
 
+        /// <summary>
+        /// Whether to include temporary forms as an option 
+        /// </summary>
         public bool IncludeTemp;
 
         public FormChoiceEvent() { Species = ""; }
@@ -16912,6 +17613,9 @@ namespace PMDC.Dungeon
 
     }
 
+    /// <summary>
+    /// Event that deactivates the use of the item by setting its hidden value 
+    /// </summary>
     [Serializable]
     public class DeactivateItemEvent : BattleEvent
     {
@@ -16939,6 +17643,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that changes the form of the user using the value in SwitchFormContext
+    /// </summary>
     [Serializable]
     public class SwitchFormEvent : BattleEvent
     {
@@ -16959,9 +17666,15 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that prompts the user to recall or delete moves and sets up MoveLearnContext and MoveDeleteContext
+    /// </summary>
     [Serializable]
     public class LinkBoxEvent : BattleEvent
     {
+        /// <summary>
+        /// Whether pre-evolution moves can be relearned
+        /// </summary>
         public bool IncludePreEvolutions;
         public LinkBoxEvent() { }
         public override GameEvent Clone() { return new LinkBoxEvent(); }
@@ -17075,6 +17788,9 @@ namespace PMDC.Dungeon
 
     }
 
+    /// <summary>
+    /// Event that causes the user to relearn a move using the value in MoveLearnContext 
+    /// </summary>
     [Serializable]
     public class MoveLearnEvent : BattleEvent
     {
@@ -17094,6 +17810,10 @@ namespace PMDC.Dungeon
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.LearnSkillWithFanfare(context.User, moveNum, moveSlot));
         }
     }
+    
+    /// <summary>
+    /// Event that causes the user to delete a move using the value in MoveDeleteContext 
+    /// </summary>
     [Serializable]
     public class MoveDeleteEvent : BattleEvent
     {
@@ -17113,8 +17833,10 @@ namespace PMDC.Dungeon
             }
         }
     }
-
-
+    
+    /// <summary>
+    /// Event that prompts the user to learn a new ability and sets up AbilityLearnContext 
+    /// </summary>
     [Serializable]
     public class AbilityCapsuleEvent : BattleEvent
     {
@@ -17167,8 +17889,10 @@ namespace PMDC.Dungeon
         }
 
     }
-
-
+    
+    /// <summary>
+    /// Event that causes the user to learn a new ability using the value in AbilityLearnContext 
+    /// </summary>
     [Serializable]
     public class AbilityLearnEvent : BattleEvent
     {
@@ -17193,6 +17917,10 @@ namespace PMDC.Dungeon
             }
         }
     }
+    
+    /// <summary>
+    /// Event that deletes the user's ability based on the value in the AbilityDeleteContext 
+    /// </summary>
     [Serializable]
     public class AbilityDeleteEvent : BattleEvent
     {
@@ -17213,7 +17941,10 @@ namespace PMDC.Dungeon
             }
         }
     }
-
+    
+    /// <summary>
+    /// Event that prompts the user which item to withdraw from the storage and sets up WithdrawStorageContext 
+    /// </summary>
     [Serializable]
     public class StorageBoxEvent : BattleEvent
     {
@@ -17279,6 +18010,10 @@ namespace PMDC.Dungeon
         }
 
     }
+    
+    /// <summary>
+    /// Event that withdraws an item from storage using the value in WithdrawStorageContext
+    /// </summary>
     [Serializable]
     public class WithdrawItemEvent : BattleEvent
     {
@@ -17306,6 +18041,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that prompts the user which assembly member to add to the team the sets up WithdrawStorageContext 
+    /// </summary>
     [Serializable]
     public class AssemblyBoxEvent : BattleEvent
     {
@@ -17366,6 +18104,10 @@ namespace PMDC.Dungeon
                 context.CancelState.Cancel = true;
         }
     }
+    
+    /// <summary>
+    /// Event that adds a team member from assembly using the value in WithdrawStorageContext
+    /// </summary>
     [Serializable]
     public class WithdrawRecruitEvent : BattleEvent
     {
@@ -17420,11 +18162,16 @@ namespace PMDC.Dungeon
             yield break;
         }
     }
-
-
+    
+    /// <summary>
+    /// Event that sets the additional recruitment rate, not accounting for the species join rate
+    /// </summary>
     [Serializable]
     public class FlatRecruitmentEvent : RecruitBoostEvent
     {
+        /// <summary>
+        /// The additional recruitment rate
+        /// </summary>
         public int RecruitRate;
 
         public FlatRecruitmentEvent() { }
@@ -17441,6 +18188,10 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that boosts the recruitment rate if the target's type matches one of the specified type.
+    /// Otherwise, it drops the recruitment rate
+    /// </summary>
     [Serializable]
     public class TypeRecruitmentEvent : RecruitBoostEvent
     {
@@ -17469,7 +18220,11 @@ namespace PMDC.Dungeon
                 return -50;
         }
     }
-
+    
+    /// <summary>
+    /// Event that boosts the recruitment rate if the target is not the default skin. 
+    /// Otherwise, it drops the recruitment rate
+    /// </summary>
     [Serializable]
     public class SkinRecruitmentEvent : RecruitBoostEvent
     {
@@ -17484,6 +18239,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that modifies the recruitment rate based on the type matchup between the user and target
+    /// </summary>
     [Serializable]
     public class TypeMatchupRecruitmentEvent : RecruitBoostEvent
     {
@@ -17501,6 +18259,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that modifies the recruitment rate based on the level difference between the user and target
+    /// </summary>
     [Serializable]
     public class LevelRecruitmentEvent : RecruitBoostEvent
     {
@@ -17512,9 +18273,16 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that attempts to recruit the target.
+    /// If successful, the recruit can be nicknamed and added to the team
+    /// </summary>
     [Serializable]
     public class RecruitmentEvent : BattleEvent
     {
+        /// <summary>
+        /// Tha lua battle script that runs when interacting with the recruit in dungeons 
+        /// </summary>
         public BattleScriptEvent ActionScript;
 
         public RecruitmentEvent()
@@ -17673,9 +18441,16 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that makes the target a neutral faction  
+    /// </summary>
     [Serializable]
     public class MakeNeutralEvent : BattleEvent
     {
+        
+        /// <summary>
+        /// Tha lua battle script that runs when interacting with the neutral in dungeons 
+        /// </summary>
         public BattleScriptEvent ActionScript;
 
         public MakeNeutralEvent()
@@ -17716,8 +18491,10 @@ namespace PMDC.Dungeon
             yield break;
         }
     }
-
-
+    
+    /// <summary>
+    /// Event that revives all fainted party memebers
+    /// </summary>
     [Serializable]
     public class ReviveAllEvent : BattleEvent
     {
@@ -17760,6 +18537,9 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that exits out of the dungeon
+    /// </summary>
     [Serializable]
     public class ExitDungeonEvent : BattleEvent
     {
@@ -17806,6 +18586,10 @@ namespace PMDC.Dungeon
         protected abstract PriorityList<BattleEvent> GetEvents(ItemData entry);
     }
 
+    /// <summary>
+    /// Event that applies the target with the AfterActions passive effects of the original character's item
+    /// This event should usually be used in proximity events
+    /// </summary>
     [Serializable]
     public class ShareAfterActionsEvent : ShareEquipBattleEvent
     {
@@ -17813,7 +18597,11 @@ namespace PMDC.Dungeon
 
         protected override PriorityList<BattleEvent> GetEvents(ItemData entry) => entry.AfterActions;
     }
-
+    
+    /// <summary>
+    /// Event that applies the target with the AfterBeingHits passive effects of the original character's item
+    /// This event should usually be used in proximity events
+    /// </summary>
     [Serializable]
     public class ShareAfterBeingHitsEvent : ShareEquipBattleEvent
     {
@@ -17822,6 +18610,11 @@ namespace PMDC.Dungeon
         protected override PriorityList<BattleEvent> GetEvents(ItemData entry) => entry.AfterBeingHits;
     }
 
+    
+    /// <summary>
+    /// Event that applies the target with the AfterHittings passive effects of the original character's item
+    /// This event should usually be used in proximity events
+    /// </summary>
     [Serializable]
     public class ShareAfterHittingsEvent : ShareEquipBattleEvent
     {
@@ -17830,6 +18623,11 @@ namespace PMDC.Dungeon
         protected override PriorityList<BattleEvent> GetEvents(ItemData entry) => entry.AfterHittings;
     }
 
+    
+    /// <summary>
+    /// Event that applies the target with the BeforeActions passive effects of the original character's item
+    /// This event should usually be used in proximity events
+    /// </summary>
     [Serializable]
     public class ShareBeforeActionsEvent : ShareEquipBattleEvent
     {
@@ -17838,6 +18636,10 @@ namespace PMDC.Dungeon
         protected override PriorityList<BattleEvent> GetEvents(ItemData entry) => entry.BeforeActions;
     }
 
+    /// <summary>
+    /// Event that applies the target with the BeforeBeingHits passive effects of the original character's item
+    /// This event should usually be used in proximity events
+    /// </summary>
     [Serializable]
     public class ShareBeforeBeingHitsEvent : ShareEquipBattleEvent
     {
@@ -17846,6 +18648,10 @@ namespace PMDC.Dungeon
         protected override PriorityList<BattleEvent> GetEvents(ItemData entry) => entry.BeforeBeingHits;
     }
 
+    /// <summary>
+    /// Event that applies the target with the BeforeHittings passive effects of the original character's item
+    /// This event should usually be used in proximity events
+    /// </summary>
     [Serializable]
     public class ShareBeforeHittingsEvent : ShareEquipBattleEvent
     {
@@ -17854,6 +18660,10 @@ namespace PMDC.Dungeon
         protected override PriorityList<BattleEvent> GetEvents(ItemData entry) => entry.BeforeHittings;
     }
 
+    /// <summary>
+    /// Event that applies the target with the BeforeTryActions passive effects of the original character's item
+    /// This event should usually be used in proximity events
+    /// </summary>
     [Serializable]
     public class ShareBeforeTryActionsEvent : ShareEquipBattleEvent
     {
@@ -17863,6 +18673,10 @@ namespace PMDC.Dungeon
     }
 
 
+    /// <summary>
+    /// Event that applies the target with the OnActions passive effects of the original character's item
+    /// This event should usually be used in proximity events
+    /// </summary>
     [Serializable]
     public class ShareOnActionsEvent : ShareEquipBattleEvent
     {
@@ -17872,6 +18686,10 @@ namespace PMDC.Dungeon
     }
 
 
+    /// <summary>
+    /// Event that applies the target with the OnHitTiles passive effects of the original character's item
+    /// This event should usually be used in proximity events
+    /// </summary>
     [Serializable]
     public class ShareOnHitTilesEvent : ShareEquipBattleEvent
     {
