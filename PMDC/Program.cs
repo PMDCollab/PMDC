@@ -319,7 +319,7 @@ namespace PMDC
                     DiagManager.Instance.LoadInputs(playInputs);
 
                 Text.Init();
-                if (langArgs != "" && DiagManager.Instance.CurSettings.Language == "")
+                if (langArgs != "")
                 {
                     if (langArgs.Length > 0)
                     {
