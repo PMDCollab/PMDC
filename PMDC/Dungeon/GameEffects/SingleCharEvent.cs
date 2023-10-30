@@ -2258,7 +2258,7 @@ namespace PMDC.Dungeon
             if (context.User.Dead)
                 yield break;
 
-            if (!context.User.CharStates.Contains<MagicGuardState>() && AffectNonFocused || DungeonScene.Instance.CurrentCharacter == context.User)
+            if (!context.User.CharStates.Contains<MagicGuardState>() && (AffectNonFocused || DungeonScene.Instance.CurrentCharacter == context.User))
             {
                 CountState countState = ((StatusEffect)owner).StatusStates.Get<CountState>();
                 if (Toxic && countState.Count < HPFraction)
