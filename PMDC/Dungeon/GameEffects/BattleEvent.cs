@@ -1990,7 +1990,7 @@ namespace PMDC.Dungeon
         /// </summary>
         [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
-        public string StatusID
+        public string StatusID;
         
         /// <summary>
         /// The message displayed in the dungeon log if the character doesn't have this status or the stack amount does not map to a skill data
@@ -2594,7 +2594,7 @@ namespace PMDC.Dungeon
         }
         protected TeamReduceEvent(TeamReduceEvent other)
         {
-            QualifyingElement = other.QualifxyingElement;
+            QualifyingElement = other.QualifyingElement;
             if (Tier1Event != null)
                 Tier1Event = (BattleEvent)other.Tier1Event.Clone();
             if (Tier2Event != null)
@@ -3505,7 +3505,7 @@ namespace PMDC.Dungeon
         /// The map status to check for
         /// </summary>
         [JsonConverter(typeof(MapStatusConverter))]
-        [DataType(0, DataManager.DataType.MapStatus, false)
+        [DataType(0, DataManager.DataType.MapStatus, false)]
         public string WeatherID;
         
         /// <summary>
@@ -6108,7 +6108,7 @@ namespace PMDC.Dungeon
         /// <summary>
         /// The message displayed in the dungeon log  
         /// </summary>
-        public StringKey Msg
+        public StringKey Msg;
         
         /// <summary>
         /// The list of battle VFXs played if the condition is met
@@ -7282,7 +7282,6 @@ namespace PMDC.Dungeon
         }
     }
     
-    //universalEvent.OnHits.Add(5, new HitPostEvent("was_hurt_last_turn", "last_move_hit_by_other", "last_targeted_by", "crits_landed"));
     /// <summary>
     /// Event that increments the AttackHitTotal global context state,
     /// </summary>
@@ -8756,8 +8755,7 @@ namespace PMDC.Dungeon
             if (context.Target.MemberTeam is ExplorerTeam)
             {
                 ExplorerTeam team = (ExplorerTeam)context.Target.MemberTeam;
-                int moneyLost = team.Money - team.Money * (Multiplier - 1) / Multiplier;
-                100 - 100 * 
+                int moneyLost = team.Money - team.Money * (Multiplier - 1) / Multiplier; 
 
                 if (moneyLost > 0)
                 {
@@ -9219,7 +9217,8 @@ namespace PMDC.Dungeon
         /// The status which contains the target
         /// Should usally be "last targeted by"
         /// </summary> 
-        [JsonConverter(typeof(StatusConverter))] [DataType(0, DataManager.DataType.Status, false)]
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
         public string TargetStatusID;
         
         /// <summary>
@@ -10120,7 +10119,20 @@ namespace PMDC.Dungeon
 
         protected abstract int CalculateFixedDamage(GameEventOwner owner, BattleContext context);
     }
-    
+
+    [Serializable]
+    public class BasePowerDamageEvent : FixedDamageEvent
+    {
+        public override GameEvent Clone() { return new BasePowerDamageEvent(); }
+        protected override int CalculateFixedDamage(GameEventOwner owner, BattleContext context)
+        {
+            BasePowerState state = context.Data.SkillStates.GetWithDefault<BasePowerState>();
+            if (state != null)
+                return state.Power;
+            return 0;
+        }
+    }
+
     /// <summary>
     /// Event that sets the specified damage the character will take 
     /// </summary>
@@ -10203,6 +10215,26 @@ namespace PMDC.Dungeon
             int diff = locDiff % 4;
             int power = (diff > 2) ? 1 : diff;
             return Math.Max(1, context.GetContextStateInt<UserLevel>(0) * power / 2);
+        }
+    }
+
+    [Serializable]
+    public class UserHPDamageEvent : FixedDamageEvent
+    {
+        public bool Reverse;
+        public UserHPDamageEvent() { }
+        public UserHPDamageEvent(bool reverse)
+        {
+            Reverse = reverse;
+        }
+        protected UserHPDamageEvent(UserHPDamageEvent other)
+        {
+            Reverse = other.Reverse;
+        }
+        public override GameEvent Clone() { return new UserHPDamageEvent(this); }
+        protected override int CalculateFixedDamage(GameEventOwner owner, BattleContext context)
+        {
+            return Reverse ? (context.User.MaxHP - context.User.HP) : context.User.HP;
         }
     }
 
