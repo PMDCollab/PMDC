@@ -1278,6 +1278,15 @@ namespace PMDC.Dungeon
     [Serializable]
     public abstract class HandoutExpEvent : SingleCharEvent
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool IgnoreMark;
+
+        protected HandoutExpEvent() { }
+
+        protected HandoutExpEvent(HandoutExpEvent other) { IgnoreMark = other.IgnoreMark; }
+
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
             if (!context.User.Dead)
@@ -1288,7 +1297,7 @@ namespace PMDC.Dungeon
                 yield return new WaitForFrames(60);
             else
             {
-                if (context.User.EXPMarked)
+                if (context.User.EXPMarked || IgnoreMark)
                 {
                     if (context.User.MemberTeam is ExplorerTeam)
                     {
@@ -1369,7 +1378,7 @@ namespace PMDC.Dungeon
         public int Denominator;
         public HandoutScaledExpEvent() { }
         public HandoutScaledExpEvent(int numerator, int denominator, int levelBuffer) { Numerator = numerator; Denominator = denominator; }
-        protected HandoutScaledExpEvent(HandoutScaledExpEvent other)
+        protected HandoutScaledExpEvent(HandoutScaledExpEvent other) : base(other)
         {
             this.Numerator = other.Numerator;
             this.Denominator = other.Denominator;
@@ -1389,7 +1398,9 @@ namespace PMDC.Dungeon
     public class HandoutConstantExpEvent : HandoutExpEvent
     {
         public HandoutConstantExpEvent() { }
-        public override GameEvent Clone() { return new HandoutConstantExpEvent(); }
+        protected HandoutConstantExpEvent(HandoutConstantExpEvent other) : base(other)
+        { }
+        public override GameEvent Clone() { return new HandoutConstantExpEvent(this); }
 
         public override int GetExp(int expYield, int defeatedLv, int recipientLv)
         {
@@ -1427,7 +1438,7 @@ namespace PMDC.Dungeon
             UnderleveledHandout = lowHandout;
             OverleveledHandout = highHandout;
         }
-        protected HandoutPiecewiseExpEvent(HandoutPiecewiseExpEvent other)
+        protected HandoutPiecewiseExpEvent(HandoutPiecewiseExpEvent other) : base(other)
         {
             ScaleMin = other.ScaleMin;
             ScaleAdd = other.ScaleAdd;
@@ -1484,7 +1495,7 @@ namespace PMDC.Dungeon
             LevelBuffer = levelBuffer;
             PowerCurve = powerCurve;
         }
-        protected HandoutRelativeExpEvent(HandoutRelativeExpEvent other)
+        protected HandoutRelativeExpEvent(HandoutRelativeExpEvent other) : base(other)
         {
             this.Numerator = other.Numerator;
             this.Denominator = other.Denominator;
@@ -1546,7 +1557,7 @@ namespace PMDC.Dungeon
             Denominator = denominator;
             LevelBuffer = levelBuffer;
         }
-        protected HandoutHarmonicExpEvent(HandoutHarmonicExpEvent other)
+        protected HandoutHarmonicExpEvent(HandoutHarmonicExpEvent other) : base(other)
         {
             this.Numerator = other.Numerator;
             this.Denominator = other.Denominator;
@@ -1596,7 +1607,7 @@ namespace PMDC.Dungeon
             Denominator = denominator;
             LevelBuffer = levelBuffer;
         }
-        protected HandoutStackExpEvent(HandoutStackExpEvent other)
+        protected HandoutStackExpEvent(HandoutStackExpEvent other) : base(other)
         {
             this.Numerator = other.Numerator;
             this.Denominator = other.Denominator;
