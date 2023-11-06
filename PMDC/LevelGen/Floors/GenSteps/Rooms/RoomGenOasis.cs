@@ -11,9 +11,8 @@ using RogueEssence.Dungeon;
 namespace PMDC.LevelGen
 {
     /// <summary>
-    /// Generates a cave-like room using cellular automata.
-    /// Will generate a square if asked to generate for a size it did not propose.
-    /// For square-looking rooms, check to make sure the room was not cut down.
+    /// Generates a cave-like room using cellular automata, then fills it with water except an outer border.
+    /// Can also spawn items on the shore.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     [Serializable]
