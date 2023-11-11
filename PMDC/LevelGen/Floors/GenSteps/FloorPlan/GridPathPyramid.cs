@@ -1,6 +1,7 @@
 ﻿using System;
 using RogueElements;
 using System.Collections.Generic;
+using System.Reactive.Joins;
 
 namespace PMDC.LevelGen
 {
@@ -45,10 +46,10 @@ namespace PMDC.LevelGen
         /// </summary>
         public ComponentCollection LargeRoomComponents { get; set; }
 
-        public RoomGen<T> FrontRoom;
-        public ComponentCollection FrontRoomComponents { get; set; }
-
-        public PermissiveRoomGen<T> FrontHall;
+        /// <summary>
+        /// Components that the rooms in the furthest direction from the giant room in a cardinal will be given, in addition to the normal components.
+        /// </summary>
+        public ComponentCollection CornerRoomComponents { get; set; }
 
         /// <summary>
         /// Prevents the step from making branches in the path, even if it would fail the space-fill quota.
@@ -60,7 +61,7 @@ namespace PMDC.LevelGen
         {
             GiantHallGen = new SpawnList<RoomGen<T>>();
             LargeRoomComponents = new ComponentCollection();
-            FrontRoomComponents = new ComponentCollection();
+            CornerRoomComponents = new ComponentCollection();
         }
 
         public override void ApplyToPath(IRandom rand, GridPlan floorPlan)
@@ -68,14 +69,27 @@ namespace PMDC.LevelGen
             RoomGen<T> roomGen = GiantHallGen.Pick(rand);
             if (roomGen == null)
                 roomGen = GenericRooms.Pick(rand);
-            Rect destRect = new Rect((floorPlan.GridWidth - GiantHallSize.X) / 2, (floorPlan.GridHeight - GiantHallSize.Y) / 2, GiantHallSize.X, GiantHallSize.Y);
+
+            Loc sizeDiff = new Loc(floorPlan.GridWidth - GiantHallSize.X, floorPlan.GridHeight - GiantHallSize.Y);
+
+            //the pyramid is a certain size A, the floor is a certain size B
+            //the placeable distance the pyramid can be between it an a wall is B - A = C
+            //the max distance that all sides (of an axis) can be from the wall simultaneously is C / 2.
+            //Basically, if we were to place a requirement of how far a given side can be from the wall, the maximum we can specify is C / 2
+            //to give placement some wiggle room, we divide this value by 2.  This will allow for wiggle room of half the total room it can actually move in.
+            //This will allow it to move while not bing potentially placed too close to the edge.
+            //C / 4
+            Loc giantHallLoc = new Loc(rand.Next(sizeDiff.X / 4, floorPlan.GridWidth - GiantHallSize.X - sizeDiff.X / 4),
+                rand.Next(sizeDiff.Y / 4, floorPlan.GridHeight - GiantHallSize.Y - sizeDiff.Y / 4));
+
+            Rect destRect = new Rect(giantHallLoc.X, giantHallLoc.Y, GiantHallSize.X, GiantHallSize.Y);
             floorPlan.AddRoom(destRect, roomGen, this.LargeRoomComponents.Clone());
 
             GenContextDebug.DebugProgress("Center Room");
 
             floorPlan.AddRoom(new Loc(destRect.Center.X, destRect.Bottom), GenericRooms.Pick(rand), this.RoomComponents.Clone());
             SafeAddHall(new LocRay4(new Loc(destRect.Center.X, destRect.Bottom), Dir4.Up),
-                    floorPlan, FrontHall, GetDefaultGen(), this.RoomComponents, this.HallComponents, true);
+                    floorPlan, GenericHalls.Pick(rand), GetDefaultGen(), this.RoomComponents, this.HallComponents, true);
 
             GenContextDebug.DebugProgress("Add Leg");
 
@@ -164,35 +178,60 @@ namespace PMDC.LevelGen
                     break;
             }
 
-            //combine the two rooms near the pyramid entrance
-            combineRooms(floorPlan, sourceRoom - new Loc(1, 0), new Loc(2, 1), FrontRoom.Copy());
+            //mark the corners
+            foreach (Dir8 dir in DirExt.VALID_DIR8)
+            {
+                if (dir.IsDiagonal())
+                {
+                    Loc diffLoc = dir.GetLoc();
+                    Loc roomCenter = destRect.Center;
+                    int eligibleRoom = -1;
+
+                    while (true)
+                    {
+                        //get the room.  Is it eligible?  update the current eligible
+                        int newRoom = floorPlan.GetRoomIndex(roomCenter);
+                        if (newRoom > 0)
+                        {
+                            GridRoomPlan plan = floorPlan.GetRoomPlan(newRoom);
+                            if (!plan.PreferHall)
+                                eligibleRoom = newRoom;
+                        }
+
+                        if (Collision.InBounds(floorPlan.GridWidth, floorPlan.GridHeight, roomCenter + diffLoc))
+                            roomCenter += diffLoc;
+                        else
+                        {
+                            DirH horiz;
+                            DirV vert;
+                            dir.Separate(out horiz, out vert);
+                            if (Collision.InBounds(floorPlan.GridWidth, floorPlan.GridHeight, roomCenter + horiz.GetLoc()))
+                                roomCenter += horiz.GetLoc();
+                            else if (Collision.InBounds(floorPlan.GridWidth, floorPlan.GridHeight, roomCenter + vert.GetLoc()))
+                                roomCenter += vert.GetLoc();
+                            else
+                                break;
+                        }
+
+                    }
+
+                    if (eligibleRoom > -1)
+                    {
+                        //add the component here
+                        GridRoomPlan plan = floorPlan.GetRoomPlan(eligibleRoom);
+                        foreach(RoomComponent cmp in CornerRoomComponents)
+                            plan.Components.Set(cmp);
+                    }
+                }
+            }
+
+
+
         }
 
         public override string ToString()
         {
             return string.Format("{0}: Fill:{1}% Branch:{2}%", this.GetType().GetFormattedTypeName(), this.RoomRatio, this.BranchRatio);
-        }
-
-        // Copied from CombineGridRoomStep.  FIND A WAY TO NOT REPEAT THIS CODE.
-
-        private void combineRooms(GridPlan floorPlan, Loc destLoc, Loc size, RoomGen<T> giantRoom)
-        {
-            //erase the constituent rooms
-            for (int x2 = destLoc.X; x2 < destLoc.X + size.X; x2++)
-            {
-                for (int y2 = destLoc.Y; y2 < destLoc.Y + size.Y; y2++)
-                {
-                    if (floorPlan.GetRoomIndex(new Loc(x2, y2)) > -1)
-                        floorPlan.EraseRoom(new Loc(x2, y2));
-                    if (x2 > destLoc.X)
-                        floorPlan.SetHall(new LocRay4(x2, y2, Dir4.Left), null, new ComponentCollection());
-                    if (y2 > destLoc.Y)
-                        floorPlan.SetHall(new LocRay4(x2, y2, Dir4.Up), null, new ComponentCollection());
-                }
-            }
-
-            //place the room
-            floorPlan.AddRoom(new Rect(destLoc.X, destLoc.Y, size.X, size.Y), giantRoom.Copy(), this.FrontRoomComponents.Clone(), false);
         }
 
 
