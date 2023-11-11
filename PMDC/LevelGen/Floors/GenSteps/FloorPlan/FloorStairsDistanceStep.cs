@@ -54,13 +54,16 @@ namespace PMDC.LevelGen
                 Rect startDraw = map.RoomPlan.GetRoom(startRoom).Draw;
 
                 bool used = false;
-                foreach (int usedRoom in used_indices)
+                if (used_indices != null)
                 {
-                    Rect usedDraw = map.RoomPlan.GetRoom(usedRoom).Draw;
-                    if (!Distance.Contains((usedDraw.Start - startDraw.Start).Dist4()))
+                    foreach (int usedRoom in used_indices)
                     {
-                        used = true;
-                        break;
+                        Rect usedDraw = map.RoomPlan.GetRoom(usedRoom).Draw;
+                        if (!Distance.Contains((usedDraw.Start - startDraw.Start).Dist4()))
+                        {
+                            used = true;
+                            break;
+                        }
                     }
                 }
 
