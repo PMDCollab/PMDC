@@ -1239,6 +1239,15 @@ namespace PMDC.Dungeon
             context.User.HP = 0;
             context.User.Dead = true;
 
+            //if (DataManager.Instance.CurrentReplay != null)
+            //{
+            //    using (StreamWriter writer = new StreamWriter(DiagManager.LOG_PATH + "Encounter.txt", true))
+            //    {
+            //        if (context.User.MemberTeam != DataManager.Instance.Save.ActiveTeam)
+            //            writer.WriteLine(String.Format("{0} {1} {2}", ZoneManager.Instance.CurrentMapID.ID, ZoneManager.Instance.CurrentMap.MapTurns, DataManager.Instance.Save.TotalTurns));
+            //    }
+            //}
+
             yield break;
         }
     }
