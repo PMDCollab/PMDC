@@ -350,7 +350,7 @@ namespace PMDC.Dungeon
                         foreach (Character player in ZoneManager.Instance.CurrentMap.ActiveTeam.Players)
                         {
                             if ((player.CharLoc - chara.CharLoc).Dist8() > Radius)
-                                chara.DieSilent();
+                                yield return CoroutineManager.Instance.StartCoroutine(chara.DieSilent());
                         }
                     }
                 }

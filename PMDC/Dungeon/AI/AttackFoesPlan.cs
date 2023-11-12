@@ -7,6 +7,7 @@ using RogueEssence.Data;
 
 namespace PMDC.Dungeon
 {
+
     [Serializable]
     public class AttackFoesPlan : AIPlan
     {

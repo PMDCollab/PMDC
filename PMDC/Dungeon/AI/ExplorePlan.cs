@@ -8,21 +8,26 @@ using RogueEssence.Data;
 namespace PMDC.Dungeon
 {
     [Serializable]
-    public class ExploreIfUnseenPlan : ExplorePlan
+    public class ExploreIfSeenPlan : ExplorePlan
     {
-        public ExploreIfUnseenPlan(AIFlags iq) : base(iq)
-        {
+        public bool Negate;
 
+        public ExploreIfSeenPlan(bool negate, AIFlags iq) : base(iq)
+        {
+            Negate = negate;
         }
-        protected ExploreIfUnseenPlan(ExploreIfUnseenPlan other) : base(other) { }
-        public override BasePlan CreateNew() { return new ExploreIfUnseenPlan(this); }
+        protected ExploreIfSeenPlan(ExploreIfSeenPlan other) : base(other)
+        {
+            Negate = other.Negate;
+        }
+        public override BasePlan CreateNew() { return new ExploreIfSeenPlan(this); }
 
         public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
-            Loc radius = Character.GetSightDims();
-            foreach (Character target in ZoneManager.Instance.CurrentMap.GetCharsInRect(Rect.FromPoints(controlledChar.CharLoc - radius, controlledChar.CharLoc + radius)))
+            //specifically check for players
+            foreach (Character target in ZoneManager.Instance.CurrentMap.ActiveTeam.Players)
             {
-                if (DungeonScene.Instance.IsTargeted(controlledChar, target, Alignment.Foe, false) && controlledChar.CanSeeCharacter(target, Map.SightRange.Clear))
+                if (controlledChar.CanSeeCharacter(target, Map.SightRange.Clear) == Negate)
                 {
                     //if a threat is in the vicinity (doesn't have to be seen), abort this plan
                     return null;
