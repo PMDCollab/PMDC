@@ -211,6 +211,8 @@ namespace PMDC.Dungeon
                 //don't attack certain kinds of foes that won't attack first
                 if (seenChar.Tactic.ID == "weird_tree")//weird tree; NOTE: specialized AI code!
                     return false;
+                if (seenChar.Tactic.ID == "moon_dance")//moon dance; NOTE: specialized AI code!
+                    return false;
                 else if (seenChar.Tactic.ID == "wait_attack")//wait attack; NOTE: specialized AI code!
                     return false;
             }
@@ -1850,6 +1852,8 @@ namespace PMDC.Dungeon
                     if (target.GetStatusEffect("last_targeted_by") == null)//last targeted by someone; NOTE: specialized AI code!
                     {
                         if (target.Tactic.ID == "weird_tree")//weird tree; NOTE: specialized AI code!
+                            return 0;
+                        if (target.Tactic.ID == "moon_dance")//moon dance; NOTE: specialized AI code!
                             return 0;
                         else if (target.Tactic.ID == "wait_attack")//wait attack; NOTE: specialized AI code!
                             return 0;
