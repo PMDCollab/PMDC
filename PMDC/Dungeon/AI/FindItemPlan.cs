@@ -25,8 +25,18 @@ namespace PMDC.Dungeon
 
         public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
-            if (!String.IsNullOrEmpty(controlledChar.EquippedItem.ID))
-                return null;
+            if (controlledChar.MemberTeam is ExplorerTeam)
+            {
+                ExplorerTeam explorerTeam = (ExplorerTeam)controlledChar.MemberTeam;
+                if (explorerTeam.GetInvCount() >= explorerTeam.GetMaxInvSlots(ZoneManager.Instance.CurrentZone))
+                    return null;
+            }
+            else
+            {
+                //already holding an item
+                if (!String.IsNullOrEmpty(controlledChar.EquippedItem.ID))
+                    return null;
+            }
 
             return base.Think(controlledChar, preThink, rand);
         }
