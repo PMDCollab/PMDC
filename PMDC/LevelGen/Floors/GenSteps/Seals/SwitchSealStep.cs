@@ -135,7 +135,7 @@ namespace PMDC.LevelGen
                 List<Loc> freeSwitchTiles = roomSwitchTiles[randIndex];
 
                 int randTileIndex = map.Rand.Next(freeSwitchTiles.Count);
-                chosenLocs.Add(freeSwitchTiles[randTileIndex]);
+                chosenLocs.Add(map.Map.WrapLoc(freeSwitchTiles[randTileIndex]));
 
                 freeSwitchTiles.RemoveAt(randTileIndex);
 

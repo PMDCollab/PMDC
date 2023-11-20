@@ -5005,7 +5005,7 @@ namespace PMDC.Dungeon
                     //remove the tile, and create vfx for each one
                     foreach (Loc loc in locs)
                     {
-                        Tile exTile = ZoneManager.Instance.CurrentMap.Tiles[loc.X][loc.Y];
+                        Tile exTile = ZoneManager.Instance.CurrentMap.GetTile(loc);
                         exTile.Effect = new EffectTile(exTile.Effect.TileLoc);
 
                         SingleEmitter altEmitter = new SingleEmitter(new AnimData("Vault_Open", 3));
@@ -5016,7 +5016,7 @@ namespace PMDC.Dungeon
 
                     foreach (Loc loc in locs)
                     {
-                        Tile exTile = ZoneManager.Instance.CurrentMap.Tiles[loc.X][loc.Y];
+                        Tile exTile = ZoneManager.Instance.CurrentMap.GetTile(loc);
                         {
                             exTile.Data = new TerrainTile(DataManager.Instance.GenFloor);
                             int distance = 0;
