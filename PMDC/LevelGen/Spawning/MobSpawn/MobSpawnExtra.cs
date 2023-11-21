@@ -512,9 +512,16 @@ namespace PMDC.LevelGen
                 if (!species.TryGetValue(0, out form))
                     continue;
 
-                if (form.Element1 == newChar.Element1 || form.Element2 == newChar.Element1 ||
-                    form.Element1 == newChar.Element2 || form.Element2 == newChar.Element2)
-                    yield return key;
+                if (form.Element1 != DataManager.Instance.DefaultElement)
+                {
+                    if (newChar.HasElement(form.Element1))
+                        yield return key;
+                }
+                if (form.Element2 != DataManager.Instance.DefaultElement)
+                {
+                    if (newChar.HasElement(form.Element2))
+                        yield return key;
+                }
             }
         }
     }
