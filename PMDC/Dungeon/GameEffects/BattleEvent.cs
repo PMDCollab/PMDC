@@ -10592,6 +10592,49 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    /// <summary>
+    /// Event that prevents the character from using the move if the specified map status is not present
+    /// </summary> 
+    [Serializable]
+    public class WeatherRequiredEvent : BattleEvent
+    {
+        /// <summary>
+        /// The status ID to check for
+        /// </summary> 
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.MapStatus, false)]
+        public string WeatherID;
+
+        /// <summary>
+        /// The message displayed in the dungeon log if the conditon is met 
+        /// </summary> 
+        public StringKey Message;
+
+        public WeatherRequiredEvent() { WeatherID = ""; }
+        public WeatherRequiredEvent(string statusID, StringKey msg)
+        {
+            WeatherID = statusID;
+            Message = msg;
+        }
+        protected WeatherRequiredEvent(WeatherRequiredEvent other)
+        {
+            WeatherID = other.WeatherID;
+            Message = other.Message;
+        }
+        public override GameEvent Clone() { return new WeatherRequiredEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (!ZoneManager.Instance.CurrentMap.Status.ContainsKey(WeatherID))
+            {
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(Message.ToLocal(), context.User.GetDisplayName(false)));
+                context.CancelState.Cancel = true;
+            }
+            yield break;
+        }
+    }
+
     /// <summary>
     /// Event that groups multiple battle events into one event, but only applies if a critical hit was landed 
     /// </summary>
