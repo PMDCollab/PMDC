@@ -8158,14 +8158,18 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             if (context.Data.Element == "fire")
-                yield return CoroutineManager.Instance.StartCoroutine(context.Target.RemoveStatusEffect(((StatusEffect)owner).ID));
-            else
             {
-                if (context.Data.Category != BattleData.SkillCategory.None)
-                {
-                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_FROZEN").ToLocal(), context.Target.GetDisplayName(false)));
-                    context.AddContextStateMult<AccMult>(false, -1, 1);
-                }
+                yield return CoroutineManager.Instance.StartCoroutine(context.Target.RemoveStatusEffect(((StatusEffect)owner).ID));
+                yield break;
+            }
+
+            if (context.ContextStates.Contains<CureAttack>())
+                yield break;
+
+            if (context.Data.Category != BattleData.SkillCategory.None)
+            {
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_FROZEN").ToLocal(), context.Target.GetDisplayName(false)));
+                context.AddContextStateMult<AccMult>(false, -1, 1);
             }
         }
     }

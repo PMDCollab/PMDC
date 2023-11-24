@@ -122,6 +122,13 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class CureAttack : ContextState
+    {
+        public CureAttack() { }
+        public override GameplayState Clone() { return new CureAttack(); }
+    }
+
+    [Serializable]
     public class BoundAttack : ContextState
     {
         public BoundAttack() { }
