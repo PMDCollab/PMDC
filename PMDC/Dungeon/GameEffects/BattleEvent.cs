@@ -17305,7 +17305,54 @@ namespace PMDC.Dungeon
             }
         }
     }
-    
+
+
+    /// <summary>
+    /// Event that changes terrain of one type to another type.
+    /// </summary>
+    [Serializable]
+    public class ChangeTerrainEvent : BattleEvent
+    {
+        [DataType(0, DataManager.DataType.Terrain, false)]
+        public string TerrainFrom;
+
+        [DataType(0, DataManager.DataType.Terrain, false)]
+        public string TerrainTo;
+
+        public ChangeTerrainEvent()
+        {
+            TerrainFrom = "";
+            TerrainTo = "";
+        }
+
+        public ChangeTerrainEvent(string terrainFrom, string terrainTo)
+        {
+            TerrainFrom = "";
+            TerrainTo = "";
+        }
+        protected ChangeTerrainEvent(ChangeTerrainEvent other)
+        {
+            TerrainFrom = other.TerrainFrom;
+            TerrainTo = other.TerrainTo;
+        }
+        public override GameEvent Clone() { return new ChangeTerrainEvent(this); }
+
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            Tile tile = ZoneManager.Instance.CurrentMap.GetTile(context.TargetTile);
+            if (tile.ID != TerrainFrom)
+                yield break;
+
+            tile.Data = new TerrainTile(TerrainTo);
+            int distance = 0;
+            Loc startLoc = context.TargetTile - new Loc(distance + 2);
+            Loc sizeLoc = new Loc((distance + 2) * 2 + 1);
+            ZoneManager.Instance.CurrentMap.MapModified(startLoc, sizeLoc);
+        }
+    }
+
+
     [Serializable]
     public abstract class RemoveTerrainBaseEvent : BattleEvent
     {
@@ -17399,7 +17446,7 @@ namespace PMDC.Dungeon
             return TileTypes.Contains(tile.Data.ID);
         }
     }
-    
+
     /// <summary>
     /// Event that removes the terrain if it contains one of the specified TerrainStates, replacing it with a floor tile
     /// </summary>
