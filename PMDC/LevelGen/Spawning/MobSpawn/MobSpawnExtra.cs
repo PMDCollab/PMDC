@@ -257,12 +257,18 @@ namespace PMDC.LevelGen
         /// </summary>
         public bool MapStartOnly;
 
+        /// <summary>
+        /// Chance of item spawn
+        /// </summary>
+        public Multiplier Chance;
+
         public MobSpawnItem()
         {
             Items = new SpawnList<InvItem>();
         }
         public MobSpawnItem(bool startOnly, params string[] itemNum) : this()
         {
+            Chance = new Multiplier(1, 1);
             MapStartOnly = startOnly;
             for(int ii = 0; ii < itemNum.Length; ii++)
                 Items.Add(new InvItem(itemNum[ii]), 100);
@@ -271,6 +277,7 @@ namespace PMDC.LevelGen
         public MobSpawnItem(MobSpawnItem other) : this()
         {
             MapStartOnly = other.MapStartOnly;
+            Chance = other.Chance;
             for (int ii = 0; ii < other.Items.Count; ii++)
                 Items.Add(new InvItem(other.Items.GetSpawn(ii)), other.Items.GetSpawnRate(ii));
         }
@@ -281,7 +288,8 @@ namespace PMDC.LevelGen
             if (MapStartOnly && map.Begun)
                 return;
 
-            newChar.EquippedItem = Items.Pick(map.Rand);
+            if (Chance.Denominator > 0 && map.Rand.Next(Chance.Denominator) < Chance.Numerator)
+                newChar.EquippedItem = Items.Pick(map.Rand);
         }
 
         public override string ToString()
@@ -292,6 +300,16 @@ namespace PMDC.LevelGen
             {
                 EntrySummary summary = DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(Items.GetSpawn(0).ID);
                 return string.Format("{0}: {1}", this.GetType().GetFormattedTypeName(), summary.Name.ToLocal());
+            }
+        }
+
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            //TODO: Remove in v1.1
+            if (Serializer.OldVersion < new Version(0, 7, 20))
+            {
+                Chance = new Multiplier(1, 1);
             }
         }
     }
@@ -317,12 +335,18 @@ namespace PMDC.LevelGen
         /// </summary>
         public bool MapStartOnly;
 
+        /// <summary>
+        /// Chance of item spawn.
+        /// </summary>
+        public Multiplier Chance;
+
         public MobSpawnExclBase()
         {
             Box = "";
         }
         public MobSpawnExclBase(string box, IntRange rarity, bool startOnly) : this()
         {
+            Chance = new Multiplier(1, 1);
             Box = box;
             MapStartOnly = startOnly;
             Rarity = rarity;
@@ -333,6 +357,7 @@ namespace PMDC.LevelGen
             MapStartOnly = other.MapStartOnly;
             Rarity = other.Rarity;
             Box = other.Box;
+            Chance = other.Chance;
         }
 
         public override void ApplyFeature(IMobSpawnMap map, Character newChar)
@@ -340,31 +365,34 @@ namespace PMDC.LevelGen
             if (MapStartOnly && map.Begun)
                 return;
 
-            RarityData rarity = DataManager.Instance.UniversalData.Get<RarityData>();
-            List<string> possibleItems = new List<string>();
-            foreach (string baseSpecies in GetPossibleSpecies(map, newChar))
+            if (Chance.Denominator > 0 && map.Rand.Next(Chance.Denominator) < Chance.Numerator)
             {
-                for (int ii = Rarity.Min; ii < Rarity.Max; ii++)
+                RarityData rarity = DataManager.Instance.UniversalData.Get<RarityData>();
+                List<string> possibleItems = new List<string>();
+                foreach (string baseSpecies in GetPossibleSpecies(map, newChar))
                 {
-                    Dictionary<int, List<string>> rarityTable;
-                    if (rarity.RarityMap.TryGetValue(baseSpecies, out rarityTable))
+                    for (int ii = Rarity.Min; ii < Rarity.Max; ii++)
                     {
-                        if (rarityTable.ContainsKey(ii))
+                        Dictionary<int, List<string>> rarityTable;
+                        if (rarity.RarityMap.TryGetValue(baseSpecies, out rarityTable))
                         {
-                            foreach (string item in rarityTable[ii])
+                            if (rarityTable.ContainsKey(ii))
                             {
-                                EntrySummary summary = DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(item);
-                                if (summary.Released)
-                                    possibleItems.Add(item);
+                                foreach (string item in rarityTable[ii])
+                                {
+                                    EntrySummary summary = DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(item);
+                                    if (summary.Released)
+                                        possibleItems.Add(item);
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            InvItem equip = new InvItem(Box);
-            equip.HiddenValue = possibleItems[map.Rand.Next(possibleItems.Count)];
-            newChar.EquippedItem = equip;
+                InvItem equip = new InvItem(Box);
+                equip.HiddenValue = possibleItems[map.Rand.Next(possibleItems.Count)];
+                newChar.EquippedItem = equip;
+            }
         }
 
         protected abstract IEnumerable<string> GetPossibleSpecies(IMobSpawnMap map, Character newChar);
@@ -372,6 +400,16 @@ namespace PMDC.LevelGen
         public override string ToString()
         {
             return string.Format("{0}: {1}*", this.GetType().GetFormattedTypeName(), Rarity.ToString());
+        }
+
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            //TODO: Remove in v1.1
+            if (Serializer.OldVersion < new Version(0, 7, 20))
+            {
+                Chance = new Multiplier(1, 1);
+            }
         }
     }
 
