@@ -190,14 +190,19 @@ namespace PMDC.Dungeon
         /// <returns></returns>
         protected bool playerSensibleToAttack(Character seenChar)
         {
-            if (seenChar.GetStatusEffect("freeze") != null)//if they're frozen, do not attack; NOTE: specialized AI code!
-                return false;
+            StatusEffect freezeStatus = seenChar.GetStatusEffect("freeze");
+            if (seenChar.GetStatusEffect("freeze") != null)//if they're frozen, and have one turn or less; NOTE: specialized AI code!
+            {
+                CountDownState countdown = freezeStatus.StatusStates.GetWithDefault<CountDownState>();
+                if (countdown.Counter < 0 || countdown.Counter > 1)
+                    return false;
+            }
 
             StatusEffect sleepStatus = seenChar.GetStatusEffect("sleep");
             if (sleepStatus != null)//if they're asleep and have one turn or less; NOTE: specialized AI code!
             {
-                CountDownState sleepState = sleepStatus.StatusStates.GetWithDefault<CountDownState>();
-                if (sleepState.Counter < 0 || sleepState.Counter > 1)
+                CountDownState countdown = sleepStatus.StatusStates.GetWithDefault<CountDownState>();
+                if (countdown.Counter < 0 || countdown.Counter > 1)
                     return false;
             }
 
@@ -205,6 +210,8 @@ namespace PMDC.Dungeon
             {
                 //don't attack certain kinds of foes that won't attack first
                 if (seenChar.Tactic.ID == "weird_tree")//weird tree; NOTE: specialized AI code!
+                    return false;
+                if (seenChar.Tactic.ID == "moon_dance")//moon dance; NOTE: specialized AI code!
                     return false;
                 else if (seenChar.Tactic.ID == "wait_attack")//wait attack; NOTE: specialized AI code!
                     return false;
@@ -572,6 +579,19 @@ namespace PMDC.Dungeon
                     return new GameAction(GameAction.ActionType.Wait, Dir8.None);
             }
 
+
+            {
+                StatusEffect sleepStatus = controlledChar.GetStatusEffect("sleep"); //NOTE: specialized AI code!
+                if (sleepStatus != null)
+                    return TrySleepAttackChoice(rand, controlledChar, seenChars, closestThreat);
+            }
+
+            {
+                StatusEffect freezeStatus = controlledChar.GetStatusEffect("freeze"); //NOTE: specialized AI code!
+                if (freezeStatus != null)
+                    return TryFreezeAttackChoice(rand, controlledChar, seenChars, closestThreat);
+            }
+
             if (controlledChar.CantInteract)//TODO: CantInteract doesn't always indicate forced attack, but this'll do for now.
                 return TryForcedAttackChoice(rand, controlledChar, seenChars, closestThreat);
 
@@ -907,6 +927,89 @@ namespace PMDC.Dungeon
                 return new GameAction(GameAction.ActionType.Attack, Dir8.None);
             else
                 return new GameAction(GameAction.ActionType.Wait, Dir8.None);
+        }
+
+        //TODO: refactor this better...
+        protected GameAction TrySleepAttackChoice(IRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
+        {
+            List<ActionDirValue> highestIndices = new List<ActionDirValue>();
+
+            foreach (int ii in iterateUsableSkillIndices(controlledChar))
+            {
+                string skillId = controlledChar.Skills[ii].Element.SkillNum;
+                if (skillId == "sleep_talk" || skillId == "snore") //just actively except the two moves that can be executed asleep; NOTE: specialized AI code!
+                {
+                    HitValue[] moveDirs = new HitValue[8];
+                    GetActionValues(controlledChar, seenChars, closestThreat, controlledChar.Skills[ii].Element.SkillNum, moveDirs, false);
+                    UpdateTotalIndices(rand, highestIndices, new GameAction(GameAction.ActionType.UseSkill, Dir8.None, ii), moveDirs);
+                }
+            }
+
+            if (!String.IsNullOrEmpty(controlledChar.EquippedItem.ID) && (IQ & AIFlags.ItemMaster) != AIFlags.None)
+            {
+                //check item use
+                if (controlledChar.EquippedItem.ID == "berry_lum")//just actively except the one item that can be executed asleep; NOTE: specialized AI code!
+                {
+                    HitValue[] moveDirs = new HitValue[8];
+                    GetItemUseValues(controlledChar, seenChars, closestThreat, controlledChar.EquippedItem.ID, moveDirs);
+                    UpdateTotalIndices(rand, highestIndices, new GameAction(GameAction.ActionType.UseItem, Dir8.None, BattleContext.EQUIP_ITEM_SLOT, -1), moveDirs);
+                }
+            }
+
+            {
+                HitValue[] moveDirs = new HitValue[8];
+                GetActionValues(controlledChar, seenChars, closestThreat, DataManager.Instance.DefaultSkill, moveDirs, false);
+                UpdateHighestIndices(highestIndices, new GameAction(GameAction.ActionType.Attack, Dir8.None), moveDirs);
+            }
+
+            if (highestIndices.Count > 0)
+            {
+                ActionDirValue actionVal = highestIndices[rand.Next(highestIndices.Count)];
+                return actionVal.Action;
+            }
+
+            return new GameAction(GameAction.ActionType.Attack, Dir8.None);
+        }
+
+        protected GameAction TryFreezeAttackChoice(IRandom rand, Character controlledChar, List<Character> seenChars, Character closestThreat)
+        {
+            List<ActionDirValue> highestIndices = new List<ActionDirValue>();
+
+            foreach (int ii in iterateUsableSkillIndices(controlledChar))
+            {
+                SkillData entry = DataManager.Instance.GetSkill(controlledChar.Skills[ii].Element.SkillNum);
+                if (entry.Data.Element == "fire") //just actively except the two moves that can be executed frozen; NOTE: specialized AI code!
+                {
+                    HitValue[] moveDirs = new HitValue[8];
+                    GetActionValues(controlledChar, seenChars, closestThreat, controlledChar.Skills[ii].Element.SkillNum, moveDirs, false);
+                    UpdateTotalIndices(rand, highestIndices, new GameAction(GameAction.ActionType.UseSkill, Dir8.None, ii), moveDirs);
+                }
+            }
+
+            if (!String.IsNullOrEmpty(controlledChar.EquippedItem.ID) && (IQ & AIFlags.ItemMaster) != AIFlags.None)
+            {
+                //check item use
+                if (controlledChar.EquippedItem.ID == "berry_lum")//just actively except the one item that can be executed asleep; NOTE: specialized AI code!
+                {
+                    HitValue[] moveDirs = new HitValue[8];
+                    GetItemUseValues(controlledChar, seenChars, closestThreat, controlledChar.EquippedItem.ID, moveDirs);
+                    UpdateTotalIndices(rand, highestIndices, new GameAction(GameAction.ActionType.UseItem, Dir8.None, BattleContext.EQUIP_ITEM_SLOT, -1), moveDirs);
+                }
+            }
+
+            {
+                HitValue[] moveDirs = new HitValue[8];
+                GetActionValues(controlledChar, seenChars, closestThreat, DataManager.Instance.DefaultSkill, moveDirs, false);
+                UpdateHighestIndices(highestIndices, new GameAction(GameAction.ActionType.Attack, Dir8.None), moveDirs);
+            }
+
+            if (highestIndices.Count > 0)
+            {
+                ActionDirValue actionVal = highestIndices[rand.Next(highestIndices.Count)];
+                return actionVal.Action;
+            }
+
+            return new GameAction(GameAction.ActionType.Attack, Dir8.None);
         }
 
         /// <summary>
@@ -1310,14 +1413,26 @@ namespace PMDC.Dungeon
                 }
             }
             //check for moves that want to wait until within range
-            if (skillIndex == "razor_wind")//wait until enemy is wihin two tiles of razor wind's hitbox, to prevent immediate walk-away; NOTE: specialized AI code!
+            if (skillIndex == "razor_wind")//wait until enemy is two+ tiles deep in the hitbox, to prevent immediate walk-away; NOTE: specialized AI code!
                 rangeMod--;
+            else if (skillIndex == "draco_meteor")//wait until enemy is two+ tiles deep in the hitbox, to catch potential partners
+                rangeMod--;
+            else if (skillIndex == "magnitude")//wait until enemy is three+ tiles deep in the hitbox, to increase damage output
+                rangeMod -= 2;
 
             rangeMod = Math.Min(Math.Max(-3, rangeMod), 3);
 
             //check for moves that change range on conditions; NOTE: specialized AI code!
             switch (skillIndex)
             {
+                case "fire_pledge":
+                case "water_pledge":
+                case "grass_pledge":
+                    {
+                        //intentionally add 4 to the range of 0, as 4 is the detection radius
+                        rangeMod = 4;
+                        break;
+                    }
                 case "mirror_move": // mirror move
                 case "assist": // assist
                 case "copycat": // copycat
@@ -1431,7 +1546,51 @@ namespace PMDC.Dungeon
                     break;
                 case "sleep_talk": // sleep talk
                     {
-                        //TODO
+                        string calledMove = "";
+
+                        int recordSlot = -1;
+                        int recordPower = -1;
+                        for (int ii = 0; ii < controlledChar.Skills.Count; ii++)
+                        {
+                            if (!String.IsNullOrEmpty(controlledChar.Skills[ii].Element.SkillNum))
+                            {
+                                SkillData testEntry = DataManager.Instance.GetSkill(controlledChar.Skills[ii].Element.SkillNum);
+
+                                int basePower = 0;
+                                if (testEntry.Data.Category == BattleData.SkillCategory.Status)
+                                    basePower = -1;
+                                else
+                                {
+                                    BasePowerState state = testEntry.Data.SkillStates.GetWithDefault<BasePowerState>();
+                                    if (state != null)
+                                        basePower = state.Power;
+                                }
+                                if (basePower > recordPower)
+                                {
+                                    recordSlot = ii;
+                                    recordPower = basePower;
+                                }
+                            }
+                        }
+
+                        if (recordSlot > -1)
+                            calledMove = controlledChar.Skills[recordSlot].Element.SkillNum;
+
+                        skillIndex = calledMove;
+                        if (String.IsNullOrEmpty(calledMove))
+                        {
+                            entry = null;
+                            hitboxAction = null;
+                            explosion = null;
+                        }
+                        else
+                        {
+                            SkillData calledEntry = DataManager.Instance.GetSkill(calledMove);
+                            entry = calledEntry;
+
+                            hitboxAction = entry.HitboxAction;
+                            explosion = entry.Explosion;
+                        }
                     }
                     break;
                 case "spit_up": // spit up
@@ -1549,6 +1708,18 @@ namespace PMDC.Dungeon
                 if (!controlledChar.CantInteract)//TODO: CantInteract doesn't always indicate forced attack, but this'll do for now.
                     return new HitValue(100, true);
             }
+            else if (skillIndex == "retaliate" || skillIndex == "fire_pledge" || skillIndex == "water_pledge" || skillIndex == "grass_pledge")
+            {
+                foreach (BattleEvent effect in entry.Data.BeforeTryActions.EnumerateInOrder())
+                {
+                    if (effect is WatchOrStrikeEvent)
+                    {
+                        string status = ((WatchOrStrikeEvent)effect).ChargeStatus;
+                        if (controlledChar.GetStatusEffect(status) != null)
+                            return new HitValue(0, false);
+                    }
+                }
+            }
 
             int rangeMod = 0;
 
@@ -1641,30 +1812,39 @@ namespace PMDC.Dungeon
                     StatusEffect sleepStatus = target.GetStatusEffect("sleep");
                     if (sleepStatus != null)
                     {
-                        bool leaveSleeping = true;
-
+                        bool leaveBe = true;
                         int counter = sleepStatus.StatusStates.GetWithDefault<CountDownState>().Counter;
                         if (!teamPartner)
                         {
                             //team partners are extra cautious not to do anything to sleepers, but npcs will still attack with status if it applies
                             if (data.Category == BattleData.SkillCategory.Status && counter > 1)
-                                leaveSleeping = false;
+                                leaveBe = false;
                             else if (data.Category != BattleData.SkillCategory.Status && counter <= 1)
-                                leaveSleeping = false;
+                                leaveBe = false;
                         }
                         else
                         {
                             //attack to wake up if they were going to wake up anyway
                             if (counter == 0 || counter == 1)
-                                leaveSleeping = false;
+                                leaveBe = false;
                         }
-                        if (leaveSleeping)
+                        if (leaveBe)
                             return 0;
                     }
-                    if (target.GetStatusEffect("freeze") != null)
+                    StatusEffect freezeStatus = target.GetStatusEffect("freeze");
+                    if (freezeStatus != null)
                     {
-                        //don't attack the frozen; it won't help
-                        return 0;
+                        bool leaveBe = true;
+                        int counter = freezeStatus.StatusStates.GetWithDefault<CountDownState>().Counter;
+                        if (data.Element == "fire")
+                        {
+                            //attack to thaw if they were going to thaw anyway
+                            if (counter == 0 || counter == 1)
+                                leaveBe = false;
+                        }
+
+                        if (leaveBe)
+                            return 0;
                     }
                 }
                 if (teamPartner)
@@ -1672,6 +1852,8 @@ namespace PMDC.Dungeon
                     if (target.GetStatusEffect("last_targeted_by") == null)//last targeted by someone; NOTE: specialized AI code!
                     {
                         if (target.Tactic.ID == "weird_tree")//weird tree; NOTE: specialized AI code!
+                            return 0;
+                        if (target.Tactic.ID == "moon_dance")//moon dance; NOTE: specialized AI code!
                             return 0;
                         else if (target.Tactic.ID == "wait_attack")//wait attack; NOTE: specialized AI code!
                             return 0;
@@ -1715,9 +1897,6 @@ namespace PMDC.Dungeon
 
             //special cases go here
             //TODO: move all NOTE codes into properly specialized code blocks
-
-            if (target.GetStatusEffect("freeze") != null/* && entry.SkillEffect.MoveType != 07*/)
-                return 0;
 
             foreach (BattleEvent effect in entry.Data.OnActions.EnumerateInOrder())
             {
@@ -2075,6 +2254,10 @@ namespace PMDC.Dungeon
                             return -100;
                         return 0;
                     }
+                    else if (effect is SketchBattleEvent)
+                    {
+                        return -100;
+                    }
                     else if (effect is PowerTrickEvent)
                     {
                         if (target.ProxyAtk == -1 || target.ProxyDef == -1)
@@ -2325,7 +2508,13 @@ namespace PMDC.Dungeon
                             else if (giveEffect.StatusID == "decoy")//substitute; not necessarily a bad status, but treated like one
                                 addedWorth = -100;
                             else
-                                addedWorth = 100;
+                            {
+                                //for any other effect, assume it has a negative effect on foes, and positive effect on allies 
+                                if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
+                                    return 100;
+                                else
+                                    return -100;
+                            }
                         }
 
                         if (statusData.StatusStates.Contains<BadStatusState>())

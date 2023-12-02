@@ -12,6 +12,7 @@ namespace PMDC.Dungeon
     public class WaitUntilAttackedPlan : AIPlan
     {
         [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
         public string StatusIndex;
         public WaitUntilAttackedPlan(AIFlags iq, string status) : base(iq)
         {
@@ -32,6 +33,7 @@ namespace PMDC.Dungeon
     public class WaitUntilMapStatusPlan : AIPlan
     {
         [JsonConverter(typeof(MapStatusConverter))]
+        [DataType(0, DataManager.DataType.MapStatus, false)]
         public string StatusIndex;
         public WaitUntilMapStatusPlan(AIFlags iq, string status) : base(iq)
         {

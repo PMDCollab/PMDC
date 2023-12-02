@@ -50,4 +50,38 @@ namespace PMDC.Dev
             return objectType == typeof(Dictionary<ItemFake, MobSpawn>);
         }
     }
+
+
+    public class MobilityTableConverter : JsonConverter
+    {
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            Dictionary<MonsterID, TerrainData.Mobility> dict = (Dictionary<MonsterID, TerrainData.Mobility>)value;
+            writer.WriteStartArray();
+            foreach (MonsterID item in dict.Keys)
+            {
+                serializer.Serialize(writer, (item, dict[item]));
+            }
+            writer.WriteEndArray();
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            Dictionary<MonsterID, TerrainData.Mobility> dict = new Dictionary<MonsterID, TerrainData.Mobility>();
+
+            JArray jArray = JArray.Load(reader);
+            List<(MonsterID, TerrainData.Mobility)> container = new List<(MonsterID, TerrainData.Mobility)>();
+            serializer.Populate(jArray.CreateReader(), container);
+
+            foreach ((MonsterID, TerrainData.Mobility) item in container)
+                dict[item.Item1] = item.Item2;
+
+            return dict;
+        }
+
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(Dictionary<MonsterID, TerrainData.Mobility>);
+        }
+    }
 }

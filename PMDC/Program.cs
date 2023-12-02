@@ -66,6 +66,7 @@ namespace PMDC
                 DataManager.DataType reserializeIndices = DataManager.DataType.None;
                 string langArgs = "";
                 bool dev = false;
+                bool devLua = false;
                 string quest = "";
                 List<string> mod = new List<string>();
                 bool buildQuest = false;
@@ -75,7 +76,15 @@ namespace PMDC
                 for (int ii = 1; ii < args.Length; ii++)
                 {
                     if (args[ii].ToLower() == "-dev")
+                    {
                         dev = true;
+                        devLua = true;
+                        //if (args.Length > ii + 1 && args[ii + 1] == "lua")
+                        //{
+                        //    devLua = true;
+                        //    ii++;
+                        //}
+                    }
                     else if (args[ii].ToLower() == "-help")
                     {
                         Console.WriteLine("PMDO OPTIONS:");
@@ -224,6 +233,7 @@ namespace PMDC
                 GraphicsManager.InitParams();
 
                 DiagManager.Instance.DevMode = dev;
+                DiagManager.Instance.DebugLua = devLua;
 
                 ModHeader newQuest = ModHeader.Invalid;
                 ModHeader[] newMods = new ModHeader[0] { };
@@ -302,13 +312,14 @@ namespace PMDC
                     DiagManager.Instance.LogError(new Exception("Errors detected in mod load:\n" + String.Join("", errorMsgs.ToArray())));
                     DiagManager.Instance.LogInfo(String.Format("The game will continue execution with mods loaded, but order will be broken!"));
                 }
+                DiagManager.Instance.PrintModSettings();
 
 
                 if (playInputs != null)
                     DiagManager.Instance.LoadInputs(playInputs);
 
                 Text.Init();
-                if (langArgs != "" && DiagManager.Instance.CurSettings.Language == "")
+                if (langArgs != "")
                 {
                     if (langArgs.Length > 0)
                     {

@@ -10,16 +10,33 @@ namespace PMDC.Dungeon
     [Serializable]
     public class FindItemPlan : ExplorePlan
     {
-        public FindItemPlan(AIFlags iq) : base(iq)
+
+        public bool IncludeMoney;
+
+        public FindItemPlan(AIFlags iq, bool includeMoney) : base(iq)
         {
+            IncludeMoney = includeMoney;
         }
-        protected FindItemPlan(FindItemPlan other) : base(other) { }
+        protected FindItemPlan(FindItemPlan other) : base(other)
+        {
+            IncludeMoney = other.IncludeMoney;
+        }
         public override BasePlan CreateNew() { return new FindItemPlan(this); }
 
         public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
-            if (!String.IsNullOrEmpty(controlledChar.EquippedItem.ID))
-                return null;
+            if (controlledChar.MemberTeam is ExplorerTeam)
+            {
+                ExplorerTeam explorerTeam = (ExplorerTeam)controlledChar.MemberTeam;
+                if (explorerTeam.GetInvCount() >= explorerTeam.GetMaxInvSlots(ZoneManager.Instance.CurrentZone))
+                    return null;
+            }
+            else
+            {
+                //already holding an item
+                if (!String.IsNullOrEmpty(controlledChar.EquippedItem.ID))
+                    return null;
+            }
 
             return base.Think(controlledChar, preThink, rand);
         }
@@ -36,7 +53,7 @@ namespace PMDC.Dungeon
             //fix later
             foreach (MapItem item in ZoneManager.Instance.CurrentMap.Items)
             {
-                if (!item.IsMoney && ZoneManager.Instance.CurrentMap.InBounds(new Rect(mapStart, mapSize), item.TileLoc))
+                if ((IncludeMoney || !item.IsMoney) && ZoneManager.Instance.CurrentMap.InBounds(new Rect(mapStart, mapSize), item.TileLoc))
                     TryAddDest(controlledChar, loc_list, item.TileLoc);
             }
             return loc_list;
