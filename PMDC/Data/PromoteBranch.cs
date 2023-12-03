@@ -29,7 +29,7 @@ namespace PMDC.Data
         [DataType(0, DataManager.DataType.Item, false)]
         public string ItemNum;
 
-        public override string GiveItem { get { return ItemNum; } }
+        public override string GetReqItem(Character character) { return ItemNum; }
         public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_ITEM").ToLocal(), DataManager.Instance.GetItem(ItemNum).GetColoredName()); }
         
         public override bool GetReq(Character character, bool inDungeon)
@@ -583,7 +583,7 @@ namespace PMDC.Data
             if (!data.Forms[Form].Released)
                 return;
 
-            //set forme depending on location
+            //set forme depending on condition
             foreach (PromoteDetail detail in Conditions)
             {
                 if (!detail.GetReq(character, inDungeon))
@@ -617,20 +617,56 @@ namespace PMDC.Data
     [Serializable]
     public class EvoFormDusk : PromoteDetail
     {
+        [DataType(1, DataManager.DataType.Item, false)]
+        public Dictionary<string, int> ItemMap;
+        public int DefaultForm;
+
+        public override string GetReqItem(Character character) { return character.EquippedItem.ID; }
+
+        public EvoFormDusk() { ItemMap = new Dictionary<string, int>(); }
+
         public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_ITEM").ToLocal(), "???"); }
 
         public override bool GetReq(Character character, bool inDungeon)
         {
+            foreach (string itemNum in ItemMap.Keys)
+            {
+                if (inDungeon)
+                {
+                    if (character.EquippedItem.ID == itemNum && !character.EquippedItem.Cursed)
+                        return true;
+                }
+                else
+                {
+                    if (character.EquippedItem.ID == itemNum)
+                        return true;
+                }
+            }
             return false;
+        }
+
+        public override void BeforePromote(Character character, bool inDungeon, ref MonsterID result)
+        {
+            int resultForm = DefaultForm;
+
+            //set forme depending on condition
+            foreach (string itemNum in ItemMap.Keys)
+            {
+                if (character.EquippedItem.ID == itemNum)
+                {
+                    resultForm = ItemMap[itemNum];
+                    break;
+                }
+            }
+
+            MonsterData data = DataManager.Instance.GetMonster(result.Species);
+            if (data.Forms[resultForm].Released)
+                result.Form = resultForm;
         }
 
         public override void OnPromote(Character character, bool inDungeon)
         {
-            //functions as an item check, AND sets the forme
-            //set forme depending on the item donated
-            //sun ribbon? midday
-            //moon ribbon? midnight
-            //harmony scarf? dusk
+            character.SilentDequipItem();
         }
     }
     [Serializable]
