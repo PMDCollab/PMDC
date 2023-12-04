@@ -3931,11 +3931,9 @@ namespace PMDC.Dungeon
             string evoItem = "";
             foreach (PromoteDetail detail in branch.Details)
             {
-                if (!String.IsNullOrEmpty(detail.GiveItem))
-                {
-                    evoItem = detail.GiveItem;
+                evoItem = detail.GetReqItem(character);
+                if (!String.IsNullOrEmpty(evoItem))
                     break;
-                }
             }
             //factor in exception item to this question
             if (bypass)

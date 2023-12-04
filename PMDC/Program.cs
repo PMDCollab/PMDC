@@ -363,6 +363,7 @@ namespace PMDC
                     }
 
                     LuaEngine.InitInstance();
+                    LuaEngine.Instance.LoadScripts();
                     DataManager.InitInstance();
                     DataManager.Instance.LoadConversions();
                     RogueEssence.Dev.DevHelper.PrepareAssetConversion();
@@ -382,6 +383,7 @@ namespace PMDC
                     //we need the datamanager for this, but only while data is hardcoded
                     //TODO: remove when data is no longer hardcoded
                     LuaEngine.InitInstance();
+                    LuaEngine.Instance.LoadScripts();
                     DataManager.InitInstance();
                     DataManager.Instance.LoadConversions();
 
@@ -419,6 +421,7 @@ namespace PMDC
                     //we need the datamanager for this, but only while data is hardcoded
                     //TODO: remove when data is no longer hardcoded
                     LuaEngine.InitInstance();
+                    LuaEngine.Instance.LoadScripts();
                     DataManager.InitInstance();
                     DiagManager.Instance.LogInfo("Reserializing indices");
                     DataManager.InitDataDirs(PathMod.ModPath(""));
@@ -435,6 +438,7 @@ namespace PMDC
                     //print the guidebook in the chosen language
                     //we need the datamanager for this
                     LuaEngine.InitInstance();
+                    LuaEngine.Instance.LoadScripts();
                     DataManager.InitInstance();
                     DataManager.Instance.InitData();
                     //just print a guidebook and exit
