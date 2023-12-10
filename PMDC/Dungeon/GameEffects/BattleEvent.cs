@@ -1792,30 +1792,32 @@ namespace PMDC.Dungeon
     /// Event that uses a different battle data if the target is an ally
     /// </summary>
     [Serializable]
-    public class AllyDifferentEvent : BattleEvent
+    public class AlignmentDifferentEvent : BattleEvent
     {
-        
+        public Alignment Alignments;
         /// <summary>
         /// Events that occur with this skill
         /// Before it's used, when it hits, after it's used, etc
         /// </summary>
         public BattleData NewData;
 
-        public AllyDifferentEvent() { }
-        public AllyDifferentEvent(BattleData moveData)
+        public AlignmentDifferentEvent() { }
+        public AlignmentDifferentEvent(Alignment alignments, BattleData moveData)
         {
+            Alignments = alignments;
             NewData = moveData;
         }
-        protected AllyDifferentEvent(AllyDifferentEvent other)
+        protected AlignmentDifferentEvent(AlignmentDifferentEvent other)
         {
+            Alignments = other.Alignments;
             NewData = new BattleData(other.NewData);
         }
-        public override GameEvent Clone() { return new AllyDifferentEvent(this); }
+        public override GameEvent Clone() { return new AlignmentDifferentEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             //different effects for allies
-            if (DungeonScene.Instance.GetMatchup(context.User, context.Target) != Alignment.Foe)
+            if ((DungeonScene.Instance.GetMatchup(context.User, context.Target) & Alignments) != Alignment.None)
             {
                 string id = context.Data.ID;
                 DataManager.DataType dataType = context.Data.DataType;
@@ -1824,6 +1826,16 @@ namespace PMDC.Dungeon
                 context.Data.DataType = dataType;
             }
             yield break;
+        }
+
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            //TODO: remove on v1.1
+            if (Serializer.OldVersion < new Version(0, 7, 21) && Alignments == Alignment.None)
+            {
+                Alignments = Alignment.Self | Alignment.Friend;
+            }
         }
     }
 
