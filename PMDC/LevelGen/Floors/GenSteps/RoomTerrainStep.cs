@@ -7,7 +7,7 @@ using RogueEssence.Dungeon;
 namespace PMDC.LevelGen
 {
     /// <summary>
-    /// Sets terrain in a room to a certain value.
+    /// Sets terrain in a number of rooms to a certain value.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     [Serializable]
