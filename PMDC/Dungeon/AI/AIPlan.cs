@@ -2125,7 +2125,7 @@ namespace PMDC.Dungeon
                     if (effect is IHealEvent)
                     {
                         IHealEvent giveEffect = (IHealEvent)effect;
-                        int healHP = target.MaxHP * giveEffect.HPNum / giveEffect.HPDen;
+                        int healHP = Math.Max(1, target.MaxHP * giveEffect.HPNum / giveEffect.HPDen);
                         int hpToHeal = target.MaxHP - target.HP;
                         int hpWorthHealing = Math.Max(hpToHeal - healHP / 2, 0);
                         //the healing only has worth if the target is missing at least half the HP the healing would give
@@ -2373,7 +2373,7 @@ namespace PMDC.Dungeon
                     else if (effect is RestEvent)
                     {
                         int healHP = target.MaxHP;
-                        int hpMissing = target.MaxHP - target.HP - healHP / 4;
+                        int hpMissing = Math.Max(target.MaxHP - target.HP - healHP / 4, 1);
                         return hpMissing * 200 / healHP;
                     }
                     else if (effect is WarpAlliesInEvent)
