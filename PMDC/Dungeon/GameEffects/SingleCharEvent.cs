@@ -6037,7 +6037,7 @@ namespace PMDC.Dungeon
             //spawn list is specified by the state tags.  same as items
             List<MobSpawn> mobs = GetMonsters(owner, ownerChar, context.User);
             //find the open tiles to spawn in
-            List<Loc> freeTiles = Grid.FindTilesInBox(bounds.Start + new Loc(1), bounds.Size - new Loc(2),
+            List<Loc> freeTiles = Grid.FindTilesInBox(bounds.Start, bounds.Size,
                 (Loc testLoc) =>
                 {
                     if (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc))
