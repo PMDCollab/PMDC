@@ -18513,23 +18513,18 @@ namespace PMDC.Dungeon
     /// If successful, the recruit can be nicknamed and added to the team
     /// </summary>
     [Serializable]
-    public class RecruitmentEvent : BattleEvent
+    public class RecruitmentEvent : BaseRecruitmentEvent
     {
-        /// <summary>
-        /// Tha lua battle script that runs when interacting with the recruit in dungeons 
-        /// </summary>
-        public BattleScriptEvent ActionScript;
-
         public RecruitmentEvent()
         { }
-        public RecruitmentEvent(BattleScriptEvent scriptEvent)
+        public RecruitmentEvent(BattleScriptEvent scriptEvent) : base(scriptEvent)
         {
-            ActionScript = scriptEvent;
+
         }
 
-        public RecruitmentEvent(RecruitmentEvent other)
+        public RecruitmentEvent(RecruitmentEvent other) : base(other)
         {
-            ActionScript = (BattleScriptEvent)other.ActionScript.Clone();
+
         }
 
         public override GameEvent Clone() { return new RecruitmentEvent(this); }
@@ -18546,7 +18541,7 @@ namespace PMDC.Dungeon
             }
 
 
-            if (context.Target.Unrecruitable || context.Target.MemberTeam is ExplorerTeam)
+            if (context.Target.Unrecruitable || context.Target.MemberTeam is ExplorerTeam || DataManager.Instance.Save.NoRecruiting)
             {
                 EmoteData emoteData = DataManager.Instance.GetEmote("angry");
                 context.Target.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 1));
@@ -18582,93 +18577,7 @@ namespace PMDC.Dungeon
                 {
                     if (DataManager.Instance.Save.Rand.Next(100) < totalRate)
                     {
-                        GameManager.Instance.Fanfare("Fanfare/JoinTeam");
-                        DungeonScene.Instance.RemoveChar(context.Target);
-                        AITactic tactic = DataManager.Instance.GetAITactic(DataManager.Instance.DefaultAI);
-                        context.Target.Tactic = new AITactic(tactic);
-                        DungeonScene.Instance.AddCharToTeam(Faction.Player, 0, false, context.Target);
-                        context.Target.RefreshTraits();
-                        context.Target.Tactic.Initialize(context.Target);
-
-                        int oldFullness = context.Target.Fullness;
-                        context.Target.FullRestore();
-                        context.Target.Fullness = oldFullness;
-                        //restore HP and status problems
-                        //{
-                        //    context.Target.HP = context.Target.MaxHP;
-
-                        //    List<int> statuses = new List<int>();
-                        //    foreach (StatusEffect oldStatus in context.Target.IterateStatusEffects())
-                        //        statuses.Add(oldStatus.ID);
-
-                        //    foreach (int statusID in statuses)
-                        //        yield return CoroutineManager.Instance.StartCoroutine(context.Target.RemoveStatusEffect(statusID, false));
-                        //}
-
-                        foreach (BackReference<Skill> skill in context.Target.Skills)
-                            skill.Element.Enabled = DataManager.Instance.Save.GetDefaultEnable(skill.Element.SkillNum);
-
-
-                        context.Target.OriginalUUID = DataManager.Instance.Save.UUID;
-                        context.Target.OriginalTeam = DataManager.Instance.Save.ActiveTeam.Name;
-                        context.Target.MetAt = ZoneManager.Instance.CurrentMap.GetColoredName();
-                        context.Target.MetLoc = new ZoneLoc(ZoneManager.Instance.CurrentZoneID, ZoneManager.Instance.CurrentMapID);
-                        context.Target.ActionEvents.Clear();
-                        if (ActionScript != null)
-                            context.Target.ActionEvents.Add((BattleEvent)ActionScript.Clone());
-                        ZoneManager.Instance.CurrentMap.UpdateExploration(context.Target);
-
-                        EmoteData emoteData = DataManager.Instance.GetEmote("glowing");
-                        context.Target.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 2));
-                        yield return new WaitForFrames(40);
-
-                        int poseId = 50;
-                        CharSheet sheet = GraphicsManager.GetChara(context.Target.Appearance.ToCharID());
-                        int fallbackIndex = sheet.GetReferencedAnimIndex(poseId);
-                        if (fallbackIndex == poseId)
-                            yield return CoroutineManager.Instance.StartCoroutine(context.Target.StartAnim(new CharAnimPose(context.Target.CharLoc, context.Target.CharDir, poseId, 0)));
-
-                        //check against inventory capacity violation
-                        if (!String.IsNullOrEmpty(context.Target.EquippedItem.ID) && DungeonScene.Instance.ActiveTeam.MaxInv == DungeonScene.Instance.ActiveTeam.GetInvCount())
-                        {
-                            InvItem item = context.Target.EquippedItem;
-                            yield return CoroutineManager.Instance.StartCoroutine(context.Target.DequipItem());
-                            yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(item, context.Target.CharLoc));
-                        }
-
-                        if (DataManager.Instance.CurrentReplay == null)
-                        {
-                            yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(new MemberFeaturesMenu(DungeonScene.Instance.ActiveTeam.Players.Count - 1, false, false)));
-
-                            bool nick = false;
-                            string name = "";
-                            yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(MenuManager.Instance.CreateQuestion(Text.FormatGrammar(new StringKey("MSG_ASK_NICKNAME").ToLocal()),
-                                () => { nick = true; },
-                                () => { })));
-                            if (nick)
-                                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(new NicknameMenu((string text) => { name = text; }, () => { })));
-                            DataManager.Instance.LogUIStringPlay(name);
-                            context.Target.Nickname = name;
-                        }
-                        else
-                        {
-                            //give nickname
-                            context.Target.Nickname = DataManager.Instance.CurrentReplay.ReadUIString();
-                        }
-                        if (DungeonScene.Instance.ActiveTeam.Name != "")
-                            DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_RECRUIT").ToLocal(), context.Target.GetDisplayName(true), DungeonScene.Instance.ActiveTeam.GetDisplayName()));
-                        else
-                            DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_RECRUIT_ANY").ToLocal(), context.Target.GetDisplayName(true)));
-                        DataManager.Instance.Save.RegisterMonster(context.Target.BaseForm.Species);
-                        DataManager.Instance.Save.RogueUnlockMonster(context.Target.BaseForm.Species);
-                        yield return CoroutineManager.Instance.StartCoroutine(context.Target.OnMapStart());
-
-                        //yield return new WaitForFrames(120);
-
-                        if (DungeonScene.Instance.ActiveTeam.Players.Count > DungeonScene.Instance.ActiveTeam.GetMaxTeam(ZoneManager.Instance.CurrentZone))
-                            yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AskToSendHome());
-
-                        yield return CoroutineManager.Instance.StartCoroutine(context.Target.StartAnim(new CharAnimIdle(context.Target.CharLoc, context.Target.CharDir)));
+                        yield return CoroutineManager.Instance.StartCoroutine(base.Apply(owner, ownerChar, context));
                     }
                     else
                     {
@@ -18678,6 +18587,211 @@ namespace PMDC.Dungeon
                     }
                 }
             }
+        }
+    }
+
+
+
+    /// <summary>
+    /// Event that attempts to recruit the target.
+    /// If successful, the recruit can be nicknamed and added to the team
+    /// </summary>
+    [Serializable]
+    public class DefeatRecruitmentEvent : BaseRecruitmentEvent
+    {
+        /// <summary>
+        /// The numerator of the modifier
+        /// </summary>
+        public int Numerator;
+
+        /// <summary>
+        /// The denominator of the modififer
+        /// </summary>
+        public int Denominator;
+
+        public DefeatRecruitmentEvent()
+        { }
+        public DefeatRecruitmentEvent(int numerator, int denominator, BattleScriptEvent scriptEvent) : base(scriptEvent)
+        {
+            Numerator = numerator;
+            Denominator = denominator;
+        }
+
+        public DefeatRecruitmentEvent(DefeatRecruitmentEvent other) : base(other)
+        {
+            Numerator = other.Numerator;
+            Denominator = other.Denominator;
+        }
+
+        public override GameEvent Clone() { return new DefeatRecruitmentEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (!context.Target.Dead)
+                yield break;
+
+
+            if (context.Target.Unrecruitable || context.Target.MemberTeam is ExplorerTeam || DataManager.Instance.Save.NoRecruiting)
+            {
+                yield break;
+            }
+            else if (context.Target.Level > context.User.Level + 5)
+            {
+                yield break;
+            }
+            else
+            {
+                MonsterID formData = context.Target.BaseForm;
+                int catchRate = DataManager.Instance.GetMonster(formData.Species).JoinRate;
+
+                int totalRate = catchRate + context.GetContextStateInt<RecruitBoost>(0);
+                totalRate = totalRate * Numerator / Denominator;
+
+                if (totalRate <= 0)
+                {
+                    yield break;
+                }
+                else
+                {
+                    if (DataManager.Instance.Save.Rand.Next(100) < totalRate)
+                    {
+                        bool recruit = false;
+                        if (DataManager.Instance.CurrentReplay != null)
+                        {
+                            recruit = DataManager.Instance.CurrentReplay.ReadUI() > 0;
+                        }
+                        else
+                        {
+                            yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(MenuManager.Instance.CreateQuestion(Text.FormatGrammar(new StringKey("MSG_ASK_RECRUIT").ToLocal()),
+                                () => { recruit = true; },
+                                () => { })));
+
+                            DataManager.Instance.LogUIPlay(recruit ? 1 : 0);
+                        }
+                        if (recruit)
+                            yield return CoroutineManager.Instance.StartCoroutine(base.Apply(owner, ownerChar, context));
+                    }
+                    else
+                    {
+                        yield break;
+                    }
+                }
+            }
+        }
+    }
+
+
+    [Serializable]
+    public abstract class BaseRecruitmentEvent : BattleEvent
+    {
+        /// <summary>
+        /// Tha lua battle script that runs when interacting with the recruit in dungeons 
+        /// </summary>
+        public BattleScriptEvent ActionScript;
+
+        public BaseRecruitmentEvent()
+        { }
+
+        public BaseRecruitmentEvent(BattleScriptEvent scriptEvent)
+        {
+            ActionScript = scriptEvent;
+        }
+
+        public BaseRecruitmentEvent(BaseRecruitmentEvent other)
+        {
+            ActionScript = other.ActionScript;
+        }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            GameManager.Instance.Fanfare("Fanfare/JoinTeam");
+            DungeonScene.Instance.RemoveChar(context.Target);
+            AITactic tactic = DataManager.Instance.GetAITactic(DataManager.Instance.DefaultAI);
+            context.Target.Tactic = new AITactic(tactic);
+            DungeonScene.Instance.AddCharToTeam(Faction.Player, 0, false, context.Target);
+            context.Target.RefreshTraits();
+            context.Target.Tactic.Initialize(context.Target);
+
+            int oldFullness = context.Target.Fullness;
+            context.Target.FullRestore();
+            context.Target.Fullness = oldFullness;
+            //restore HP and status problems
+            //{
+            //    context.Target.HP = context.Target.MaxHP;
+
+            //    List<int> statuses = new List<int>();
+            //    foreach (StatusEffect oldStatus in context.Target.IterateStatusEffects())
+            //        statuses.Add(oldStatus.ID);
+
+            //    foreach (int statusID in statuses)
+            //        yield return CoroutineManager.Instance.StartCoroutine(context.Target.RemoveStatusEffect(statusID, false));
+            //}
+
+            foreach (BackReference<Skill> skill in context.Target.Skills)
+                skill.Element.Enabled = DataManager.Instance.Save.GetDefaultEnable(skill.Element.SkillNum);
+
+
+            context.Target.OriginalUUID = DataManager.Instance.Save.UUID;
+            context.Target.OriginalTeam = DataManager.Instance.Save.ActiveTeam.Name;
+            context.Target.MetAt = ZoneManager.Instance.CurrentMap.GetColoredName();
+            context.Target.MetLoc = new ZoneLoc(ZoneManager.Instance.CurrentZoneID, ZoneManager.Instance.CurrentMapID);
+            context.Target.ActionEvents.Clear();
+            if (ActionScript != null)
+                context.Target.ActionEvents.Add((BattleEvent)ActionScript.Clone());
+            ZoneManager.Instance.CurrentMap.UpdateExploration(context.Target);
+
+            EmoteData emoteData = DataManager.Instance.GetEmote("glowing");
+            context.Target.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 2));
+            yield return new WaitForFrames(40);
+
+            int poseId = 50;
+            CharSheet sheet = GraphicsManager.GetChara(context.Target.Appearance.ToCharID());
+            int fallbackIndex = sheet.GetReferencedAnimIndex(poseId);
+            if (fallbackIndex == poseId)
+                yield return CoroutineManager.Instance.StartCoroutine(context.Target.StartAnim(new CharAnimPose(context.Target.CharLoc, context.Target.CharDir, poseId, 0)));
+
+            //check against inventory capacity violation
+            if (!String.IsNullOrEmpty(context.Target.EquippedItem.ID) && DungeonScene.Instance.ActiveTeam.MaxInv == DungeonScene.Instance.ActiveTeam.GetInvCount())
+            {
+                InvItem item = context.Target.EquippedItem;
+                yield return CoroutineManager.Instance.StartCoroutine(context.Target.DequipItem());
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(item, context.Target.CharLoc));
+            }
+
+            if (DataManager.Instance.CurrentReplay == null)
+            {
+                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(new MemberFeaturesMenu(DungeonScene.Instance.ActiveTeam.Players.Count - 1, false, false)));
+
+                bool nick = false;
+                string name = "";
+                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(MenuManager.Instance.CreateQuestion(Text.FormatGrammar(new StringKey("MSG_ASK_NICKNAME").ToLocal()),
+                    () => { nick = true; },
+                    () => { })));
+                if (nick)
+                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(new NicknameMenu((string text) => { name = text; }, () => { })));
+                DataManager.Instance.LogUIStringPlay(name);
+                context.Target.Nickname = name;
+            }
+            else
+            {
+                //give nickname
+                context.Target.Nickname = DataManager.Instance.CurrentReplay.ReadUIString();
+            }
+            if (DungeonScene.Instance.ActiveTeam.Name != "")
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_RECRUIT").ToLocal(), context.Target.GetDisplayName(true), DungeonScene.Instance.ActiveTeam.GetDisplayName()));
+            else
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_RECRUIT_ANY").ToLocal(), context.Target.GetDisplayName(true)));
+            DataManager.Instance.Save.RegisterMonster(context.Target.BaseForm.Species);
+            DataManager.Instance.Save.RogueUnlockMonster(context.Target.BaseForm.Species);
+            yield return CoroutineManager.Instance.StartCoroutine(context.Target.OnMapStart());
+
+            //yield return new WaitForFrames(120);
+
+            if (DungeonScene.Instance.ActiveTeam.Players.Count > DungeonScene.Instance.ActiveTeam.GetMaxTeam(ZoneManager.Instance.CurrentZone))
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AskToSendHome());
+
+            yield return CoroutineManager.Instance.StartCoroutine(context.Target.StartAnim(new CharAnimIdle(context.Target.CharLoc, context.Target.CharDir)));
+
         }
     }
 
