@@ -23,6 +23,11 @@ namespace PMDC.Dev
                     typeName = typeName.Replace("RogueEssence.LevelGen.FloorNameIDZoneStep", "PMDC.LevelGen.FloorNameDropZoneStep");
                 }
             }
+            if (RogueEssence.Data.Serializer.OldVersion < new Version(0, 7, 21))
+            {
+                if (typeName.StartsWith("PMDC.Dungeon.AllyDifferentEvent"))
+                    typeName = typeName.Replace("PMDC.Dungeon.AllyDifferentEvent", "PMDC.Dungeon.AlignmentDifferentEvent");
+            }
             Type typeToDeserialize = Type.GetType(String.Format("{0}, {1}",
                 typeName, assemblyName));
 

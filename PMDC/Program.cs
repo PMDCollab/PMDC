@@ -524,6 +524,7 @@ namespace PMDC
             DataEditor.AddEditor(new MultiStepSpawnerEditor());
             DataEditor.AddEditor(new PickerSpawnerEditor());
             DataEditor.AddEditor(new TeamContextSpawnerEditor());
+            DataEditor.AddEditor(new LoopedTeamSpawnerEditor());
             DataEditor.AddEditor(new ContextSpawnerEditor());
             DataEditor.AddEditor(new MoneyDivSpawnerEditor());
             DataEditor.AddEditor(new TeamStepSpawnerEditor());

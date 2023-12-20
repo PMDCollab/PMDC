@@ -389,9 +389,12 @@ namespace PMDC.LevelGen
                     }
                 }
 
-                InvItem equip = new InvItem(Box);
-                equip.HiddenValue = possibleItems[map.Rand.Next(possibleItems.Count)];
-                newChar.EquippedItem = equip;
+                if (possibleItems.Count > 0)
+                {
+                    InvItem equip = new InvItem(Box);
+                    equip.HiddenValue = possibleItems[map.Rand.Next(possibleItems.Count)];
+                    newChar.EquippedItem = equip;
+                }
             }
         }
 
