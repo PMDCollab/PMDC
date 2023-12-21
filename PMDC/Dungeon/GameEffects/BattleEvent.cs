@@ -69,10 +69,11 @@ namespace PMDC.Dungeon
         {
             //use the correct phys/special stats
             if (context.Data.Category == BattleData.SkillCategory.Physical)
-                context.ContextStates.Set(new AttackerStat(context.User.Atk));
+                context.ContextStates.Set(new UserAtkStat(context.User.Atk));
             else if (context.Data.Category == BattleData.SkillCategory.Magical)
-                context.ContextStates.Set(new AttackerStat(context.User.MAtk));
+                context.ContextStates.Set(new UserAtkStat(context.User.MAtk));
             context.ContextStates.Set(new UserLevel(context.User.Level));
+            context.ContextStates.Set(new UserHitStat(context.User.Speed));
 
             if (context.ActionType == BattleActionType.Skill && context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS)
             {
@@ -137,10 +138,11 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             if (context.Data.Category == BattleData.SkillCategory.Physical)
-                context.ContextStates.Set(new TargetStat(context.Target.Def));
+                context.ContextStates.Set(new TargetDefStat(context.Target.Def));
             else if (context.Data.Category == BattleData.SkillCategory.Magical)
-                context.ContextStates.Set(new TargetStat(context.Target.MDef));
+                context.ContextStates.Set(new TargetDefStat(context.Target.MDef));
             context.ContextStates.Set(new TargetLevel(context.Target.Level));
+            context.ContextStates.Set(new TargetEvadeStat(context.Target.Speed));
 
             yield break;
         }
@@ -213,8 +215,8 @@ namespace PMDC.Dungeon
                     acc /= table.AccuracyLevels[-table.MinAccuracy];
                     acc = table.ApplyEvasionMod(acc, context.GetContextStateInt<TargetEvasionBoost>(0));
                     acc /= table.EvasionLevels[-table.MinEvasion];
-                    acc *= context.User.Speed;
-                    acc /= context.Target.Speed;
+                    acc *= context.GetContextStateInt<UserHitStat>(1);
+                    acc /= context.GetContextStateInt<TargetEvadeStat>(1);
                     acc = context.GetContextStateMult<AccMult>().Multiply(acc);
 
                     //MustHitNext is to ensure that no single character can miss twice in a row
@@ -9767,7 +9769,7 @@ namespace PMDC.Dungeon
     public class FlipCategoryEvent : BattleEvent
     {
         /// <summary>
-        /// Whether the attack can change flip between categories during multi-strike moves
+        /// Whether this is being applied before or after the user's stat calculation.
         /// </summary> 
         public bool MidwayCross;
 
@@ -9802,7 +9804,33 @@ namespace PMDC.Dungeon
             yield break;
         }
     }
-    
+
+
+    /// <summary>
+    /// Event that reverses the effect that speed has on hit and dodge rate.
+    /// </summary> 
+    [Serializable]
+    public class SpeedReverseHitEvent : BattleEvent
+    {
+        public SpeedReverseHitEvent() { }
+        protected SpeedReverseHitEvent(SpeedReverseHitEvent other)
+        {
+
+        }
+        public override GameEvent Clone() { return new SpeedReverseHitEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            int userSpeed = context.GetContextStateInt<UserHitStat>(1);
+            int targetSpeed = context.GetContextStateInt<TargetEvadeStat>(1);
+
+            context.ContextStates.Set(new UserHitStat(targetSpeed));
+            context.ContextStates.Set(new TargetEvadeStat(userSpeed));
+
+            yield break;
+        }
+    }
+
     /// <summary>
     /// Event that uses the target's attack stat to calculate the damage
     /// </summary> 
@@ -9815,9 +9843,9 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             if (context.Data.Category == BattleData.SkillCategory.Physical)
-                context.ContextStates.Set(new AttackerStat(context.Target.Atk));
+                context.ContextStates.Set(new UserAtkStat(context.Target.Atk));
             else if (context.Data.Category == BattleData.SkillCategory.Magical)
-                context.ContextStates.Set(new AttackerStat(context.Target.MAtk));
+                context.ContextStates.Set(new UserAtkStat(context.Target.MAtk));
             context.ContextStates.Set(new UserAtkBoost(context.GetContextStateInt<TargetAtkBoost>(0)));
             context.ContextStates.Set(new UserSpAtkBoost(context.GetContextStateInt<TargetSpAtkBoost>(0)));
             yield break;
@@ -10074,8 +10102,8 @@ namespace PMDC.Dungeon
                 }
 
                 AtkDefLevelTableState dmgModTable = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<AtkDefLevelTableState>();
-                int attackStat = dmgModTable.AtkLevelMult(context.GetContextStateInt<AttackerStat>(0), atkBoost);
-                int defenseStat = Math.Max(1, dmgModTable.DefLevelMult(context.GetContextStateInt<TargetStat>(0), defBoost));
+                int attackStat = dmgModTable.AtkLevelMult(context.GetContextStateInt<UserAtkStat>(1), atkBoost);
+                int defenseStat = Math.Max(1, dmgModTable.DefLevelMult(context.GetContextStateInt<TargetDefStat>(1), defBoost));
 
                 //STAB
                 if (context.User.HasElement(context.Data.Element))

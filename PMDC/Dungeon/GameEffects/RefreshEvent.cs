@@ -324,7 +324,7 @@ namespace PMDC.Dungeon
         public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
         {
             //good and bad status conditions?
-            if (character.HasElement(Element) && character.CharStates.Contains(NoDupeEffect.GetType()))
+            if (character.HasElement(Element) && !character.CharStates.Contains(NoDupeEffect.GetType()))
             {
                 bool hasStatus = false;
                 foreach (string statusID in character.StatusEffects.Keys)

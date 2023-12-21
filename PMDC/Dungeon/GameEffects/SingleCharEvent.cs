@@ -6572,16 +6572,6 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
             //for counting the enemies and allies in the box each time, with a tab kept on what tiles to unlock when finished
-
-            bool noPlayers = true;
-            foreach (Character player in ZoneManager.Instance.CurrentMap.ActiveTeam.Players)
-            {
-                if (!player.Dead && ZoneManager.Instance.CurrentMap.InBounds(Bounds, player.CharLoc))
-                {
-                    noPlayers = false;
-                    break;
-                }
-            }
             bool noFoes = true;
             foreach (Team team in ZoneManager.Instance.CurrentMap.MapTeams)
             {
@@ -6596,7 +6586,7 @@ namespace PMDC.Dungeon
             }
 
             //when either runs out, resume normal music, and the singlechareffect must be removed from the checklist
-            if (noPlayers || noFoes)
+            if (noFoes)
             {
                 MapCheckState checks = ((MapStatus)owner).StatusStates.GetWithDefault<MapCheckState>();
                 checks.CheckEvents.Remove(this);
@@ -6611,17 +6601,14 @@ namespace PMDC.Dungeon
                 if (returnMusic)
                     GameManager.Instance.BGM(ZoneManager.Instance.CurrentMap.Music, true);
 
-                //if all enemies are cleared, also remove the barriers with a "thud".
-                if (noFoes)
-                {
-                    yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(80));
-                    GameManager.Instance.BattleSE("DUN_Eruption");
-                    DungeonScene.Instance.SetScreenShake(new ScreenMover(3, 6, 10));
-                    unlockTile();
-                    yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
-                    foreach (SingleCharEvent result in ResultEvents)
-                        yield return CoroutineManager.Instance.StartCoroutine(result.Apply(owner, ownerChar, context));
-                }
+                //remove the barriers with a "thud".
+                yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(80));
+                GameManager.Instance.BattleSE("DUN_Eruption");
+                DungeonScene.Instance.SetScreenShake(new ScreenMover(3, 6, 10));
+                unlockTile();
+                yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
+                foreach (SingleCharEvent result in ResultEvents)
+                    yield return CoroutineManager.Instance.StartCoroutine(result.Apply(owner, ownerChar, context));
             }
             yield break;
         }
