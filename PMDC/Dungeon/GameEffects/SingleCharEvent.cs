@@ -4642,46 +4642,20 @@ namespace PMDC.Dungeon
         }
     }
 
-    /// <summary>
-    /// Event that applies the trap behavior
-    /// </summary>
     [Serializable]
     public class InvokeTrapEvent : SingleCharEvent
     {
-        /// <summary>
-        /// Data on the hitbox of the attack. Controls range and targeting
-        /// </summary>
         public CombatAction HitboxAction;
-        
-        /// <summary>
-        /// Optional data to specify a splash effect on the tiles hit
-        /// </summary>
         public ExplosionData Explosion;
-        
-        /// <summary>
-        /// Events that occur with this trap.
-        /// Before it's used, when it hits, after it's used, etc
-        /// </summary>
-        public BattleData NewData; 
-        
-        /// <summary>
-        /// The message displayed when the trap is triggered
-        /// </summary>
-        [StringKey(0, true)]
-        public StringKey Message;
-                
-        /// <summary>
-        /// Whether the trap can be activated only once
-        /// </summary>
+        public BattleData NewData;
         public bool OneTime;
-        
+
         public InvokeTrapEvent() { }
-        public InvokeTrapEvent(CombatAction action, ExplosionData explosion, BattleData moveData, StringKey msg, bool oneTime)
+        public InvokeTrapEvent(CombatAction action, ExplosionData explosion, BattleData moveData, bool oneTime)
         {
             HitboxAction = action;
             Explosion = explosion;
             NewData = moveData;
-            Message = msg;
             OneTime = oneTime;
         }
         protected InvokeTrapEvent(InvokeTrapEvent other)
@@ -4689,7 +4663,6 @@ namespace PMDC.Dungeon
             HitboxAction = other.HitboxAction;
             Explosion = other.Explosion;
             NewData = new BattleData(other.NewData);
-            Message = other.Message;
             OneTime = other.OneTime;
         }
         public override GameEvent Clone() { return new InvokeTrapEvent(this); }
@@ -4738,7 +4711,7 @@ namespace PMDC.Dungeon
             newContext.Item = new InvItem();
 
             TileData entry = DataManager.Instance.GetTile(owner.GetID());
-            newContext.SetActionMsg(Text.FormatGrammar(Message.ToLocal(), newContext.User.GetDisplayName(false), entry.Name.ToLocal()));
+            newContext.SetActionMsg(Text.FormatGrammar(new StringKey("MSG_TILE_CHECK").ToLocal(), newContext.User.GetDisplayName(false), entry.Name.ToLocal()));
 
             //process the attack
             
