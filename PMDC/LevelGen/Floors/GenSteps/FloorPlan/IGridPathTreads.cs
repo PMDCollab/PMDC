@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using RogueElements;
 
-namespace RogueElements
+namespace PMDC.LevelGen
 {
     public interface IGridPathTreads
     {
@@ -82,7 +83,7 @@ namespace RogueElements
             GenContextDebug.DebugProgress("Side Rooms");
 
             //add the rooms in the middle
-            SpawnList<Loc> possibleRoomLocs = new SpawnList<Loc>();
+            SpawnList<Loc> possibleRoomLocs = new SpawnList<Loc>(true);
             List<Loc> rooms = new List<Loc>();
 
             for (int i = 1; i < mainLength - 1; i++)
@@ -102,7 +103,7 @@ namespace RogueElements
 
             for (int i = 0; i < numMiddleRooms; i++)
             {
-                rooms.Add(possibleRoomLocs.Pick(rand, true));
+                rooms.Add(possibleRoomLocs.Pick(rand));
             }
             
             foreach (Loc room in rooms)
@@ -193,7 +194,7 @@ namespace RogueElements
         protected void AddAdditionalHallwayConnections(IRandom rand, GridPlan floorPlan, List<Loc> rooms)
         {
             //This stores a list of locs that can generate a left or up migration for a side hallway connection.
-            SpawnList<Tuple<Loc, int>> possibleSideHallwaySources = new SpawnList<Tuple<Loc, int>>();
+            SpawnList<Tuple<Loc, int>> possibleSideHallwaySources = new SpawnList<Tuple<Loc, int>>(true);
             List<Tuple<Loc, int>> sideHallwaySources = new List<Tuple<Loc, int>>();
             
             foreach (Loc room in rooms)
@@ -230,7 +231,7 @@ namespace RogueElements
 
             for (int i = 0; i < numConnections; i++)
             {
-                sideHallwaySources.Add(possibleSideHallwaySources.Pick(rand, true));
+                sideHallwaySources.Add(possibleSideHallwaySources.Pick(rand));
             }
             
             foreach (Tuple<Loc, int> sideHallwaySource in sideHallwaySources)
