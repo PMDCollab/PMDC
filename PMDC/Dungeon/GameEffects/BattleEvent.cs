@@ -6175,7 +6175,7 @@ namespace PMDC.Dungeon
         
         /// <summary>
         /// The list of battle VFXs played if the condition is met
-        /// </summary
+        /// </summary>
         public List<BattleAnimEvent> Anims;
 
         public BounceStatusEvent()
@@ -8317,9 +8317,9 @@ namespace PMDC.Dungeon
 
     /// <summary>
     /// Event that boosts the character's stat depending on the effectiveness of the specified type to the character's type.
-    /// Super effective: Defense & Special Defense
-    /// Not effective: Attack & Special Attack
-    /// Neutral: Speed & HP
+    /// Super effective: Defense and Special Defense
+    /// Not effective: Attack and Special Attack
+    /// Neutral: Speed and HP
     /// Same type: Boost all stats
     /// </summary>
     [Serializable]
@@ -11723,12 +11723,12 @@ namespace PMDC.Dungeon
         
         /// <summary>
         /// Whether to display a message if the status fails to apply
-        /// </summary
+        /// </summary>
         public bool SilentCheck;
         
         /// <summary>
         /// Whether to include the user of the status in the context
-        /// </summary
+        /// </summary>
         public bool Anonymous;
         
         /// <summary>
@@ -12810,7 +12810,7 @@ namespace PMDC.Dungeon
 
     /// <summary>
     /// Event that subtracts PP from the target if the user is hit by a move
-    /// </summary
+    /// </summary>
     [Serializable]
     public class SpiteEvent : BattleEvent
     {
@@ -12855,7 +12855,7 @@ namespace PMDC.Dungeon
 
     /// <summary>
     /// Event that restores PP on all move slots
-    /// </summary
+    /// </summary>
     [Serializable]
     public class RestorePPEvent : BattleEvent
     {
@@ -12881,7 +12881,7 @@ namespace PMDC.Dungeon
     
     /// <summary>
     /// Event that restores or reduces the hunger of the character by the specified amount 
-    /// </summary
+    /// </summary>
     [Serializable]
     public class RestoreBellyEvent : BattleEvent
     {
@@ -13006,7 +13006,7 @@ namespace PMDC.Dungeon
     
     /// <summary>
     /// Event that removes the specified status
-    /// </summary
+    /// </summary>
     [Serializable]
     public class RemoveStatusBattleEvent : BattleEvent
     {
@@ -14849,7 +14849,7 @@ namespace PMDC.Dungeon
         
         /// <summary>
         /// Whether or not the item needs to be held for the effect to work 
-        /// </summary
+        /// </summary>
         public bool HeldOnly;
 
         /// <summary>
@@ -14968,7 +14968,7 @@ namespace PMDC.Dungeon
         
         /// <summary>
         /// Whether to display a message if the item cannot be taken 
-        /// </summary
+        /// </summary>
         public bool SilentCheck;
 
         public MugItemEvent() { }
@@ -15032,7 +15032,7 @@ namespace PMDC.Dungeon
 
         /// <summary>
         /// Whether to display a message if the item cannot be dropped
-        /// </summary
+        /// </summary>
         public bool SilentCheck;
 
         public DropItemEvent() { }
@@ -15408,7 +15408,7 @@ namespace PMDC.Dungeon
         
         /// <summary>
         /// Whether to display a message if the item cannot be dropped
-        /// </summary
+        /// </summary>
         public bool SilentCheck;
 
         public StealItemEvent() { }
@@ -15790,7 +15790,7 @@ namespace PMDC.Dungeon
 
         /// <summary>
         /// Whether to display a message if the item cannot be dropped
-        /// </summary
+        /// </summary>
         public bool SilentCheck;
 
         public UseFoeItemEvent() { }
