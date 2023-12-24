@@ -18362,11 +18362,11 @@ namespace PMDC.Dungeon
                 ExplorerTeam team = ((ExplorerTeam)context.User.MemberTeam);
                 foreach (Character chara in team.Assembly)
                 {
-                    if (!chara.Absentee)
-                    {
+                    //if (!chara.Absentee)
+                    //{
                         hasBench = true;
                         break;
-                    }
+                    //}
                 }
                 if (!hasBench)
                 {
