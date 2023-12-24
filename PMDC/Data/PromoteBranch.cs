@@ -470,15 +470,23 @@ namespace PMDC.Data
         [DataType(0, DataManager.DataType.Monster, false)]
         public string Species;
 
-        public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_ALLY_SPECIES").ToLocal(), DataManager.Instance.GetMonster(Species).GetColoredName()); }
+        public int Amount;
+
+        public override string GetReqString()
+        {
+            if (Amount > 1)
+                return Text.FormatGrammar(new StringKey("EVO_REQ_ALLY_SPECIES_MULTI").ToLocal(), DataManager.Instance.GetMonster(Species).GetColoredName(), Amount);
+            return Text.FormatGrammar(new StringKey("EVO_REQ_ALLY_SPECIES").ToLocal(), DataManager.Instance.GetMonster(Species).GetColoredName());
+        }
         public override bool GetReq(Character character, bool inDungeon)
         {
+            int amount = 0;
             foreach (Character partner in character.MemberTeam.Players)
             {
                 if (partner.BaseForm.Species == Species)
-                    return true;
+                    amount++;
             }
-            return false;
+            return amount >= Amount;
         }
     }
     [Serializable]

@@ -2562,6 +2562,42 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that modifies the damage multiplier based on how many teammates are defeated.
+    /// </summary>
+    [Serializable]
+    public class MultiplyFromFallenEvent : BattleEvent
+    {
+        /// <summary>
+        /// Denominator of the modifier
+        /// </summary>
+        public int Denominator;
+
+        public MultiplyFromFallenEvent() { }
+        public MultiplyFromFallenEvent(int denominator) : this()
+        {
+            Denominator = denominator;
+        }
+        protected MultiplyFromFallenEvent(MultiplyFromFallenEvent other) : this()
+        {
+            Denominator = other.Denominator;
+        }
+        public override GameEvent Clone() { return new MultiplyFromFallenEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            int numerator = Denominator;
+            foreach (Character player in context.User.MemberTeam.Players)
+            {
+                if (player.Dead)
+                    numerator++;
+            }
+            if (numerator != Denominator)
+                context.AddContextStateMult<DmgMult>(false, numerator, Denominator);
+            yield break;
+        }
+    }
+
 
 
     /// <summary>
