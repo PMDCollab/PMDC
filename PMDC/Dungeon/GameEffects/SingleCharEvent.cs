@@ -347,11 +347,21 @@ namespace PMDC.Dungeon
                     {
                         Character chara = team.Players[jj];
 
+                        bool keep = false;
                         foreach (Character player in ZoneManager.Instance.CurrentMap.ActiveTeam.Players)
                         {
-                            if ((player.CharLoc - chara.CharLoc).Dist8() > Radius)
-                                yield return CoroutineManager.Instance.StartCoroutine(chara.DieSilent());
+                            if (player.Dead)
+                                continue;
+
+                            if ((player.CharLoc - chara.CharLoc).Dist8() <= Radius)
+                            {
+                                keep = true;
+                                break;
+                            }
                         }
+
+                        if (!keep)
+                            yield return CoroutineManager.Instance.StartCoroutine(chara.DieSilent());
                     }
                 }
             }
