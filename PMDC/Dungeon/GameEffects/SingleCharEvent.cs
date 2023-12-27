@@ -3815,6 +3815,69 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    [Serializable]
+    public class StealthEvoEvent : SingleCharEvent
+    {
+        [DataType(1, DataManager.DataType.Monster, false)]
+        public HashSet<string> CheckSpecies;
+        public int PercentChance;
+
+        public StealthEvoEvent() { CheckSpecies = new HashSet<string>(); }
+        public StealthEvoEvent(int chance, params string[] species)
+        {
+            PercentChance = chance;
+            CheckSpecies = new HashSet<string>();
+            foreach(string monster in species)
+                CheckSpecies.Add(monster);
+        }
+        public StealthEvoEvent(StealthEvoEvent other)
+        {
+            PercentChance = other.PercentChance;
+            CheckSpecies = new HashSet<string>();
+            foreach (string monster in other.CheckSpecies)
+                CheckSpecies.Add(monster);
+        }
+        public override GameEvent Clone() { return new StealthEvoEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            //only if part of the team, and not the leader
+            if (context.User != null && context.User.MemberTeam == DungeonScene.Instance.ActiveTeam && DungeonScene.Instance.ActiveTeam.Leader != context.User)
+            {
+                if (CheckSpecies.Contains(context.User.BaseForm.Species))
+                {
+                    if (DataManager.Instance.Save.Rand.Next(100) < PercentChance)
+                    {
+                        MonsterData oldEntry = DataManager.Instance.GetMonster(context.User.BaseForm.Species);
+                        PromoteBranch branch = oldEntry.Promotions[0];
+                        if (branch.IsQualified(context.User, true))
+                            yield return CoroutineManager.Instance.StartCoroutine(beginEvo(context.User, branch));
+                    }
+                }
+            }
+            yield break;
+        }
+
+        private IEnumerator<YieldInstruction> beginEvo(Character character, PromoteBranch branch)
+        {
+            //evolve
+            MonsterID newData = character.BaseForm;
+            newData.Species = branch.Result;
+            branch.BeforePromote(character, true, ref newData);
+            character.Promote(newData);
+            branch.OnPromote(character, true, false);
+
+            int oldFullness = character.Fullness;
+            character.FullRestore();
+            character.Fullness = oldFullness;
+
+            DataManager.Instance.Save.RegisterMonster(character.BaseForm.Species);
+            DataManager.Instance.Save.RogueUnlockMonster(character.BaseForm.Species);
+            yield break;
+        }
+    }
+
     [Serializable]
     public class AskEvoEvent : SingleCharEvent
     {
