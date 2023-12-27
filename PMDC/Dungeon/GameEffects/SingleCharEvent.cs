@@ -347,11 +347,21 @@ namespace PMDC.Dungeon
                     {
                         Character chara = team.Players[jj];
 
+                        bool keep = false;
                         foreach (Character player in ZoneManager.Instance.CurrentMap.ActiveTeam.Players)
                         {
-                            if ((player.CharLoc - chara.CharLoc).Dist8() > Radius)
-                                yield return CoroutineManager.Instance.StartCoroutine(chara.DieSilent());
+                            if (player.Dead)
+                                continue;
+
+                            if ((player.CharLoc - chara.CharLoc).Dist8() <= Radius)
+                            {
+                                keep = true;
+                                break;
+                            }
                         }
+
+                        if (!keep)
+                            yield return CoroutineManager.Instance.StartCoroutine(chara.DieSilent());
                     }
                 }
             }
@@ -5453,7 +5463,7 @@ namespace PMDC.Dungeon
                 freeTiles.RemoveAt(randIndex);
                 //start the animations
                 //NOTE: the animation is a little funky here for wrapped maps
-                ItemAnim itemAnim = new ItemAnim(baseLoc * GraphicsManager.TileSize, itemTargetLoc * GraphicsManager.TileSize, item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, Math.Max(0, waitTime));
+                ItemAnim itemAnim = new ItemAnim(baseLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), itemTargetLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, Math.Max(0, waitTime));
                 DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
             }
 
@@ -5654,7 +5664,7 @@ namespace PMDC.Dungeon
                 freeTiles.RemoveAt(randIndex);
                 //start the animations
                 //NOTE: the animation is a little funky here for wrapped maps
-                ItemAnim itemAnim = new ItemAnim(baseLoc * GraphicsManager.TileSize, itemTargetLoc * GraphicsManager.TileSize, item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, Math.Max(0, waitTime));
+                ItemAnim itemAnim = new ItemAnim(baseLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), itemTargetLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, Math.Max(0, waitTime));
                 DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
             }
 

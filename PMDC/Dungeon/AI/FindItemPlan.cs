@@ -53,8 +53,11 @@ namespace PMDC.Dungeon
             //fix later
             foreach (MapItem item in ZoneManager.Instance.CurrentMap.Items)
             {
-                if ((IncludeMoney || !item.IsMoney) && ZoneManager.Instance.CurrentMap.InBounds(new Rect(mapStart, mapSize), item.TileLoc))
-                    TryAddDest(controlledChar, loc_list, item.TileLoc);
+                if (item.IsMoney && IncludeMoney || !item.IsMoney && item.Price == 0)
+                {
+                    if (ZoneManager.Instance.CurrentMap.InBounds(new Rect(mapStart, mapSize), item.TileLoc) && controlledChar.CharLoc != item.TileLoc)
+                        TryAddDest(controlledChar, loc_list, item.TileLoc);
+                }
             }
             return loc_list;
         }
