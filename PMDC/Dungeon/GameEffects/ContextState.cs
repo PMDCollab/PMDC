@@ -5,6 +5,7 @@ using RogueEssence.Dungeon;
 using RogueEssence.Data;
 using Newtonsoft.Json;
 using RogueEssence.Dev;
+using RogueElements;
 
 namespace PMDC.Dungeon
 {
@@ -252,6 +253,23 @@ namespace PMDC.Dungeon
         public Infiltrator(StringKey msg) { Msg = msg; }
         protected Infiltrator(Infiltrator other) { Msg = other.Msg; }
         public override GameplayState Clone() { return new Infiltrator(this); }
+    }
+
+    [Serializable]
+    public class BallFetch : ContextState
+    {
+        public BallFetch() { }
+        public override GameplayState Clone() { return new BallFetch(); }
+    }
+
+    [Serializable]
+    public class RecruitFail : ContextState
+    {
+        public Loc? ResultLoc;
+        public RecruitFail() { }
+        public RecruitFail(Loc? resultLoc) { ResultLoc = resultLoc; }
+        public RecruitFail(RecruitFail other) { ResultLoc = other.ResultLoc; }
+        public override GameplayState Clone() { return new RecruitFail(this); }
     }
 
     [Serializable]

@@ -15503,6 +15503,7 @@ namespace PMDC.Dungeon
                         yield return new WaitForFrames(ItemAnim.ITEM_ACTION_TIME);
                     }
 
+                    GameManager.Instance.SE(GraphicsManager.EquipSE);
                     DungeonScene.Instance.LogMsg(Text.FormatGrammar(Message.ToLocal(), origin.GetDisplayName(false), item.GetDisplayName(), target.GetDisplayName(false), owner.GetDisplayName()));
 
                     if (origin.MemberTeam is ExplorerTeam)
@@ -15616,6 +15617,7 @@ namespace PMDC.Dungeon
 
                     if (!origin.EquippedItem.Cursed || origin.CanRemoveStuck)
                     {
+                        GameManager.Instance.SE(GraphicsManager.EquipSE);
                         if (origin.MemberTeam is ExplorerTeam)
                         {
                             if (((ExplorerTeam)origin.MemberTeam).GetInvCount() < ((ExplorerTeam)origin.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone))
@@ -18604,22 +18606,19 @@ namespace PMDC.Dungeon
                 yield return new WaitForFrames(60);
             }
 
-
             if (context.Target.Unrecruitable || context.Target.MemberTeam is ExplorerTeam || DataManager.Instance.Save.NoRecruiting)
             {
                 EmoteData emoteData = DataManager.Instance.GetEmote("angry");
                 context.Target.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 1));
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_CANT_RECRUIT").ToLocal(), context.Target.GetDisplayName(false)));
-                GameManager.Instance.BattleSE("DUN_Miss");
-                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(context.Item, context.Target.CharLoc));
+                yield return CoroutineManager.Instance.StartCoroutine(failRecruit(owner, ownerChar, context));
             }
             else if (context.Target.Level > context.User.Level + 5)
             {
                 EmoteData emoteData = DataManager.Instance.GetEmote("angry");
                 context.Target.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 1));
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_CANT_RECRUIT_LEVEL").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
-                GameManager.Instance.BattleSE("DUN_Miss");
-                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(context.Item, context.Target.CharLoc));
+                yield return CoroutineManager.Instance.StartCoroutine(failRecruit(owner, ownerChar, context));
             }
             else
             {
@@ -18634,8 +18633,7 @@ namespace PMDC.Dungeon
                     EmoteData emoteData = DataManager.Instance.GetEmote("angry");
                     context.Target.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 1));
                     DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_CANT_RECRUIT_RATE").ToLocal(), context.Target.GetDisplayName(false)));
-                    GameManager.Instance.BattleSE("DUN_Miss");
-                    yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(context.Item, context.Target.CharLoc));
+                    yield return CoroutineManager.Instance.StartCoroutine(failRecruit(owner, ownerChar, context));
                 }
                 else
                 {
@@ -18646,11 +18644,24 @@ namespace PMDC.Dungeon
                     else
                     {
                         DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_RECRUIT_FAIL").ToLocal(), context.Target.GetDisplayName(false)));
-                        GameManager.Instance.BattleSE("DUN_Miss");
-                        yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(context.Item, context.Target.CharLoc));
+                        yield return CoroutineManager.Instance.StartCoroutine(failRecruit(owner, ownerChar, context));
                     }
                 }
             }
+        }
+
+        private IEnumerator<YieldInstruction> failRecruit(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            GameManager.Instance.BattleSE("DUN_Miss");
+
+            // TODO: Not the best way to track where the item landed... ideally use a context but there isn't more than one use case yet.
+            MapItem mapItem = new MapItem(context.Item, new Loc(-1));
+            yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropMapItem(mapItem, context.Target.CharLoc, context.Target.CharLoc, false));
+
+            Loc? resultLoc = null;
+            if (mapItem.TileLoc != new Loc(-1))
+                resultLoc = mapItem.TileLoc;
+            context.ContextStates.Set(new RecruitFail(resultLoc));
         }
     }
 

@@ -3021,20 +3021,19 @@ namespace PMDC.Dungeon
     [Serializable]
     public class GatherEvent : SingleCharEvent
     {
-        [JsonConverter(typeof(ItemConverter))]
-        [DataType(0, DataManager.DataType.Item, false)]
-        public string GatherItem;
+        [DataType(1, DataManager.DataType.Item, false)]
+        public List<string> GatherItems;
         public int Chance;
         public List<AnimEvent> Anims;
 
         public GatherEvent()
         {
             Anims = new List<AnimEvent>();
-            GatherItem = "";
+            GatherItems = new List<string>();
         }
-        public GatherEvent(string gatherItem, int chance, params AnimEvent[] anims)
+        public GatherEvent(List<string> gatherItem, int chance, params AnimEvent[] anims)
         {
-            GatherItem = gatherItem;
+            GatherItems = gatherItem;
             Chance = chance;
             Anims = new List<AnimEvent>();
             Anims.AddRange(anims);
@@ -3045,7 +3044,8 @@ namespace PMDC.Dungeon
             Chance = other.Chance;
             foreach (AnimEvent anim in other.Anims)
                 Anims.Add((AnimEvent)anim.Clone());
-            GatherItem = other.GatherItem;
+            GatherItems = new List<string>();
+            GatherItems.AddRange(other.GatherItems);
         }
         public override GameEvent Clone() { return new GatherEvent(this); }
 
@@ -3064,7 +3064,8 @@ namespace PMDC.Dungeon
 
             if (ZoneManager.Instance.CurrentMap.MapTurns == 0 && DataManager.Instance.Save.Rand.Next(100) < Chance)
             {
-                InvItem invItem = new InvItem(GatherItem);
+                string gatherItem = GatherItems[DataManager.Instance.Save.Rand.Next(GatherItems.Count)];
+                InvItem invItem = new InvItem(gatherItem);
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_PICKUP").ToLocal(), context.User.GetDisplayName(false), invItem.GetDisplayName()), false, false, context.User, null);
 
                 foreach (AnimEvent anim in Anims)
