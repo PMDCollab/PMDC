@@ -3260,6 +3260,79 @@ namespace PMDC.Dungeon
 
 
 
+    [Serializable]
+    public class WeatherFormeSingleEvent : SingleCharEvent
+    {
+        [JsonConverter(typeof(MonsterConverter))]
+        [DataType(0, DataManager.DataType.Monster, false)]
+        public string ReqSpecies;
+        public int DefaultForme;
+        [JsonConverter(typeof(MapStatusIntDictConverter))]
+        public Dictionary<string, int> WeatherPair;
+
+        public List<AnimEvent> Anims;
+
+        public WeatherFormeSingleEvent() { WeatherPair = new Dictionary<string, int>(); ReqSpecies = ""; Anims = new List<AnimEvent>(); }
+        public WeatherFormeSingleEvent(string reqSpecies, int defaultForme, Dictionary<string, int> weather, params AnimEvent[] anims)
+        {
+            ReqSpecies = reqSpecies;
+            DefaultForme = defaultForme;
+            WeatherPair = weather;
+            Anims = new List<AnimEvent>();
+            Anims.AddRange(anims);
+        }
+        protected WeatherFormeSingleEvent(WeatherFormeSingleEvent other) : this()
+        {
+            ReqSpecies = other.ReqSpecies;
+            DefaultForme = other.DefaultForme;
+
+            foreach (string weather in other.WeatherPair.Keys)
+                WeatherPair.Add(weather, other.WeatherPair[weather]);
+
+            Anims = new List<AnimEvent>();
+            foreach (AnimEvent anim in other.Anims)
+                Anims.Add((AnimEvent)anim.Clone());
+        }
+        public override GameEvent Clone() { return new WeatherFormeSingleEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            if (context.User == null)
+                yield break;
+
+            if (context.User.CurrentForm.Species != ReqSpecies)
+                yield break;
+
+            //get the forme it should be in
+            int forme = DefaultForme;
+
+            foreach (string weather in WeatherPair.Keys)
+            {
+                if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(weather))
+                {
+                    forme = WeatherPair[weather];
+                    break;
+                }
+            }
+
+            if (forme < 0)
+                yield break;
+
+            if (forme != context.User.CurrentForm.Form)
+            {
+                //transform it
+                context.User.Transform(new MonsterID(context.User.CurrentForm.Species, forme, context.User.CurrentForm.Skin, context.User.CurrentForm.Gender));
+
+                foreach (AnimEvent anim in Anims)
+                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
+
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_FORM_CHANGE").ToLocal(), context.User.GetDisplayName(false)));
+            }
+
+            yield break;
+        }
+    }
+
 
 
     [Serializable]

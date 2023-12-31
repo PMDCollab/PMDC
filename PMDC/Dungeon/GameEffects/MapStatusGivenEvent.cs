@@ -85,6 +85,9 @@ namespace PMDC.Dungeon
                 }
             }
 
+            if (forme < 0)
+                yield break;
+
             if (forme != character.CurrentForm.Form)
             {
                 //transform it

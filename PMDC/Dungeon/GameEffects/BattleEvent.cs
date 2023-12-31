@@ -4222,6 +4222,81 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    /// <summary>
+    /// Event that protects against an attack if the target is in the specified form, and changes to a different form if so.
+    /// </summary>
+    [Serializable]
+    public class BustFormEvent : BattleEvent
+    {
+        /// <summary>
+        /// Species needed to trigger protection
+        /// </summary>
+        [DataType(0, DataManager.DataType.Monster, false)]
+        public string ReqSpecies;
+
+        /// <summary>
+        /// The form needed to trigger protection
+        /// </summary>
+        public int ReqForm;
+
+        /// <summary>
+        /// The form to change ot after protection
+        /// </summary>
+        public int ResultForm;
+
+        /// <summary>
+        /// The message displayed in the dungeon log  
+        /// </summary>
+        public StringKey Msg;
+
+        /// <summary>
+        /// The list of battle VFXs played if the protection triggers
+        /// </summary>
+        public List<BattleAnimEvent> Anims;
+
+        public BustFormEvent()
+        {
+            ReqSpecies = "";
+            Anims = new List<BattleAnimEvent>();
+        }
+        public BustFormEvent(string species, int fromForm, int toForm, StringKey msg, params BattleAnimEvent[] anims)
+        {
+            ReqSpecies = species;
+            ReqForm = fromForm;
+            ResultForm = toForm;
+            Msg = msg;
+            Anims = new List<BattleAnimEvent>();
+            Anims.AddRange(anims);
+        }
+        protected BustFormEvent(BustFormEvent other)
+        {
+            ReqSpecies = other.ReqSpecies;
+            ReqForm = other.ReqForm;
+            ResultForm = other.ResultForm;
+            Msg = other.Msg;
+            Anims = new List<BattleAnimEvent>();
+            foreach (BattleAnimEvent anim in other.Anims)
+                Anims.Add((BattleAnimEvent)anim.Clone());
+        }
+        public override GameEvent Clone() { return new BustFormEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.Target.CurrentForm.Species == ReqSpecies && context.Target.CurrentForm.Form == ReqForm)
+            {
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(Msg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
+
+                context.Target.Transform(new MonsterID(context.Target.CurrentForm.Species, ResultForm, context.Target.CurrentForm.Skin, context.Target.CurrentForm.Gender));
+
+                foreach (BattleAnimEvent anim in Anims)
+                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
+
+                context.AddContextStateMult<AccMult>(false, -1, 1);
+            }
+        }
+    }
+
     /// <summary>
     /// UNUSED
     /// Event that causes the move to deal no damage if the target is not at full HP
@@ -10891,7 +10966,7 @@ namespace PMDC.Dungeon
     }
 
     /// <summary>
-    /// Event that groups multiple battle events into one event, but only applies if a critical hit was landed 
+    /// Event that groups multiple battle events into one event, but only applies if an attacking move is used
     /// </summary>
     [Serializable]
     public class AttackingMoveNeededEvent : BattleEvent
