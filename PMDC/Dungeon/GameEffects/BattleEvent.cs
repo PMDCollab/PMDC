@@ -17005,46 +17005,49 @@ namespace PMDC.Dungeon
 
             if (!String.IsNullOrEmpty(candidateDex.PromoteFrom))
             {
-                int hp = context.Target.HP;
+                MonsterData dex = DataManager.Instance.GetMonster(candidateDex.PromoteFrom);
+                BaseMonsterForm forme = dex.Forms[candidateForm.PromoteForm];
 
-                string prevName = context.Target.GetDisplayName(false);
-                MonsterID prevoData = context.Target.CurrentForm;
-                prevoData.Species = candidateDex.PromoteFrom;
-                prevoData.Form = candidateForm.PromoteForm;
-                context.Target.Transform(prevoData);
-
-                MonsterData dex = DataManager.Instance.GetMonster(context.Target.CurrentForm.Species);
-                BaseMonsterForm forme = dex.Forms[context.Target.CurrentForm.Form];
-                //moves
-                List<string> final_moves = forme.RollLatestSkills(context.Target.Level * 1 / 2 + 1, new List<string>());
-                for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
+                if (dex.Released && forme.Released)
                 {
-                    if (ii < final_moves.Count)
-                        context.Target.ChangeSkill(ii, final_moves[ii], TransformCharges);
-                    else
-                        context.Target.ChangeSkill(ii, "", -1);
+                    int hp = context.Target.HP;
+
+                    string prevName = context.Target.GetDisplayName(false);
+                    MonsterID prevoData = context.Target.CurrentForm;
+                    prevoData.Species = candidateDex.PromoteFrom;
+                    prevoData.Form = candidateForm.PromoteForm;
+                    context.Target.Transform(prevoData);
+
+                    //moves
+                    List<string> final_moves = forme.RollLatestSkills(context.Target.Level * 1 / 2 + 1, new List<string>());
+                    for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
+                    {
+                        if (ii < final_moves.Count)
+                            context.Target.ChangeSkill(ii, final_moves[ii], TransformCharges);
+                        else
+                            context.Target.ChangeSkill(ii, "", -1);
+                    }
+
+                    //set the status
+                    if (!String.IsNullOrEmpty(StatusID))
+                    {
+                        StatusEffect setStatus = new StatusEffect(StatusID);
+                        setStatus.LoadFromData();
+                        setStatus.StatusStates.Set(new HPState(hp));
+                        yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(null, setStatus, false));
+                    }
+
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_DEVOLVE").ToLocal(), prevName, dex.GetColoredName()));
+
+                    foreach (BattleAnimEvent anim in Anims)
+                        yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
+
+                    yield break;
                 }
-
-                //set the status
-                if (!String.IsNullOrEmpty(StatusID))
-                {
-                    StatusEffect setStatus = new StatusEffect(StatusID);
-                    setStatus.LoadFromData();
-                    setStatus.StatusStates.Set(new HPState(hp));
-                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(null, setStatus, false));
-                }
-
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_DEVOLVE").ToLocal(), prevName, dex.GetColoredName()));
-
-                foreach (BattleAnimEvent anim in Anims)
-                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
-
             }
-            else
-            {
-                if (!SilentCheck)
-                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_DEVOLVE_FAIL").ToLocal(), context.Target.GetDisplayName(false)));
-            }
+
+            if (!SilentCheck)
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_DEVOLVE_FAIL").ToLocal(), context.Target.GetDisplayName(false)));
         }
     }
     
