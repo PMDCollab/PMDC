@@ -276,4 +276,30 @@ namespace PMDC.Dungeon
         }
         public override GameplayState Clone() { return new MonsterHouseTableState(this); }
     }
+
+
+
+    [Serializable]
+    public class MissionBoardState : UniversalState
+    {
+        /// <summary>
+        /// If this is set to true, the mission board will be enabled, and random missions will be accessible.
+        /// </summary>
+        public bool EnableMissionBoard;
+        
+        public MissionBoardState()
+        {
+            EnableMissionBoard = false;
+        }
+
+        public MissionBoardState(bool enableMissionBoard)
+        {
+            EnableMissionBoard = enableMissionBoard;
+        }
+        protected MissionBoardState(MissionBoardState other)
+        {
+            EnableMissionBoard = other.EnableMissionBoard;
+        }
+        public override GameplayState Clone() { return new MissionBoardState(this); }
+    }
 }
