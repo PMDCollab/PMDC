@@ -4222,6 +4222,81 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    /// <summary>
+    /// Event that protects against an attack if the target is in the specified form, and changes to a different form if so.
+    /// </summary>
+    [Serializable]
+    public class BustFormEvent : BattleEvent
+    {
+        /// <summary>
+        /// Species needed to trigger protection
+        /// </summary>
+        [DataType(0, DataManager.DataType.Monster, false)]
+        public string ReqSpecies;
+
+        /// <summary>
+        /// The form needed to trigger protection
+        /// </summary>
+        public int ReqForm;
+
+        /// <summary>
+        /// The form to change ot after protection
+        /// </summary>
+        public int ResultForm;
+
+        /// <summary>
+        /// The message displayed in the dungeon log  
+        /// </summary>
+        public StringKey Msg;
+
+        /// <summary>
+        /// The list of battle VFXs played if the protection triggers
+        /// </summary>
+        public List<BattleAnimEvent> Anims;
+
+        public BustFormEvent()
+        {
+            ReqSpecies = "";
+            Anims = new List<BattleAnimEvent>();
+        }
+        public BustFormEvent(string species, int fromForm, int toForm, StringKey msg, params BattleAnimEvent[] anims)
+        {
+            ReqSpecies = species;
+            ReqForm = fromForm;
+            ResultForm = toForm;
+            Msg = msg;
+            Anims = new List<BattleAnimEvent>();
+            Anims.AddRange(anims);
+        }
+        protected BustFormEvent(BustFormEvent other)
+        {
+            ReqSpecies = other.ReqSpecies;
+            ReqForm = other.ReqForm;
+            ResultForm = other.ResultForm;
+            Msg = other.Msg;
+            Anims = new List<BattleAnimEvent>();
+            foreach (BattleAnimEvent anim in other.Anims)
+                Anims.Add((BattleAnimEvent)anim.Clone());
+        }
+        public override GameEvent Clone() { return new BustFormEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.Target.CurrentForm.Species == ReqSpecies && context.Target.CurrentForm.Form == ReqForm)
+            {
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(Msg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
+
+                context.Target.Transform(new MonsterID(context.Target.CurrentForm.Species, ResultForm, context.Target.CurrentForm.Skin, context.Target.CurrentForm.Gender));
+
+                foreach (BattleAnimEvent anim in Anims)
+                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
+
+                context.AddContextStateMult<AccMult>(false, -1, 1);
+            }
+        }
+    }
+
     /// <summary>
     /// UNUSED
     /// Event that causes the move to deal no damage if the target is not at full HP
@@ -10891,7 +10966,7 @@ namespace PMDC.Dungeon
     }
 
     /// <summary>
-    /// Event that groups multiple battle events into one event, but only applies if a critical hit was landed 
+    /// Event that groups multiple battle events into one event, but only applies if an attacking move is used
     /// </summary>
     [Serializable]
     public class AttackingMoveNeededEvent : BattleEvent
@@ -15503,6 +15578,7 @@ namespace PMDC.Dungeon
                         yield return new WaitForFrames(ItemAnim.ITEM_ACTION_TIME);
                     }
 
+                    GameManager.Instance.SE(GraphicsManager.EquipSE);
                     DungeonScene.Instance.LogMsg(Text.FormatGrammar(Message.ToLocal(), origin.GetDisplayName(false), item.GetDisplayName(), target.GetDisplayName(false), owner.GetDisplayName()));
 
                     if (origin.MemberTeam is ExplorerTeam)
@@ -15616,6 +15692,7 @@ namespace PMDC.Dungeon
 
                     if (!origin.EquippedItem.Cursed || origin.CanRemoveStuck)
                     {
+                        GameManager.Instance.SE(GraphicsManager.EquipSE);
                         if (origin.MemberTeam is ExplorerTeam)
                         {
                             if (((ExplorerTeam)origin.MemberTeam).GetInvCount() < ((ExplorerTeam)origin.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone))
@@ -16928,46 +17005,49 @@ namespace PMDC.Dungeon
 
             if (!String.IsNullOrEmpty(candidateDex.PromoteFrom))
             {
-                int hp = context.Target.HP;
+                MonsterData dex = DataManager.Instance.GetMonster(candidateDex.PromoteFrom);
+                BaseMonsterForm forme = dex.Forms[candidateForm.PromoteForm];
 
-                string prevName = context.Target.GetDisplayName(false);
-                MonsterID prevoData = context.Target.CurrentForm;
-                prevoData.Species = candidateDex.PromoteFrom;
-                prevoData.Form = candidateForm.PromoteForm;
-                context.Target.Transform(prevoData);
-
-                MonsterData dex = DataManager.Instance.GetMonster(context.Target.CurrentForm.Species);
-                BaseMonsterForm forme = dex.Forms[context.Target.CurrentForm.Form];
-                //moves
-                List<string> final_moves = forme.RollLatestSkills(context.Target.Level * 1 / 2 + 1, new List<string>());
-                for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
+                if (dex.Released && forme.Released)
                 {
-                    if (ii < final_moves.Count)
-                        context.Target.ChangeSkill(ii, final_moves[ii], TransformCharges);
-                    else
-                        context.Target.ChangeSkill(ii, "", -1);
+                    int hp = context.Target.HP;
+
+                    string prevName = context.Target.GetDisplayName(false);
+                    MonsterID prevoData = context.Target.CurrentForm;
+                    prevoData.Species = candidateDex.PromoteFrom;
+                    prevoData.Form = candidateForm.PromoteForm;
+                    context.Target.Transform(prevoData);
+
+                    //moves
+                    List<string> final_moves = forme.RollLatestSkills(context.Target.Level * 1 / 2 + 1, new List<string>());
+                    for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
+                    {
+                        if (ii < final_moves.Count)
+                            context.Target.ChangeSkill(ii, final_moves[ii], TransformCharges);
+                        else
+                            context.Target.ChangeSkill(ii, "", -1);
+                    }
+
+                    //set the status
+                    if (!String.IsNullOrEmpty(StatusID))
+                    {
+                        StatusEffect setStatus = new StatusEffect(StatusID);
+                        setStatus.LoadFromData();
+                        setStatus.StatusStates.Set(new HPState(hp));
+                        yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(null, setStatus, false));
+                    }
+
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_DEVOLVE").ToLocal(), prevName, dex.GetColoredName()));
+
+                    foreach (BattleAnimEvent anim in Anims)
+                        yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
+
+                    yield break;
                 }
-
-                //set the status
-                if (!String.IsNullOrEmpty(StatusID))
-                {
-                    StatusEffect setStatus = new StatusEffect(StatusID);
-                    setStatus.LoadFromData();
-                    setStatus.StatusStates.Set(new HPState(hp));
-                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(null, setStatus, false));
-                }
-
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_DEVOLVE").ToLocal(), prevName, dex.GetColoredName()));
-
-                foreach (BattleAnimEvent anim in Anims)
-                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
-
             }
-            else
-            {
-                if (!SilentCheck)
-                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_DEVOLVE_FAIL").ToLocal(), context.Target.GetDisplayName(false)));
-            }
+
+            if (!SilentCheck)
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_DEVOLVE_FAIL").ToLocal(), context.Target.GetDisplayName(false)));
         }
     }
     
@@ -18604,22 +18684,19 @@ namespace PMDC.Dungeon
                 yield return new WaitForFrames(60);
             }
 
-
             if (context.Target.Unrecruitable || context.Target.MemberTeam is ExplorerTeam || DataManager.Instance.Save.NoRecruiting)
             {
                 EmoteData emoteData = DataManager.Instance.GetEmote("angry");
                 context.Target.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 1));
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_CANT_RECRUIT").ToLocal(), context.Target.GetDisplayName(false)));
-                GameManager.Instance.BattleSE("DUN_Miss");
-                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(context.Item, context.Target.CharLoc));
+                yield return CoroutineManager.Instance.StartCoroutine(failRecruit(owner, ownerChar, context));
             }
             else if (context.Target.Level > context.User.Level + 5)
             {
                 EmoteData emoteData = DataManager.Instance.GetEmote("angry");
                 context.Target.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 1));
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_CANT_RECRUIT_LEVEL").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false)));
-                GameManager.Instance.BattleSE("DUN_Miss");
-                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(context.Item, context.Target.CharLoc));
+                yield return CoroutineManager.Instance.StartCoroutine(failRecruit(owner, ownerChar, context));
             }
             else
             {
@@ -18634,8 +18711,7 @@ namespace PMDC.Dungeon
                     EmoteData emoteData = DataManager.Instance.GetEmote("angry");
                     context.Target.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 1));
                     DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_CANT_RECRUIT_RATE").ToLocal(), context.Target.GetDisplayName(false)));
-                    GameManager.Instance.BattleSE("DUN_Miss");
-                    yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(context.Item, context.Target.CharLoc));
+                    yield return CoroutineManager.Instance.StartCoroutine(failRecruit(owner, ownerChar, context));
                 }
                 else
                 {
@@ -18646,11 +18722,24 @@ namespace PMDC.Dungeon
                     else
                     {
                         DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_RECRUIT_FAIL").ToLocal(), context.Target.GetDisplayName(false)));
-                        GameManager.Instance.BattleSE("DUN_Miss");
-                        yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(context.Item, context.Target.CharLoc));
+                        yield return CoroutineManager.Instance.StartCoroutine(failRecruit(owner, ownerChar, context));
                     }
                 }
             }
+        }
+
+        private IEnumerator<YieldInstruction> failRecruit(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            GameManager.Instance.BattleSE("DUN_Miss");
+
+            // TODO: Not the best way to track where the item landed... ideally use a context but there isn't more than one use case yet.
+            MapItem mapItem = new MapItem(context.Item, new Loc(-1));
+            yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropMapItem(mapItem, context.Target.CharLoc, context.Target.CharLoc, false));
+
+            Loc? resultLoc = null;
+            if (mapItem.TileLoc != new Loc(-1))
+                resultLoc = mapItem.TileLoc;
+            context.ContextStates.Set(new RecruitFail(resultLoc));
         }
     }
 

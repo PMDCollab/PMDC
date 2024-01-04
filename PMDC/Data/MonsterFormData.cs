@@ -147,8 +147,8 @@ namespace PMDC.Data
         public override int GetStat(int level, Stat stat, int bonus)
         {
             int curStat = getMinStat(level, stat);
-            int minStat = getMinStat(100, stat);
-            int maxStat = GetMaxStat(stat);
+            int minStat = getMinStat(DataManager.Instance.Start.MaxLevel, stat);
+            int maxStat = GetMaxStat(stat, DataManager.Instance.Start.MaxLevel);
             int statDiff = maxStat - minStat;
 
             return Math.Max(1, curStat + bonus * statDiff / MonsterFormData.MAX_STAT_BOOST);
@@ -293,22 +293,22 @@ namespace PMDC.Data
         /// </summary>
         /// <param name="stat"></param>
         /// <returns></returns>
-        public override int GetMaxStat(Stat stat)
+        public override int GetMaxStat(Stat stat, int level)
         {
             switch (stat)
             {
                 case Stat.HP:
-                    return hpStatMax(BaseHP);
+                    return hpStatMax(BaseHP, level);
                 case Stat.Speed:
-                    return genericStatMax(BaseSpeed);
+                    return genericStatMax(BaseSpeed, level);
                 case Stat.Attack:
-                    return genericStatMax(BaseAtk);
+                    return genericStatMax(BaseAtk, level);
                 case Stat.Defense:
-                    return genericStatMax(BaseDef);
+                    return genericStatMax(BaseDef, level);
                 case Stat.MAtk:
-                    return genericStatMax(BaseMAtk);
+                    return genericStatMax(BaseMAtk, level);
                 case Stat.MDef:
-                    return genericStatMax(BaseMDef);
+                    return genericStatMax(BaseMDef, level);
                 default:
                     return 0;
             }
@@ -351,17 +351,17 @@ namespace PMDC.Data
             return 1;
         }
 
-        private int genericStatMax(int baseStat)
+        private int genericStatMax(int baseStat, int level)
         {
-            return genericStatCalc(scaleStatTotal(baseStat), DataManager.Instance.Start.MaxLevel);
+            return genericStatCalc(scaleStatTotal(baseStat), level);
         }
 
-        private int hpStatMax(int baseStat)
+        private int hpStatMax(int baseStat, int level)
         {
             if (baseStat > 1)
-                return hpStatCalc(scaleStatTotal(baseStat), DataManager.Instance.Start.MaxLevel);
+                return hpStatCalc(scaleStatTotal(baseStat), level);
             else
-                return 21;
+                return (level / 5 + 1);
         }
 
         /// <summary>

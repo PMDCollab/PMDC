@@ -1122,12 +1122,12 @@ namespace PMDC.Dungeon
 
             if (counter.Counter <= 0)
             {
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.RemoveStatusEffect(((StatusEffect)owner).ID, false));
+                yield return CoroutineManager.Instance.StartCoroutine(context.Target.RemoveStatusEffect(((StatusEffect)owner).ID, false));
 
                 foreach (StatusAnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
                 GameManager.Instance.BattleSE("DUN_Hit_Super_Effective");
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(-1));
+                yield return CoroutineManager.Instance.StartCoroutine(context.Target.InflictDamage(-1));
             }
         }
     }

@@ -446,6 +446,101 @@ namespace PMDC.Dungeon
     }
 
 
+    [Serializable]
+    public class FetchEvent : BattleEvent
+    {
+        public StringKey Msg;
+
+        public FetchEvent() { }
+        public FetchEvent(StringKey msg)
+        {
+            Msg = msg;
+        }
+        protected FetchEvent(FetchEvent other)
+        {
+            Msg = other.Msg;
+        }
+        public override GameEvent Clone() { return new FetchEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.ContextStates.Contains<BallFetch>())
+                yield break;
+
+            RecruitFail state = context.ContextStates.GetWithDefault<RecruitFail>();
+            if (state == null || state.ResultLoc == null)
+                yield break;
+
+            //the item needs to be there
+            int itemSlot = ZoneManager.Instance.CurrentMap.GetItem(state.ResultLoc.Value);
+
+            //the item needs to match
+            if (itemSlot == -1)
+                yield break;
+
+            MapItem mapItem = ZoneManager.Instance.CurrentMap.Items[itemSlot];
+
+            //make sure it's the right one
+            if (mapItem.Value != context.Item.ID)
+                yield break;
+
+
+            //fetch the ball!
+            InvItem item = context.Item;
+            Character origin = ownerChar;
+
+
+            yield return new WaitForFrames(30);
+
+            ZoneManager.Instance.CurrentMap.Items.RemoveAt(itemSlot);
+
+            //item steal animation
+            Loc itemStartLoc = mapItem.TileLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2);
+            int MaxDistance = (int)Math.Sqrt((itemStartLoc - origin.MapLoc).DistSquared());
+            ItemAnim itemAnim = new ItemAnim(itemStartLoc, origin.MapLoc, DataManager.Instance.GetItem(item.ID).Sprite, MaxDistance / 2, 0);
+            DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
+            yield return new WaitForFrames(ItemAnim.ITEM_ACTION_TIME);
+
+            GameManager.Instance.SE(GraphicsManager.EquipSE);
+            DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_BALL_FETCH").ToLocal(), origin.GetDisplayName(false), item.GetDisplayName()));
+
+            if (origin.MemberTeam is ExplorerTeam)
+            {
+                if (((ExplorerTeam)origin.MemberTeam).GetInvCount() < ((ExplorerTeam)origin.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone))
+                {
+                    //attackers already holding an item will have the item returned to the bag
+                    if (!String.IsNullOrEmpty(origin.EquippedItem.ID))
+                    {
+                        InvItem attackerItem = origin.EquippedItem;
+                        yield return CoroutineManager.Instance.StartCoroutine(origin.DequipItem());
+                        origin.MemberTeam.AddToInv(attackerItem);
+                    }
+                    yield return CoroutineManager.Instance.StartCoroutine(origin.EquipItem(item));
+                }
+                else
+                {
+                    yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30));
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_INV_FULL").ToLocal(), origin.GetDisplayName(false), item.GetDisplayName()));
+                    //if the bag is full, or there is no bag, the stolen item will slide off in the opposite direction they're facing
+                    Loc endLoc = origin.CharLoc + origin.CharDir.Reverse().GetLoc();
+                    yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(item, endLoc, origin.CharLoc));
+                }
+            }
+            else
+            {
+                if (!String.IsNullOrEmpty(origin.EquippedItem.ID))
+                {
+                    InvItem attackerItem = origin.EquippedItem;
+                    yield return CoroutineManager.Instance.StartCoroutine(origin.DequipItem());
+                    //if the user is holding an item already, the item will slide off in the opposite direction they're facing
+                    Loc endLoc = origin.CharLoc + origin.CharDir.Reverse().GetLoc();
+                    yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(attackerItem, endLoc, origin.CharLoc));
+                }
+                yield return CoroutineManager.Instance.StartCoroutine(origin.EquipItem(item));
+            }
+        }
+    }
+
 
     [Serializable]
     public class FollowUpEvent : InvokeBattleEvent
