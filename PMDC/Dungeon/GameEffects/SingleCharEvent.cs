@@ -5600,7 +5600,7 @@ namespace PMDC.Dungeon
                 freeTiles.RemoveAt(randIndex);
                 //start the animations
                 //NOTE: the animation is a little funky here for wrapped maps
-                ItemAnim itemAnim = new ItemAnim(baseLoc * GraphicsManager.TileSize, itemTargetLoc * GraphicsManager.TileSize, item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, Math.Max(0, waitTime));
+                ItemAnim itemAnim = new ItemAnim(baseLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), itemTargetLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, Math.Max(0, waitTime));
                 DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
             }
 
@@ -5801,7 +5801,7 @@ namespace PMDC.Dungeon
                 freeTiles.RemoveAt(randIndex);
                 //start the animations
                 //NOTE: the animation is a little funky here for wrapped maps
-                ItemAnim itemAnim = new ItemAnim(baseLoc * GraphicsManager.TileSize, itemTargetLoc * GraphicsManager.TileSize, item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, Math.Max(0, waitTime));
+                ItemAnim itemAnim = new ItemAnim(baseLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), itemTargetLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), item.IsMoney ? GraphicsManager.MoneySprite : DataManager.Instance.GetItem(item.Value).Sprite, GraphicsManager.TileSize / 2, Math.Max(0, waitTime));
                 DungeonScene.Instance.CreateAnim(itemAnim, DrawLayer.Normal);
             }
 
