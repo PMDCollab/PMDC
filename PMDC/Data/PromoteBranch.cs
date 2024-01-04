@@ -463,6 +463,27 @@ namespace PMDC.Data
             return false;
         }
     }
+
+    /// <summary>
+    /// Condition: if in a dungeon map and a turn has not passed.
+    /// </summary>
+    [Serializable]
+    public class EvoMapStart : PromoteDetail
+    {
+        public EvoMapStart() { }
+
+        public override string GetReqString() { return ""; }
+        public override bool GetReq(Character character, bool inDungeon)
+        {
+            if (!inDungeon)
+                return false;
+
+            if (GameManager.Instance.CurrentScene == DungeonScene.Instance)
+                return ZoneManager.Instance.CurrentMap.MapTurns == 0;
+            return false;
+        }
+    }
+
     [Serializable]
     public class EvoPartner : PromoteDetail
     {

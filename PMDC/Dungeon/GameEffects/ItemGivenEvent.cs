@@ -131,7 +131,7 @@ namespace PMDC.Dungeon
                     //enemies might pick up the item, just silently put it back down.
 
                     //spawn the item directly below
-                    DungeonScene.Instance.DropMapItem(context.Item, context.User.CharLoc, context.User.CharLoc, true);
+                    DungeonScene.Instance.DropMapItem(new MapItem(context.Item), context.User.CharLoc, context.User.CharLoc, true);
                 }
 
                 //cancel the pickup
