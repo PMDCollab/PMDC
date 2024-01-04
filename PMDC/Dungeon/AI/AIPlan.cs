@@ -2731,7 +2731,7 @@ namespace PMDC.Dungeon
         protected List<Loc> GetAreaExits(Character controlledChar)
         {
             //get all tiles that are within the border of sight range, or within the border of the screen
-            Loc seen = new Loc(1, 1);
+            Loc seen = Loc.One;
             
             //If Passable is in the restricted tiles, floor gen typically create blobby water or wall terrain and it is possible some blobs are too small
             //This can cause an issue where the blob the Pokemon spawned in is too small so nowhere on the borders of sight range can the Pokemon move
