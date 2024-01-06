@@ -769,7 +769,7 @@ namespace MapGenTest
 
                 foreach (SingleCharEvent effect in mapContext.Map.MapEffect.OnMapTurnEnds.EnumerateInOrder())
                 {
-                    RespawnBaseEvent respawn = (RespawnBaseEvent)effect;
+                    RespawnBaseEvent respawn = effect as RespawnBaseEvent;
                     if (respawn != null)
                     {
                         MathUtils.AddToDictionary<string>(generatedStats, "npc_cap", respawn.MaxFoes);
