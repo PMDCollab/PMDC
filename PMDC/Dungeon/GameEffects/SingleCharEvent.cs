@@ -1786,7 +1786,7 @@ namespace PMDC.Dungeon
             {
                 if (effect is AutoReviveEvent)
                 {
-                    if (((AutoReviveEvent)effect).AskToUse)
+                    if (((AutoReviveEvent)effect).AskToUse == AskToUse)
                         return true;
                 }
             }
