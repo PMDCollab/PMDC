@@ -4375,14 +4375,14 @@ namespace PMDC.Dungeon
 
             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(20));
 
-            yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(Text.FormatGrammar(FailMessage.ToLocal())));
+            yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(Text.FormatGrammar(FailMessage.ToLocal())));
 
             MonsterID formData = context.User.BaseForm;
             BaseMonsterForm form = DataManager.Instance.GetMonster(formData.Species).Forms[formData.Form];
 
             if (form.Element1 == TargetElement || form.Element2 == TargetElement)
             {
-                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(Text.FormatGrammar(SuccessMessage.ToLocal(), context.User.BaseName)));
+                yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(Text.FormatGrammar(SuccessMessage.ToLocal(), context.User.BaseName)));
 
                 if (ZoneManager.Instance.InDevZone) //editor considerations
                     GameManager.Instance.SceneOutcome = GameManager.Instance.ReturnToEditor();
