@@ -17,7 +17,7 @@ namespace PMDC.Data
     [Serializable]
     public class MonsterFormData : BaseMonsterForm
     {
-        public const int MAX_STAT_BOOST = 128;
+        public const int MAX_STAT_BOOST = 256;
 
         /// <summary>
         /// What generation it was introduced in
