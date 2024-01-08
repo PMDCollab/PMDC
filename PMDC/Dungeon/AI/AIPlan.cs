@@ -64,6 +64,17 @@ namespace PMDC.Dungeon
         /// </summary>
         public AIFlags IQ;
 
+        /// <summary>
+        /// Mobility types where, even if the Pokemon could enter, the AI will not allow it to move into
+        /// If the Pokemon does not have a non-restricted mobility type around it, it will refuse to move
+        /// </summary>
+        public TerrainData.Mobility RestrictedMobilityTypes;
+
+        /// <summary>
+        /// Whether to restrict the Pokemon's movement on passable terrain as well.
+        /// </summary>
+        public bool RestrictMobilityPassable;
+
         public int AttackRange;
         public int StatusRange;
         public int SelfStatusRange;
@@ -118,16 +129,21 @@ namespace PMDC.Dungeon
             Avoid,
         }
 
-        public AIPlan() { }
+        public AIPlan()
+        {
+        }
 
         public AIPlan(AIFlags iq)
         {
             this.IQ = iq;
         }
 
-        public AIPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange)
+        public AIPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange,
+            TerrainData.Mobility restrictedMobilityTypes, bool restrictMobilityPassable)
         {
             this.IQ = iq;
+            this.RestrictedMobilityTypes = restrictedMobilityTypes;
+            this.RestrictMobilityPassable = restrictMobilityPassable;
             this.AttackRange = attackRange;
             this.StatusRange = statusRange;
             this.SelfStatusRange = selfStatusRange;
@@ -136,6 +152,8 @@ namespace PMDC.Dungeon
         protected AIPlan(AIPlan other)
         {
             IQ = other.IQ;
+            RestrictedMobilityTypes = other.RestrictedMobilityTypes;
+            RestrictMobilityPassable = other.RestrictMobilityPassable;
             SelfStatusRange = other.SelfStatusRange;
             StatusRange = other.StatusRange;
             AttackRange = other.AttackRange;
@@ -233,6 +251,27 @@ namespace PMDC.Dungeon
                 if (!character.Dead && (DungeonScene.Instance.GetMatchup(controlledChar, character) & alignment) != Alignment.None)
                     return true;
             }
+            return false;
+        }
+
+        protected bool BlockedByTerrain(Character controlledChar, Loc testLoc)
+        {
+            Tile tile = ZoneManager.Instance.CurrentMap.GetTile(testLoc);
+            
+            //Check for restricted mobility types
+            if (tile.Data.GetData() != null)
+            {
+                TerrainData terrain = tile.Data.GetData();
+                if ((terrain.BlockType & RestrictedMobilityTypes) != 0)
+                {
+                    return true;
+                }
+                else if (terrain.BlockType == TerrainData.Mobility.Passable && RestrictMobilityPassable)
+                {
+                    return true;
+                }
+            }
+
             return false;
         }
 
@@ -387,6 +426,8 @@ namespace PMDC.Dungeon
 
                 if (BlockedByTrap(controlledChar, testLoc))
                     return true;
+                if (BlockedByTerrain(controlledChar, testLoc))
+                    return true;
                 if (BlockedByHazard(controlledChar, testLoc))
                     return true;
 
@@ -442,6 +483,8 @@ namespace PMDC.Dungeon
                     return true;
 
                 if (BlockedByTrap(controlledChar, testLoc))
+                    return true;
+                if (BlockedByTerrain(controlledChar, testLoc))
                     return true;
                 if (BlockedByHazard(controlledChar, testLoc))
                     return true;
@@ -2699,7 +2742,15 @@ namespace PMDC.Dungeon
         protected List<Loc> GetAreaExits(Character controlledChar)
         {
             //get all tiles that are within the border of sight range, or within the border of the screen
-            Loc seen = Character.GetSightDims();
+            Loc seen = new Loc(1, 1);
+            
+            //If Passable is in the restricted tiles, floor gen typically create blobby water or wall terrain and it is possible some blobs are too small
+            //This can cause an issue where the blob the Pokemon spawned in is too small so nowhere on the borders of sight range can the Pokemon move
+            //That would cause the Pokemon to give up movement altogether-  to prevent this, the radius of area exits will be set to 1 for such.
+            if ((RestrictedMobilityTypes & TerrainData.Mobility.Passable) == 0)
+            {
+                seen = Character.GetSightDims();
+            }
 
             List<Loc> loc_list = new List<Loc>();
             //currently, CPU sight cheats by knowing tiles up to the bounds, instead of individual tiles at the border of FOV.
@@ -2724,6 +2775,8 @@ namespace PMDC.Dungeon
                 return;
 
             if (BlockedByTrap(controlledChar, border_loc))
+                return;
+            if (BlockedByTerrain(controlledChar, border_loc))
                 return;
             if (BlockedByHazard(controlledChar, border_loc))
                 return;

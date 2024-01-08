@@ -69,6 +69,8 @@ namespace PMDC.Dungeon
 
                     if (BlockedByTrap(controlledChar, testLoc))
                         return true;
+                    if (BlockedByTerrain(controlledChar, testLoc))
+                        return true;
                     if (BlockedByHazard(controlledChar, testLoc))
                         return true;
 

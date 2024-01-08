@@ -89,7 +89,7 @@ namespace PMDC.Dungeon
                 if (controlledChar.CharLoc == goalPath[goalPath.Count - 1])//check if on the trail
                 {
                     if (!ZoneManager.Instance.CurrentMap.TileBlocked(goalPath[goalPath.Count - 2], controlledChar.Mobility) &&
-                        !BlockedByTrap(controlledChar, goalPath[goalPath.Count - 2]) &&
+                        !BlockedByTrap(controlledChar, goalPath[goalPath.Count - 2]) && !BlockedByTerrain(controlledChar, goalPath[goalPath.Count - 2]) &&
                         !BlockedByHazard(controlledChar, goalPath[goalPath.Count - 2]))//check to make sure the next step didn't suddely become blocked
                     {
                         //update current traversals
