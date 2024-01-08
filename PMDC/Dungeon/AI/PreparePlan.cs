@@ -220,7 +220,7 @@ namespace PMDC.Dungeon
         public string FirstMoveStatus;
 
         public LeadSkillPlan() { FirstMoveStatus = ""; }
-        public LeadSkillPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, string firstMoveStatus, TerrainData.Mobility restrictedMobilityTypes) : base(iq, attackRange, statusRange, selfStatusRange, restrictedMobilityTypes)
+        public LeadSkillPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, string firstMoveStatus, TerrainData.Mobility restrictedMobilityTypes, bool restrictMobilityPassable) : base(iq, attackRange, statusRange, selfStatusRange, restrictedMobilityTypes, restrictMobilityPassable)
         {
             FirstMoveStatus = firstMoveStatus;
         }
