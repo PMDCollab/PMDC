@@ -12,7 +12,7 @@ namespace PMDC.Dungeon
     {
         public FollowLeaderPlan() { }
         public FollowLeaderPlan(AIFlags iq) : base(iq) { }
-        public FollowLeaderPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, TerrainData.Mobility restrictedMobilityTypes) : base(iq, attackRange, statusRange, selfStatusRange, restrictedMobilityTypes) { }
+        public FollowLeaderPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, TerrainData.Mobility restrictedMobilityTypes, bool restrictMobilityPassable) : base(iq, attackRange, statusRange, selfStatusRange, restrictedMobilityTypes, restrictMobilityPassable) { }
         protected FollowLeaderPlan(FollowLeaderPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new FollowLeaderPlan(this); }
 

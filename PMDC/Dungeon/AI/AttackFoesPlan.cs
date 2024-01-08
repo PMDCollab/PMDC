@@ -22,7 +22,7 @@ namespace PMDC.Dungeon
         private Character lastSeenChar;
 
         public AttackFoesPlan() { }
-        public AttackFoesPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, AttackChoice attackPattern, PositionChoice positionPattern, TerrainData.Mobility restrictedMobilityTypes) : base(iq, attackRange, statusRange, selfStatusRange, restrictedMobilityTypes)
+        public AttackFoesPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, AttackChoice attackPattern, PositionChoice positionPattern, TerrainData.Mobility restrictedMobilityTypes, bool restrictMobilityPassable) : base(iq, attackRange, statusRange, selfStatusRange, restrictedMobilityTypes, restrictMobilityPassable)
         {
             AttackPattern = attackPattern;
             PositionPattern = positionPattern;

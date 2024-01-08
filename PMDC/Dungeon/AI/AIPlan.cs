@@ -70,6 +70,11 @@ namespace PMDC.Dungeon
         /// </summary>
         public TerrainData.Mobility RestrictedMobilityTypes;
 
+        /// <summary>
+        /// Whether to restrict the Pokemon's movement on passable terrain as well.
+        /// </summary>
+        public bool RestrictMobilityPassable;
+
         public int AttackRange;
         public int StatusRange;
         public int SelfStatusRange;
@@ -134,10 +139,11 @@ namespace PMDC.Dungeon
         }
 
         public AIPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange,
-            TerrainData.Mobility restrictedMobilityTypes)
+            TerrainData.Mobility restrictedMobilityTypes, bool restrictMobilityPassable)
         {
             this.IQ = iq;
             this.RestrictedMobilityTypes = restrictedMobilityTypes;
+            this.RestrictMobilityPassable = restrictMobilityPassable;
             this.AttackRange = attackRange;
             this.StatusRange = statusRange;
             this.SelfStatusRange = selfStatusRange;
@@ -147,6 +153,7 @@ namespace PMDC.Dungeon
         {
             IQ = other.IQ;
             RestrictedMobilityTypes = other.RestrictedMobilityTypes;
+            RestrictMobilityPassable = other.RestrictMobilityPassable;
             SelfStatusRange = other.SelfStatusRange;
             StatusRange = other.StatusRange;
             AttackRange = other.AttackRange;
@@ -256,6 +263,10 @@ namespace PMDC.Dungeon
             {
                 TerrainData terrain = tile.Data.GetData();
                 if ((terrain.BlockType & RestrictedMobilityTypes) != 0)
+                {
+                    return true;
+                }
+                else if (terrain.BlockType == TerrainData.Mobility.Passable && RestrictMobilityPassable)
                 {
                     return true;
                 }
