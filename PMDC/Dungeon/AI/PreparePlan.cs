@@ -175,7 +175,7 @@ namespace PMDC.Dungeon
         public string FirstMoveStatus;
 
         public PreBuffPlan() { }
-        public PreBuffPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, string firstMoveStatus, TerrainData.Mobility restrictedMobilityTypes) : base(iq, attackRange, statusRange, selfStatusRange, restrictedMobilityTypes)
+        public PreBuffPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, string firstMoveStatus, TerrainData.Mobility restrictedMobilityTypes, bool restrictMobilityPassable) : base(iq, attackRange, statusRange, selfStatusRange, restrictedMobilityTypes, restrictMobilityPassable)
         {
             FirstMoveStatus = firstMoveStatus;
         }
