@@ -2747,7 +2747,7 @@ namespace PMDC.Dungeon
             //If Passable is in the restricted tiles, floor gen typically create blobby water or wall terrain and it is possible some blobs are too small
             //This can cause an issue where the blob the Pokemon spawned in is too small so nowhere on the borders of sight range can the Pokemon move
             //That would cause the Pokemon to give up movement altogether-  to prevent this, the radius of area exits will be set to 1 for such.
-            if ((RestrictedMobilityTypes & TerrainData.Mobility.Passable) == 0)
+            if ((RestrictMobilityPassable) == 0)
             {
                 seen = Character.GetSightDims();
             }
