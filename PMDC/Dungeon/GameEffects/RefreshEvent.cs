@@ -76,25 +76,25 @@ namespace PMDC.Dungeon
             MonsterID testID = character.CurrentForm;
             if (IDPair.TryGetValue(testID, out mobility))
             {
-                character.Mobility = TerrainData.Mobility.Passable | mobility;
+                character.Mobility = mobility;
                 return;
             }
             testID.Gender = Gender.Unknown;
             if (IDPair.TryGetValue(testID, out mobility))
             {
-                character.Mobility = TerrainData.Mobility.Passable | mobility;
+                character.Mobility = mobility;
                 return;
             }
             testID.Skin = "";
             if (IDPair.TryGetValue(testID, out mobility))
             {
-                character.Mobility = TerrainData.Mobility.Passable | mobility;
+                character.Mobility = mobility;
                 return;
             }
             testID.Form = -1;
             if (IDPair.TryGetValue(testID, out mobility))
             {
-                character.Mobility = TerrainData.Mobility.Passable | mobility;
+                character.Mobility = mobility;
                 return;
             }
         }
