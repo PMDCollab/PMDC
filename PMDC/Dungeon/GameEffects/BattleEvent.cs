@@ -6283,7 +6283,12 @@ namespace PMDC.Dungeon
         /// The message displayed in the dungeon log
         /// </summary>
         public StringKey Msg;
-        
+
+        /// <summary>
+        /// Only status effects, not all status moves
+        /// </summary>
+        public bool StatusOnly;
+
         /// <summary>
         /// The list of battle VFXs played if the condition is met
         /// </summary>
@@ -6293,14 +6298,16 @@ namespace PMDC.Dungeon
         {
             Anims = new List<BattleAnimEvent>();
         }
-        public BounceStatusEvent(StringKey msg, params BattleAnimEvent[] anims)
+        public BounceStatusEvent(bool statusOnly, StringKey msg, params BattleAnimEvent[] anims)
         {
+            StatusOnly = statusOnly;
             Msg = msg;
             Anims = new List<BattleAnimEvent>();
             Anims.AddRange(anims);
         }
         protected BounceStatusEvent(BounceStatusEvent other)
         {
+            StatusOnly = other.StatusOnly;
             Msg = other.Msg;
             Anims = new List<BattleAnimEvent>();
             foreach (BattleAnimEvent anim in other.Anims)
@@ -6314,18 +6321,24 @@ namespace PMDC.Dungeon
             if (context.ActionType == BattleActionType.Skill && context.Data.Category == BattleData.SkillCategory.Status && DungeonScene.Instance.GetMatchup(context.User, context.Target) != Alignment.Self)
             {
                 bool inflictsStatus = false;
-                foreach (BattleEvent effect in context.Data.OnHits.EnumerateInOrder())
+                if (StatusOnly)
                 {
-                    if (effect is StatusBattleEvent)
+                    foreach (BattleEvent effect in context.Data.OnHits.EnumerateInOrder())
                     {
-                        StatusBattleEvent giveEffect = (StatusBattleEvent)effect;
-                        if (giveEffect.AffectTarget && !giveEffect.Anonymous)
+                        if (effect is StatusBattleEvent)
                         {
-                            inflictsStatus = true;
-                            break;
+                            StatusBattleEvent giveEffect = (StatusBattleEvent)effect;
+                            if (giveEffect.AffectTarget && !giveEffect.Anonymous)
+                            {
+                                inflictsStatus = true;
+                                break;
+                            }
                         }
                     }
                 }
+                else
+                    inflictsStatus = true;
+
                 if (inflictsStatus)
                 {
                     DungeonScene.Instance.LogMsg(Text.FormatGrammar(Msg.ToLocal(), context.Target.GetDisplayName(false)));
