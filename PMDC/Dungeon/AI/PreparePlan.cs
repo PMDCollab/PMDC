@@ -15,7 +15,7 @@ namespace PMDC.Dungeon
         public AttackChoice AttackPattern;
 
         public PreparePlan() { }
-        public PreparePlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, AttackChoice attackPattern) : base(iq, attackRange, statusRange, selfStatusRange)
+        public PreparePlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, AttackChoice attackPattern, TerrainData.Mobility restrictedMobilityTypes, bool restrictMobilityPassable) : base(iq, attackRange, statusRange, selfStatusRange, restrictedMobilityTypes, restrictMobilityPassable)
         {
             AttackPattern = attackPattern;
         }
@@ -56,7 +56,7 @@ namespace PMDC.Dungeon
         public AttackChoice AttackPattern;
 
         public PrepareWithLeaderPlan() { }
-        public PrepareWithLeaderPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, AttackChoice attackPattern) : base(iq, attackRange, statusRange, selfStatusRange)
+        public PrepareWithLeaderPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, AttackChoice attackPattern, TerrainData.Mobility restrictedMobilityTypes, bool restrictMobilityPassable) : base(iq, attackRange, statusRange, selfStatusRange, restrictedMobilityTypes, restrictMobilityPassable)
         {
             AttackPattern = attackPattern;
         }
@@ -175,7 +175,7 @@ namespace PMDC.Dungeon
         public string FirstMoveStatus;
 
         public PreBuffPlan() { }
-        public PreBuffPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, string firstMoveStatus) : base(iq, attackRange, statusRange, selfStatusRange)
+        public PreBuffPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, string firstMoveStatus, TerrainData.Mobility restrictedMobilityTypes, bool restrictMobilityPassable) : base(iq, attackRange, statusRange, selfStatusRange, restrictedMobilityTypes, restrictMobilityPassable)
         {
             FirstMoveStatus = firstMoveStatus;
         }
@@ -220,7 +220,7 @@ namespace PMDC.Dungeon
         public string FirstMoveStatus;
 
         public LeadSkillPlan() { FirstMoveStatus = ""; }
-        public LeadSkillPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, string firstMoveStatus) : base(iq, attackRange, statusRange, selfStatusRange)
+        public LeadSkillPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, string firstMoveStatus, TerrainData.Mobility restrictedMobilityTypes, bool restrictMobilityPassable) : base(iq, attackRange, statusRange, selfStatusRange, restrictedMobilityTypes, restrictMobilityPassable)
         {
             FirstMoveStatus = firstMoveStatus;
         }
