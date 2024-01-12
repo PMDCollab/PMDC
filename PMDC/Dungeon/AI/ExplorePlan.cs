@@ -50,11 +50,6 @@ namespace PMDC.Dungeon
             goalPath = new List<Loc>();
             LocHistory = new List<Loc>();
         }
-        public ExplorePlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, TerrainData.Mobility restrictedMobilityTypes, bool restrictMobilityPassable) : base(iq, attackRange, statusRange, selfStatusRange, restrictedMobilityTypes, restrictMobilityPassable)
-        {
-            goalPath = new List<Loc>();
-            LocHistory = new List<Loc>();
-        }
         protected ExplorePlan(ExplorePlan other) : base(other) { }
         public override BasePlan CreateNew() { return new ExplorePlan(this); }
         public override void Initialize(Character controlledChar)
