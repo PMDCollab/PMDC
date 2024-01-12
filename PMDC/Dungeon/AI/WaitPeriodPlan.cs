@@ -11,6 +11,8 @@ namespace PMDC.Dungeon
     {
         public int Turns;
 
+        public WaitPeriodPlan() : base()
+        { }
         public WaitPeriodPlan(AIFlags iq, int turns) : base(iq)
         {
             Turns = turns;

@@ -4,6 +4,7 @@ using RogueElements;
 using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Data;
+using Newtonsoft.Json;
 
 namespace PMDC.Dungeon
 {
@@ -45,6 +46,10 @@ namespace PMDC.Dungeon
         protected List<Loc> goalPath;
         [NonSerialized]
         public List<Loc> LocHistory;
+
+        public ExplorePlan() : base()
+        { }
+
         public ExplorePlan(AIFlags iq) : base(iq)
         {
             goalPath = new List<Loc>();
