@@ -21,6 +21,9 @@ namespace PMDC.Dungeon
         [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Item, false)]
         public string ItemIndex;
+
+        public CultDancePlan() : base()
+        { }
         public CultDancePlan(AIFlags iq, string item, string status) : base(iq)
         {
             StatusIndex = status;
