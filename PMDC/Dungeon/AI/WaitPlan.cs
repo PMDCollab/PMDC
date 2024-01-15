@@ -11,6 +11,7 @@ namespace PMDC.Dungeon
     {
         public WaitPlan() { }
         public WaitPlan(AIFlags iq) : base(iq) { }
+        public WaitPlan(AIFlags iq, int attackRange, int statusRange, int selfStatusRange, TerrainData.Mobility restrictedMobilityTypes, bool restrictMobilityPassable) : base(iq, attackRange, statusRange, selfStatusRange, restrictedMobilityTypes, restrictMobilityPassable) { }
         protected WaitPlan(WaitPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new WaitPlan(this); }
 

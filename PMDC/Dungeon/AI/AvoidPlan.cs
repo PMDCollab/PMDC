@@ -15,6 +15,8 @@ namespace PMDC.Dungeon
         [NonSerialized]
         private List<Loc> locHistory;
 
+        public AvoidPlan() : base()
+        { }
         public AvoidPlan(AIFlags iq) : base(iq)
         {
             goalPath = new List<Loc>();

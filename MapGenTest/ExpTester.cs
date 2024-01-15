@@ -299,6 +299,7 @@ namespace MapGenTest
             ZoneEntrySummary zoneSummary = (ZoneEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Zone].Get(zoneId);
 
             int recipientLv = zoneSummary.Level;
+            int expPercent = zoneSummary.ExpPercent;
             GrowthData growthData = DataManager.Instance.GetGrowth(growth);
             int gainedExp = 0;
 
@@ -311,7 +312,7 @@ namespace MapGenTest
                     currentLoc = exp.segLoc;
                 }
                 int gain = expEvent.GetExp(exp.expYield, exp.level, recipientLv);
-                gainedExp += gain;
+                gainedExp += (gain * expPercent / 100);
 
                 while (recipientLv < DataManager.Instance.Start.MaxLevel && gainedExp >= growthData.GetExpTo(recipientLv, recipientLv + 1))
                 {

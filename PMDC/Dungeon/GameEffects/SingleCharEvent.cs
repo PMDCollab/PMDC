@@ -1758,7 +1758,15 @@ namespace PMDC.Dungeon
     [Serializable]
     public class AutoReviveEvent : SingleCharEvent
     {
+        /// <summary>
+        /// Asks to use the item.  Can be refused.
+        /// </summary>
         public bool AskToUse;
+
+        /// <summary>
+        /// For ask to use only: defaults to automatically choosing yes for players and enemies that know how to use it.
+        /// </summary>
+        public bool DefaultYes;
 
 
         [JsonConverter(typeof(ItemConverter))]
@@ -1774,6 +1782,7 @@ namespace PMDC.Dungeon
         protected AutoReviveEvent(AutoReviveEvent other)
         {
             AskToUse = other.AskToUse;
+            DefaultYes = other.DefaultYes;
             ChangeTo = other.ChangeTo;
         }
         public override GameEvent Clone() { return new AutoReviveEvent(this); }
@@ -1841,6 +1850,11 @@ namespace PMDC.Dungeon
                                 useIndex = candKeys[uiIndex];
                                 useSlot = candidateItems[useIndex];
                             }
+                        }
+                        else if (DefaultYes)
+                        {
+                            useIndex = candKeys[0];
+                            useSlot = candidateItems[useIndex];
                         }
                         else
                         {

@@ -11,7 +11,14 @@ namespace PMDC.Dungeon
     {
         public int Turns;
 
+        public WaitPeriodPlan() : base()
+        { }
         public WaitPeriodPlan(AIFlags iq, int turns) : base(iq)
+        {
+            Turns = turns;
+        }
+
+        public WaitPeriodPlan(AIFlags iq, int turns, int attackRange, int statusRange, int selfStatusRange, TerrainData.Mobility restrictedMobilityTypes, bool restrictMobilityPassable) : base(iq, attackRange, statusRange, selfStatusRange, restrictedMobilityTypes, restrictMobilityPassable)
         {
             Turns = turns;
         }

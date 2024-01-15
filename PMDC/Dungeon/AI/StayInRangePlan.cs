@@ -14,6 +14,9 @@ namespace PMDC.Dungeon
 
         [NonSerialized]
         private Loc targetLoc;
+
+        public StayInRangePlan() : base()
+        { }
         public StayInRangePlan(AIFlags iq) : base(iq)
         {
             targetLoc = new Loc(-1);
