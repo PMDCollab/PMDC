@@ -8457,6 +8457,11 @@ namespace PMDC.Dungeon
         [DataType(0, DataManager.DataType.Element, false)]
         public string TargetElement;
 
+        /// <summary>
+        /// If checked, must be base type not current type
+        /// </summary>
+        public bool RequireBase;
+
         public GummiEvent() { TargetElement = ""; }
         public GummiEvent(string element)
         {
@@ -8465,6 +8470,7 @@ namespace PMDC.Dungeon
         protected GummiEvent(GummiEvent other)
         {
             TargetElement = other.TargetElement;
+            RequireBase = other.RequireBase;
         }
         public override GameEvent Clone() { return new GummiEvent(this); }
 
@@ -8473,12 +8479,21 @@ namespace PMDC.Dungeon
             MonsterID formData = context.Target.BaseForm;
             BaseMonsterForm form = DataManager.Instance.GetMonster(formData.Species).Forms[formData.Form];
 
-            int typeMatchup = PreTypeEvent.CalculateTypeMatchup(TargetElement, context.Target.Element1);
-            typeMatchup += PreTypeEvent.CalculateTypeMatchup(TargetElement, context.Target.Element2);
+            string element1 = context.Target.Element1;
+            string element2 = context.Target.Element2;
+
+            if (RequireBase)
+            {
+                element1 = form.Element1;
+                element2 = form.Element2;
+            }
+
+            int typeMatchup = PreTypeEvent.CalculateTypeMatchup(TargetElement, element1);
+            typeMatchup += PreTypeEvent.CalculateTypeMatchup(TargetElement, element2);
 
             int heal = 5;
             List<Stat> stats = new List<Stat>();
-            if (TargetElement == DataManager.Instance.DefaultElement || context.Target.Element1 == TargetElement || context.Target.Element2 == TargetElement)
+            if (TargetElement == DataManager.Instance.DefaultElement || element1 == TargetElement || element2 == TargetElement)
             {
                 heal = 20;
                 stats.Add(Stat.HP);
@@ -8585,7 +8600,196 @@ namespace PMDC.Dungeon
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_STAT_BOOST").ToLocal(), context.Target.GetDisplayName(false), stat.ToLocal(), (newStat - prevStat).ToString()));
         }
     }
-    
+
+    /// <summary>
+    /// Normally raises one stat. Also raises other stats if matching type.
+    /// Matching = All stats + 2
+    /// Super-effective = All stats + 1, main stat + 2
+    /// Normal effect = main stat + 2
+    /// NVE = main stat + 1
+    /// Immune = nothing
+    /// </summary>
+    [Serializable]
+    public class VitaGummiEvent : BattleEvent
+    {
+
+        /// <summary>
+        /// The gummi type
+        /// </summary>
+        [JsonConverter(typeof(ElementConverter))]
+        [DataType(0, DataManager.DataType.Element, false)]
+        public string TargetElement;
+
+        /// <summary>
+        /// If checked, must be base type not current type
+        /// </summary>
+        public bool RequireBase;
+
+        /// <summary>
+        /// The stat to boost
+        /// </summary>
+        public Stat BoostedStat;
+
+        public VitaGummiEvent() { TargetElement = ""; }
+        public VitaGummiEvent(string element, bool requireBase, Stat defaultStat)
+        {
+            TargetElement = element;
+            RequireBase = requireBase;
+            BoostedStat = defaultStat;
+        }
+        protected VitaGummiEvent(VitaGummiEvent other)
+        {
+            TargetElement = other.TargetElement;
+            RequireBase = other.RequireBase;
+            BoostedStat = other.BoostedStat;
+        }
+        public override GameEvent Clone() { return new VitaGummiEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            MonsterID formData = context.Target.BaseForm;
+            BaseMonsterForm form = DataManager.Instance.GetMonster(formData.Species).Forms[formData.Form];
+
+            string element1 = context.Target.Element1;
+            string element2 = context.Target.Element2;
+
+            if (RequireBase)
+            {
+                element1 = form.Element1;
+                element2 = form.Element2;
+            }
+
+            int typeMatchup = PreTypeEvent.CalculateTypeMatchup(TargetElement, element1);
+            typeMatchup += PreTypeEvent.CalculateTypeMatchup(TargetElement, element2);
+
+            int heal;
+            int mainAdd;
+            int subAdd;
+            List<Stat> stats = new List<Stat>();
+            if (TargetElement == DataManager.Instance.DefaultElement || element1 == TargetElement || element2 == TargetElement)
+            {
+                heal = 20;
+                mainAdd = 2;
+                subAdd = 2;
+                stats.Add(Stat.HP);
+                stats.Add(Stat.Attack);
+                stats.Add(Stat.Defense);
+                stats.Add(Stat.MAtk);
+                stats.Add(Stat.MDef);
+                stats.Add(Stat.Speed);
+            }
+            else if (typeMatchup >= PreTypeEvent.S_E_2)
+            {
+                heal = 15;
+                mainAdd = 2;
+                subAdd = 1;
+                stats.Add(Stat.HP);
+                stats.Add(Stat.Attack);
+                stats.Add(Stat.Defense);
+                stats.Add(Stat.MAtk);
+                stats.Add(Stat.MDef);
+                stats.Add(Stat.Speed);
+            }
+            else if (typeMatchup == PreTypeEvent.NRM_2)
+            {
+                heal = 10;
+                mainAdd = 2;
+                subAdd = 0;
+                stats.Add(BoostedStat);
+            }
+            else if (typeMatchup > PreTypeEvent.N_E_2)
+            {
+                heal = 5;
+                mainAdd = 1;
+                subAdd = 0;
+                stats.Add(BoostedStat);
+            }
+            else
+            {
+                heal = 5;
+                mainAdd = 0;
+                subAdd = 0;
+            }
+
+            foreach (Stat stat in stats)
+                AddStat(stat, stat == BoostedStat ? mainAdd : subAdd, context);
+
+            if (heal > 15)
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_HUNGER_FILL").ToLocal(), context.Target.GetDisplayName(false)));
+            else if (heal > 5)
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_HUNGER_FILL_MIN").ToLocal(), context.Target.GetDisplayName(false)));
+
+            context.Target.Fullness += heal;
+
+            if (context.Target.Fullness >= context.Target.MaxFullness)
+            {
+                context.Target.Fullness = context.Target.MaxFullness;
+                context.Target.FullnessRemainder = 0;
+            }
+
+            yield break;
+        }
+
+        private void AddStat(Stat stat, int amount, BattleContext context)
+        {
+            int prevStat = 0;
+            int newStat = 0;
+            switch (stat)
+            {
+                case Stat.HP:
+                    if (context.Target.MaxHPBonus < MonsterFormData.MAX_STAT_BOOST)
+                    {
+                        prevStat = context.Target.MaxHP;
+                        context.Target.MaxHPBonus = Math.Min(context.Target.MaxHPBonus + amount, MonsterFormData.MAX_STAT_BOOST);
+                        newStat = context.Target.MaxHP;
+                    }
+                    break;
+                case Stat.Attack:
+                    if (context.Target.AtkBonus < MonsterFormData.MAX_STAT_BOOST)
+                    {
+                        prevStat = context.Target.BaseAtk;
+						context.Target.AtkBonus = Math.Min(context.Target.AtkBonus + amount, MonsterFormData.MAX_STAT_BOOST);
+                        newStat = context.Target.BaseAtk;
+                    }
+                    break;
+                case Stat.Defense:
+                    if (context.Target.DefBonus < MonsterFormData.MAX_STAT_BOOST)
+                    {
+                        prevStat = context.Target.BaseDef;
+                        context.Target.DefBonus = Math.Min(context.Target.DefBonus + amount, MonsterFormData.MAX_STAT_BOOST);
+                        newStat = context.Target.BaseDef;
+                    }
+                    break;
+                case Stat.MAtk:
+                    if (context.Target.MAtkBonus < MonsterFormData.MAX_STAT_BOOST)
+                    {
+                        prevStat = context.Target.BaseMAtk;
+                        context.Target.MAtkBonus = Math.Min(context.Target.MAtkBonus + amount, MonsterFormData.MAX_STAT_BOOST);
+                        newStat = context.Target.BaseMAtk;
+                    }
+                    break;
+                case Stat.MDef:
+                    if (context.Target.MDefBonus < MonsterFormData.MAX_STAT_BOOST)
+                    {
+                        prevStat = context.Target.BaseMDef;
+                        context.Target.MDefBonus = Math.Min(context.Target.MDefBonus + amount, MonsterFormData.MAX_STAT_BOOST);
+                        newStat = context.Target.BaseMDef;
+                    }
+                    break;
+                case Stat.Speed:
+                    if (context.Target.SpeedBonus < MonsterFormData.MAX_STAT_BOOST)
+                    {
+                        prevStat = context.Target.BaseSpeed;
+                        context.Target.SpeedBonus = Math.Min(context.Target.SpeedBonus + amount, MonsterFormData.MAX_STAT_BOOST);
+                        newStat = context.Target.BaseSpeed;
+                    }
+                    break;
+            }
+            if (newStat - prevStat > 0)
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_STAT_BOOST").ToLocal(), context.Target.GetDisplayName(false), stat.ToLocal(), (newStat - prevStat).ToString()));
+        }
+    }
+
     /// <summary>
     /// Event that boosts the specified stat by the specified amount
     /// </summary>
