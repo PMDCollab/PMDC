@@ -10,7 +10,10 @@ using System.Xml;
 
 namespace PMDC.LevelGen
 {
-
+    /// <summary>
+    /// Gets specific items of a certain mon on the floor
+    /// </summary>
+    /// <typeparam name="TGenContext"></typeparam>
     [Serializable]
     public class SpeciesItemContextSpawner<TGenContext> : SpeciesItemSpawner<TGenContext>
         where TGenContext : BaseMapGenContext

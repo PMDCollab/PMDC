@@ -2907,7 +2907,7 @@ namespace PMDC.Dungeon
                 ItemData itemData = DataManager.Instance.GetItem(context.Item.ID);
                 if (itemData.ItemStates.Contains<BerryState>())
                 {
-                    context.HitboxAction = new AreaAction();
+                    context.HitboxAction = new SelfAction();
                     context.HitboxAction.TargetAlignments = (Alignment.Self | Alignment.Friend);
                     context.Explosion.ExplodeFX.Emitter = Emitter;
                     context.Explosion.ExplodeFX.Sound = Sound;

@@ -13,7 +13,10 @@ using PMDC.Data;
 
 namespace PMDC.LevelGen
 {
-
+    /// <summary>
+    /// Gets specific items of a certain specified type
+    /// </summary>
+    /// <typeparam name="TGenContext"></typeparam>
     [Serializable]
     public class SpeciesItemElementSpawner<TGenContext> : SpeciesItemSpawner<TGenContext>
         where TGenContext : BaseMapGenContext
