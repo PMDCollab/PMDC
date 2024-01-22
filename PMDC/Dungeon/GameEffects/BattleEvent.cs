@@ -2907,13 +2907,14 @@ namespace PMDC.Dungeon
                 ItemData itemData = DataManager.Instance.GetItem(context.Item.ID);
                 if (itemData.ItemStates.Contains<BerryState>())
                 {
-                    context.HitboxAction = new SelfAction();
-                    context.HitboxAction.TargetAlignments = (Alignment.Self | Alignment.Friend);
-                    context.Explosion.ExplodeFX.Emitter = Emitter;
-                    context.Explosion.ExplodeFX.Sound = Sound;
-                    context.Explosion.Range = 1;
-                    context.Explosion.Speed = 10;
-                    context.Explosion.ExplodeFX.Delay = 30;
+                    AreaAction newAction = new AreaAction();
+                    newAction.TargetAlignments = (Alignment.Self | Alignment.Friend);
+                    newAction.Range = 1;
+                    newAction.ActionFX.Emitter = Emitter;
+                    newAction.Speed = 10;
+                    newAction.ActionFX.Sound = Sound;
+                    newAction.ActionFX.Delay = 30;
+                    context.HitboxAction = newAction;
                     context.Explosion.TargetAlignments = (Alignment.Self | Alignment.Friend);
 
                     DungeonScene.Instance.LogMsg(Text.FormatGrammar(Msg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
