@@ -7007,6 +7007,32 @@ namespace PMDC.Dungeon
 
 
     [Serializable]
+    public class PlayerCharEvent : SingleCharEvent
+    {
+        public SingleCharEvent BaseEvent;
+
+        public PlayerCharEvent()
+        { }
+        public PlayerCharEvent(SingleCharEvent baseEvent)
+        {
+            BaseEvent = baseEvent;
+        }
+        protected PlayerCharEvent(PlayerCharEvent other)
+        {
+            BaseEvent = (SingleCharEvent)other.BaseEvent.Clone();
+        }
+        public override GameEvent Clone() { return new PlayerCharEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
+                yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, context));
+        }
+    }
+
+
+
+    [Serializable]
     public class LeaderCharEvent : SingleCharEvent
     {
         public SingleCharEvent BaseEvent;
