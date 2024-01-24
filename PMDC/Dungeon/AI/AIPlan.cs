@@ -2554,9 +2554,9 @@ namespace PMDC.Dungeon
                             {
                                 //for any other effect, assume it has a negative effect on foes, and positive effect on allies 
                                 if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
-                                    return 100;
+                                    addedWorth = 100;
                                 else
-                                    return -100;
+                                    addedWorth = -100;
                             }
                         }
 
