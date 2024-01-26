@@ -121,7 +121,7 @@ namespace MapGenTest
             Logs = new List<ExpLog>();
             List<int> uniqueIDs = new List<int>();
             int maxUniqueIDs = 0;
-            foreach (string dir in Directory.GetFiles(EXP_DIR))
+            foreach (string dir in Directory.GetFiles(EXP_DIR + "/0.7.20"))
             {
                 HashSet<int> curUniqueIDs = new HashSet<int>();
                 ExpLog log = new ExpLog();
@@ -147,7 +147,7 @@ namespace MapGenTest
                             curUniqueIDs.Add(id);
                     }
                 }
-                if (log.Zone.ID != "")
+                if (log.Zone.ID == "forsaken_desert")
                 {
                     Logs.Add(log);
                     uniqueIDs.Add(curUniqueIDs.Count);
@@ -156,14 +156,14 @@ namespace MapGenTest
                 }
             }
 
-            //for (int ii = uniqueIDs.Count - 1; ii >= 0; ii--)
-            //{
-            //    if (uniqueIDs[ii] < maxUniqueIDs)
-            //    {
-            //        Logs.RemoveAt(ii);
-            //        uniqueIDs.RemoveAt(ii);
-            //    }
-            //}
+            for (int ii = uniqueIDs.Count - 1; ii >= 0; ii--)
+            {
+                if (uniqueIDs[ii] < maxUniqueIDs)
+                {
+                    Logs.RemoveAt(ii);
+                    uniqueIDs.RemoveAt(ii);
+                }
+            }
 
             InitHandouts();
 

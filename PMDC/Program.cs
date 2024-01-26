@@ -293,7 +293,10 @@ namespace PMDC
                                 break;
                             case ModRelationship.DependsOn:
                                 {
-                                    errorMsgs.Add(String.Format("{0} depends on missing mod {1}.", involved[0].Namespace, involved[1].Namespace));
+                                    if (String.IsNullOrEmpty(involved[1].Namespace))
+                                        errorMsgs.Add(String.Format("{0} depends on game version {1}.", involved[0].Namespace, involved[1].Version));
+                                    else
+                                        errorMsgs.Add(String.Format("{0} depends on missing mod {1}.", involved[0].Namespace, involved[1].Namespace));
                                     errorMsgs.Add("\n");
                                 }
                                 break;
