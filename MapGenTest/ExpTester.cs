@@ -31,6 +31,24 @@ namespace MapGenTest
                 Handouts.Add((new HandoutRelativeExpEvent(1, 7, 10, 2), String.Format("ORIGINAL")));
             }
             {
+                HandoutExpEvent low = new HandoutStackExpEvent(1, 7, 5);
+                HandoutExpEvent high = new HandoutHarmonicExpEvent(1, 7, 5);
+
+                Handouts.Add((new HandoutPiecewiseExpEvent(5, 0, low, high), String.Format("STACK HARMONIC")));
+            }
+            {
+                HandoutExpEvent low = new HandoutStackExpEvent(1, 7, 7);
+                HandoutExpEvent high = new HandoutHarmonicExpEvent(1, 7, 7);
+
+                Handouts.Add((new HandoutPiecewiseExpEvent(5, 0, low, high), String.Format("STACK HARMONIC GRADUAL")));
+            }
+            {
+                HandoutExpEvent low = new HandoutStackExpEvent(1, 7, 5);
+                HandoutExpEvent high = new HandoutHarmonicExpEvent(1, 7, 5);
+
+                Handouts.Add((new HandoutPiecewiseExpEvent(5, 5, low, high), String.Format("STACK HARMONIC OFFSET")));
+            }
+            {
                 HandoutExpEvent low = new HandoutRelativeExpEvent(1, 7, 5, 2);
                 HandoutExpEvent high = new HandoutRelativeExpEvent(1, 7, 5, 4);
 
@@ -96,32 +114,16 @@ namespace MapGenTest
 
             //    Handouts.Add((new HandoutPiecewiseExpEvent(5, 0, low, high), String.Format("POWER HARMONIC NO BUFFER")));
             //}
-            {
-                HandoutExpEvent low = new HandoutStackExpEvent(1, 7, 5);
-                HandoutExpEvent high = new HandoutHarmonicExpEvent(1, 7, 5);
-
-                Handouts.Add((new HandoutPiecewiseExpEvent(5, 0, low, high), String.Format("STACK HARMONIC")));
-            }
-            {
-                HandoutExpEvent low = new HandoutStackExpEvent(1, 7, 7);
-                HandoutExpEvent high = new HandoutHarmonicExpEvent(1, 7, 7);
-
-                Handouts.Add((new HandoutPiecewiseExpEvent(5, 0, low, high), String.Format("STACK HARMONIC GRADUAL")));
-            }
-            {
-                HandoutExpEvent low = new HandoutStackExpEvent(1, 7, 5);
-                HandoutExpEvent high = new HandoutHarmonicExpEvent(1, 7, 5);
-
-                Handouts.Add((new HandoutPiecewiseExpEvent(5, 5, low, high), String.Format("STACK HARMONIC OFFSET")));
-            }
         }
 
         public static void Run()
         {
             Logs = new List<ExpLog>();
-
+            List<int> uniqueIDs = new List<int>();
+            int maxUniqueIDs = 0;
             foreach (string dir in Directory.GetFiles(EXP_DIR))
             {
+                HashSet<int> curUniqueIDs = new HashSet<int>();
                 ExpLog log = new ExpLog();
                 string file = Path.GetFileNameWithoutExtension(dir);
                 log.Name = file;
@@ -140,10 +142,29 @@ namespace MapGenTest
                         if (!log.Zone.IsValid())
                             log.Zone = new ZoneLoc(zone, loc);
                         log.Exps.Add((loc, expYield, level));
+
+                        if (segment == 0)
+                            curUniqueIDs.Add(id);
                     }
                 }
-                Logs.Add(log);
+                if (log.Zone.ID != "")
+                {
+                    Logs.Add(log);
+                    uniqueIDs.Add(curUniqueIDs.Count);
+                    if (curUniqueIDs.Count > maxUniqueIDs)
+                        maxUniqueIDs = curUniqueIDs.Count;
+                }
             }
+
+            //for (int ii = uniqueIDs.Count - 1; ii >= 0; ii--)
+            //{
+            //    if (uniqueIDs[ii] < maxUniqueIDs)
+            //    {
+            //        Logs.RemoveAt(ii);
+            //        uniqueIDs.RemoveAt(ii);
+            //    }
+            //}
+
             InitHandouts();
 
             int offset = 0;
@@ -157,7 +178,7 @@ namespace MapGenTest
                 int longestWidth = 0;
                 for (int ii = offset; ii < Logs.Count; ii++)
                 {
-                    string label = GetSelectionString(ii, Logs[ii].Name);
+                    string label = GetSelectionString(ii, String.Format("{0}: {1}", Logs[ii].Zone.ID, Logs[ii].Name));
                     if (label.Length > longestWidth)
                         longestWidth = label.Length;
                 }
@@ -174,7 +195,7 @@ namespace MapGenTest
                         if (index + offset < Logs.Count)
                         {
                             choiceStr += "{" + jj + "," + "-" + longestWidth + "}  ";
-                            choiceList.Add(GetSelectionString(index, Logs[index + offset].Name));
+                            choiceList.Add(GetSelectionString(index, String.Format("{0}: {1}", Logs[index + offset].Zone.ID, Logs[index + offset].Name)));
                         }
                     }
                     Console.WriteLine(String.Format(choiceStr, choiceList.ToArray()));
@@ -206,13 +227,14 @@ namespace MapGenTest
         public static void ComparisonMenu(string state, ExpLog log)
         {
             state = log.Name;
+            int levelDiff = 0;
             while (true)
             {
                 Console.Clear();
                 Console.WriteLine(state);
-                Console.WriteLine("Showing with all exp curves|ESC=Exit");
+                Console.WriteLine("Showing with all exp curves offset {0}|ESC=Exit", levelDiff);
 
-                TestExp(log);
+                TestExp(log, levelDiff);
 
                 Console.WriteLine();
 
@@ -233,12 +255,18 @@ namespace MapGenTest
                 {
                     LevelLogMenu(state, log, growthKeys[growthIndex]);
                 }
+
+                if (key.Key == ConsoleKey.UpArrow)
+                    levelDiff += 5;
+                else if (key.Key == ConsoleKey.DownArrow)
+                    levelDiff -= 5;
             }
         }
 
         public static void LevelLogMenu(string state, ExpLog log, string growth)
         {
             state = growth;
+            int levelDiff = 0;
             while (true)
             {
                 Console.Clear();
@@ -253,7 +281,7 @@ namespace MapGenTest
                     for (int ii = 0; ii < Handouts.Count; ii++)
                     {
                         Console.WriteLine(String.Format("{0}) {1}", ii, Handouts[ii].name));
-                        List<int> levelLog = GetLevelLog(Handouts[ii].expEvent, log, growth);
+                        List<int> levelLog = GetLevelLog(Handouts[ii].expEvent, log, growth, levelDiff);
                         floorList.Add(levelLog);
                         indices.Add(String.Format("{0,4}", ii.ToString()));
                     }
@@ -269,13 +297,17 @@ namespace MapGenTest
                 }
 
                 ConsoleKeyInfo key = Console.ReadKey();
-                if (key.Key == ConsoleKey.Escape)
+                if (key.Key == ConsoleKey.UpArrow)
+                    levelDiff += 5;
+                else if (key.Key == ConsoleKey.DownArrow)
+                    levelDiff -= 5;
+                else if (key.Key == ConsoleKey.Escape)
                     break;
 
             }
         }
 
-        public static void TestExp(ExpLog log)
+        public static void TestExp(ExpLog log, int addLevel)
         {
             Console.WriteLine(String.Format("{0,4}|{1,4}|{2,4}|{3,4}|{4,4}|{5,4}", "err", "fast", "fluc", "mfst", "mslo", "slow"));
 
@@ -284,21 +316,21 @@ namespace MapGenTest
                 List<int> growthResults = new List<int>();
                 foreach (string growth in DataManager.Instance.DataIndices[DataManager.DataType.GrowthGroup].GetOrderedKeys(false))
                 {
-                    List<int> levelLog = GetLevelLog(handout.expEvent, log, growth);
+                    List<int> levelLog = GetLevelLog(handout.expEvent, log, growth, addLevel);
                     growthResults.Add(levelLog[levelLog.Count - 1]);
                 }
                 Console.WriteLine(String.Format("{0,4}|{1,4}|{2,4}|{3,4}|{4,4}|{5,4}  //{6}", growthResults[0], growthResults[1], growthResults[2], growthResults[3], growthResults[4], growthResults[5], handout.name));
             }
         }
 
-        public static List<int> GetLevelLog(HandoutExpEvent expEvent, ExpLog log, string growth)
+        public static List<int> GetLevelLog(HandoutExpEvent expEvent, ExpLog log, string growth, int addLevel)
         {
             List<int> levelLog = new List<int>();
 
             string zoneId = log.Zone.ID;
             ZoneEntrySummary zoneSummary = (ZoneEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Zone].Get(zoneId);
 
-            int recipientLv = zoneSummary.Level;
+            int recipientLv = zoneSummary.Level + addLevel;
             int expPercent = zoneSummary.ExpPercent;
             GrowthData growthData = DataManager.Instance.GetGrowth(growth);
             int gainedExp = 0;
