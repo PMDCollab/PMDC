@@ -222,8 +222,8 @@ namespace PMDC.Dungeon
                     //MustHitNext is to ensure that no single character can miss twice in a row
                     if (context.User.MustHitNext || DataManager.Instance.Save.Rand.Next(0, 100) < acc)
                         hit = true;
-                    context.User.MustHitNext = !hit;
                 }
+                context.User.MustHitNext = !hit;
 
                 if (hit)
                 {
@@ -5098,7 +5098,7 @@ namespace PMDC.Dungeon
 
 
     /// <summary>
-    /// Event that decreases the accuracy rate the further away the distance of the action
+    /// Event that decreases the accuracy rate at point blank
     /// </summary>
     [Serializable]
     public class EvasiveCloseUpEvent : BattleEvent
@@ -5911,6 +5911,23 @@ namespace PMDC.Dungeon
             int diff = ZoneManager.Instance.CurrentMap.GetClosestDist8(context.StrikeStartTile, context.Target.CharLoc);
             for (int ii = 0; ii < diff; ii++)
                 context.AddContextStateMult<DmgMult>(false, 1, 2);
+            yield break;
+        }
+    }
+
+    /// <summary>
+    /// Event that causes the battle action to miss if the attacker isn't due for a sure hit.
+    /// </summary>
+    [Serializable]
+    public class EvadeIfPossibleEvent : BattleEvent
+    {
+        public EvadeIfPossibleEvent() { }
+        public override GameEvent Clone() { return new EvadeIfPossibleEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (!context.User.MustHitNext)
+                context.AddContextStateMult<AccMult>(false, 0, 1);
             yield break;
         }
     }
