@@ -365,7 +365,11 @@ namespace PMDC.Dungeon
             context.Strikes = 1;
             context.Item = new InvItem(item);
             if (entry.MaxStack > 1)
+            {
+                //TODO: Price needs to be multiplied by amount instead of dividing
+                context.Item.Price = context.Item.Price / context.Item.Amount;
                 context.Item.Amount = 1;
+            }
             context.HitboxAction = entry.UseAction.Clone();
             switch (entry.UsageType)
             {
@@ -488,7 +492,11 @@ namespace PMDC.Dungeon
                 context.Data.AfterActions.Add(-1, new LandItemEvent());
             context.Item = new InvItem(item);
             if (entry.MaxStack > 1)
+            {
+                //TODO: Price needs to be multiplied by amount instead of dividing
+                context.Item.Price = context.Item.Price / context.Item.Amount;
                 context.Item.Amount = 1;
+            }
             context.Strikes = 1;
             //create the action from scratch
             if (entry.ArcThrow)
