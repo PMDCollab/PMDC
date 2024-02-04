@@ -66,15 +66,7 @@ namespace PMDC.Dungeon
             bool blocked = Grid.IsDirBlocked(controlledChar.CharLoc, testDir,
                 (Loc testLoc) =>
                 {
-
-                    if (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, controlledChar.Mobility))
-                        return true;
-
-                    if (BlockedByTrap(controlledChar, testLoc))
-                        return true;
-                    if (BlockedByTerrain(controlledChar, testLoc))
-                        return true;
-                    if (BlockedByHazard(controlledChar, testLoc))
+                    if (IsPathBlocked(controlledChar, testLoc))
                         return true;
 
                     if (ZoneManager.Instance.CurrentMap.WrapLoc(testLoc) != targetItem.TileLoc && respectPeers)

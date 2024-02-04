@@ -243,6 +243,33 @@ namespace PMDC.Dungeon
             return true;
         }
 
+        /// <summary>
+        /// A character is being an obstacle if they cannot move (status effect), or choose not to move (ai).
+        /// This also includes opponents.
+        /// </summary>
+        /// <param name="controlledChar"></param>
+        /// <param name="testLoc"></param>
+        /// <returns></returns>
+        protected bool BlockedByObstacleChar(Character controlledChar, Loc testLoc)
+        {
+            Character character = ZoneManager.Instance.CurrentMap.GetCharAtLoc(testLoc);
+            if (character != null)
+            {
+                if (!character.Dead && (DungeonScene.Instance.GetMatchup(controlledChar, character) & Alignment.Foe) != Alignment.None)
+                    return true;
+                if (character.CantWalk)
+                    return true;
+                switch (character.Tactic.ID) //NOTE: specialized AI code!
+                {
+                    case "wait_attack":
+                    case "turret":
+                    case "shopkeeper":
+                        return true;
+                }
+            }
+            return false;
+        }
+
         protected bool BlockedByChar(Character controlledChar, Loc testLoc, Alignment alignment)
         {
             Character character = ZoneManager.Instance.CurrentMap.GetCharAtLoc(testLoc);
@@ -259,7 +286,7 @@ namespace PMDC.Dungeon
             Tile tile = ZoneManager.Instance.CurrentMap.GetTile(testLoc);
             
             //Check for restricted mobility types
-            if (tile.Data.GetData() != null)
+            if (tile != null)
             {
                 TerrainData terrain = tile.Data.GetData();
                 if ((terrain.BlockType & RestrictedMobilityTypes) != 0)
@@ -321,6 +348,21 @@ namespace PMDC.Dungeon
                 if (seenChar.Tactic.ID == "wait_attack" && ZoneManager.Instance.CurrentMap.InRange(seenChar.CharLoc, testLoc, 1) && seenChar.GetStatusEffect("last_targeted_by") == null)//do not approach silcoon/cascoon; NOTE: specialized AI code!
                     return true;
             }
+            return false;
+        }
+
+        protected bool IsPathBlocked(Character controlledChar, Loc testLoc)
+        {
+            if (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, controlledChar.Mobility))
+                return true;
+
+            if (BlockedByTrap(controlledChar, testLoc))
+                return true;
+            if (BlockedByTerrain(controlledChar, testLoc))
+                return true;
+            if (BlockedByHazard(controlledChar, testLoc))
+                return true;
+
             return false;
         }
 
@@ -421,14 +463,7 @@ namespace PMDC.Dungeon
                     }
                 }
 
-                if (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, controlledChar.Mobility))
-                    return true;
-
-                if (BlockedByTrap(controlledChar, testLoc))
-                    return true;
-                if (BlockedByTerrain(controlledChar, testLoc))
-                    return true;
-                if (BlockedByHazard(controlledChar, testLoc))
+                if (IsPathBlocked(controlledChar, testLoc))
                     return true;
 
                 if (respectPeers && BlockedByChar(controlledChar, testLoc, Alignment.Friend | Alignment.Foe))
@@ -479,17 +514,10 @@ namespace PMDC.Dungeon
                         return false;
                 }
 
-                if (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, controlledChar.Mobility))
+                if (IsPathBlocked(controlledChar, testLoc))
                     return true;
 
-                if (BlockedByTrap(controlledChar, testLoc))
-                    return true;
-                if (BlockedByTerrain(controlledChar, testLoc))
-                    return true;
-                if (BlockedByHazard(controlledChar, testLoc))
-                    return true;
-
-                if (BlockedByChar(controlledChar, testLoc, Alignment.Foe))
+                if (BlockedByObstacleChar(controlledChar, testLoc))
                     return true;
 
                 return false;
