@@ -2015,7 +2015,7 @@ namespace PMDC.Dungeon
             foreach (AnimEvent anim in Anims)
                 yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
 
-            int stack = ((StatusEffect)owner).StatusStates.GetWithDefault<StackState>().Stack;
+            int stack = ((StatusEffect)owner).StatusStates.GetWithDefault<CountState>().Count;
             int trapdmg = Math.Max(1, context.User.MaxHP * stack / 16);
             yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(trapdmg));
             

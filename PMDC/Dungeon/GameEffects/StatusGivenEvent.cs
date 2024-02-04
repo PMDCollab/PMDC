@@ -297,6 +297,44 @@ namespace PMDC.Dungeon
         }
 
     }
+
+    [Serializable]
+    public class StatusCountBoostMod : StatusGivenEvent
+    {
+        [StringTypeConstraint(1, typeof(CharState))]
+        public List<FlagType> States;
+
+        public int Stack;
+
+        public StatusCountBoostMod() { States = new List<FlagType>(); }
+        public StatusCountBoostMod(Type state, int stack) : this() { States.Add(new FlagType(state)); Stack = stack; }
+        public StatusCountBoostMod(StatusCountBoostMod other) : this() { States.AddRange(other.States); Stack = other.Stack; }
+
+        public override GameEvent Clone() { return new StatusCountBoostMod(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, StatusCheckContext context)
+        {
+            if (owner == context.Status)//done BY the pending status
+            {
+                //check if the attacker has the right charstate
+                bool hasState = false;
+                foreach (FlagType state in States)
+                {
+                    if (context.User.CharStates.Contains(state.FullType))
+                        hasState = true;
+                }
+                if (context.User != null && hasState)
+                {
+                    CountState stack = context.Status.StatusStates.GetWithDefault<CountState>();
+                    if (stack != null)
+                        stack.Count += Stack;
+                }
+            }
+            yield break;
+        }
+
+    }
+
     [Serializable]
     public class StatusHPBoostMod : StatusGivenEvent
     {
