@@ -339,13 +339,12 @@ namespace PMDC.Dungeon
         {
             if ((IQ & AIFlags.PlayerSense) == AIFlags.None)
                 return false;
-            //TODO: pass in the list of seen characters instead of computing them on the spot
-            //this is very slow and expensive to do, and can lead to performance bottlenecks
-            //and the only reason the game isn't lagging is because this check is only called for ally characters!
-            List<Character> seenChars = controlledChar.GetSeenCharacters(Alignment.Foe);
-            foreach (Character seenChar in seenChars)
+            //check only entities 1 tile away, and also check ai and targeted before seeing.  this optimizes what would've been expensive processing
+            foreach (Character target in ZoneManager.Instance.CurrentMap.GetCharsInRect(Rect.FromPointRadius(testLoc, 1)))
             {
-                if (seenChar.Tactic.ID == "wait_attack" && ZoneManager.Instance.CurrentMap.InRange(seenChar.CharLoc, testLoc, 1) && seenChar.GetStatusEffect("last_targeted_by") == null)//do not approach silcoon/cascoon; NOTE: specialized AI code!
+                if (target.Tactic.ID == "wait_attack" && target.GetStatusEffect("last_targeted_by") == null &&
+                    DungeonScene.Instance.IsTargeted(controlledChar, target, Alignment.Foe, false) &&
+                    controlledChar.CanSeeCharacter(target))//do not approach silcoon/cascoon; NOTE: specialized AI code!
                     return true;
             }
             return false;
