@@ -2496,6 +2496,11 @@ namespace PMDC.Dungeon
                                 return -100;
                         }
                     }
+                    else if (effect is ItemRestoreEvent)
+                    {
+                        //never use this normally
+                        return 0;
+                    }
                 }
 
                 //status checker
