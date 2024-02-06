@@ -8024,12 +8024,15 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            for (int ii = 0; ii < ExceptionMoves.Length; ii++)
+            if (context.ActionType == BattleActionType.Skill)
             {
-                if (context.Data.ID == ExceptionMoves[ii])
+                for (int ii = 0; ii < ExceptionMoves.Length; ii++)
                 {
-                    context.Data.HitRate = -1;
-                    yield break;
+                    if (context.Data.ID == ExceptionMoves[ii])
+                    {
+                        context.Data.HitRate = -1;
+                        yield break;
+                    }
                 }
             }
             context.AddContextStateMult<AccMult>(false, 0, 1);

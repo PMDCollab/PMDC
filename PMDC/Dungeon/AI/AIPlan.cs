@@ -5,6 +5,7 @@ using RogueEssence.Data;
 using RogueEssence;
 using RogueEssence.Dungeon;
 using System.Runtime.Serialization;
+using System.Linq;
 
 namespace PMDC.Dungeon
 {
@@ -2709,6 +2710,25 @@ namespace PMDC.Dungeon
                                         power /= -2;
                                     break;
                                 }
+                            }
+                            else if (effect is SemiInvulEvent)
+                            {
+                                //TODO: account for hitting through semi-invulnerable effects using specific exception moves
+                                //SemiInvulEvent invulEvent = (SemiInvulEvent)effect;
+                                //if (!invulEvent.ExceptionMoves.Contains(data.ID))
+                                if (data.HitRate > -1)
+                                    power = 0;
+                            }
+                            else if (effect is ProtectEvent)
+                            {
+                                //TODO: account for moves and factors that hit through protect
+                                power = 0;
+                            }
+                            else if (effect is WonderGuardEvent)
+                            {
+                                int testMatchup = PreTypeEvent.GetDualEffectiveness(controlledChar, target, data);
+                                if (testMatchup <= PreTypeEvent.NRM_2)
+                                    power = 0;
                             }
                         }
                     }
