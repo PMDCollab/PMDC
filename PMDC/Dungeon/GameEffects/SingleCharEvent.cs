@@ -6323,6 +6323,24 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class MonsterHouseOwnerEvent : MonsterHouseEvent
+    {
+        //activated by tile; get context info from tile states
+        public MonsterHouseOwnerEvent() { }
+        public override GameEvent Clone() { return new MonsterHouseOwnerEvent(); }
+        protected override bool NeedTurnEnd { get { return true; } }
+
+        protected override Rect GetBounds(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            throw new NotImplementedException();
+        }
+        protected override List<MobSpawn> GetMonsters(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    [Serializable]
     public class MonsterHouseMapEvent : MonsterHouseEvent
     {
         //activated by map; use the variables set here
