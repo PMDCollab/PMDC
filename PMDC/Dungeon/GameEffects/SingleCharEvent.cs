@@ -3932,7 +3932,8 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
             //only if part of the team, and not the leader
-            if (context.User != null && context.User.MemberTeam == DungeonScene.Instance.ActiveTeam && DungeonScene.Instance.ActiveTeam.Leader != context.User)
+            if (context.User != null && context.User.MemberTeam == DungeonScene.Instance.ActiveTeam
+                && DungeonScene.Instance.ActiveTeam.Leader != context.User && !context.User.MemberTeam.GetCharIndex(context.User).Guest)
             {
                 if (CheckSpecies.Contains(context.User.BaseForm.Species))
                 {
@@ -3981,49 +3982,52 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
-            if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
+            // Only player team, and do not include guests
+            if (context.User.MemberTeam != DungeonScene.Instance.ActiveTeam)
+                yield break;
+            if (context.User.MemberTeam.GetCharIndex(context.User).Guest)
+                yield break;
+
+            CharAnimation standAnim = new CharAnimIdle(context.User.CharLoc, context.User.CharDir);
+            standAnim.MajorAnim = true;
+            yield return CoroutineManager.Instance.StartCoroutine(context.User.StartAnim(standAnim));
+
+            if (DataManager.Instance.CurrentReplay != null)
             {
-                CharAnimation standAnim = new CharAnimIdle(context.User.CharLoc, context.User.CharDir);
-                standAnim.MajorAnim = true;
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.StartAnim(standAnim));
-
-                if (DataManager.Instance.CurrentReplay != null)
-                {
-                    int index = DataManager.Instance.CurrentReplay.ReadUI();
-                    if (index > -1)
-                    {
-                        string currentSong = GameManager.Instance.Song;
-                        GameManager.Instance.BGM("", true);
-
-                        yield return CoroutineManager.Instance.StartCoroutine(beginEvo(context.User, index));
-
-                        GameManager.Instance.BGM(currentSong, true);
-                    }
-                }
-                else
+                int index = DataManager.Instance.CurrentReplay.ReadUI();
+                if (index > -1)
                 {
                     string currentSong = GameManager.Instance.Song;
                     GameManager.Instance.BGM("", true);
 
-                    yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(20));
-
-                    int index = -1;
-
-                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(Text.FormatGrammar(new StringKey("DLG_EVO_INTRO").ToLocal())));
-                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(createEvoQuestion(context.User, (int slot) => { index = slot; })));
-
-                    if (DataManager.Instance.CurrentReplay == null)
-                        DataManager.Instance.LogUIPlay(index);
-
-                    if (index > -1)
-                        yield return CoroutineManager.Instance.StartCoroutine(beginEvo(context.User, index));
-
-                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(Text.FormatGrammar(new StringKey("DLG_EVO_END").ToLocal())));
+                    yield return CoroutineManager.Instance.StartCoroutine(beginEvo(context.User, index));
 
                     GameManager.Instance.BGM(currentSong, true);
-
-                    yield return new WaitForFrames(1);
                 }
+            }
+            else
+            {
+                string currentSong = GameManager.Instance.Song;
+                GameManager.Instance.BGM("", true);
+
+                yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(20));
+
+                int index = -1;
+
+                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(Text.FormatGrammar(new StringKey("DLG_EVO_INTRO").ToLocal())));
+                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(createEvoQuestion(context.User, (int slot) => { index = slot; })));
+
+                if (DataManager.Instance.CurrentReplay == null)
+                    DataManager.Instance.LogUIPlay(index);
+
+                if (index > -1)
+                    yield return CoroutineManager.Instance.StartCoroutine(beginEvo(context.User, index));
+
+                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(Text.FormatGrammar(new StringKey("DLG_EVO_END").ToLocal())));
+
+                GameManager.Instance.BGM(currentSong, true);
+
+                yield return new WaitForFrames(1);
             }
         }
 
