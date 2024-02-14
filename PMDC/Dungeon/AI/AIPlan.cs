@@ -355,6 +355,9 @@ namespace PMDC.Dungeon
 
             bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
             bool teamPartner = (IQ & AIFlags.TeamPartner) != AIFlags.None;
+
+            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
+            Loc mapSize = Character.GetSightDims() * 2 + new Loc(1);
             foreach (Character seenChar in seenCharacters)
             {
                 if (playerSense && !playerSensibleToAttack(seenChar))
@@ -368,9 +371,22 @@ namespace PMDC.Dungeon
             }
         }
 
-        private Loc[] getWrappedEnds(Loc mapStart, Loc mapSize, Loc start, Loc[] ends)
+        /// <summary>
+        /// End locs may appear multiple times in wrapped maps, and this function chooses the end locs that are closest to the start loc.
+        /// This is done by checking a rectangle equal to the whole map's size, but centered on the start.
+        /// This only works in wrapped maps.  ignore in non-wrapped maps
+        /// </summary>
+        /// <param name="mapStart"></param>
+        /// <param name="mapSize"></param>
+        /// <param name="start"></param>
+        /// <param name="ends"></param>
+        /// <returns></returns>
+        private Loc[] getWrappedEnds(Loc start, Loc[] ends)
         {
-            Rect mapRect = new Rect(mapStart, mapSize);
+            if (ZoneManager.Instance.CurrentMap.EdgeView != Map.ScrollEdge.Wrap)
+                return ends;
+
+            Rect mapRect = new Rect(start - ZoneManager.Instance.CurrentMap.Size / 2, ZoneManager.Instance.CurrentMap.Size);
 
             Loc[] wrappedEnds = new Loc[ends.Length];
             for (int ii = 0; ii < ends.Length; ii++)
@@ -400,9 +416,7 @@ namespace PMDC.Dungeon
         /// <returns></returns>
         protected List<Loc>[] GetPaths(Character controlledChar, Loc[] ends, bool freeGoal, bool respectPeers, int limit = 1)
         {
-            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
-            Loc mapSize = Character.GetSightDims() * 2 + new Loc(1);
-            Loc[] wrappedEnds = getWrappedEnds(mapStart, mapSize, controlledChar.CharLoc, ends);
+            Loc[] wrappedEnds = getWrappedEnds(controlledChar.CharLoc, ends);
 
             //requires a valid target tile
             Grid.LocTest checkDiagBlock = (Loc loc) => {
@@ -438,6 +452,8 @@ namespace PMDC.Dungeon
             };
 
 
+            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
+            Loc mapSize = Character.GetSightDims() * 2 + new Loc(1);
             return Grid.FindNPaths(mapStart, mapSize, controlledChar.CharLoc, wrappedEnds, checkBlock, checkDiagBlock, limit, true);
         }
 
@@ -461,9 +477,7 @@ namespace PMDC.Dungeon
 
         protected List<Loc>[] GetPathsPermissive(Character controlledChar, List<Loc> ends)
         {
-            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
-            Loc mapSize = Character.GetSightDims() * 2 + new Loc(1);
-            Loc[] wrappedEnds = getWrappedEnds(mapStart, mapSize, controlledChar.CharLoc, ends.ToArray());
+            Loc[] wrappedEnds = getWrappedEnds(controlledChar.CharLoc, ends.ToArray());
 
             //requires a valid target tile
             Grid.LocTest checkDiagBlock = (Loc testLoc) => {
@@ -495,6 +509,8 @@ namespace PMDC.Dungeon
                 return false;
             };
 
+            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
+            Loc mapSize = Character.GetSightDims() * 2 + new Loc(1);
             return Grid.FindAllPaths(mapStart, mapSize, controlledChar.CharLoc, wrappedEnds, checkBlock, checkDiagBlock);
         }
 
@@ -507,9 +523,7 @@ namespace PMDC.Dungeon
         /// <returns></returns>
         protected List<Loc>[] GetPathsImpassable(Character controlledChar, List<Loc> ends)
         {
-            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
-            Loc mapSize = Character.GetSightDims() * 2 + new Loc(1);
-            Loc[] wrappedEnds = getWrappedEnds(mapStart, mapSize, controlledChar.CharLoc, ends.ToArray());
+            Loc[] wrappedEnds = getWrappedEnds(controlledChar.CharLoc, ends.ToArray());
 
             //requires a valid target tile
             Grid.LocTest checkDiagBlock = (Loc testLoc) => {
@@ -531,7 +545,9 @@ namespace PMDC.Dungeon
                 return false;
             };
 
-            return Grid.FindNPaths(mapStart, Character.GetSightDims() * 2 + new Loc(1), controlledChar.CharLoc, wrappedEnds, checkBlock, checkDiagBlock, 1, false);
+            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
+            Loc mapSize = Character.GetSightDims() * 2 + new Loc(1);
+            return Grid.FindNPaths(mapStart, mapSize, controlledChar.CharLoc, wrappedEnds, checkBlock, checkDiagBlock, 1, false);
         }
 
         protected GameAction SelectChoiceFromPath(Character controlledChar, List<Loc> path)
