@@ -12122,7 +12122,15 @@ namespace PMDC.Dungeon
                 yield return CoroutineManager.Instance.StartCoroutine(applyStatus(owner, ownerChar, AltStatusID, origin, target, context, cancel));
 
             //This will pull the player to a proper location if it dashed onto untraversible terrain and snapped back.  it looks a bit janky though....
-            context.User.CharLoc = context.Target.CharLoc + context.User.CharDir.Reverse().GetLoc();
+            LocRay8 candLoc = new LocRay8(context.StrikeStartTile, context.User.CharDir);
+            Loc endLoc = context.User.CharLoc;
+            for (int ii = 0; ii < context.HitboxAction.Distance; ii++)
+            {
+                candLoc.Traverse(1);
+                if (ZoneManager.Instance.CurrentMap.GetCharAtLoc(endLoc) == null)
+                    endLoc = candLoc.Loc;
+            }
+            context.User.CharLoc = endLoc;
         }
     }
 
