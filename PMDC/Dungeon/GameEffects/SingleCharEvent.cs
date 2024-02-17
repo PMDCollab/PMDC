@@ -16,6 +16,7 @@ using System.Linq;
 using Newtonsoft.Json;
 using System.Runtime.Serialization;
 using System.IO;
+using PMDC.LevelGen;
 
 namespace PMDC.Dungeon
 {
@@ -6210,6 +6211,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public abstract class MonsterHouseEvent : SingleCharEvent
     {
+        protected virtual IEnumerator<YieldInstruction> FailSpawn(GameEventOwner owner, Character ownerChar, SingleCharContext context) { yield break; }
         protected abstract Rect GetBounds(GameEventOwner owner, Character ownerChar, Character character);
         protected abstract List<MobSpawn> GetMonsters(GameEventOwner owner, Character ownerChar, Character character);
         protected abstract bool NeedTurnEnd { get; }
@@ -6219,12 +6221,6 @@ namespace PMDC.Dungeon
             yield return new WaitUntil(DungeonScene.Instance.AnimationsOver);
 
             Rect bounds = GetBounds(owner, ownerChar, context.User);
-
-            //it's a monster house!
-            DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_MONSTER_HOUSE").ToLocal()));
-            //kick up the music.
-            GameManager.Instance.BGM("", false);
-            GameManager.Instance.BGM(GraphicsManager.MonsterBGM, false);
 
             //spawn all contents with the landing animation
             //spawn list is specified by the state tags.  same as items
@@ -6241,6 +6237,18 @@ namespace PMDC.Dungeon
 
                     return true;
                 });
+
+            if (mobs.Count > 0 && freeTiles.Count > 0)
+            {
+                //it's a monster house!
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_MONSTER_HOUSE").ToLocal()));
+                //kick up the music.
+                GameManager.Instance.BGM("", false);
+                GameManager.Instance.BGM(GraphicsManager.MonsterBGM, false);
+            }
+            else
+                yield return CoroutineManager.Instance.StartCoroutine(FailSpawn(owner, ownerChar, context));
+
             //spawn them
             List<Character> respawns = new List<Character>();
             for (int ii = 0; ii < mobs.Count; ii++)
@@ -6329,18 +6337,79 @@ namespace PMDC.Dungeon
     [Serializable]
     public class MonsterHouseOwnerEvent : MonsterHouseEvent
     {
-        //activated by tile; get context info from tile states
-        public MonsterHouseOwnerEvent() { }
-        public override GameEvent Clone() { return new MonsterHouseOwnerEvent(); }
+        /// <summary>
+        /// Number of monsters to spawn.
+        /// </summary>
+        public RandRange MobRange;
+
+        /// <summary>
+        /// Percent of monsters carrying items.
+        /// </summary>
+        public int ItemPercent;
+
+        //activated by user, get mob spawn data from map and locally
+        public MonsterHouseOwnerEvent()
+        { }
+        public MonsterHouseOwnerEvent(RandRange mobRange, int itemPercent)
+        {
+            MobRange = mobRange;
+            ItemPercent = itemPercent;
+        }
+        public MonsterHouseOwnerEvent(MonsterHouseOwnerEvent other)
+        {
+            MobRange = other.MobRange;
+            ItemPercent = other.ItemPercent;
+        }
+        public override GameEvent Clone() { return new MonsterHouseOwnerEvent(this); }
         protected override bool NeedTurnEnd { get { return true; } }
+
+        protected override IEnumerator<YieldInstruction> FailSpawn(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            GameManager.Instance.BGM("", false);
+            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30) + 20);
+            DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_NOTHING_HAPPENED").ToLocal()));
+            GameManager.Instance.BGM(ZoneManager.Instance.CurrentMap.Music, true);
+            yield break;
+        }
 
         protected override Rect GetBounds(GameEventOwner owner, Character ownerChar, Character character)
         {
-            throw new NotImplementedException();
+            return new Rect(character.CharLoc - new Loc(5), new Loc(11));
         }
         protected override List<MobSpawn> GetMonsters(GameEventOwner owner, Character ownerChar, Character character)
         {
-            throw new NotImplementedException();
+            Map map = ZoneManager.Instance.CurrentMap;
+            int mobCount = MobRange.Pick(map.Rand);
+            List<MobSpawn> chosenMobs = new List<MobSpawn>();
+
+            for (int ii = 0; ii < mobCount; ii++)
+            {
+                if (map.TeamSpawns.CanPick)
+                {
+                    List<MobSpawn> exampleList = map.TeamSpawns.Pick(map.Rand).ChooseSpawns(map.Rand);
+                    if (exampleList.Count > 0)
+                        chosenMobs.Add(exampleList[map.Rand.Next(exampleList.Count)]);
+                }
+            }
+
+            List<MobSpawn> houseMobs = new List<MobSpawn>();
+            foreach (MobSpawn mob in chosenMobs)
+            {
+                MobSpawn copyMob = mob.Copy();
+                if (DataManager.Instance.Save.Rand.Next(PMDC.LevelGen.MonsterHouseBaseStep<MapGenContext>.ALT_COLOR_ODDS) == 0)
+                {
+                    SkinTableState table = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<SkinTableState>();
+                    copyMob.BaseForm.Skin = table.AltColor;
+                }
+                if (DataManager.Instance.Save.Rand.Next(100) < ItemPercent)
+                {
+                    MobSpawnItem item = new MobSpawnItem(false);
+                    item.Items.Add(map.ItemSpawns.Pick(DataManager.Instance.Save.Rand), 10);
+                    copyMob.SpawnFeatures.Add(item);
+                }
+                houseMobs.Add(copyMob);
+            }
+            return houseMobs;
         }
     }
 
