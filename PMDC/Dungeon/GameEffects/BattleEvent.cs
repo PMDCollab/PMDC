@@ -15567,11 +15567,6 @@ namespace PMDC.Dungeon
             if (itemIndex > -2)
             {
                 InvItem item = (itemIndex > -1 ? ((ExplorerTeam)context.Target.MemberTeam).GetInv(itemIndex) : context.Target.EquippedItem);
-                //remove the item, and make it fly off in the attacker's direction as if it were an attack
-                if (itemIndex > -1)
-                    ((ExplorerTeam)context.Target.MemberTeam).RemoveFromInv(itemIndex);
-                else
-                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.DequipItem());
 
                 BattleContext newContext = new BattleContext(BattleActionType.Throw);
                 newContext.User = context.User;
@@ -15624,6 +15619,12 @@ namespace PMDC.Dungeon
                 newContext.Data.AfterActions.Add(-1, new LandItemEvent());
 
                 newContext.Item = new InvItem(item);
+                if (entry.MaxStack > 1)
+                {
+                    //TODO: Price needs to be multiplied by amount instead of dividing
+                    newContext.Item.Price = context.Item.Price / newContext.Item.Amount;
+                    newContext.Item.Amount = 1;
+                }
                 newContext.Strikes = 1;
 
                 //the action needs to be exactly the linear throw action, but starting from the target's location
@@ -15648,7 +15649,7 @@ namespace PMDC.Dungeon
                 newContext.Explosion = new ExplosionData(entry.Explosion);
                 newContext.Explosion.TargetAlignments = Alignment.Friend | Alignment.Foe | Alignment.Self;
 
-                newContext.SetActionMsg(Text.FormatGrammar(new StringKey("MSG_KNOCK_ITEM").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false), item.GetDisplayName()));
+                newContext.SetActionMsg(Text.FormatGrammar(new StringKey("MSG_KNOCK_ITEM").ToLocal(), context.User.GetDisplayName(false), context.Target.GetDisplayName(false), newContext.Item.GetDisplayName()));
 
 
                 //beforetryaction and beforeAction need to distinguish forced effects vs willing effects for all times it's triggered
@@ -15667,6 +15668,7 @@ namespace PMDC.Dungeon
                 yield return CoroutineManager.Instance.StartCoroutine(newContext.User.BeforeAction(newContext));
                 if (newContext.CancelState.Cancel) { yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.CancelWait(newContext.User.CharLoc)); yield break; }
 
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.ExpendItem(context.Target, itemIndex, BattleActionType.Throw));
                 newContext.PrintActionMsg();
 
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.ExecuteAction(newContext));
@@ -15821,9 +15823,9 @@ namespace PMDC.Dungeon
             yield break;
         }
     }
-    
+
     /// <summary>
-    /// Event that destroy's the character item
+    /// Event that destroy the character's item
     /// </summary>
     [Serializable]
     public class DestroyItemEvent : ItemMetaEvent
@@ -15840,19 +15842,19 @@ namespace PMDC.Dungeon
             if (itemIndex > -2)
             {
                 InvItem item = (itemIndex > -1 ? ((ExplorerTeam)context.Target.MemberTeam).GetInv(itemIndex) : context.Target.EquippedItem);
+                ItemData entry = DataManager.Instance.GetItem(item.ID);
+                InvItem newItem = new InvItem(item);
+                if (entry.MaxStack > 1)
+                    newItem.Amount = 1;
+
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.ExpendItem(context.Target, itemIndex, BattleActionType.Throw));
+
                 //destroy the item
                 if (itemIndex > -1)
-                {
-                    ((ExplorerTeam)context.Target.MemberTeam).RemoveFromInv(itemIndex);
-                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_LOSE_ITEM").ToLocal(), context.Target.GetDisplayName(false), item.GetDisplayName()));
-                }
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_LOSE_ITEM").ToLocal(), context.Target.GetDisplayName(false), newItem.GetDisplayName()));
                 else
-                {
-                    yield return CoroutineManager.Instance.StartCoroutine(context.Target.DequipItem());
-                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_LOSE_HELD_ITEM").ToLocal(), context.Target.GetDisplayName(false), item.GetDisplayName()));
-                }
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_LOSE_HELD_ITEM").ToLocal(), context.Target.GetDisplayName(false), newItem.GetDisplayName()));
             }
-            yield break;
         }
     }
 
@@ -16322,27 +16324,33 @@ namespace PMDC.Dungeon
                     newContext.Explosion = new ExplosionData(entry.Explosion);
                     newContext.Strikes = 1;
                     newContext.Item = new InvItem(item);
+                    if (entry.MaxStack > 1)
+                    {
+                        //TODO: Price needs to be multiplied by amount instead of dividing
+                        newContext.Item.Price = newContext.Item.Price / newContext.Item.Amount;
+                        newContext.Item.Amount = 1;
+                    }
                     newContext.HitboxAction = entry.UseAction.Clone();
                     switch (entry.UsageType)
                     {
                         case ItemData.UseType.Eat:
                             {
-                                newContext.SetActionMsg(Text.FormatGrammar(new StringKey("MSG_STEAL_EAT").ToLocal(), newContext.User.GetDisplayName(false), item.GetDisplayName()));
+                                newContext.SetActionMsg(Text.FormatGrammar(new StringKey("MSG_STEAL_EAT").ToLocal(), newContext.User.GetDisplayName(false), newContext.Item.GetDisplayName()));
                                 break;
                             }
                         case ItemData.UseType.Drink:
                             {
-                                newContext.SetActionMsg(Text.FormatGrammar(new StringKey("MSG_STEAL_DRINK").ToLocal(), newContext.User.GetDisplayName(false), item.GetDisplayName()));
+                                newContext.SetActionMsg(Text.FormatGrammar(new StringKey("MSG_STEAL_DRINK").ToLocal(), newContext.User.GetDisplayName(false), newContext.Item.GetDisplayName()));
                                 break;
                             }
                         case ItemData.UseType.Learn:
                             {
-                                newContext.SetActionMsg(Text.FormatGrammar(new StringKey("MSG_STEAL_OPERATE").ToLocal(), newContext.User.GetDisplayName(false), item.GetDisplayName()));
+                                newContext.SetActionMsg(Text.FormatGrammar(new StringKey("MSG_STEAL_OPERATE").ToLocal(), newContext.User.GetDisplayName(false), newContext.Item.GetDisplayName()));
                                 break;
                             }
                         case ItemData.UseType.Use:
                             {
-                                newContext.SetActionMsg(Text.FormatGrammar(new StringKey("MSG_STEAL_USE").ToLocal(), newContext.User.GetDisplayName(false), item.GetDisplayName()));
+                                newContext.SetActionMsg(Text.FormatGrammar(new StringKey("MSG_STEAL_USE").ToLocal(), newContext.User.GetDisplayName(false), newContext.Item.GetDisplayName()));
                                 break;
                             }
                     }
@@ -16363,10 +16371,7 @@ namespace PMDC.Dungeon
                     //PreExecuteItem
 
                     //remove the item, and have the attacker use the item as a move
-                    if (itemIndex > -1)
-                        ((ExplorerTeam)target.MemberTeam).RemoveFromInv(itemIndex);
-                    else
-                        yield return CoroutineManager.Instance.StartCoroutine(target.DequipItem());
+                    yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.ExpendItem(target, itemIndex, BattleActionType.Item));
 
                     newContext.PrintActionMsg();
 
