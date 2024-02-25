@@ -40,7 +40,7 @@ namespace PMDC.Dungeon
         protected abstract bool RunFromFoes { get; }
         protected abstract bool AbortIfCornered { get; }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             if (controlledChar.CantWalk)
                 return null;

@@ -5,6 +5,7 @@ using RogueEssence.Dungeon;
 using RogueEssence.Data;
 using Newtonsoft.Json;
 using RogueEssence.Dev;
+using System.Collections.Generic;
 
 namespace PMDC.Dungeon
 {
@@ -32,7 +33,7 @@ namespace PMDC.Dungeon
         protected CultDancePlan(CultDancePlan other) : base(other) { StatusIndex = other.StatusIndex; ItemIndex = other.ItemIndex; }
         public override BasePlan CreateNew() { return new CultDancePlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             MapItem item;
             if (goBeserk(controlledChar, out item))

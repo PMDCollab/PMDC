@@ -3,6 +3,7 @@ using RogueElements;
 using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Data;
+using System.Collections.Generic;
 
 namespace PMDC.Dungeon
 {
@@ -35,10 +36,10 @@ namespace PMDC.Dungeon
             base.Initialize(controlledChar);
         }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             if (controlledChar.EquippedItem.ID != origItem && !String.IsNullOrEmpty(controlledChar.EquippedItem.ID))//we have a held item that is different now
-                return base.Think(controlledChar, preThink, rand);
+                return base.Think(controlledChar, preThink, rand, waitingChars);
 
             return null;
         }

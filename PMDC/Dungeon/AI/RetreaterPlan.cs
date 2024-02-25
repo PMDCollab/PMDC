@@ -20,7 +20,7 @@ namespace PMDC.Dungeon
         protected override bool RunFromFoes { get { return true; } }
         protected override bool AbortIfCornered { get { return true; } }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             if (controlledChar.HP * Factor < controlledChar.MaxHP)
             {
@@ -40,7 +40,7 @@ namespace PMDC.Dungeon
                     }
                 }
 
-                return base.Think(controlledChar, preThink, rand);
+                return base.Think(controlledChar, preThink, rand, waitingChars);
             }
 
             return null;

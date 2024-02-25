@@ -3,6 +3,7 @@ using RogueElements;
 using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Data;
+using System.Collections.Generic;
 
 namespace PMDC.Dungeon
 {
@@ -13,7 +14,7 @@ namespace PMDC.Dungeon
         protected BossPlan(BossPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new BossPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             if (controlledChar.HP * 2 < controlledChar.MaxHP)
             {
@@ -25,7 +26,7 @@ namespace PMDC.Dungeon
                 }
             }
 
-            return base.Think(controlledChar, preThink, rand);
+            return base.Think(controlledChar, preThink, rand, waitingChars);
         }
     }
 }

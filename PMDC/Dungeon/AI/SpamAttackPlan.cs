@@ -3,6 +3,7 @@ using RogueElements;
 using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Data;
+using System.Collections.Generic;
 
 namespace PMDC.Dungeon
 {
@@ -13,7 +14,7 @@ namespace PMDC.Dungeon
         protected SpamAttackPlan(SpamAttackPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new SpamAttackPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             //need attack action check
             for (int ii = 0; ii < controlledChar.Skills.Count; ii++)

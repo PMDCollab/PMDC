@@ -25,7 +25,7 @@ namespace PMDC.Dungeon
         }
         public override BasePlan CreateNew() { return new PreparePlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
             Character target = null;
@@ -66,9 +66,9 @@ namespace PMDC.Dungeon
         }
         public override BasePlan CreateNew() { return new PrepareWithLeaderPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
-            GameAction baseAction = base.Think(controlledChar, preThink, rand);
+            GameAction baseAction = base.Think(controlledChar, preThink, rand, waitingChars);
 
             //behave like followLeader normally
             if (baseAction != null && baseAction.Type != GameAction.ActionType.Wait)
@@ -185,7 +185,7 @@ namespace PMDC.Dungeon
         }
         public override BasePlan CreateNew() { return new PreBuffPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             if (controlledChar.GetStatusEffect(FirstMoveStatus) != null)
                 return null;
@@ -230,7 +230,7 @@ namespace PMDC.Dungeon
         }
         public override BasePlan CreateNew() { return new LeadSkillPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             if (controlledChar.GetStatusEffect(FirstMoveStatus) != null)
                 return null;

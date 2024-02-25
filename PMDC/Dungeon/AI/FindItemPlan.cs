@@ -23,7 +23,7 @@ namespace PMDC.Dungeon
         }
         public override BasePlan CreateNew() { return new FindItemPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             if (controlledChar.MemberTeam is ExplorerTeam)
             {
@@ -38,7 +38,7 @@ namespace PMDC.Dungeon
                     return null;
             }
 
-            return base.Think(controlledChar, preThink, rand);
+            return base.Think(controlledChar, preThink, rand, waitingChars);
         }
 
         protected override List<Loc> GetDestinations(Character controlledChar)

@@ -23,7 +23,7 @@ namespace PMDC.Dungeon
         }
         public override BasePlan CreateNew() { return new ExploreIfSeenPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             //specifically check for players
             foreach (Character target in ZoneManager.Instance.CurrentMap.ActiveTeam.Players)
@@ -35,7 +35,7 @@ namespace PMDC.Dungeon
                 }
             }
 
-            return base.Think(controlledChar, preThink, rand);
+            return base.Think(controlledChar, preThink, rand, waitingChars);
         }
     }
 
@@ -75,7 +75,7 @@ namespace PMDC.Dungeon
             base.SwitchedIn(currentPlan);
         }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             if (controlledChar.CantWalk)
                 return null;
