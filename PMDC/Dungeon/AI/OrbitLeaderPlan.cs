@@ -16,7 +16,7 @@ namespace PMDC.Dungeon
         protected OrbitLeaderPlan(OrbitLeaderPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new OrbitLeaderPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             if (controlledChar.CantWalk)
                 return null;

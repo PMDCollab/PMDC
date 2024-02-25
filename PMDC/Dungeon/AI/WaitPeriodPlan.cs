@@ -3,6 +3,7 @@ using RogueElements;
 using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Data;
+using System.Collections.Generic;
 
 namespace PMDC.Dungeon
 {
@@ -25,7 +26,7 @@ namespace PMDC.Dungeon
         protected WaitPeriodPlan(WaitPeriodPlan other) : base(other) { Turns = other.Turns; }
         public override BasePlan CreateNew() { return new WaitPeriodPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             if (ZoneManager.Instance.CurrentMap.MapTurns % Turns == 0)
                 return null;

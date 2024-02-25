@@ -16,7 +16,7 @@ namespace PMDC.Dungeon
         protected FollowLeaderPlan(FollowLeaderPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new FollowLeaderPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             if (controlledChar.CantWalk)
                 return null;
@@ -38,7 +38,7 @@ namespace PMDC.Dungeon
                             return null;
                     }
                 }
-                else if (controlledChar.IsInSightBounds(testChar.CharLoc))
+                else if (controlledChar.IsInSightBounds(testChar.CharLoc) && isActingLeader(preThink, waitingChars, testChar))//exclude the leaders that are currently waiting on this character
                 {
                     seenCharacters.Add(testChar);
                     seeLeader = true;
@@ -102,6 +102,17 @@ namespace PMDC.Dungeon
 
             //if a path can't be found to anyone, return false
             return null;
+        }
+
+        private bool isActingLeader(bool preThink, List<Character> waitingChars, Character testChar)
+        {
+            if (preThink)
+                return !waitingChars.Contains(testChar);
+            else
+            {
+                //check if the teammate has already moved (not eligible to move in the current faction slice)
+                return !ZoneManager.Instance.CurrentMap.CurrentTurnMap.IsEligibleToMove(testChar);
+            }
         }
 
         private GameAction tryDir(Character controlledChar, Character targetChar, Dir8 testDir, bool respectPeers)

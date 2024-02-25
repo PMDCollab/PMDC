@@ -24,7 +24,7 @@ namespace PMDC.Dungeon
         }
         public override BasePlan CreateNew() { return new FleeStairsPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             Map map = ZoneManager.Instance.CurrentMap;
 

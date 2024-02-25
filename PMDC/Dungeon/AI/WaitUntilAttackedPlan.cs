@@ -5,6 +5,7 @@ using RogueEssence.Dungeon;
 using RogueEssence.Data;
 using Newtonsoft.Json;
 using RogueEssence.Dev;
+using System.Collections.Generic;
 
 namespace PMDC.Dungeon
 {
@@ -24,7 +25,7 @@ namespace PMDC.Dungeon
         protected WaitUntilAttackedPlan(WaitUntilAttackedPlan other) : base(other) { StatusIndex = other.StatusIndex; }
         public override BasePlan CreateNew() { return new WaitUntilAttackedPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             if (controlledChar.GetStatusEffect(StatusIndex) == null)
                 return new GameAction(GameAction.ActionType.Wait, Dir8.None);
@@ -48,7 +49,7 @@ namespace PMDC.Dungeon
         protected WaitUntilMapStatusPlan(WaitUntilMapStatusPlan other) : base(other) { StatusIndex = other.StatusIndex; }
         public override BasePlan CreateNew() { return new WaitUntilMapStatusPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             if (!ZoneManager.Instance.CurrentMap.Status.ContainsKey(StatusIndex))
                 return new GameAction(GameAction.ActionType.Wait, Dir8.None);

@@ -30,7 +30,7 @@ namespace PMDC.Dungeon
             base.Initialize(controlledChar);
         }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             if (controlledChar.CantWalk)
                 return null;

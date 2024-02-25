@@ -3,6 +3,7 @@ using RogueElements;
 using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Data;
+using System.Collections.Generic;
 
 namespace PMDC.Dungeon
 {
@@ -15,7 +16,7 @@ namespace PMDC.Dungeon
         protected WaitPlan(WaitPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new WaitPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             return new GameAction(GameAction.ActionType.Wait, Dir8.None);
         }
@@ -29,7 +30,7 @@ namespace PMDC.Dungeon
         protected WaitWithLeaderPlan(WaitWithLeaderPlan other) : base(other) { }
         public override BasePlan CreateNew() { return new WaitWithLeaderPlan(this); }
 
-        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
+        public override GameAction Think(Character controlledChar, bool preThink, IRandom rand, List<Character> waitingChars)
         {
             //check if there's an ally of higher rank than self visible, wait
             foreach (Character testChar in controlledChar.MemberTeam.IterateByRank())
