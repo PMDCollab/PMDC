@@ -80,7 +80,7 @@ namespace PMDC.Dungeon
 
         public override int GetHashCode()
         {
-            return Species.GetHashCode() ^ Item.GetHashCode();
+            return String.GetHashCode(Species) ^ String.GetHashCode(Item);
         }
 
         public override string ToString()
