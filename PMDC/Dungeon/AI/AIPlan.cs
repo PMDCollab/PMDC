@@ -2527,6 +2527,7 @@ namespace PMDC.Dungeon
                     if (effect is StatusBattleEvent)
                     {
                         givesStatus = true;
+                        bool unknownStatus = false;
                         int addedWorth = 0;
                         StatusBattleEvent giveEffect = (StatusBattleEvent)effect;
                         StatusData statusData = DataManager.Instance.GetStatus(giveEffect.StatusID);
@@ -2597,19 +2598,20 @@ namespace PMDC.Dungeon
                                 if (statusTarget.StatusEffects.ContainsKey("last_used_move_slot"))
                                     addedWorth = 100;
                             }
-                            else if (giveEffect.StatusID == "decoy")//substitute; not necessarily a bad status, but treated like one
-                                addedWorth = -100;
                             else
                             {
-                                //for any other effect, assume it has a negative effect on foes, and positive effect on allies 
-                                if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
-                                    addedWorth = 100;
-                                else
-                                    addedWorth = -100;
+                                addedWorth = 100;
+                                unknownStatus = true;
                             }
                         }
 
+                        //determine if the status is bad or not
                         if (statusData.StatusStates.Contains<BadStatusState>())
+                            addedWorth *= -1;
+                        else if (giveEffect.StatusID == "decoy")//substitute; not necessarily a bad status, but treated like one
+                            addedWorth *= -1;
+                        //for any other unknown effect, assume it has a negative effect on foes, and positive effect on allies 
+                        else if (unknownStatus && DungeonScene.Instance.GetMatchup(controlledChar, target) == Alignment.Foe)
                             addedWorth *= -1;
 
                         statusWorth += addedWorth;
