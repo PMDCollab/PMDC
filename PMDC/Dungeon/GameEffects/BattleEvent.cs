@@ -951,12 +951,6 @@ namespace PMDC.Dungeon
         public string ReqSpecies;
 
         /// <summary>
-        /// The move that changes the character into its Defense form
-        /// </summary>
-        [DataType(0, DataManager.DataType.Skill, false)]
-        public string DefenseSkill;
-        
-        /// <summary>
         /// The defense form ID of the species
         /// </summary>
         public int DefenseForme;
@@ -966,18 +960,16 @@ namespace PMDC.Dungeon
         /// </summary>
         public int AttackForme;
 
-        public StanceChangeEvent() { ReqSpecies = ""; DefenseSkill = ""; }
-        public StanceChangeEvent(string reqSpecies, string defenseSkill, int defenseForme, int attackForme)
+        public StanceChangeEvent() { ReqSpecies = ""; }
+        public StanceChangeEvent(string reqSpecies, int defenseForme, int attackForme)
         {
             ReqSpecies = reqSpecies;
-            DefenseSkill = defenseSkill;
             DefenseForme = defenseForme;
             AttackForme = attackForme;
         }
         protected StanceChangeEvent(StanceChangeEvent other) : this()
         {
             ReqSpecies = other.ReqSpecies;
-            DefenseSkill = other.DefenseSkill;
             DefenseForme = other.DefenseForme;
             AttackForme = other.AttackForme;
         }
@@ -997,7 +989,7 @@ namespace PMDC.Dungeon
                 {
                     forme = AttackForme;
                 }
-                else if (context.Data.ID == DefenseSkill)
+                else if (context.Data.Category == BattleData.SkillCategory.Status)
                 {
                     forme = DefenseForme;
                 }
@@ -17722,14 +17714,30 @@ namespace PMDC.Dungeon
         [DataType(0, DataManager.DataType.Tile, false)]
         public string TrapID;
 
-        public CounterTrapEvent() { }
-        public CounterTrapEvent(string trapID)
+        /// <summary>
+        /// The particle VFX 
+        /// </summary>
+        public FiniteEmitter Emitter;
+
+        /// <summary>
+        /// The sound effect of the VFX
+        /// </summary>
+        [Sound(0)]
+        public string Sound;
+
+
+        public CounterTrapEvent() { Emitter = new EmptyFiniteEmitter(); }
+        public CounterTrapEvent(string trapID, FiniteEmitter emitter, string sound)
         {
             TrapID = trapID;
+            Emitter = emitter;
+            Sound = sound;
         }
         protected CounterTrapEvent(CounterTrapEvent other)
         {
             TrapID = other.TrapID;
+            Emitter = (FiniteEmitter)other.Emitter.Clone();
+            Sound = other.Sound;
         }
         public override GameEvent Clone() { return new CounterTrapEvent(this); }
 
@@ -17738,11 +17746,28 @@ namespace PMDC.Dungeon
             if (!Collision.InBounds(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height, context.Target.CharLoc))
                 yield break;
 
-            Tile tile = ZoneManager.Instance.CurrentMap.Tiles[context.Target.CharLoc.X][context.Target.CharLoc.Y];
-            if (tile.Data.GetData().BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(tile.Effect.ID))
+            bool dropped = false;
+            Loc baseLoc = context.Target.CharLoc;
+            foreach (Dir4 dir in DirExt.VALID_DIR4)
             {
-                tile.Effect = new EffectTile(TrapID, true, context.Target.CharLoc);
-                tile.Effect.Owner = ZoneManager.Instance.CurrentMap.GetTileOwner(context.Target);
+                Loc endLoc = baseLoc + dir.GetLoc();
+                Tile tile = ZoneManager.Instance.CurrentMap.Tiles[endLoc.X][endLoc.Y];
+                if (tile.Data.GetData().BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(tile.Effect.ID))
+                {
+                    tile.Effect = new EffectTile(TrapID, true, endLoc);
+                    tile.Effect.Owner = ZoneManager.Instance.CurrentMap.GetTileOwner(context.Target);
+
+                    GameManager.Instance.BattleSE(Sound);
+                    FiniteEmitter endEmitter = (FiniteEmitter)Emitter.Clone();
+                    endEmitter.SetupEmit(endLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), endLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), context.Target.CharDir);
+                    DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+                    dropped = true;
+                }
+            }
+            if (dropped)
+            {
+                TileData tileData = DataManager.Instance.GetTile(TrapID);
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_SPIKE_DROPPER").ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName(), tileData.Name.ToLocal()));
             }
         }
     }
