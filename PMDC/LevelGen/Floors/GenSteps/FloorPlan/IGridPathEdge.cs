@@ -14,7 +14,7 @@ namespace PMDC.LevelGen
     }
 
     /// <summary>
-    /// Populates the empty grid plan of a map by creating a minimum spanning tree of connected rooms and halls.
+    /// Populates the empty grid plan of a map by putting all rooms on one side of the map.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     [Serializable]

@@ -1147,6 +1147,53 @@ namespace PMDC.Dungeon
 
 
     [Serializable]
+    public class RevolvingFormeEvent : SingleCharEvent
+    {
+        [JsonConverter(typeof(MonsterConverter))]
+        [DataType(0, DataManager.DataType.Monster, false)]
+        public string ReqSpecies;
+        public int Form1;
+        public int Form2;
+
+        public RevolvingFormeEvent() { ReqSpecies = ""; }
+        public RevolvingFormeEvent(string reqSpecies, int form1, int form2)
+        {
+            ReqSpecies = reqSpecies;
+            Form1 = form1;
+            Form2 = form2;
+        }
+        protected RevolvingFormeEvent(RevolvingFormeEvent other) : this()
+        {
+            ReqSpecies = other.ReqSpecies;
+            Form1 = other.Form1;
+            Form2 = other.Form2;
+        }
+        public override GameEvent Clone() { return new RevolvingFormeEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            if (context.User == null)
+                yield break;
+
+            if (context.User.CurrentForm.Species != ReqSpecies)
+                yield break;
+
+            int forme = Form1;
+            if (context.User.CurrentForm.Form == Form1)
+                forme = Form2;
+
+            if (forme != context.User.CurrentForm.Form)
+            {
+                //transform it
+                context.User.Transform(new MonsterID(context.User.CurrentForm.Species, forme, context.User.CurrentForm.Skin, context.User.CurrentForm.Gender));
+            }
+
+            yield break;
+        }
+    }
+
+
+    [Serializable]
     public class MeteorFormeEvent : SingleCharEvent
     {
         [JsonConverter(typeof(MonsterConverter))]
