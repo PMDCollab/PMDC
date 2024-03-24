@@ -477,7 +477,7 @@ namespace PMDC.LevelGen
             for (int ii = 0; ii < map.TeamSpawns.Count; ii++)
             {
                 SpawnList<MobSpawn> memberSpawns = map.TeamSpawns.GetSpawn(ii).GetPossibleSpawns();
-                for (int jj = 0; ii < memberSpawns.Count; jj++)
+                for (int jj = 0; jj < memberSpawns.Count; jj++)
                 {
                     MobSpawn spawn = memberSpawns.GetSpawn(jj);
                     if (CheckIfAllowed(map, spawn, species))
