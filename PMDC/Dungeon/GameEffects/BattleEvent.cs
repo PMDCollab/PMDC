@@ -3797,12 +3797,50 @@ namespace PMDC.Dungeon
     }
 
     /// <summary>
-    /// Event that makes the move never miss and always land a critical hit if the move is on its last PP
+    /// Event that makes the move never miss and always land a critical hit if all moves have the same PP
     /// </summary>
     [Serializable]
     public class BetterOddsEvent : BattleEvent
     {
         public override GameEvent Clone() { return new BetterOddsEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.ActionType == BattleActionType.Skill && context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS)
+            {
+                Skill baseMove = context.User.Skills[context.UsageSlot].Element;
+                bool allEqual = true;
+                for (int ii = 0; ii < context.User.Skills.Count; ii++)
+                {
+                    if (ii == context.UsageSlot)
+                        continue;
+                    Skill move = context.User.Skills[ii].Element;
+                    if (String.IsNullOrEmpty(move.SkillNum))
+                        continue;
+                    if (move.Charges != baseMove.Charges + 1)
+                    {
+                        allEqual = false;
+                        break;
+                    }
+
+                }
+                if (allEqual)
+                {
+                    context.Data.HitRate = -1;
+                    context.AddContextStateInt<CritLevel>(4);
+                }
+            }
+            yield break;
+        }
+    }
+
+    /// <summary>
+    /// Event that makes the move never miss and always land a critical hit if the move is on its last PP
+    /// </summary>
+    [Serializable]
+    public class FinalOddsEvent : BattleEvent
+    {
+        public override GameEvent Clone() { return new FinalOddsEvent(); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
