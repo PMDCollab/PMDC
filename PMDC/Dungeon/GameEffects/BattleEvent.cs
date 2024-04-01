@@ -9074,41 +9074,53 @@ namespace PMDC.Dungeon
         /// </summary> 
         public int Level;
 
+        /// <summary>
+        /// Whether to affect the target or user
+        /// </summary>
+        public bool AffectTarget;
+
         public LevelChangeEvent() { }
-        public LevelChangeEvent(int level)
+        public LevelChangeEvent(int level, bool affectTarget)
         {
             Level = level;
+            AffectTarget = affectTarget;
         }
         protected LevelChangeEvent(LevelChangeEvent other)
         {
             Level = other.Level;
+            AffectTarget = other.AffectTarget;
         }
         public override GameEvent Clone() { return new LevelChangeEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            context.Target.EXP = 0;
-            string growth = DataManager.Instance.GetMonster(context.Target.BaseForm.Species).EXPTable;
+            Character target = (AffectTarget ? context.Target : context.User);
+
+            if (target.Dead)
+                yield break;
+
+            target.EXP = 0;
+            string growth = DataManager.Instance.GetMonster(target.BaseForm.Species).EXPTable;
             GrowthData growthData = DataManager.Instance.GetGrowth(growth);
             if (Level < 0)
             {
                 int levelsChanged = 0;
-                while (levelsChanged > Level && context.Target.Level + levelsChanged > 1)
+                while (levelsChanged > Level && target.Level + levelsChanged > 1)
                 {
-                    context.Target.EXP -= growthData.GetExpToNext(context.Target.Level + levelsChanged - 1);
+                    target.EXP -= growthData.GetExpToNext(target.Level + levelsChanged - 1);
                     levelsChanged--;
                 }
             }
             else if (Level > 0)
             {
                 int levelsChanged = 0;
-                while (levelsChanged < Level && context.Target.Level + levelsChanged < DataManager.Instance.Start.MaxLevel)
+                while (levelsChanged < Level && target.Level + levelsChanged < DataManager.Instance.Start.MaxLevel)
                 {
-                    context.Target.EXP += growthData.GetExpToNext(context.Target.Level + levelsChanged);
+                    target.EXP += growthData.GetExpToNext(target.Level + levelsChanged);
                     levelsChanged++;
                 }
             }
-            DungeonScene.Instance.LevelGains.Add(ZoneManager.Instance.CurrentMap.GetCharIndex(context.Target));
+            DungeonScene.Instance.LevelGains.Add(ZoneManager.Instance.CurrentMap.GetCharIndex(target));
             yield break;
         }
     }
