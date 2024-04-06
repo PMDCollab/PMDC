@@ -2812,7 +2812,7 @@ namespace PMDC.Dungeon
         protected List<Loc> GetAreaExits(Character controlledChar)
         {
             //get all tiles that are within the border of sight range, or within the border of the screen
-            Loc seen = new Loc(1, 1);
+            Loc seen = Character.GetSightDims();
 
             List<Loc> loc_list = new List<Loc>();
             //currently, CPU sight cheats by knowing tiles up to the bounds, instead of individual tiles at the border of FOV.
