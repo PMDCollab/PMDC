@@ -18856,6 +18856,82 @@ namespace PMDC.Dungeon
         }
     }
 
+
+
+    /// <summary>
+    /// Event that selects the item currently held by the user to send to the storage 
+    /// </summary>
+    [Serializable]
+    public class DepositBoxEvent : BattleEvent
+    {
+        public DepositBoxEvent() { }
+        public override GameEvent Clone() { return new DepositBoxEvent(); }
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
+            {
+                if (!String.IsNullOrEmpty(context.User.EquippedItem.ID) && context.UsageSlot != BattleContext.EQUIP_ITEM_SLOT)
+                {
+                    InvSlot chosenSlot = new InvSlot(true, context.User.MemberTeam.GetCharIndex(context.User).Char);
+                    
+                    //TODO: make this into an inventory UI for the player to choose what to send to deposit.  make an exception for the usage slot itself
+
+                    if (!context.CancelState.Cancel)
+                    {
+                        DepositStorageContext deposit = new DepositStorageContext(chosenSlot);
+                        context.ContextStates.Set(deposit);
+                    }
+                }
+                else
+                {
+                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(Text.FormatGrammar(new StringKey("DLG_NO_HELD_ITEM").ToLocal(), context.User.GetDisplayName(true))));
+                    context.CancelState.Cancel = true;
+                }
+            }
+            else
+                context.CancelState.Cancel = true;
+        }
+
+    }
+
+    /// <summary>
+    /// Event that stores an item using the value in DepositStorageContext
+    /// </summary>
+    [Serializable]
+    public class StoreItemEvent : BattleEvent
+    {
+        public StoreItemEvent() { }
+        public override GameEvent Clone() { return new StoreItemEvent(); }
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            DepositStorageContext deposit = context.ContextStates.GetWithDefault<DepositStorageContext>();
+            if (deposit != null)
+            {
+                InvSlot slot = deposit.DepositSlot;
+
+                if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
+                {
+                    ExplorerTeam team = (ExplorerTeam)context.User.MemberTeam;
+                    InvItem item;
+                    if (slot.IsEquipped)
+                    {
+                        item = team.Players[slot.Slot].EquippedItem;
+                        yield return CoroutineManager.Instance.StartCoroutine(team.Players[slot.Slot].DequipItem());
+                    }
+                    else
+                    {
+                        item = team.GetInv(slot.Slot);
+                        team.RemoveFromInv(slot.Slot);
+                    }
+
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_STORAGE_STORE").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName()));
+                    team.StoreItems(new List<InvItem> { item });
+                }
+            }
+        }
+    }
+
+
     /// <summary>
     /// Event that prompts the user which assembly member to add to the team the sets up WithdrawStorageContext 
     /// </summary>
