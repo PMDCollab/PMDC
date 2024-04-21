@@ -1913,7 +1913,7 @@ namespace PMDC.Dungeon
                             {
                                 int idx = ii;
                                 string itemId = candKeys[ii];
-                                ItemData entry = DataManager.Instance.GetItem(itemId);
+                                ItemEntrySummary entry = (ItemEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(itemId);
                                 choices.Add(new DialogueChoice(entry.GetIconName(), () =>
                                 {
                                     uiIndex = idx;
@@ -3801,12 +3801,12 @@ namespace PMDC.Dungeon
                     }
                 }
 
-                ItemData itemEntry = DataManager.Instance.GetItem(unlock.UnlockItem);
+                ItemEntrySummary itemEntry = (ItemEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(unlock.UnlockItem);
                 DungeonScene.Instance.PendingLeaderAction = giveLockedResponse(itemSlot, itemEntry);
             }
         }
 
-        private IEnumerator<YieldInstruction> giveLockedResponse(int itemSlot, ItemData item)
+        private IEnumerator<YieldInstruction> giveLockedResponse(int itemSlot, ItemEntrySummary item)
         {
             if (DataManager.Instance.CurrentReplay != null)
                 yield break;
@@ -4152,7 +4152,7 @@ namespace PMDC.Dungeon
             //factor in exception item to this question
             if (bypass)
                 evoItem = ExceptionItem;
-            string question = !String.IsNullOrEmpty(evoItem) ? Text.FormatGrammar(new StringKey("DLG_EVO_CONFIRM_ITEM").ToLocal(), character.GetDisplayName(true), DataManager.Instance.GetItem(evoItem).GetIconName(), DataManager.Instance.GetMonster(branch.Result).GetColoredName()) : Text.FormatGrammar(new StringKey("DLG_EVO_CONFIRM").ToLocal(), character.GetDisplayName(true), DataManager.Instance.GetMonster(branch.Result).GetColoredName());
+            string question = !String.IsNullOrEmpty(evoItem) ? Text.FormatGrammar(new StringKey("DLG_EVO_CONFIRM_ITEM").ToLocal(), character.GetDisplayName(true), ((ItemEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(evoItem)).GetIconName(), DataManager.Instance.GetMonster(branch.Result).GetColoredName()) : Text.FormatGrammar(new StringKey("DLG_EVO_CONFIRM").ToLocal(), character.GetDisplayName(true), DataManager.Instance.GetMonster(branch.Result).GetColoredName());
             return MenuManager.Instance.CreateQuestion(question, () => { action(branchIndex); }, () => { });
         }
 

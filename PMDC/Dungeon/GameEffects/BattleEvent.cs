@@ -859,10 +859,14 @@ namespace PMDC.Dungeon
 
                 for (int ii = 0; ii < targets.Count; ii++)
                 {
-                    int charDmg = dmg;
+                    HitAndRunState cancel;
+                    if (targets[ii].CharStates.TryGet(out cancel))
+                    {
+                        DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_HIT_AND_RUN").ToLocal(), targets[ii].GetDisplayName(false), ((ItemEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(cancel.OriginItem)).GetIconName()));
+                        continue;
+                    }
 
-                    if (targets[ii].CharStates.Contains<HitAndRunState>())
-                        charDmg /= 4;
+                    int charDmg = dmg;
 
                     yield return CoroutineManager.Instance.StartCoroutine(targets[ii].InflictDamage(charDmg));
                 }
@@ -6070,14 +6074,17 @@ namespace PMDC.Dungeon
             {
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_REFLECT").ToLocal()));
 
-                int recoil = damage * Numerator / Denominator;
+                HitAndRunState cancel;
+                if (context.User.CharStates.TryGet(out cancel))
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_HIT_AND_RUN").ToLocal(), context.User.GetDisplayName(false), ((ItemEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(cancel.OriginItem)).GetIconName()));
+                else
+                {
+                    int recoil = damage * Numerator / Denominator;
 
-                if (context.User.CharStates.Contains<HitAndRunState>())
-                    recoil /= 4;
-
-                if (recoil < 1)
-                    recoil = 1;
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(recoil));
+                    if (recoil < 1)
+                        recoil = 1;
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(recoil));
+                }
             }
         }
     }
@@ -6144,17 +6151,20 @@ namespace PMDC.Dungeon
             {
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_REFLECT").ToLocal()));
 
-                foreach (BattleAnimEvent anim in Anims)
-                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
+                HitAndRunState cancel;
+                if (context.User.CharStates.TryGet(out cancel))
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_HIT_AND_RUN").ToLocal(), context.User.GetDisplayName(false), ((ItemEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(cancel.OriginItem)).GetIconName()));
+                else
+                {
+                    foreach (BattleAnimEvent anim in Anims)
+                        yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
 
-                int recoil = damage * Numerator / Denominator;
+                    int recoil = damage * Numerator / Denominator;
 
-                if (context.User.CharStates.Contains<HitAndRunState>())
-                    recoil /= 4;
-
-                if (recoil < 1)
-                    recoil = 1;
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(recoil));
+                    if (recoil < 1)
+                        recoil = 1;
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(recoil));
+                }
             }
         }
     }
@@ -6206,17 +6216,20 @@ namespace PMDC.Dungeon
             {
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_REFLECT_BY").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
 
-                foreach (BattleAnimEvent anim in Anims)
-                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
+                HitAndRunState cancel;
+                if (context.User.CharStates.TryGet(out cancel))
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_HIT_AND_RUN").ToLocal(), context.User.GetDisplayName(false), ((ItemEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(cancel.OriginItem)).GetIconName()));
+                else
+                {
+                    foreach (BattleAnimEvent anim in Anims)
+                        yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
 
-                int recoil = damage * Numerator / Denominator;
+                    int recoil = damage * Numerator / Denominator;
 
-                if (context.User.CharStates.Contains<HitAndRunState>())
-                    recoil /= 4;
-
-                if (recoil < 1)
-                    recoil = 1;
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(recoil));
+                    if (recoil < 1)
+                        recoil = 1;
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(recoil));
+                }
             }
         }
     }
@@ -8199,14 +8212,18 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             int damage = context.GetContextStateInt<DamageDealt>(0);
-            if (damage > 0 && ((StatusEffect)owner).TargetChar != null)
+            Character target = ((StatusEffect)owner).TargetChar;
+            if (damage > 0 && target != null)
             {
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_DESTINY_BOND").ToLocal(), context.Target.GetDisplayName(false), ((StatusEffect)owner).TargetChar.GetDisplayName(false)));
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_DESTINY_BOND").ToLocal(), context.Target.GetDisplayName(false), target.GetDisplayName(false)));
 
-                if (((StatusEffect)owner).TargetChar.CharStates.Contains<HitAndRunState>())
-                    damage /= 4;
-
-                yield return CoroutineManager.Instance.StartCoroutine(((StatusEffect)owner).TargetChar.InflictDamage(damage));
+                HitAndRunState cancel;
+                if (target.CharStates.TryGet(out cancel))
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_HIT_AND_RUN").ToLocal(), target.GetDisplayName(false), ((ItemEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(cancel.OriginItem)).GetIconName()));
+                else
+                {
+                    yield return CoroutineManager.Instance.StartCoroutine(target.InflictDamage(damage));
+                }
             }
         }
     }
@@ -10763,9 +10780,15 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that deals fixed damage based on the user's current HP.
+    /// </summary>
     [Serializable]
     public class UserHPDamageEvent : FixedDamageEvent
     {
+        /// <summary>
+        /// Instead, deal damage based on the HP the user is missing.
+        /// </summary>
         public bool Reverse;
         public UserHPDamageEvent() { }
         public UserHPDamageEvent(bool reverse)

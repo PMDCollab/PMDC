@@ -1,5 +1,6 @@
 ﻿using System;
-using RogueEssence;
+using RogueEssence.Data;
+using RogueEssence.Dev;
 using RogueEssence.Dungeon;
 
 namespace PMDC.Dungeon
@@ -20,8 +21,12 @@ namespace PMDC.Dungeon
     [Serializable]
     public class HitAndRunState : CharState
     {
-        public HitAndRunState() { }
-        public override GameplayState Clone() { return new HitAndRunState(); }
+        [DataType(0, DataManager.DataType.Item, false)]
+        public string OriginItem;
+        public HitAndRunState() { OriginItem = ""; }
+        public HitAndRunState(string origin) { OriginItem = origin; }
+        public HitAndRunState(HitAndRunState other) { OriginItem = other.OriginItem; }
+        public override GameplayState Clone() { return new HitAndRunState(this); }
     }
 
     [Serializable]
