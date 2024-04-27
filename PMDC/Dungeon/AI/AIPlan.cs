@@ -1225,7 +1225,8 @@ namespace PMDC.Dungeon
         protected void GetItemUseValues(Character controlledChar, List<Character> seenChars, Character closestThreat, string itemIndex, HitValue[] dirs)
         {
             ItemData entry = DataManager.Instance.GetItem(itemIndex);
-            if (!entry.ItemStates.Contains<BerryState>() && !entry.ItemStates.Contains<SeedState>() && !entry.ItemStates.Contains<WandState>())
+            if (!entry.ItemStates.Contains<BerryState>() && !entry.ItemStates.Contains<SeedState>() && !entry.ItemStates.Contains<WandState>()
+                && entry.SortCategory != 10)//manmade medicines NOTE: Specialized AI code!
                 return;
 
             Dir8 defaultDir = Dir8.None;
@@ -1867,6 +1868,8 @@ namespace PMDC.Dungeon
 
             if (data.Category == BattleData.SkillCategory.Status && maxValue > 0)
                 return new HitValue(totalValue / totalTargets, directHit);
+            else if (data.Category == BattleData.SkillCategory.None)
+                return new HitValue(totalValue, directHit);
             else
                 return new HitValue(maxValue, directHit);
         }
