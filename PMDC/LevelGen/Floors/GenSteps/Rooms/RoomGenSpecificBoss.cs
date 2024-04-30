@@ -105,6 +105,7 @@ namespace PMDC.LevelGen
 
 
             EffectTile newEffect = new EffectTile(TriggerTile, true, Trigger + this.Draw.Start);
+            newEffect.TileStates.Set(new DangerState(true));
             newEffect.TileStates.Set(mobSpawnState);
             newEffect.TileStates.Set(new BoundsState(new Rect(this.Draw.Start - new Loc(1), this.Draw.Size + new Loc(2))));
             newEffect.TileStates.Set(new SongState(Song));
