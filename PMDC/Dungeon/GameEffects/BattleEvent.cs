@@ -19129,7 +19129,7 @@ namespace PMDC.Dungeon
             MonsterID formData = context.Target.BaseForm;
             BaseMonsterForm form = DataManager.Instance.GetMonster(formData.Species).Forms[formData.Form];
             if (Elements.Contains(form.Element1) || Elements.Contains(form.Element2))
-                return 35;
+                return 40;
             else
                 return -50;
         }
@@ -19148,7 +19148,7 @@ namespace PMDC.Dungeon
         {
             MonsterID formData = context.Target.BaseForm;
             if (formData.Skin != DataManager.Instance.DefaultSkin)
-                return 35;
+                return 40;
             return -50;
         }
     }
@@ -19183,7 +19183,7 @@ namespace PMDC.Dungeon
 
         protected override int GetRecruitRate(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            return (context.User.Level - context.Target.Level);//between + and - 100, at max
+            return ((context.User.Level - context.Target.Level - 1) / 10 + 1) * 10;//between + and - 100, at max
         }
     }
 
