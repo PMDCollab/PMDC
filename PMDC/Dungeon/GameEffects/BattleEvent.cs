@@ -9297,7 +9297,7 @@ namespace PMDC.Dungeon
                 {
                     DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_KNOCK_MONEY").ToLocal(), context.Target.GetDisplayName(false), Text.FormatKey("MONEY_AMOUNT", moneyLost.ToString())));
                     team.LoseMoney(context.Target, moneyLost);
-                    Loc endLoc = context.Target.CharLoc + context.User.CharDir.GetLoc() * 2;
+                    Loc endLoc = DungeonScene.Instance.MoveShotUntilBlocked(context.User, context.Target.CharLoc, context.User.CharDir, 2, Alignment.None, false, false);
                     yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropMoney(moneyLost, endLoc, context.Target.CharLoc));
                 }
             }
@@ -15602,7 +15602,7 @@ namespace PMDC.Dungeon
                 else
                     yield return CoroutineManager.Instance.StartCoroutine(context.Target.DequipItem());
 
-                Loc endLoc = context.Target.CharLoc + context.User.CharDir.GetLoc() * 2;
+                Loc endLoc = DungeonScene.Instance.MoveShotUntilBlocked(context.User, context.Target.CharLoc, context.User.CharDir, 2, Alignment.None, false, false);
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(item, endLoc, context.Target.CharLoc));
             }
         }
@@ -16512,7 +16512,7 @@ namespace PMDC.Dungeon
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_STICKY_HOLD").ToLocal(), context.Target.GetDisplayName(false)));
 
                 //bestowed item slides off
-                Loc endLoc = context.Target.CharLoc + context.User.CharDir.GetLoc() * 2;
+                Loc endLoc = DungeonScene.Instance.MoveShotUntilBlocked(context.User, context.Target.CharLoc, context.User.CharDir, 2, Alignment.None, false, false);
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(context.Item, endLoc, context.Target.CharLoc));
             }
             else if (!String.IsNullOrEmpty(context.Item.ID))
@@ -16524,7 +16524,7 @@ namespace PMDC.Dungeon
                     //held item slides off
                     InvItem heldItem = context.Target.EquippedItem;
                     yield return CoroutineManager.Instance.StartCoroutine(context.Target.DequipItem());
-                    Loc endLoc = context.Target.CharLoc + context.User.CharDir.GetLoc() * 2;
+                    Loc endLoc = DungeonScene.Instance.MoveShotUntilBlocked(context.User, context.Target.CharLoc, context.User.CharDir, 2, Alignment.None, false, false);
                     yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(heldItem, endLoc, context.Target.CharLoc));
 
                     //give the target the item
