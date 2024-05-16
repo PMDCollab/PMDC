@@ -45,6 +45,12 @@ namespace PMDC.Dev
                     assemblyName = assemblyName.Replace("RogueEssence", "PMDC");
                     typeName = typeName.Replace("RogueEssence.LevelGen.MobSpawnSettingsStep", "PMDC.LevelGen.MobSpawnSettingsStep");
                 }
+                
+                if (typeName.StartsWith("RogueEssence.Data.UniversalActiveEffect"))
+                {
+                    assemblyName = assemblyName.Replace("RogueEssence", "PMDC");
+                    typeName = typeName.Replace("RogueEssence.Data.UniversalActiveEffect", "PMDC.Data.UniversalActiveEffect");
+                }
                 //typeName = typeName.Replace("From", "To");
                 //assemblyName = assemblyName.Replace("From", "To");
                 //then the type moved to a new namespace
