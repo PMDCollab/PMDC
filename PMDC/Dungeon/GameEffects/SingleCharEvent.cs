@@ -1412,6 +1412,10 @@ namespace PMDC.Dungeon
 
         private void handoutAssemblyExp(Character player, int totalExp)
         {
+            if (ZoneManager.Instance.CurrentZone.ExpPercent <= 0)
+                return;
+            totalExp = totalExp * ZoneManager.Instance.CurrentZone.ExpPercent / 100;
+
             if (!player.Dead && player.Level < DataManager.Instance.Start.MaxLevel)
             {
                 player.EXP += totalExp;
