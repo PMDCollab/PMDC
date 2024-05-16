@@ -1440,66 +1440,12 @@ namespace PMDC.Dungeon
             }
         }
 
-        private T getConditionalEvent<T>(Character controlledChar, PassiveContext passiveContext, BattleEvent effect) where T : BattleEvent
-        {
-            if (effect is T)
-                return (T)effect;
-
-            //TODO: add other conditions
-            FamilyBattleEvent familyEffect = effect as FamilyBattleEvent;
-            if (familyEffect != null)
-            {
-                ItemData entry = (ItemData)passiveContext.Passive.GetData();
-                FamilyState family;
-                if (!entry.ItemStates.TryGet<FamilyState>(out family))
-                    return null;
-                if (family.Members.Contains(controlledChar.BaseForm.Species))
-                    return getConditionalEvent<T>(controlledChar, passiveContext, familyEffect.BaseEvent);
-            }
-            return null;
-        }
 
         private void modifyActionHitboxes(Character controlledChar, List<Character> seenChars, Dir8 dir, ref string skillIndex, ref SkillData entry, ref  int rangeMod, ref CombatAction hitboxAction, ref ExplosionData explosion)
         {
-            //check for passives that modify range; NOTE: specialized AI code!
-            foreach (PassiveContext passive in controlledChar.IteratePassives(GameEventPriority.USER_PORT_PRIORITY))
-            {
-                foreach (BattleEvent effect in passive.EventData.OnActions.EnumerateInOrder())
-                {
-                    AddRangeEvent addRangeEvent = getConditionalEvent<AddRangeEvent>(controlledChar, passive, effect);
-                    if (addRangeEvent != null)
-                    {
-                        rangeMod += addRangeEvent.Range;
-                        continue;
-                    }
+            //check for passives that modify range
+            DataManager.Instance.UniversalEvent.GetRange(controlledChar, ref entry);
 
-                    CategoryAddRangeEvent categoryRangeEvent = getConditionalEvent<CategoryAddRangeEvent>(controlledChar, passive, effect);
-                    if (categoryRangeEvent != null)
-                    {
-                        if (entry.Data.Category == categoryRangeEvent.Category)
-                            rangeMod += categoryRangeEvent.Range;
-                        continue;
-                    }
-
-                    WeatherAddRangeEvent weatherRangeEvent = getConditionalEvent<WeatherAddRangeEvent>(controlledChar, passive, effect);
-                    if (weatherRangeEvent != null)
-                    {
-                        if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(weatherRangeEvent.WeatherID))
-                            rangeMod += weatherRangeEvent.Range;
-                        continue;
-                    }
-                    
-                    ElementAddRangeEvent elementRangeEvent = getConditionalEvent<ElementAddRangeEvent>(controlledChar, passive, effect);
-                    if (elementRangeEvent != null)
-                    {
-                        if (elementRangeEvent.Elements.Contains(controlledChar.Element1) || elementRangeEvent.Elements.Contains(controlledChar.Element2))
-                        {
-                            rangeMod += elementRangeEvent.Range;
-                        }
-                        continue;
-                    }
-                }
-            }
             //check for moves that want to wait until within range
             if (skillIndex == "razor_wind")//wait until enemy is two+ tiles deep in the hitbox, to prevent immediate walk-away; NOTE: specialized AI code!
                 rangeMod--;
