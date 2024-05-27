@@ -408,6 +408,42 @@ namespace PMDC.LevelGen
         }
     }
 
+    [Serializable]
+    public class ItemThemeBox : ItemTheme
+    {
+        public BoxSpawner<BaseMapGenContext> Spawner;
+
+        public ItemThemeBox() { }
+        public ItemThemeBox(BoxSpawner<BaseMapGenContext> spawner, RandRange amount) : base(amount)
+        {
+            Spawner = spawner;
+        }
+        protected ItemThemeBox(ItemThemeBox other) : base(other)
+        {
+            Spawner = other.Spawner;
+        }
+        public override ItemTheme Copy() { return new ItemThemeBox(this); }
+
+        public override List<MapItem> GenerateItems(BaseMapGenContext map, SpawnList<MapItem> specialItems)
+        {
+            
+            int itemCount = Amount.Pick(map.Rand);
+            List<MapItem> spawners = new List<MapItem>();
+
+            for (int ii = 0; ii < itemCount; ii++)
+            {
+                List<MapItem> spawned = Spawner.GetSpawns(map);
+                spawners.AddRange(spawned);
+                while (spawners.Count > itemCount)
+                    spawners.RemoveAt(spawners.Count - 1);
+                if (spawners.Count >= itemCount)
+                    break;
+            }
+
+            return spawners;
+        }
+    }
+
 
     [Serializable]
     public class MobThemeFamilySeeded : MobThemeFamily
@@ -477,7 +513,7 @@ namespace PMDC.LevelGen
             for (int ii = 0; ii < map.TeamSpawns.Count; ii++)
             {
                 SpawnList<MobSpawn> memberSpawns = map.TeamSpawns.GetSpawn(ii).GetPossibleSpawns();
-                for (int jj = 0; ii < memberSpawns.Count; jj++)
+                for (int jj = 0; jj < memberSpawns.Count; jj++)
                 {
                     MobSpawn spawn = memberSpawns.GetSpawn(jj);
                     if (CheckIfAllowed(map, spawn, species))

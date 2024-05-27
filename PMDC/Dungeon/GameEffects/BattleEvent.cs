@@ -859,10 +859,14 @@ namespace PMDC.Dungeon
 
                 for (int ii = 0; ii < targets.Count; ii++)
                 {
-                    int charDmg = dmg;
+                    HitAndRunState cancel;
+                    if (targets[ii].CharStates.TryGet(out cancel))
+                    {
+                        DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_HIT_AND_RUN").ToLocal(), targets[ii].GetDisplayName(false), ((ItemEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(cancel.OriginItem)).GetIconName()));
+                        continue;
+                    }
 
-                    if (targets[ii].CharStates.Contains<HitAndRunState>())
-                        charDmg /= 4;
+                    int charDmg = dmg;
 
                     yield return CoroutineManager.Instance.StartCoroutine(targets[ii].InflictDamage(charDmg));
                 }
@@ -951,12 +955,6 @@ namespace PMDC.Dungeon
         public string ReqSpecies;
 
         /// <summary>
-        /// The move that changes the character into its Defense form
-        /// </summary>
-        [DataType(0, DataManager.DataType.Skill, false)]
-        public string DefenseSkill;
-        
-        /// <summary>
         /// The defense form ID of the species
         /// </summary>
         public int DefenseForme;
@@ -966,18 +964,16 @@ namespace PMDC.Dungeon
         /// </summary>
         public int AttackForme;
 
-        public StanceChangeEvent() { ReqSpecies = ""; DefenseSkill = ""; }
-        public StanceChangeEvent(string reqSpecies, string defenseSkill, int defenseForme, int attackForme)
+        public StanceChangeEvent() { ReqSpecies = ""; }
+        public StanceChangeEvent(string reqSpecies, int defenseForme, int attackForme)
         {
             ReqSpecies = reqSpecies;
-            DefenseSkill = defenseSkill;
             DefenseForme = defenseForme;
             AttackForme = attackForme;
         }
         protected StanceChangeEvent(StanceChangeEvent other) : this()
         {
             ReqSpecies = other.ReqSpecies;
-            DefenseSkill = other.DefenseSkill;
             DefenseForme = other.DefenseForme;
             AttackForme = other.AttackForme;
         }
@@ -997,7 +993,7 @@ namespace PMDC.Dungeon
                 {
                     forme = AttackForme;
                 }
-                else if (context.Data.ID == DefenseSkill)
+                else if (context.Data.Category == BattleData.SkillCategory.Status)
                 {
                     forme = DefenseForme;
                 }
@@ -3805,12 +3801,50 @@ namespace PMDC.Dungeon
     }
 
     /// <summary>
-    /// Event that makes the move never miss and always land a critical hit if the move is on its last PP
+    /// Event that makes the move never miss and always land a critical hit if all moves have the same PP
     /// </summary>
     [Serializable]
     public class BetterOddsEvent : BattleEvent
     {
         public override GameEvent Clone() { return new BetterOddsEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.ActionType == BattleActionType.Skill && context.UsageSlot > BattleContext.DEFAULT_ATTACK_SLOT && context.UsageSlot < CharData.MAX_SKILL_SLOTS)
+            {
+                Skill baseMove = context.User.Skills[context.UsageSlot].Element;
+                bool allEqual = true;
+                for (int ii = 0; ii < context.User.Skills.Count; ii++)
+                {
+                    if (ii == context.UsageSlot)
+                        continue;
+                    Skill move = context.User.Skills[ii].Element;
+                    if (String.IsNullOrEmpty(move.SkillNum))
+                        continue;
+                    if (move.Charges != baseMove.Charges + 1)
+                    {
+                        allEqual = false;
+                        break;
+                    }
+
+                }
+                if (allEqual)
+                {
+                    context.Data.HitRate = -1;
+                    context.AddContextStateInt<CritLevel>(4);
+                }
+            }
+            yield break;
+        }
+    }
+
+    /// <summary>
+    /// Event that makes the move never miss and always land a critical hit if the move is on its last PP
+    /// </summary>
+    [Serializable]
+    public class FinalOddsEvent : BattleEvent
+    {
+        public override GameEvent Clone() { return new FinalOddsEvent(); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
@@ -5607,7 +5641,8 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            context.RangeMod += Range;
+            if (context.ActionType == BattleActionType.Skill && context.Data.ID != DataManager.Instance.DefaultSkill)
+                context.RangeMod += Range;
             yield break;
         }
     }
@@ -6040,14 +6075,17 @@ namespace PMDC.Dungeon
             {
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_REFLECT").ToLocal()));
 
-                int recoil = damage * Numerator / Denominator;
+                HitAndRunState cancel;
+                if (context.User.CharStates.TryGet(out cancel))
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_HIT_AND_RUN").ToLocal(), context.User.GetDisplayName(false), ((ItemEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(cancel.OriginItem)).GetIconName()));
+                else
+                {
+                    int recoil = damage * Numerator / Denominator;
 
-                if (context.User.CharStates.Contains<HitAndRunState>())
-                    recoil /= 4;
-
-                if (recoil < 1)
-                    recoil = 1;
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(recoil));
+                    if (recoil < 1)
+                        recoil = 1;
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(recoil));
+                }
             }
         }
     }
@@ -6114,17 +6152,20 @@ namespace PMDC.Dungeon
             {
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_REFLECT").ToLocal()));
 
-                foreach (BattleAnimEvent anim in Anims)
-                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
+                HitAndRunState cancel;
+                if (context.User.CharStates.TryGet(out cancel))
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_HIT_AND_RUN").ToLocal(), context.User.GetDisplayName(false), ((ItemEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(cancel.OriginItem)).GetIconName()));
+                else
+                {
+                    foreach (BattleAnimEvent anim in Anims)
+                        yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
 
-                int recoil = damage * Numerator / Denominator;
+                    int recoil = damage * Numerator / Denominator;
 
-                if (context.User.CharStates.Contains<HitAndRunState>())
-                    recoil /= 4;
-
-                if (recoil < 1)
-                    recoil = 1;
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(recoil));
+                    if (recoil < 1)
+                        recoil = 1;
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(recoil));
+                }
             }
         }
     }
@@ -6176,17 +6217,20 @@ namespace PMDC.Dungeon
             {
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_REFLECT_BY").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
 
-                foreach (BattleAnimEvent anim in Anims)
-                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
+                HitAndRunState cancel;
+                if (context.User.CharStates.TryGet(out cancel))
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_HIT_AND_RUN").ToLocal(), context.User.GetDisplayName(false), ((ItemEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(cancel.OriginItem)).GetIconName()));
+                else
+                {
+                    foreach (BattleAnimEvent anim in Anims)
+                        yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
 
-                int recoil = damage * Numerator / Denominator;
+                    int recoil = damage * Numerator / Denominator;
 
-                if (context.User.CharStates.Contains<HitAndRunState>())
-                    recoil /= 4;
-
-                if (recoil < 1)
-                    recoil = 1;
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(recoil));
+                    if (recoil < 1)
+                        recoil = 1;
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(recoil));
+                }
             }
         }
     }
@@ -8169,14 +8213,18 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             int damage = context.GetContextStateInt<DamageDealt>(0);
-            if (damage > 0 && ((StatusEffect)owner).TargetChar != null)
+            Character target = ((StatusEffect)owner).TargetChar;
+            if (damage > 0 && target != null)
             {
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_DESTINY_BOND").ToLocal(), context.Target.GetDisplayName(false), ((StatusEffect)owner).TargetChar.GetDisplayName(false)));
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_DESTINY_BOND").ToLocal(), context.Target.GetDisplayName(false), target.GetDisplayName(false)));
 
-                if (((StatusEffect)owner).TargetChar.CharStates.Contains<HitAndRunState>())
-                    damage /= 4;
-
-                yield return CoroutineManager.Instance.StartCoroutine(((StatusEffect)owner).TargetChar.InflictDamage(damage));
+                HitAndRunState cancel;
+                if (target.CharStates.TryGet(out cancel))
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_HIT_AND_RUN").ToLocal(), target.GetDisplayName(false), ((ItemEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(cancel.OriginItem)).GetIconName()));
+                else
+                {
+                    yield return CoroutineManager.Instance.StartCoroutine(target.InflictDamage(damage));
+                }
             }
         }
     }
@@ -9044,41 +9092,53 @@ namespace PMDC.Dungeon
         /// </summary> 
         public int Level;
 
+        /// <summary>
+        /// Whether to affect the target or user
+        /// </summary>
+        public bool AffectTarget;
+
         public LevelChangeEvent() { }
-        public LevelChangeEvent(int level)
+        public LevelChangeEvent(int level, bool affectTarget)
         {
             Level = level;
+            AffectTarget = affectTarget;
         }
         protected LevelChangeEvent(LevelChangeEvent other)
         {
             Level = other.Level;
+            AffectTarget = other.AffectTarget;
         }
         public override GameEvent Clone() { return new LevelChangeEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            context.Target.EXP = 0;
-            string growth = DataManager.Instance.GetMonster(context.Target.BaseForm.Species).EXPTable;
+            Character target = (AffectTarget ? context.Target : context.User);
+
+            if (target.Dead)
+                yield break;
+
+            target.EXP = 0;
+            string growth = DataManager.Instance.GetMonster(target.BaseForm.Species).EXPTable;
             GrowthData growthData = DataManager.Instance.GetGrowth(growth);
             if (Level < 0)
             {
                 int levelsChanged = 0;
-                while (levelsChanged > Level && context.Target.Level + levelsChanged > 1)
+                while (levelsChanged > Level && target.Level + levelsChanged > 1)
                 {
-                    context.Target.EXP -= growthData.GetExpToNext(context.Target.Level + levelsChanged - 1);
+                    target.EXP -= growthData.GetExpToNext(target.Level + levelsChanged - 1);
                     levelsChanged--;
                 }
             }
             else if (Level > 0)
             {
                 int levelsChanged = 0;
-                while (levelsChanged < Level && context.Target.Level + levelsChanged < DataManager.Instance.Start.MaxLevel)
+                while (levelsChanged < Level && target.Level + levelsChanged < DataManager.Instance.Start.MaxLevel)
                 {
-                    context.Target.EXP += growthData.GetExpToNext(context.Target.Level + levelsChanged);
+                    target.EXP += growthData.GetExpToNext(target.Level + levelsChanged);
                     levelsChanged++;
                 }
             }
-            DungeonScene.Instance.LevelGains.Add(ZoneManager.Instance.CurrentMap.GetCharIndex(context.Target));
+            DungeonScene.Instance.LevelGains.Add(ZoneManager.Instance.CurrentMap.GetCharIndex(target));
             yield break;
         }
     }
@@ -9238,7 +9298,7 @@ namespace PMDC.Dungeon
                 {
                     DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_KNOCK_MONEY").ToLocal(), context.Target.GetDisplayName(false), Text.FormatKey("MONEY_AMOUNT", moneyLost.ToString())));
                     team.LoseMoney(context.Target, moneyLost);
-                    Loc endLoc = context.Target.CharLoc + context.User.CharDir.GetLoc() * 2;
+                    Loc endLoc = DungeonScene.Instance.MoveShotUntilBlocked(context.User, context.Target.CharLoc, context.User.CharDir, 2, Alignment.None, false, false);
                     yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropMoney(moneyLost, endLoc, context.Target.CharLoc));
                 }
             }
@@ -10721,9 +10781,15 @@ namespace PMDC.Dungeon
         }
     }
 
+    /// <summary>
+    /// Event that deals fixed damage based on the user's current HP.
+    /// </summary>
     [Serializable]
     public class UserHPDamageEvent : FixedDamageEvent
     {
+        /// <summary>
+        /// Instead, deal damage based on the HP the user is missing.
+        /// </summary>
         public bool Reverse;
         public UserHPDamageEvent() { }
         public UserHPDamageEvent(bool reverse)
@@ -15537,7 +15603,7 @@ namespace PMDC.Dungeon
                 else
                     yield return CoroutineManager.Instance.StartCoroutine(context.Target.DequipItem());
 
-                Loc endLoc = context.Target.CharLoc + context.User.CharDir.GetLoc() * 2;
+                Loc endLoc = DungeonScene.Instance.MoveShotUntilBlocked(context.User, context.Target.CharLoc, context.User.CharDir, 2, Alignment.None, false, false);
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(item, endLoc, context.Target.CharLoc));
             }
         }
@@ -16447,7 +16513,7 @@ namespace PMDC.Dungeon
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_STICKY_HOLD").ToLocal(), context.Target.GetDisplayName(false)));
 
                 //bestowed item slides off
-                Loc endLoc = context.Target.CharLoc + context.User.CharDir.GetLoc() * 2;
+                Loc endLoc = DungeonScene.Instance.MoveShotUntilBlocked(context.User, context.Target.CharLoc, context.User.CharDir, 2, Alignment.None, false, false);
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(context.Item, endLoc, context.Target.CharLoc));
             }
             else if (!String.IsNullOrEmpty(context.Item.ID))
@@ -16459,7 +16525,7 @@ namespace PMDC.Dungeon
                     //held item slides off
                     InvItem heldItem = context.Target.EquippedItem;
                     yield return CoroutineManager.Instance.StartCoroutine(context.Target.DequipItem());
-                    Loc endLoc = context.Target.CharLoc + context.User.CharDir.GetLoc() * 2;
+                    Loc endLoc = DungeonScene.Instance.MoveShotUntilBlocked(context.User, context.Target.CharLoc, context.User.CharDir, 2, Alignment.None, false, false);
                     yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(heldItem, endLoc, context.Target.CharLoc));
 
                     //give the target the item
@@ -17722,14 +17788,30 @@ namespace PMDC.Dungeon
         [DataType(0, DataManager.DataType.Tile, false)]
         public string TrapID;
 
-        public CounterTrapEvent() { }
-        public CounterTrapEvent(string trapID)
+        /// <summary>
+        /// The particle VFX 
+        /// </summary>
+        public FiniteEmitter Emitter;
+
+        /// <summary>
+        /// The sound effect of the VFX
+        /// </summary>
+        [Sound(0)]
+        public string Sound;
+
+
+        public CounterTrapEvent() { Emitter = new EmptyFiniteEmitter(); }
+        public CounterTrapEvent(string trapID, FiniteEmitter emitter, string sound)
         {
             TrapID = trapID;
+            Emitter = emitter;
+            Sound = sound;
         }
         protected CounterTrapEvent(CounterTrapEvent other)
         {
             TrapID = other.TrapID;
+            Emitter = (FiniteEmitter)other.Emitter.Clone();
+            Sound = other.Sound;
         }
         public override GameEvent Clone() { return new CounterTrapEvent(this); }
 
@@ -17738,11 +17820,28 @@ namespace PMDC.Dungeon
             if (!Collision.InBounds(ZoneManager.Instance.CurrentMap.Width, ZoneManager.Instance.CurrentMap.Height, context.Target.CharLoc))
                 yield break;
 
-            Tile tile = ZoneManager.Instance.CurrentMap.Tiles[context.Target.CharLoc.X][context.Target.CharLoc.Y];
-            if (tile.Data.GetData().BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(tile.Effect.ID))
+            bool dropped = false;
+            Loc baseLoc = context.Target.CharLoc;
+            foreach (Dir4 dir in DirExt.VALID_DIR4)
             {
-                tile.Effect = new EffectTile(TrapID, true, context.Target.CharLoc);
-                tile.Effect.Owner = ZoneManager.Instance.CurrentMap.GetTileOwner(context.Target);
+                Loc endLoc = baseLoc + dir.GetLoc();
+                Tile tile = ZoneManager.Instance.CurrentMap.Tiles[endLoc.X][endLoc.Y];
+                if (tile.Data.GetData().BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(tile.Effect.ID))
+                {
+                    tile.Effect = new EffectTile(TrapID, true, endLoc);
+                    tile.Effect.Owner = ZoneManager.Instance.CurrentMap.GetTileOwner(context.Target);
+
+                    GameManager.Instance.BattleSE(Sound);
+                    FiniteEmitter endEmitter = (FiniteEmitter)Emitter.Clone();
+                    endEmitter.SetupEmit(endLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), endLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), context.Target.CharDir);
+                    DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+                    dropped = true;
+                }
+            }
+            if (dropped)
+            {
+                TileData tileData = DataManager.Instance.GetTile(TrapID);
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_SPIKE_DROPPER").ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName(), tileData.Name.ToLocal()));
             }
         }
     }
@@ -18781,6 +18880,82 @@ namespace PMDC.Dungeon
         }
     }
 
+
+
+    /// <summary>
+    /// Event that selects the item currently held by the user to send to the storage 
+    /// </summary>
+    [Serializable]
+    public class DepositBoxEvent : BattleEvent
+    {
+        public DepositBoxEvent() { }
+        public override GameEvent Clone() { return new DepositBoxEvent(); }
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
+            {
+                if (!String.IsNullOrEmpty(context.User.EquippedItem.ID) && context.UsageSlot != BattleContext.EQUIP_ITEM_SLOT)
+                {
+                    InvSlot chosenSlot = new InvSlot(true, context.User.MemberTeam.GetCharIndex(context.User).Char);
+                    
+                    //TODO: make this into an inventory UI for the player to choose what to send to deposit.  make an exception for the usage slot itself
+
+                    if (!context.CancelState.Cancel)
+                    {
+                        DepositStorageContext deposit = new DepositStorageContext(chosenSlot);
+                        context.ContextStates.Set(deposit);
+                    }
+                }
+                else
+                {
+                    yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(Text.FormatGrammar(new StringKey("DLG_NO_HELD_ITEM").ToLocal(), context.User.GetDisplayName(true))));
+                    context.CancelState.Cancel = true;
+                }
+            }
+            else
+                context.CancelState.Cancel = true;
+        }
+
+    }
+
+    /// <summary>
+    /// Event that stores an item using the value in DepositStorageContext
+    /// </summary>
+    [Serializable]
+    public class StoreItemEvent : BattleEvent
+    {
+        public StoreItemEvent() { }
+        public override GameEvent Clone() { return new StoreItemEvent(); }
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            DepositStorageContext deposit = context.ContextStates.GetWithDefault<DepositStorageContext>();
+            if (deposit != null)
+            {
+                InvSlot slot = deposit.DepositSlot;
+
+                if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
+                {
+                    ExplorerTeam team = (ExplorerTeam)context.User.MemberTeam;
+                    InvItem item;
+                    if (slot.IsEquipped)
+                    {
+                        item = team.Players[slot.Slot].EquippedItem;
+                        yield return CoroutineManager.Instance.StartCoroutine(team.Players[slot.Slot].DequipItem());
+                    }
+                    else
+                    {
+                        item = team.GetInv(slot.Slot);
+                        team.RemoveFromInv(slot.Slot);
+                    }
+
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_STORAGE_STORE").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName()));
+                    team.StoreItems(new List<InvItem> { item });
+                }
+            }
+        }
+    }
+
+
     /// <summary>
     /// Event that prompts the user which assembly member to add to the team the sets up WithdrawStorageContext 
     /// </summary>
@@ -18955,7 +19130,7 @@ namespace PMDC.Dungeon
             MonsterID formData = context.Target.BaseForm;
             BaseMonsterForm form = DataManager.Instance.GetMonster(formData.Species).Forms[formData.Form];
             if (Elements.Contains(form.Element1) || Elements.Contains(form.Element2))
-                return 35;
+                return 40;
             else
                 return -50;
         }
@@ -18974,7 +19149,7 @@ namespace PMDC.Dungeon
         {
             MonsterID formData = context.Target.BaseForm;
             if (formData.Skin != DataManager.Instance.DefaultSkin)
-                return 35;
+                return 40;
             return -50;
         }
     }
@@ -19009,7 +19184,7 @@ namespace PMDC.Dungeon
 
         protected override int GetRecruitRate(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            return (context.User.Level - context.Target.Level);//between + and - 100, at max
+            return ((context.User.Level - context.Target.Level - 1) / 10 + 1) * 10;//between + and - 100, at max
         }
     }
 

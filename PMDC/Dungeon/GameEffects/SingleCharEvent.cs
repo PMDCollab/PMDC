@@ -1147,6 +1147,53 @@ namespace PMDC.Dungeon
 
 
     [Serializable]
+    public class RevolvingFormeEvent : SingleCharEvent
+    {
+        [JsonConverter(typeof(MonsterConverter))]
+        [DataType(0, DataManager.DataType.Monster, false)]
+        public string ReqSpecies;
+        public int Form1;
+        public int Form2;
+
+        public RevolvingFormeEvent() { ReqSpecies = ""; }
+        public RevolvingFormeEvent(string reqSpecies, int form1, int form2)
+        {
+            ReqSpecies = reqSpecies;
+            Form1 = form1;
+            Form2 = form2;
+        }
+        protected RevolvingFormeEvent(RevolvingFormeEvent other) : this()
+        {
+            ReqSpecies = other.ReqSpecies;
+            Form1 = other.Form1;
+            Form2 = other.Form2;
+        }
+        public override GameEvent Clone() { return new RevolvingFormeEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            if (context.User == null)
+                yield break;
+
+            if (context.User.CurrentForm.Species != ReqSpecies)
+                yield break;
+
+            int forme = Form1;
+            if (context.User.CurrentForm.Form == Form1)
+                forme = Form2;
+
+            if (forme != context.User.CurrentForm.Form)
+            {
+                //transform it
+                context.User.Transform(new MonsterID(context.User.CurrentForm.Species, forme, context.User.CurrentForm.Skin, context.User.CurrentForm.Gender));
+            }
+
+            yield break;
+        }
+    }
+
+
+    [Serializable]
     public class MeteorFormeEvent : SingleCharEvent
     {
         [JsonConverter(typeof(MonsterConverter))]
@@ -1365,6 +1412,10 @@ namespace PMDC.Dungeon
 
         private void handoutAssemblyExp(Character player, int totalExp)
         {
+            if (ZoneManager.Instance.CurrentZone.ExpPercent <= 0)
+                return;
+            totalExp = totalExp * ZoneManager.Instance.CurrentZone.ExpPercent / 100;
+
             if (!player.Dead && player.Level < DataManager.Instance.Start.MaxLevel)
             {
                 player.EXP += totalExp;
@@ -1866,7 +1917,7 @@ namespace PMDC.Dungeon
                             {
                                 int idx = ii;
                                 string itemId = candKeys[ii];
-                                ItemData entry = DataManager.Instance.GetItem(itemId);
+                                ItemEntrySummary entry = (ItemEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(itemId);
                                 choices.Add(new DialogueChoice(entry.GetIconName(), () =>
                                 {
                                     uiIndex = idx;
@@ -3754,12 +3805,12 @@ namespace PMDC.Dungeon
                     }
                 }
 
-                ItemData itemEntry = DataManager.Instance.GetItem(unlock.UnlockItem);
+                ItemEntrySummary itemEntry = (ItemEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(unlock.UnlockItem);
                 DungeonScene.Instance.PendingLeaderAction = giveLockedResponse(itemSlot, itemEntry);
             }
         }
 
-        private IEnumerator<YieldInstruction> giveLockedResponse(int itemSlot, ItemData item)
+        private IEnumerator<YieldInstruction> giveLockedResponse(int itemSlot, ItemEntrySummary item)
         {
             if (DataManager.Instance.CurrentReplay != null)
                 yield break;
@@ -4105,7 +4156,7 @@ namespace PMDC.Dungeon
             //factor in exception item to this question
             if (bypass)
                 evoItem = ExceptionItem;
-            string question = !String.IsNullOrEmpty(evoItem) ? Text.FormatGrammar(new StringKey("DLG_EVO_CONFIRM_ITEM").ToLocal(), character.GetDisplayName(true), DataManager.Instance.GetItem(evoItem).GetIconName(), DataManager.Instance.GetMonster(branch.Result).GetColoredName()) : Text.FormatGrammar(new StringKey("DLG_EVO_CONFIRM").ToLocal(), character.GetDisplayName(true), DataManager.Instance.GetMonster(branch.Result).GetColoredName());
+            string question = !String.IsNullOrEmpty(evoItem) ? Text.FormatGrammar(new StringKey("DLG_EVO_CONFIRM_ITEM").ToLocal(), character.GetDisplayName(true), ((ItemEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(evoItem)).GetIconName(), DataManager.Instance.GetMonster(branch.Result).GetColoredName()) : Text.FormatGrammar(new StringKey("DLG_EVO_CONFIRM").ToLocal(), character.GetDisplayName(true), DataManager.Instance.GetMonster(branch.Result).GetColoredName());
             return MenuManager.Instance.CreateQuestion(question, () => { action(branchIndex); }, () => { });
         }
 

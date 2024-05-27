@@ -562,6 +562,19 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class DepositStorageContext : ContextState
+    {
+        public InvSlot DepositSlot;
+        public DepositStorageContext() { }
+        public DepositStorageContext(InvSlot slot) { DepositSlot = slot; }
+        protected DepositStorageContext(DepositStorageContext other)
+        {
+            DepositSlot = other.DepositSlot;
+        }
+        public override GameplayState Clone() { return new DepositStorageContext(this); }
+    }
+
+    [Serializable]
     public class JudgmentContext : ContextState
     {
         [JsonConverter(typeof(ElementListConverter))]

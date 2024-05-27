@@ -31,7 +31,7 @@ namespace PMDC.Data
         public string ItemNum;
 
         public override string GetReqItem(Character character) { return ItemNum; }
-        public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_ITEM").ToLocal(), DataManager.Instance.GetItem(ItemNum).GetColoredName()); }
+        public override string GetReqString() { return Text.FormatGrammar(new StringKey("EVO_REQ_ITEM").ToLocal(), ((ItemEntrySummary)DataManager.Instance.DataIndices[DataManager.DataType.Item].Get(ItemNum)).GetColoredName()); }
         
         public override bool GetReq(Character character, bool inDungeon)
         {

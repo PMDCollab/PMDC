@@ -1225,7 +1225,8 @@ namespace PMDC.Dungeon
         protected void GetItemUseValues(Character controlledChar, List<Character> seenChars, Character closestThreat, string itemIndex, HitValue[] dirs)
         {
             ItemData entry = DataManager.Instance.GetItem(itemIndex);
-            if (!entry.ItemStates.Contains<BerryState>() && !entry.ItemStates.Contains<SeedState>() && !entry.ItemStates.Contains<WandState>())
+            if (!entry.ItemStates.Contains<BerryState>() && !entry.ItemStates.Contains<SeedState>() && !entry.ItemStates.Contains<WandState>()
+                && entry.SortCategory != 10)//manmade medicines NOTE: Specialized AI code!
                 return;
 
             Dir8 defaultDir = Dir8.None;
@@ -1439,66 +1440,12 @@ namespace PMDC.Dungeon
             }
         }
 
-        private T getConditionalEvent<T>(Character controlledChar, PassiveContext passiveContext, BattleEvent effect) where T : BattleEvent
-        {
-            if (effect is T)
-                return (T)effect;
-
-            //TODO: add other conditions
-            FamilyBattleEvent familyEffect = effect as FamilyBattleEvent;
-            if (familyEffect != null)
-            {
-                ItemData entry = (ItemData)passiveContext.Passive.GetData();
-                FamilyState family;
-                if (!entry.ItemStates.TryGet<FamilyState>(out family))
-                    return null;
-                if (family.Members.Contains(controlledChar.BaseForm.Species))
-                    return getConditionalEvent<T>(controlledChar, passiveContext, familyEffect.BaseEvent);
-            }
-            return null;
-        }
 
         private void modifyActionHitboxes(Character controlledChar, List<Character> seenChars, Dir8 dir, ref string skillIndex, ref SkillData entry, ref  int rangeMod, ref CombatAction hitboxAction, ref ExplosionData explosion)
         {
-            //check for passives that modify range; NOTE: specialized AI code!
-            foreach (PassiveContext passive in controlledChar.IteratePassives(GameEventPriority.USER_PORT_PRIORITY))
-            {
-                foreach (BattleEvent effect in passive.EventData.OnActions.EnumerateInOrder())
-                {
-                    AddRangeEvent addRangeEvent = getConditionalEvent<AddRangeEvent>(controlledChar, passive, effect);
-                    if (addRangeEvent != null)
-                    {
-                        rangeMod += addRangeEvent.Range;
-                        continue;
-                    }
+            //check for passives that modify range
+            DataManager.Instance.UniversalEvent.GetRange(controlledChar, ref entry);
 
-                    CategoryAddRangeEvent categoryRangeEvent = getConditionalEvent<CategoryAddRangeEvent>(controlledChar, passive, effect);
-                    if (categoryRangeEvent != null)
-                    {
-                        if (entry.Data.Category == categoryRangeEvent.Category)
-                            rangeMod += categoryRangeEvent.Range;
-                        continue;
-                    }
-
-                    WeatherAddRangeEvent weatherRangeEvent = getConditionalEvent<WeatherAddRangeEvent>(controlledChar, passive, effect);
-                    if (weatherRangeEvent != null)
-                    {
-                        if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(weatherRangeEvent.WeatherID))
-                            rangeMod += weatherRangeEvent.Range;
-                        continue;
-                    }
-                    
-                    ElementAddRangeEvent elementRangeEvent = getConditionalEvent<ElementAddRangeEvent>(controlledChar, passive, effect);
-                    if (elementRangeEvent != null)
-                    {
-                        if (elementRangeEvent.Elements.Contains(controlledChar.Element1) || elementRangeEvent.Elements.Contains(controlledChar.Element2))
-                        {
-                            rangeMod += elementRangeEvent.Range;
-                        }
-                        continue;
-                    }
-                }
-            }
             //check for moves that want to wait until within range
             if (skillIndex == "razor_wind")//wait until enemy is two+ tiles deep in the hitbox, to prevent immediate walk-away; NOTE: specialized AI code!
                 rangeMod--;
@@ -1867,6 +1814,8 @@ namespace PMDC.Dungeon
 
             if (data.Category == BattleData.SkillCategory.Status && maxValue > 0)
                 return new HitValue(totalValue / totalTargets, directHit);
+            else if (data.Category == BattleData.SkillCategory.None)
+                return new HitValue(totalValue, directHit);
             else
                 return new HitValue(maxValue, directHit);
         }
@@ -2527,6 +2476,7 @@ namespace PMDC.Dungeon
                     if (effect is StatusBattleEvent)
                     {
                         givesStatus = true;
+                        bool unknownStatus = false;
                         int addedWorth = 0;
                         StatusBattleEvent giveEffect = (StatusBattleEvent)effect;
                         StatusData statusData = DataManager.Instance.GetStatus(giveEffect.StatusID);
@@ -2597,19 +2547,20 @@ namespace PMDC.Dungeon
                                 if (statusTarget.StatusEffects.ContainsKey("last_used_move_slot"))
                                     addedWorth = 100;
                             }
-                            else if (giveEffect.StatusID == "decoy")//substitute; not necessarily a bad status, but treated like one
-                                addedWorth = -100;
                             else
                             {
-                                //for any other effect, assume it has a negative effect on foes, and positive effect on allies 
-                                if (DungeonScene.Instance.GetMatchup(controlledChar, target) != Alignment.Foe)
-                                    addedWorth = 100;
-                                else
-                                    addedWorth = -100;
+                                addedWorth = 100;
+                                unknownStatus = true;
                             }
                         }
 
+                        //determine if the status is bad or not
                         if (statusData.StatusStates.Contains<BadStatusState>())
+                            addedWorth *= -1;
+                        else if (giveEffect.StatusID == "decoy")//substitute; not necessarily a bad status, but treated like one
+                            addedWorth *= -1;
+                        //for any other unknown effect, assume it has a negative effect on foes, and positive effect on allies 
+                        else if (unknownStatus && DungeonScene.Instance.GetMatchup(controlledChar, target) == Alignment.Foe)
                             addedWorth *= -1;
 
                         statusWorth += addedWorth;
@@ -2810,7 +2761,7 @@ namespace PMDC.Dungeon
         protected List<Loc> GetAreaExits(Character controlledChar)
         {
             //get all tiles that are within the border of sight range, or within the border of the screen
-            Loc seen = new Loc(1, 1);
+            Loc seen = Character.GetSightDims();
 
             List<Loc> loc_list = new List<Loc>();
             //currently, CPU sight cheats by knowing tiles up to the bounds, instead of individual tiles at the border of FOV.

@@ -42,6 +42,7 @@ namespace PMDC.Dungeon
             else
             {
                 yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.SetDialogue(Text.FormatGrammar(new StringKey("DLG_CANT_RECALL_INTRINSIC").ToLocal(), target.GetDisplayName(true))));
+                context.CancelState.Cancel = true;
             }
         }
     }

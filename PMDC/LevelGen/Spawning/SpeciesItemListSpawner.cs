@@ -20,10 +20,12 @@ namespace PMDC.LevelGen
     {
         public SpeciesItemListSpawner()
         {
+            this.Species = new List<string>();
         }
 
         public SpeciesItemListSpawner(IntRange rarity, RandRange amount, params string[] species) : base(rarity, amount)
         {
+            this.Species = new List<string>();
             this.Species.AddRange(species);
         }
 

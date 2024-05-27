@@ -16,6 +16,7 @@ using RogueEssence;
 using RogueEssence.Dev;
 using PMDC.LevelGen;
 using System.Diagnostics;
+using PMDC.Dungeon;
 
 namespace PMDC.Dev
 {
@@ -25,32 +26,68 @@ namespace PMDC.Dev
 
         public delegate IEntryData GetNamedData(int ii);
 
-        public static void AddEvoFamily(Dictionary<string, HashSet<(string, ZoneLoc)>> found, string index, string tag, ZoneLoc encounter)
+        public static void AddWithEvos(Dictionary<MonsterID, HashSet<(string, ZoneLoc)>> found, MonsterID index, string tag, ZoneLoc encounter)
         {
             addMonster(found, index, tag, encounter);
             //also add all the evos
-            MonsterData data = DataManager.Instance.GetMonster(index);
-            findEvos(found, data);
+            foreach(MonsterID evo in findEvos(index, true))
+                addMonster(found, evo, "EVOLVE", ZoneLoc.Invalid);
         }
 
-        private static void addMonster(Dictionary<string, HashSet<(string, ZoneLoc)>> found, string index, string tag, ZoneLoc encounter)
+        private static void addMonster(Dictionary<MonsterID, HashSet<(string, ZoneLoc)>> found, MonsterID index, string tag, ZoneLoc encounter)
         {
             if (!found.ContainsKey(index))
                 found[index] = new HashSet<(string, ZoneLoc)>();
             found[index].Add((tag, encounter));
         }
 
-        private static void findEvos(Dictionary<string, HashSet<(string, ZoneLoc)>> found, MonsterData data)
+        public static IEnumerable<MonsterID> FindMonFamily(string firstStage)
         {
-            foreach (PromoteBranch evo in data.Promotions)
+            MonsterData data = DataManager.Instance.GetMonster(firstStage);
+            string prevo = data.PromoteFrom;
+            while (!String.IsNullOrEmpty(prevo))
             {
-                addMonster(found, evo.Result, "EVOLVE", ZoneLoc.Invalid);
-                MonsterData evoData = DataManager.Instance.GetMonster(evo.Result);
-                findEvos(found, evoData);
+                firstStage = prevo;
+                data = DataManager.Instance.GetMonster(firstStage);
+                prevo = data.PromoteFrom;
+            }
+            MonsterData preData = DataManager.Instance.GetMonster(firstStage);
+            for (int ii = 0; ii < preData.Forms.Count; ii++)
+            {
+                MonsterID preForm = new MonsterID(firstStage, ii, "", Gender.Unknown);
+                yield return preForm;
+                foreach (MonsterID evo in findEvos(preForm, false))
+                    yield return evo;
             }
         }
 
-        private static void extractMobSpawnFromObject(Dictionary<string, HashSet<(string, ZoneLoc)>> foundSpecies, object member, bool recruitableOnly, string tag, ZoneLoc encounter)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="encountersOnly">For use for encounter data only.</param>
+        /// <returns></returns>
+        private static IEnumerable<MonsterID> findEvos(MonsterID index, bool encountersOnly)
+        {
+            MonsterData data = DataManager.Instance.GetMonster(index.Species);
+            foreach (PromoteBranch promote in data.Promotions)
+            {
+                MonsterData evoData = DataManager.Instance.GetMonster(promote.Result);
+                for (int jj = 0; jj < evoData.Forms.Count; jj++)
+                {
+                    if ((!encountersOnly || evoData.Forms[jj].Released && !evoData.Forms[jj].Temporary) && evoData.Forms[jj].PromoteForm == index.Form)
+                    {
+                        MonsterID altForm = new MonsterID(promote.Result, jj, "", Gender.Unknown);
+                        yield return altForm;
+
+                        foreach (MonsterID evo in findEvos(altForm, encountersOnly))
+                            yield return evo;
+                    }
+                }
+            }
+        }
+
+        private static void extractMobSpawnFromObject(Dictionary<MonsterID, HashSet<(string, ZoneLoc)>> foundSpecies, object member, bool recruitableOnly, string tag, ZoneLoc encounter)
         {
             Type type = member.GetType();
 
@@ -74,7 +111,7 @@ namespace PMDC.Dev
                         }
                     }
                     if (!skip || !recruitableOnly)
-                        AddEvoFamily(foundSpecies, spawn.BaseForm.Species, tag, encounter);
+                        AddWithEvos(foundSpecies, new MonsterID(spawn.BaseForm.Species, spawn.BaseForm.Form, "", Gender.Unknown), tag, encounter);
                 }
                 else if (type.IsArray)
                 {
@@ -105,6 +142,15 @@ namespace PMDC.Dev
                         }
                     }
                 }
+                else if (type.GetInterfaces().Contains(typeof(IPriorityList)))
+                {
+                    IPriorityList enumerable = (IPriorityList)member;
+                    foreach (Priority pri in enumerable.GetPriorities())
+                    {
+                        foreach(object val in enumerable.GetItems(pri))
+                            extractMobSpawnFromObject(foundSpecies, val, recruitableOnly, tag, encounter);
+                    }
+                }
                 else if (type.GetInterfaces().Contains(typeof(IEnumerable)))
                 {
                     IEnumerable enumerable = (IEnumerable)member;
@@ -123,7 +169,7 @@ namespace PMDC.Dev
             }
         }
 
-        private static void extractMobSpawnsFromClass(Dictionary<string, HashSet<(string, ZoneLoc)>> foundSpecies, object obj, bool recruitableOnly, string tag, ZoneLoc encounter)
+        private static void extractMobSpawnsFromClass(Dictionary<MonsterID, HashSet<(string, ZoneLoc)>> foundSpecies, object obj, bool recruitableOnly, string tag, ZoneLoc encounter)
         {
             //go through all members and add for them
             //control starts off clean; this is the control that will have all member controls on it
@@ -152,11 +198,11 @@ namespace PMDC.Dev
             }
         }
 
-        public static Dictionary<string, HashSet<(string, ZoneLoc)>> GetAllAppearingMonsters(bool recruitableOnly)
+        public static Dictionary<MonsterID, HashSet<(string, ZoneLoc)>> GetAllAppearingMonsters(bool recruitableOnly)
         {
             //go through all dungeons
             //get all potential spawns in the dungeons (make it a table of bools mapping dex num to boolean)
-            Dictionary<string, HashSet<(string, ZoneLoc)>> foundSpecies = new Dictionary<string, HashSet<(string, ZoneLoc)>>();
+            Dictionary<MonsterID, HashSet<(string, ZoneLoc)>> foundSpecies = new Dictionary<MonsterID, HashSet<(string, ZoneLoc)>>();
             
             //check all structures
             foreach(string zz in DataManager.Instance.DataIndices[DataManager.DataType.Zone].GetOrderedKeys(true))
@@ -169,10 +215,10 @@ namespace PMDC.Dev
 
                 for (int ii = 0; ii < mainZone.Segments.Count; ii++)
                 {
-                    LayeredSegment structure = mainZone.Segments[ii] as LayeredSegment;
                     //check the postprocs for spawn-related classes
-                    if (structure != null)
+                    if (mainZone.Segments[ii] is LayeredSegment)
                     {
+                        LayeredSegment structure = (LayeredSegment)mainZone.Segments[ii];
                         extractMobSpawnFromObject(foundSpecies, structure.ZoneSteps, recruitableOnly, "", new ZoneLoc(zz, new SegLoc(ii, -1)));
                         for (int jj = 0; jj < structure.Floors.Count; jj++)
                             extractMobSpawnFromObject(foundSpecies, structure.Floors[jj], recruitableOnly, "", new ZoneLoc(zz, new SegLoc(ii, jj)));
