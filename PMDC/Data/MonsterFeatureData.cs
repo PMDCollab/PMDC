@@ -54,8 +54,7 @@ namespace PMDC.Data
         public override void ContentChanged(string idx)
         {
             string dataPath = DataManager.DATA_PATH + DataManager.DataType.Monster.ToString() + "/";
-            string dir = PathMod.ModPath(dataPath + idx + DataManager.DATA_EXT);
-            MonsterData data = DataManager.LoadData<MonsterData>(dir);
+            MonsterData data = DataManager.LoadEntryData<MonsterData>(dataPath, idx, DataManager.DATA_EXT);
             Dictionary<int, FormFeatureSummary> formSummaries = computeSummary(dataPath, idx, data);
             FeatureData[idx] = formSummaries;
         }
@@ -68,7 +67,7 @@ namespace PMDC.Data
             foreach (string dir in PathMod.GetModFiles(dataPath, "*" + DataManager.DATA_EXT))
             {
                 string file = Path.GetFileNameWithoutExtension(dir);
-                MonsterData data = DataManager.LoadData<MonsterData>(dir);
+                MonsterData data = DataManager.LoadObject<MonsterData>(dir);
                 Dictionary<int, FormFeatureSummary> formSummaries = computeSummary(dataPath, file, data);
                 FeatureData[file] = formSummaries;
             }
@@ -82,8 +81,7 @@ namespace PMDC.Data
             while (!String.IsNullOrEmpty(preEvo.PromoteFrom))
             {
                 family = preEvo.PromoteFrom.ToString();
-                string preDir = PathMod.ModPath(dataPath + family + DataManager.DATA_EXT);
-                preEvo = DataManager.LoadData<MonsterData>(preDir);
+                preEvo = DataManager.LoadData<MonsterData>(dataPath, family, DataManager.DATA_EXT);
             }
             EvoFlag stage = EvoFlag.NoEvo;
             bool evolvedFrom = !String.IsNullOrEmpty(data.PromoteFrom);

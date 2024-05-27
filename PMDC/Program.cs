@@ -410,11 +410,7 @@ namespace PMDC
                     DataManager.InitInstance();
                     DataManager.Instance.LoadConversions();
 
-                    //TODO: Created v0.5.20, delete on v1.1
-                    if (File.Exists(PathMod.HardMod(DataManager.MISC_PATH + "Index.bin")))
-                        DataManager.Instance.UniversalData = DataManager.LoadData<TypeDict<BaseData>>(PathMod.ModPath(DataManager.MISC_PATH + "Index.bin"));
-                    else
-                        DataManager.Instance.UniversalData = DataManager.LoadData<TypeDict<BaseData>>(PathMod.ModPath(DataManager.MISC_PATH + "Index" + DataManager.DATA_EXT));
+                    DataManager.Instance.UniversalData = DataManager.LoadData<TypeDict<BaseData>>(DataManager.MISC_PATH, "Index", DataManager.DATA_EXT);
                     RogueEssence.Dev.DevHelper.RunExtraIndexing(reserializeIndices);
                     return;
                 }
@@ -430,7 +426,7 @@ namespace PMDC
                     DataManager.InitDataDirs(PathMod.ModPath(""));
                     RogueEssence.Dev.DevHelper.RunIndexing(convertIndices);
 
-                    DataManager.Instance.UniversalData = DataManager.LoadData<TypeDict<BaseData>>(PathMod.ModPath(DataManager.MISC_PATH + "Index" + DataManager.DATA_EXT));
+                    DataManager.Instance.UniversalData = DataManager.LoadData<TypeDict<BaseData>>(DataManager.MISC_PATH, "Index", DataManager.DATA_EXT);
                     RogueEssence.Dev.DevHelper.RunExtraIndexing(convertIndices);
                     return;
                 }

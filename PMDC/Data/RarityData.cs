@@ -40,11 +40,10 @@ namespace PMDC.Data
 
             //Add it to its new locations
             string dataPath = DataManager.DATA_PATH + DataManager.DataType.Item.ToString() + "/";
-            string dir = PathMod.ModPath(dataPath + idx + DataManager.DATA_EXT);
             //check against deletion
-            if (File.Exists(dir))
+            ItemData data = DataManager.LoadData<ItemData>(dataPath, idx, DataManager.DATA_EXT);
+            if (data != null)
             {
-                ItemData data = DataManager.LoadData<ItemData>(dir);
                 computeSummary(idx, data);
             }
         }
@@ -57,7 +56,7 @@ namespace PMDC.Data
             foreach (string dir in PathMod.GetModFiles(dataPath, "*" + DataManager.DATA_EXT))
             {
                 string file = Path.GetFileNameWithoutExtension(dir);
-                ItemData data = DataManager.LoadData<ItemData>(dir);
+                ItemData data = DataManager.LoadObject<ItemData>(dir);
                 if (data.Released)
                     computeSummary(file, data);
             }
