@@ -67,7 +67,7 @@ namespace PMDC.Data
             foreach (string dir in PathMod.GetModFiles(dataPath, "*" + DataManager.DATA_EXT))
             {
                 string file = Path.GetFileNameWithoutExtension(dir);
-                MonsterData data = DataManager.LoadObject<MonsterData>(dir);
+                MonsterData data = DataManager.LoadData<MonsterData>(dataPath, file, DataManager.DATA_EXT);
                 Dictionary<int, FormFeatureSummary> formSummaries = computeSummary(dataPath, file, data);
                 FeatureData[file] = formSummaries;
             }

@@ -56,7 +56,7 @@ namespace PMDC.Data
             foreach (string dir in PathMod.GetModFiles(dataPath, "*" + DataManager.DATA_EXT))
             {
                 string file = Path.GetFileNameWithoutExtension(dir);
-                ItemData data = DataManager.LoadObject<ItemData>(dir);
+                ItemData data = DataManager.LoadData<ItemData>(dataPath, file, DataManager.DATA_EXT);
                 if (data.Released)
                     computeSummary(file, data);
             }
