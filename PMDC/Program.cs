@@ -391,7 +391,7 @@ namespace PMDC
                     DataManager.Instance.LoadConversions();
 
                     DataManager.InitDataDirs(PathMod.ModPath(""));
-                    RogueEssence.Dev.DevHelper.ConvertAssetNames();
+                    //RogueEssence.Dev.DevHelper.ConvertAssetNames();
 
                     //load conversions a second time because it mightve changed
                     DataManager.Instance.LoadConversions();
