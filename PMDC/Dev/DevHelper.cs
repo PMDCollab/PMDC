@@ -463,7 +463,6 @@ namespace PMDC.Dev
             //check against v0.8.1 or lower
             string modulePath = Path.Join(PathMod.HardMod(PathMod.Quest.Path, LuaEngine.SCRIPT_PATH), PathMod.Quest.Namespace);
             if (!Directory.Exists(modulePath))
-            //if (true)
             {
                 //★ Lua scripts are moved to a subfolder based on the mod's namespace.
                 Directory.Move(PathMod.HardMod(PathMod.Quest.Path, LuaEngine.SCRIPT_PATH), Path.Join(PathMod.HardMod(PathMod.Quest.Path, DataManager.DATA_PATH), "tmp"));
