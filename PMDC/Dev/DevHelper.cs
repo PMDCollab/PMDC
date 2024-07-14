@@ -17,6 +17,9 @@ using RogueEssence.Dev;
 using PMDC.LevelGen;
 using System.Diagnostics;
 using PMDC.Dungeon;
+using RogueEssence.Script;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace PMDC.Dev
 {
@@ -434,6 +437,147 @@ namespace PMDC.Dev
             //    Debug.WriteLine("The file could not be read:");
             //    Debug.WriteLine(e.Message);
             //}
+        }
+
+
+        private static void FindReplaceFiles(string path, bool recursive, string regexFrom, string replace)
+        {
+            foreach (string file in Directory.GetFiles(path, "*.lua"))
+            {
+                string inText = File.ReadAllText(file);
+                string outText = Regex.Replace(inText, regexFrom, replace);
+                File.WriteAllText(file, outText);
+            }
+
+            if (recursive)
+            {
+                foreach (string dir in Directory.GetDirectories(path))
+                {
+                    FindReplaceFiles(dir, recursive, regexFrom, replace);
+                }
+            }
+        }
+
+        public static void ConvertLua()
+        {
+            //check against v0.8.1 or lower
+            string modulePath = Path.Join(PathMod.HardMod(PathMod.Quest.Path, LuaEngine.SCRIPT_PATH), PathMod.Quest.Namespace);
+            if (!Directory.Exists(modulePath))
+            //if (true)
+            {
+                //★ Lua scripts are moved to a subfolder based on the mod's namespace.
+                Directory.Move(PathMod.HardMod(PathMod.Quest.Path, LuaEngine.SCRIPT_PATH), Path.Join(PathMod.HardMod(PathMod.Quest.Path, DataManager.DATA_PATH), "tmp"));
+                Directory.CreateDirectory(PathMod.HardMod(PathMod.Quest.Path, LuaEngine.SCRIPT_PATH));
+                Directory.Move(Path.Join(PathMod.HardMod(PathMod.Quest.Path, DataManager.DATA_PATH), "tmp"), modulePath);
+
+                //delete unnecessary files
+                if (Directory.Exists(Path.Join(modulePath, "bin")))
+                    Directory.Delete(Path.Join(modulePath, "bin"), true);
+                if (Directory.Exists(Path.Join(modulePath, "lib")))
+                    Directory.Delete(Path.Join(modulePath, "lib"), true);
+                if (File.Exists(Path.Join(modulePath, "debugger.lua")))
+                    File.Delete(Path.Join(modulePath, "debugger.lua"));
+                if (File.Exists(Path.Join(modulePath, "services", "baseservice.lua")))
+                    File.Delete(Path.Join(modulePath, "services", "baseservice.lua"));
+
+                //delete requires to lib
+                FindReplaceFiles(modulePath, false, @".*require\s+'lib\.\w+'", "");
+
+                //★ References to your own scripts require "yourscript" changed to include your namespace require "yournamespace.yourscript"
+
+                //go through all base game script modules and create a list (manually.  this will be specified in hardcode)
+                List<string> luaModules = new List<string>() { "common", "common_gen", "common_shop", "common_talk", "common_tutor", "common_vars",
+                    "event", "event_battle", "event_mapgen", "event_misc", "event_single", "recruit_list", "queue", "services/baseservice",
+                    "ai/base_state", "ai/ground_baseai", "ai/ground_default", "ai/ground_partner",
+                    "menu/DescriptionSummary", "menu/InventorySelectMenu", "menu/juice/JuiceShopMenu", "menu/juice/SpecialtiesMenu",
+                    "menu/skill/SkillSelectMenu", "menu/skill/SkillTutorMenu", "menu/team/AssemblySelectMenu", "menu/team/TeamSelectMenu"
+                    };
+
+                //remove the ones that are included in the mod to create a secondary list
+                for (int ii = luaModules.Count - 1; ii >= 0; ii--)
+                {
+                    string existingModLua = LuaEngine.GetModulePath(modulePath, luaModules[ii]);
+                    if (existingModLua != null)
+                        luaModules.RemoveAt(ii);
+                }
+
+                //do a mass find/replace.  for each file...
+                //change require "yourscript" to require "yournamespace.yourscript"
+                FindReplaceFiles(modulePath, true, "require\\s+(['\"])", String.Format("require $1{0}.", PathMod.Quest.Namespace));
+                //do it for AI too: AI:SetCharacterAI(partner, "origin.ai.ground_partner"
+                FindReplaceFiles(modulePath, true, "AI:SetCharacterAI\\((.+?),\\s+(['\"])", String.Format("AI:SetCharacterAI($1, $2{0}.", PathMod.Quest.Namespace));
+
+                //change require "yournamespace.yourscript" to "origin.yourscript" SPECIFICALLY for the scripts in the secondary list
+                foreach (string luaPath in luaModules)
+                {
+                    string luaModulePath = luaPath.Replace("/", ".");
+                    FindReplaceFiles(modulePath, true, String.Format("require\\s+(['\"]){0}\\.{1}(['\"])", PathMod.Quest.Namespace, luaPath), String.Format("require $1{0}.{1}$2", PathMod.BaseNamespace, luaModulePath));
+                    FindReplaceFiles(modulePath, true, String.Format("AI:SetCharacterAI\\((.+?),\\s+(['\"]){0}\\.{1}(['\"])", PathMod.Quest.Namespace, luaPath), String.Format("AI:SetCharacterAI($1, $2{0}.{1}$3", PathMod.BaseNamespace, luaModulePath));
+                    FindReplaceFiles(modulePath, true, String.Format("require\\s+(['\"]){0}\\.{1}(['\"])", PathMod.Quest.Namespace, luaModulePath), String.Format("require $1{0}.{1}$2", PathMod.BaseNamespace, luaModulePath));
+                    FindReplaceFiles(modulePath, true, String.Format("AI:SetCharacterAI\\((.+?),\\s+(['\"]){0}\\.{1}(['\"])", PathMod.Quest.Namespace, luaModulePath), String.Format("AI:SetCharacterAI($1, $2{0}.{1}$3", PathMod.BaseNamespace, luaModulePath));
+                }
+
+
+                //★ References to require "basegamescript" become require "origin.basegamescript"
+                //★ common and event scripts need their empty table declarations removed.
+                FindReplaceFiles(modulePath, false, @"COMMON\s*=\s*{\s*}", "");
+                FindReplaceFiles(modulePath, false, @"SINGLE_CHAR_SCRIPT\s*=\s*{\s*}", "");
+                FindReplaceFiles(modulePath, false, @"BATTLE_SCRIPT\s*=\s*{\s*}", "");
+                FindReplaceFiles(modulePath, false, @"STATUS_SCRIPT\s*=\s*{\s*}", "");
+                FindReplaceFiles(modulePath, false, @"MAP_STATUS_SCRIPT\s*=\s*{\s*}", "");
+                FindReplaceFiles(modulePath, false, @"ITEM_SCRIPT\s*=\s*{\s*}", "");
+                FindReplaceFiles(modulePath, false, @"REFRESH_SCRIPT\s*=\s*{\s*}", "");
+                FindReplaceFiles(modulePath, false, @"SKILL_CHANGE_SCRIPT\s*=\s*{\s*}", "");
+                FindReplaceFiles(modulePath, false, @"GROUND_ITEM_EVENT_SCRIPT\s*=\s*{\s*}", "");
+                FindReplaceFiles(modulePath, false, @"ZONE_GEN_SCRIPT\s*=\s*{\s*}", "");
+                FindReplaceFiles(modulePath, false, @"FLOOR_GEN_SCRIPT\s*=\s*{\s*}", "");
+
+
+                //★ Scripts modded from children of common.lua or event.lua must have a modded version of their parent with an include to the child.
+                Dictionary<string, string> script_req = new Dictionary<string, string>();
+                script_req["common_talk"] = "common";
+                script_req["common_shop"] = "common";
+                script_req["common_vars"] = "common";
+                script_req["common_tutor"] = "common";
+                script_req["event_single"] = "event";
+                script_req["event_battle"] = "event";
+                script_req["event_misc"] = "event";
+                script_req["event_mapgen"] = "event";
+
+                Dictionary<string, List<string>> create_files = new Dictionary<string, List<string>>();
+                foreach (string key in script_req.Keys)
+                {
+                    string existingModLua = LuaEngine.GetModulePath(modulePath, key);
+                    if (existingModLua != null)
+                    {
+                        if (!create_files.ContainsKey(script_req[key]))
+                            create_files.Add(script_req[key], new List<string>());
+                        create_files[script_req[key]].Add(key);
+                    }
+                }
+
+                foreach (string create_file in create_files.Keys)
+                {
+                    string existingModLua = LuaEngine.GetModulePath(modulePath, create_file);
+                    if (existingModLua == null)
+                    {
+                        StringBuilder requires = new StringBuilder();
+                        foreach (string required_file in create_files[create_file])
+                        {
+                            requires.AppendLine(String.Format("require '{0}.{1}'", PathMod.Quest.Namespace, required_file));
+                        }
+                        File.WriteAllText(Path.Join(modulePath, create_file + ".lua"), requires.ToString());
+                    }
+                }
+
+                //update MapStrings using find/replace
+                //Remove variable declaration and initialization statements.
+                FindReplaceFiles(Path.Join(modulePath, "ground"), true, @"local\s*MapStrings\s*=\s*{\s*}", "");
+                FindReplaceFiles(Path.Join(modulePath, "ground"), true, @"\w+\s*=\s*COMMON\.AutoLoadLocalizedStrings\(\)", "");
+                //Instead of MapStrings, use STRINGS.MapStrings
+                FindReplaceFiles(Path.Join(modulePath, "ground"), true, @"MapStrings\[", "STRINGS.MapStrings[");
+
+            }
         }
 
     }

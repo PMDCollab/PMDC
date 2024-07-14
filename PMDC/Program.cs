@@ -392,6 +392,7 @@ namespace PMDC
 
                     DataManager.InitDataDirs(PathMod.ModPath(""));
                     //RogueEssence.Dev.DevHelper.ConvertAssetNames();
+                    PMDC.Dev.DevHelper.ConvertLua();
 
                     //load conversions a second time because it mightve changed
                     DataManager.Instance.LoadConversions();
