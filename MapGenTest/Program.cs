@@ -22,7 +22,7 @@ namespace MapGenTest
                 enlargeConsole();
 
             string[] args = Environment.GetCommandLineArgs();
-            PathMod.InitPathMod(args[0], "origin");
+            PathMod.InitPathMod(args[0]);
             DiagManager.InitInstance();
             Serializer.InitSettings(new SerializerContractResolver(), new UpgradeBinder());
             //DiagManager.Instance.DevMode = true;
@@ -51,6 +51,7 @@ namespace MapGenTest
                 }
             }
 
+            PathMod.InitNamespaces();
             GraphicsManager.InitParams();
             Text.Init();
             Text.SetCultureCode("en");
