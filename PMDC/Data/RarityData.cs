@@ -38,10 +38,8 @@ namespace PMDC.Data
                 }
             }
 
-            //Add it to its new locations
-            string dataPath = DataManager.DATA_PATH + DataManager.DataType.Item.ToString() + "/";
             //check against deletion
-            ItemData data = DataManager.LoadData<ItemData>(dataPath, idx, DataManager.DATA_EXT);
+            ItemData data = DataManager.LoadEntryData<ItemData>(idx, DataManager.DataType.Item.ToString());
             if (data != null)
             {
                 computeSummary(idx, data);
@@ -56,7 +54,7 @@ namespace PMDC.Data
             foreach (string dir in PathMod.GetModFiles(dataPath, "*" + DataManager.DATA_EXT))
             {
                 string file = Path.GetFileNameWithoutExtension(dir);
-                ItemData data = DataManager.LoadData<ItemData>(dataPath, file, DataManager.DATA_EXT);
+                ItemData data = DataManager.LoadEntryData<ItemData>(file, DataManager.DataType.Item.ToString());
                 if (data.Released)
                     computeSummary(file, data);
             }

@@ -53,9 +53,8 @@ namespace PMDC.Data
 
         public override void ContentChanged(string idx)
         {
-            string dataPath = DataManager.DATA_PATH + DataManager.DataType.Monster.ToString() + "/";
-            MonsterData data = DataManager.LoadEntryData<MonsterData>(dataPath, idx, DataManager.DATA_EXT);
-            Dictionary<int, FormFeatureSummary> formSummaries = computeSummary(dataPath, idx, data);
+            MonsterData data = DataManager.LoadEntryData<MonsterData>(idx, DataManager.DataType.Monster.ToString());
+            Dictionary<int, FormFeatureSummary> formSummaries = computeSummary(idx, data);
             FeatureData[idx] = formSummaries;
         }
 
@@ -67,13 +66,13 @@ namespace PMDC.Data
             foreach (string dir in PathMod.GetModFiles(dataPath, "*" + DataManager.DATA_EXT))
             {
                 string file = Path.GetFileNameWithoutExtension(dir);
-                MonsterData data = DataManager.LoadData<MonsterData>(dataPath, file, DataManager.DATA_EXT);
-                Dictionary<int, FormFeatureSummary> formSummaries = computeSummary(dataPath, file, data);
+                MonsterData data = DataManager.LoadEntryData<MonsterData>(file, DataManager.DataType.Monster.ToString());
+                Dictionary<int, FormFeatureSummary> formSummaries = computeSummary(file, data);
                 FeatureData[file] = formSummaries;
             }
         }
 
-        private Dictionary<int, FormFeatureSummary> computeSummary(string dataPath, string num, MonsterData data)
+        private Dictionary<int, FormFeatureSummary> computeSummary(string num, MonsterData data)
         {
             Dictionary<int, FormFeatureSummary> formFeatureData = new Dictionary<int, FormFeatureSummary>();
             string family = num;
@@ -81,7 +80,7 @@ namespace PMDC.Data
             while (!String.IsNullOrEmpty(preEvo.PromoteFrom))
             {
                 family = preEvo.PromoteFrom.ToString();
-                preEvo = DataManager.LoadData<MonsterData>(dataPath, family, DataManager.DATA_EXT);
+                preEvo = DataManager.LoadEntryData<MonsterData>(family, DataManager.DataType.Monster.ToString());
             }
             EvoFlag stage = EvoFlag.NoEvo;
             bool evolvedFrom = !String.IsNullOrEmpty(data.PromoteFrom);
