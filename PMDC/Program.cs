@@ -64,6 +64,8 @@ namespace PMDC
                 GraphicsManager.AssetType convertAssets = GraphicsManager.AssetType.None;
                 DataManager.DataType convertIndices = DataManager.DataType.None;
                 DataManager.DataType reserializeIndices = DataManager.DataType.None;
+                bool resaveDiff = false;
+                DataManager.DataType resaveIndices = DataManager.DataType.None;
                 string langArgs = "";
                 bool dev = false;
                 bool devLua = false;
@@ -98,6 +100,8 @@ namespace PMDC
                         Console.WriteLine("-mod [mod] [...]: Specify the list of folders in MODS/ to load as additional mods.");
                         Console.WriteLine("-index [monster/skill/item/intrinsic/status/mapstatus/terrain/tile/zone/emote/autotile/element/growthgroup/skillgroup/ai/rank/skin/all]: Reindexes the selected list of data assets.");
                         Console.WriteLine("-reserialize [monster/skill/item/intrinsic/status/mapstatus/terrain/tile/zone/emote/autotile/element/growthgroup/skillgroup/ai/rank/skin/all]: Reserializes the selected list of data assets.");
+                        Console.WriteLine("-modfile [monster/skill/item/intrinsic/status/mapstatus/terrain/tile/zone/emote/autotile/element/growthgroup/skillgroup/ai/rank/skin/all]: Resaves the selected list of data assets as files. Must specify quest.");
+                        Console.WriteLine("-modpatch [monster/skill/item/intrinsic/status/mapstatus/terrain/tile/zone/emote/autotile/element/growthgroup/skillgroup/ai/rank/skin/all]: Resaves the selected list of data assets as patch files. Must specify quest.");
                         Console.WriteLine("-convert [font/chara/portrait/tile/item/particle/beam/icon/object/bg/autotile/all]: Converts graphics from the raw asset folder and saves it to the asset folder.");
                         return;
                     }
@@ -174,6 +178,51 @@ namespace PMDC
                             jj++;
                         }
                         loadModXml = false;
+                        ii += jj - 1;
+                    }
+                    else if (args[ii] == "-modfile")
+                    {
+                        int jj = 1;
+                        while (args.Length > ii + jj)
+                        {
+                            DataManager.DataType conv = DataManager.DataType.None;
+                            foreach (DataManager.DataType type in Enum.GetValues(typeof(DataManager.DataType)))
+                            {
+                                if (args[ii + jj].ToLower() == type.ToString().ToLower())
+                                {
+                                    conv = type;
+                                    break;
+                                }
+                            }
+                            if (conv != DataManager.DataType.None)
+                                resaveIndices |= conv;
+                            else
+                                break;
+                            jj++;
+                        }
+                        ii += jj - 1;
+                    }
+                    else if (args[ii] == "-modpatch")
+                    {
+                        resaveDiff = true;
+                        int jj = 1;
+                        while (args.Length > ii + jj)
+                        {
+                            DataManager.DataType conv = DataManager.DataType.None;
+                            foreach (DataManager.DataType type in Enum.GetValues(typeof(DataManager.DataType)))
+                            {
+                                if (args[ii + jj].ToLower() == type.ToString().ToLower())
+                                {
+                                    conv = type;
+                                    break;
+                                }
+                            }
+                            if (conv != DataManager.DataType.None)
+                                resaveIndices |= conv;
+                            else
+                                break;
+                            jj++;
+                        }
                         ii += jj - 1;
                     }
                     else if (args[ii].ToLower() == "-index")
@@ -371,6 +420,39 @@ namespace PMDC
                     DataManager.InitInstance();
                     DataManager.Instance.LoadConversions();
                     RogueEssence.Dev.DevHelper.PrepareAssetConversion();
+                    return;
+                }
+
+                if (resaveIndices != DataManager.DataType.None)
+                {
+                    if (!PathMod.Quest.IsValid())
+                    {
+                        DiagManager.Instance.LogInfo("No quest specified to resave.");
+                        return;
+                    }
+
+                    if (resaveDiff)
+                        DiagManager.Instance.LogInfo("Re-saving modded files as jsonpatch");
+                    else
+                        DiagManager.Instance.LogInfo("Re-saving modded files as json");
+
+                    //we need the datamanager for this, but only while data is hardcoded
+                    //TODO: remove when data is no longer hardcoded
+                    LuaEngine.InitInstance();
+                    LuaEngine.Instance.LoadScripts();
+                    DataManager.InitInstance();
+                    DiagManager.Instance.LogInfo("Resaving files");
+                    DataManager.InitDataDirs(PathMod.ModPath(""));
+                    if (resaveIndices == DataManager.DataType.All)
+                        RogueEssence.Dev.DevHelper.ResaveBase(resaveDiff);
+                    RogueEssence.Dev.DevHelper.Resave(resaveIndices, resaveDiff);
+
+                    //reindex must follow
+
+                    RogueEssence.Dev.DevHelper.RunIndexing(resaveIndices);
+
+                    DataManager.Instance.UniversalData = DataManager.LoadData<TypeDict<BaseData>>(DataManager.MISC_PATH, "Index", DataManager.DATA_EXT);
+                    RogueEssence.Dev.DevHelper.RunExtraIndexing(resaveIndices);
                     return;
                 }
 
