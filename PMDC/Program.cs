@@ -200,6 +200,7 @@ namespace PMDC
                                 break;
                             jj++;
                         }
+                        loadModXml = false;
                         ii += jj - 1;
                     }
                     else if (args[ii] == "-modpatch")
@@ -223,6 +224,7 @@ namespace PMDC
                                 break;
                             jj++;
                         }
+                        loadModXml = false;
                         ii += jj - 1;
                     }
                     else if (args[ii].ToLower() == "-index")
@@ -391,6 +393,13 @@ namespace PMDC
                         DiagManager.Instance.LogInfo("No quest specified to build.");
                         return;
                     }
+
+                    //we need the datamanager for this, but only while data is hardcoded
+                    //TODO: remove when data is no longer hardcoded
+                    LuaEngine.InitInstance();
+                    LuaEngine.Instance.LoadScripts();
+                    DataManager.InitInstance();
+
                     RogueEssence.Dev.DevHelper.MergeQuest(quest);
 
                     return;
