@@ -1441,10 +1441,10 @@ namespace PMDC.Dungeon
         }
 
 
-        private void modifyActionHitboxes(Character controlledChar, List<Character> seenChars, Dir8 dir, ref string skillIndex, ref SkillData entry, ref  int rangeMod, ref CombatAction hitboxAction, ref ExplosionData explosion)
+        private void modifyActionHitboxes(Character controlledChar, List<Character> seenChars, Dir8 dir, ref string skillIndex, ref SkillData entry, ref int rangeMod, ref CombatAction hitboxAction, ref ExplosionData explosion)
         {
             //check for passives that modify range
-            DataManager.Instance.UniversalEvent.GetRange(controlledChar, ref entry);
+            rangeMod = DataManager.Instance.UniversalEvent.GetRange(controlledChar, ref entry);
 
             //check for moves that want to wait until within range
             if (skillIndex == "razor_wind")//wait until enemy is two+ tiles deep in the hitbox, to prevent immediate walk-away; NOTE: specialized AI code!
