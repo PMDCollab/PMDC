@@ -7269,5 +7269,4 @@ namespace PMDC.Dungeon
 
         protected override PriorityList<SingleCharEvent> GetEvents(ItemData entry) => entry.OnWalks;
     }
-
 }
