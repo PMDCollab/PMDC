@@ -1821,16 +1821,19 @@ namespace PMDC.Dungeon
         /// </summary>
         public bool DefaultYes;
 
+        public int HPFraction;
+
 
         [JsonConverter(typeof(ItemConverter))]
         [DataType(0, DataManager.DataType.Item, false)]
         public string ChangeTo;
 
         public AutoReviveEvent() { ChangeTo = ""; }
-        public AutoReviveEvent(bool askToUse, string changeTo)
+        public AutoReviveEvent(bool askToUse, string changeTo, int hpFraction)
         {
             AskToUse = askToUse;
             ChangeTo = changeTo;
+            HPFraction = hpFraction;
         }
         protected AutoReviveEvent(AutoReviveEvent other)
         {
@@ -1972,7 +1975,7 @@ namespace PMDC.Dungeon
             if (!String.IsNullOrEmpty(useIndex))
             {
                 context.User.OnRemove();
-                context.User.HP = context.User.MaxHP;
+                context.User.HP = Math.Max(1, context.User.MaxHP / HPFraction);
                 context.User.Dead = false;
                 context.User.DefeatAt = "";
 
