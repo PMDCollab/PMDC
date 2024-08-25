@@ -89,6 +89,10 @@ namespace PMDC.Dungeon
             {
                 SelfStatusRange = 4;
             }
+            if (Serializer.OldVersion < new Version(0, 8, 4))
+            {
+                AbandonRangeOnHit = true;
+            }
         }
 
         public enum AttackChoice
@@ -238,12 +242,10 @@ namespace PMDC.Dungeon
                 else if (seenChar.Tactic.ID == "wait_attack")//wait attack; NOTE: specialized AI code!
                     return false;
             }
-            
-            if (seenChar.GetStatusEffect("was_hurt_last_turn") == null)
-            {
-                if (seenChar.Tactic.ID == "tit_for_tat")//tit for tat; NOTE: specialized AI code!
-                    return false;
-            }
+
+            if (seenChar.Tactic.ID == "tit_for_tat")//tit for tat; NOTE: specialized AI code!
+                return false;
+
             return true;
         }
 
@@ -1896,9 +1898,9 @@ namespace PMDC.Dungeon
                             return 0;
                         else if (target.Tactic.ID == "wait_attack")//wait attack; NOTE: specialized AI code!
                             return 0;
-                        else if (target.Tactic.ID == "tit_for_tat")//tit for tat; NOTE: specialized AI code!
-                            return 0;
                     }
+                    if (target.Tactic.ID == "tit_for_tat")//tit for tat; NOTE: specialized AI code!
+                        return 0;
                 }
                 else
                 {

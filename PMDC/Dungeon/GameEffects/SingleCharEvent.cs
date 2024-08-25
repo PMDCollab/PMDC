@@ -2028,6 +2028,16 @@ namespace PMDC.Dungeon
 
             }
         }
+
+
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            if (Serializer.OldVersion < new Version(0, 8, 4))
+            {
+                HPFraction = 1;
+            }
+        }
     }
 
 
