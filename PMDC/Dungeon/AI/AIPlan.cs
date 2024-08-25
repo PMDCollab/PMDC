@@ -79,6 +79,7 @@ namespace PMDC.Dungeon
         public int AttackRange;
         public int StatusRange;
         public int SelfStatusRange;
+        public bool AbandonRangeOnHit;
 
 
         [OnDeserialized]
@@ -148,6 +149,7 @@ namespace PMDC.Dungeon
             this.AttackRange = attackRange;
             this.StatusRange = statusRange;
             this.SelfStatusRange = selfStatusRange;
+            this.AbandonRangeOnHit = true;
         }
 
         protected AIPlan(AIPlan other)
@@ -158,6 +160,7 @@ namespace PMDC.Dungeon
             SelfStatusRange = other.SelfStatusRange;
             StatusRange = other.StatusRange;
             AttackRange = other.AttackRange;
+            AbandonRangeOnHit = other.AbandonRangeOnHit;
         }
 
         /// <summary>
@@ -2099,9 +2102,13 @@ namespace PMDC.Dungeon
         {
             int delta = GetTargetBattleDataEffect(controlledChar, data, seenChars, target, 0, 1, defaultVal);
 
-            //special case for self-buffing
-            if (controlledChar.GetStatusEffect("last_targeted_by") == null)
+            if (AbandonRangeOnHit && controlledChar.GetStatusEffect("last_targeted_by") != null)
             {
+                //we no longer abide by range limitation when hit
+            }
+            else
+            {
+                //abide by range limitation, otherwise
                 Alignment targetAlignment = DungeonScene.Instance.GetMatchup(controlledChar, target);
                 if (data.Category == BattleData.SkillCategory.Status || data.Category == BattleData.SkillCategory.None)
                 {
