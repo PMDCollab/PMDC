@@ -2556,6 +2556,14 @@ namespace PMDC.Dungeon
                                 if (statusTarget.StatusEffects.ContainsKey("last_used_move_slot"))
                                     addedWorth = 100;
                             }
+                            else if (giveEffect.StatusID == "area_counter")//disable NOTE: specialized code!
+                            {
+                                addedWorth = 100;
+                            }
+                            else if (giveEffect.StatusID == "weakness_drain")//disable NOTE: specialized code!
+                            {
+                                addedWorth = 100;
+                            }
                             else
                             {
                                 addedWorth = 100;
