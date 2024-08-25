@@ -327,11 +327,11 @@ namespace PMDC.Dev
                 for (int jj = 0; jj < summary.Forms.Count; jj++)
                 {
                     MonsterFormData formData = (MonsterFormData)data.Forms[jj];
+                    if (formData.Temporary)
+                        continue;
+
                     if (summary.Released && formData.Released)
                     {
-                        if (formData.Temporary)
-                            continue;
-
                         string encounterStr = "UNKNOWN";
                         MonsterID monId = new MonsterID(key, jj, "", Gender.Unknown);
                         if (foundSpecies.ContainsKey(monId))
