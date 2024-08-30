@@ -796,6 +796,63 @@ namespace PMDC.Dungeon
     }
 
     /// <summary>
+    /// Event that applies a VFX on the owner character only
+    /// </summary>
+    [Serializable]
+    public class OwnerBattleAnimEvent : BattleEvent
+    {
+        /// <summary>
+        /// The particle VFX 
+        /// </summary>
+        public FiniteEmitter Emitter;
+
+        //TODO: make this into BattleFX?
+        /// <summary>
+        /// The sound effect of the VFX
+        /// </summary>
+        [Sound(0)]
+        public string Sound;
+
+        /// <summary>
+        /// The delay after the VFX
+        /// </summary>
+        public int Delay;
+
+        public OwnerBattleAnimEvent()
+        {
+            Emitter = new EmptyFiniteEmitter();
+        }
+        public OwnerBattleAnimEvent(FiniteEmitter emitter, string sound) : this(emitter, sound, 0) { }
+        public OwnerBattleAnimEvent(FiniteEmitter emitter, string sound, int delay)
+        {
+            Emitter = emitter;
+            Sound = sound;
+            Delay = delay;
+        }
+        protected OwnerBattleAnimEvent(OwnerBattleAnimEvent other)
+        {
+            Emitter = (FiniteEmitter)other.Emitter.Clone();
+            Sound = other.Sound;
+            Delay = other.Delay;
+        }
+        public override GameEvent Clone() { return new OwnerBattleAnimEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            Character target = ownerChar;
+
+            GameManager.Instance.BattleSE(Sound);
+            if (!target.Unidentifiable)
+            {
+                FiniteEmitter endEmitter = (FiniteEmitter)Emitter.Clone();
+                endEmitter.SetupEmit(target.MapLoc, target.MapLoc, target.CharDir);
+                DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
+            }
+            yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(Delay));
+        }
+    }
+
+    /// <summary>
     /// Event that reflects all damaging moves to nearby foes
     /// </summary>
     [Serializable]
@@ -5628,22 +5685,38 @@ namespace PMDC.Dungeon
         /// </summary>
         public int Range;
 
-        public AddRangeEvent() { }
-        public AddRangeEvent(int range)
+        /// <summary>
+        /// The list of battle events that will be applied
+        /// </summary>
+        public List<BattleEvent> Anims;
+
+        public AddRangeEvent() { Anims = new List<BattleEvent>(); }
+        public AddRangeEvent(int range, params BattleEvent[] anims)
         {
             Range = range;
+
+            Anims = new List<BattleEvent>();
+            Anims.AddRange(anims);
         }
         protected AddRangeEvent(AddRangeEvent other)
         {
             Range = other.Range;
+
+            Anims = new List<BattleEvent>();
+            foreach (BattleEvent anim in other.Anims)
+                Anims.Add((BattleEvent)anim.Clone());
         }
         public override GameEvent Clone() { return new AddRangeEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             if (context.ActionType == BattleActionType.Skill && context.Data.ID != DataManager.Instance.DefaultSkill)
+            {
+                foreach (BattleEvent anim in Anims)
+                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
+
                 context.RangeMod += Range;
-            yield break;
+            }
         }
     }
     
@@ -5792,7 +5865,60 @@ namespace PMDC.Dungeon
             yield break;
         }
     }
-    
+
+    /// <summary>
+    /// Event that causes the move to miss if the range of the move is executed from a distance greater than the specified amount
+    /// </summary>
+    [Serializable]
+    public class DistantGuardEvent : BattleEvent
+    {
+        /// <summary>
+        /// Attacks greater than this distances will be blocked.
+        /// </summary>
+        public int Distance;
+
+        /// <summary>
+        /// The list of battle events that will be applied
+        /// </summary>
+        public List<BattleAnimEvent> Anims;
+
+        public DistantGuardEvent()
+        {
+            Anims = new List<BattleAnimEvent>();
+        }
+        public DistantGuardEvent(int distance, params BattleAnimEvent[] anims)
+        {
+            Distance = distance;
+            Anims = new List<BattleAnimEvent>();
+            Anims.AddRange(anims);
+        }
+        protected DistantGuardEvent(DistantGuardEvent other)
+        {
+            Distance = other.Distance;
+            Anims = new List<BattleAnimEvent>();
+            foreach (BattleAnimEvent anim in other.Anims)
+                Anims.Add((BattleAnimEvent)anim.Clone());
+        }
+        public override GameEvent Clone() { return new DistantGuardEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.ActionType == BattleActionType.Skill && context.Data.ID != DataManager.Instance.DefaultSkill)
+            {
+                if (!ZoneManager.Instance.CurrentMap.InRange(context.StrikeStartTile, context.Target.CharLoc, Distance))
+                {
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_PROTECT_WITH").ToLocal(), context.Target.GetDisplayName(false), owner.GetDisplayName()));
+
+                    foreach (BattleAnimEvent anim in Anims)
+                        yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
+
+                    context.AddContextStateMult<AccMult>(false, -1, 1);
+                }
+            }
+            yield break;
+        }
+    }
+
     /// <summary>
     /// Event that causes the move to miss if the range of the move is greater than the specified amount
     /// </summary>
@@ -7501,6 +7627,9 @@ namespace PMDC.Dungeon
         public string RecentHitStatusID;
         [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
+        public string LastHitStatusID;
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
         public string OtherHitStatusID;
         [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
@@ -7512,13 +7641,15 @@ namespace PMDC.Dungeon
         public HitPostEvent()
         {
             RecentHitStatusID = "";
+            LastHitStatusID = "";
             OtherHitStatusID = "";
             TargetStatusID = "";
             CritStatusID = "";
         }
-        public HitPostEvent(string recentHitStatusID, string otherHitStatusID, string targetStatusID, string critStatusID)
+        public HitPostEvent(string recentHitStatusID, string lastHitStatusID, string otherHitStatusID, string targetStatusID, string critStatusID)
         {
             RecentHitStatusID = recentHitStatusID;
+            LastHitStatusID = lastHitStatusID;
             OtherHitStatusID = otherHitStatusID;
             TargetStatusID = targetStatusID;
             CritStatusID = critStatusID;
@@ -7526,6 +7657,7 @@ namespace PMDC.Dungeon
         protected HitPostEvent(HitPostEvent other)
         {
             RecentHitStatusID = other.RecentHitStatusID;
+            LastHitStatusID = other.LastHitStatusID;
             OtherHitStatusID = other.OtherHitStatusID;
             TargetStatusID = other.TargetStatusID;
             CritStatusID = other.CritStatusID;
@@ -7560,6 +7692,16 @@ namespace PMDC.Dungeon
                     else
                         recentHitStatus.StatusStates.GetWithDefault<StackState>().Stack = recentHitStatus.StatusStates.GetWithDefault<StackState>().Stack + 1;
 
+                    StatusEffect lastHitStatus = context.Target.GetStatusEffect(LastHitStatusID);
+                    if (lastHitStatus == null)
+                    {
+                        lastHitStatus = new StatusEffect(LastHitStatusID);
+                        lastHitStatus.LoadFromData();
+                        lastHitStatus.StatusStates.GetWithDefault<StackState>().Stack = 1;
+                        yield return CoroutineManager.Instance.StartCoroutine(context.Target.AddStatusEffect(context.User, lastHitStatus));
+                    }
+                    else
+                        lastHitStatus.StatusStates.GetWithDefault<StackState>().Stack = lastHitStatus.StatusStates.GetWithDefault<StackState>().Stack + 1;
                 }
 
                 if (context.ContextStates.Contains<AttackCrit>())
@@ -9443,7 +9585,7 @@ namespace PMDC.Dungeon
         /// </summary>
          public bool FromTarget;
         [JsonConverter(typeof(StatusSetConverter))]
-        [DataType(0, DataManager.DataType.Status, false)]
+        [DataType(1, DataManager.DataType.Status, false)]
         public HashSet<string> StatChangeIDs;
 
         public StatBasePowerEvent() { StatChangeIDs = new HashSet<string>(); }
@@ -9478,6 +9620,67 @@ namespace PMDC.Dungeon
                 }
 
                 basePower.Power += AddedPower * totalStacks;
+            }
+            yield break;
+        }
+    }
+
+
+
+    /// <summary>
+    /// Event that boosts the power of moves depending on the number of times being hit before acting
+    /// </summary>
+    [Serializable]
+    public class PrevHitBasePowerEvent : BattleEvent
+    {
+        /// <summary>
+        /// The base power for each stat change
+        /// </summary>
+        public int AddedPower;
+
+        /// <summary>
+        /// The maximum stack limit
+        /// </summary>
+        public int MaxStack;
+
+        /// <summary>
+        /// Whether to check the target or user
+        /// </summary>
+        public bool FromTarget;
+
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string PrevHitID;
+
+        public PrevHitBasePowerEvent() { PrevHitID = ""; }
+        public PrevHitBasePowerEvent(int addedPower, bool fromTarget, string prevHitID, int limit)
+        {
+            AddedPower = addedPower;
+            FromTarget = fromTarget;
+            PrevHitID = prevHitID;
+            MaxStack = limit;
+        }
+        protected PrevHitBasePowerEvent(PrevHitBasePowerEvent other) : this()
+        {
+            AddedPower = other.AddedPower;
+            FromTarget = other.FromTarget;
+            PrevHitID = other.PrevHitID;
+            MaxStack = other.MaxStack;
+        }
+        public override GameEvent Clone() { return new PrevHitBasePowerEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            Character source = (FromTarget ? context.Target : context.User);
+
+            StatusEffect recentHitStatus = source.GetStatusEffect(PrevHitID);
+            if (recentHitStatus != null)
+            {
+                BasePowerState basePower = context.Data.SkillStates.GetWithDefault<BasePowerState>();
+                if (basePower != null)
+                {
+                    int timesHit = Math.Min(recentHitStatus.StatusStates.GetWithDefault<StackState>().Stack, MaxStack);
+                    basePower.Power += AddedPower * timesHit;
+                }
             }
             yield break;
         }
