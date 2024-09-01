@@ -21,11 +21,10 @@ namespace MapGenTest
             if (OperatingSystem.IsWindows())
                 enlargeConsole();
 
+            Serializer.InitSettings(new SerializerContractResolver(), new UpgradeBinder());
+
             string[] args = Environment.GetCommandLineArgs();
             PathMod.InitPathMod(args[0]);
-            DiagManager.InitInstance();
-            Serializer.InitSettings(new SerializerContractResolver(), new UpgradeBinder());
-            //DiagManager.Instance.DevMode = true;
             bool testExp = false;
             for (int ii = 1; ii < args.Length; ii++)
             {
@@ -51,7 +50,11 @@ namespace MapGenTest
                 }
             }
 
+            DiagManager.InitInstance();
+            //DiagManager.Instance.DevMode = true;
+
             PathMod.InitNamespaces();
+
             GraphicsManager.InitParams();
             Text.Init();
             Text.SetCultureCode("en");
