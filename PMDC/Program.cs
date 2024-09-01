@@ -96,6 +96,7 @@ namespace PMDC
                         Console.WriteLine("-csv: Print a strategy guide to GUIDE/ as csv");
                         Console.WriteLine("-asset [path]: Specify a custom path for assets.");
                         Console.WriteLine("-raw [path]: Specify a custom path for raw assets.");
+                        Console.WriteLine("-appdata [path]: Specify a custom path for app data such as saves, mods, logs, configs.");
                         Console.WriteLine("-quest [folder]: Specify the folder in MODS/ to load as the quest.");
                         Console.WriteLine("-mod [mod] [...]: Specify the list of folders in MODS/ to load as additional mods.");
                         Console.WriteLine("-index [monster/skill/item/intrinsic/status/mapstatus/terrain/tile/zone/emote/autotile/element/growthgroup/skillgroup/ai/rank/skin/all]: Reindexes the selected list of data assets.");
@@ -129,6 +130,11 @@ namespace PMDC
                     else if (args[ii].ToLower() == "-raw")
                     {
                         PathMod.DEV_PATH = Path.GetFullPath(args[ii + 1]);
+                        ii++;
+                    }
+                    else if (args[ii].ToLower() == "-appdata")
+                    {
+                        PathMod.APP_PATH = Path.GetFullPath(args[ii + 1]);
                         ii++;
                     }
                     else if (args[ii].ToLower() == "-quest")

@@ -18,10 +18,10 @@ namespace PMDC.Dev
         private static void writeCSVGuide(string name, List<string[]> stats)
         {
 
-            if (!Directory.Exists(PathMod.ExePath + "GUIDE/"))
-                Directory.CreateDirectory(PathMod.ExePath + "GUIDE/");
+            if (!Directory.Exists(PathMod.APP_PATH + "GUIDE/"))
+                Directory.CreateDirectory(PathMod.APP_PATH + "GUIDE/");
 
-            using (StreamWriter file = new StreamWriter(PathMod.ExePath + "GUIDE/" + name + ".csv"))
+            using (StreamWriter file = new StreamWriter(PathMod.APP_PATH + "GUIDE/" + name + ".csv"))
             {
                 foreach (string[] stat in stats)
                     file.WriteLine(String.Join("\t", stat));
@@ -178,10 +178,10 @@ namespace PMDC.Dev
                 "		<footer>PMDC v"+ Versioning.GetVersion().ToString() + "</footer>\n" +
                 "	</body>\n" +
                 "</html>\n";
-            if (!Directory.Exists(PathMod.ExePath + "GUIDE/"))
-                Directory.CreateDirectory(PathMod.ExePath + "GUIDE/");
+            if (!Directory.Exists(PathMod.APP_PATH + "GUIDE/"))
+                Directory.CreateDirectory(PathMod.APP_PATH + "GUIDE/");
 
-            using (StreamWriter file = new StreamWriter(PathMod.ExePath + "GUIDE/" + name + ".html"))
+            using (StreamWriter file = new StreamWriter(PathMod.APP_PATH + "GUIDE/" + name + ".html"))
                 file.Write(html);
 
             Console.WriteLine();
