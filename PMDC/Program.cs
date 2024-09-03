@@ -50,6 +50,7 @@ namespace PMDC
             bool logInput = true;
             bool guideBook = false;
             bool guideCsv = false;
+            bool printWiki = false;
             GraphicsManager.AssetType convertAssets = GraphicsManager.AssetType.None;
             DataManager.DataType convertIndices = DataManager.DataType.None;
             DataManager.DataType reserializeIndices = DataManager.DataType.None;
@@ -86,6 +87,7 @@ namespace PMDC
                         Console.WriteLine("-lang [en/es/de/zh/ko]: Specify language.");
                         Console.WriteLine("-guide: Print a strategy guide to GUIDE/ as html");
                         Console.WriteLine("-csv: Print a strategy guide to GUIDE/ as csv");
+                        Console.WriteLine("-wiki: Print wiki-ready pages.");
                         Console.WriteLine("-asset [path]: Specify a custom path for assets.");
                         Console.WriteLine("-raw [path]: Specify a custom path for raw assets.");
                         Console.WriteLine("-appdata [path]: Specify a custom path for app data such as saves, mods, logs, configs.  Specify no path and the AppData environment variable will be used.");
@@ -114,6 +116,8 @@ namespace PMDC
                         guideBook = true;
                     else if (args[ii].ToLower() == "-csv")
                         guideCsv = true;
+                    else if (args[ii].ToLower() == "-wiki")
+                        printWiki = true;
                     else if (args[ii].ToLower() == "-asset")
                     {
                         PathMod.ASSET_PATH = Path.GetFullPath(args[ii + 1]);
@@ -564,6 +568,23 @@ namespace PMDC
                     StrategyGuide.PrintItemGuide(guideCsv);
                     StrategyGuide.PrintAbilityGuide(guideCsv);
                     StrategyGuide.PrintEncounterGuide(guideCsv);
+                    return;
+                }
+
+                if (printWiki)
+                {
+                    //print the guidebook in the chosen language
+                    //we need the datamanager for this
+                    LuaEngine.InitInstance();
+                    LuaEngine.Instance.LoadScripts();
+                    DataManager.InitInstance();
+                    DataManager.Instance.InitData();
+                    //just print a guidebook and exit
+                    //StrategyGuide.PrintMoveWiki();
+                    StrategyGuide.PrintItemWiki();
+                    //StrategyGuide.PrintAbilityWiki();
+                    //StrategyGuide.PrintMonsterWiki();
+                    //StrategyGuide.PrintDungeonWiki();
                     return;
                 }
 
