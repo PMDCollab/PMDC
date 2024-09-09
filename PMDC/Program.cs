@@ -30,6 +30,7 @@ namespace PMDC
         //[System.Runtime.InteropServices.DllImport("user32.dll")]
         //static extern bool SetProcessDPIAware();
 
+        public static AppBuilder BuildAvaloniaApp() => RogueEssence.Dev.Program.BuildAvaloniaApp();
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
@@ -599,7 +600,7 @@ namespace PMDC
                 if (DiagManager.Instance.DevMode)
                 {
                     InitDataEditor();
-                    AppBuilder builder = RogueEssence.Dev.Program.BuildAvaloniaApp();
+                    AppBuilder builder = BuildAvaloniaApp();
                     builder.StartWithClassicDesktopLifetime(args);
                 }
                 else
@@ -631,7 +632,6 @@ namespace PMDC
         public static void InitDataEditor()
         {
             DataEditor.Init();
-
             DataEditor.AddEditor(new StatusEffectEditor());
             DataEditor.AddEditor(new MapStatusEditor());
 
@@ -692,8 +692,10 @@ namespace PMDC
             DataEditor.AddEditor(new PromoteBranchEditor());
 
             DataEditor.AddEditor(new MonsterIDEditor());
-
+            
             DataEditor.AddEditor(new TeamMemberSpawnEditor());
+            DataEditor.AddEditor(new TeamMemberSpawnSimpleEditor());
+
             DataEditor.AddEditor(new MobSpawnEditor());
             DataEditor.AddEditor(new MobSpawnWeakEditor());
             DataEditor.AddEditor(new MobSpawnAltColorEditor());

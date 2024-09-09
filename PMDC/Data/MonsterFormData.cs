@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using RogueElements;
 using System.Drawing;
+using System.Linq;
 using RogueEssence;
 using RogueEssence.Data;
 using RogueEssence.Dungeon;
@@ -264,6 +265,17 @@ namespace PMDC.Data
                 abilities.Add(2);
 
             return abilities;
+        }
+        
+        // TODO: Consider moves from prior evolutions
+        public List<string> GetPossibleSkills()
+        {
+            List<string> skills = new List<string>();
+            skills.AddRange(LevelSkills.Select(x => x.Skill));
+            skills.AddRange(TeachSkills.Select(x => x.Skill));
+            skills.AddRange(SharedSkills.Select(x => x.Skill));
+            skills.AddRange(SecretSkills.Select(x => x.Skill));
+            return skills.Distinct().ToList();
         }
 
 
