@@ -6078,7 +6078,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             int diff = ZoneManager.Instance.CurrentMap.GetClosestDist8(context.StrikeStartTile, context.Target.CharLoc);
-            for (int ii = 0; ii < diff; ii++)
+            for (int ii = 1; ii < diff; ii++)
                 context.AddContextStateMult<DmgMult>(false, 1, 2);
             yield break;
         }
