@@ -19,8 +19,8 @@
         <converters:IsNotNoneOrEmptyConverter x:Key="IsNotNoneOrEmptyConverter"/>
         <converters:ComparisonConverter x:Key="ComparisonConverter"/>
         <converters:OXConverter x:Key="OXConverter"/>
-        <converters:TypeConverter x:Key="TypeConverter"/>
-        <converters:CategoryConverter x:Key="CategoryConverter"/>
+        <converters:ElementIconConverter x:Key="ElementIconConverter"/>
+        <converters:SkillCategoryIconConverter x:Key="SkillCategoryIconConverter"/>
         <SolidColorBrush x:Key="FocusColor">#54B4D3</SolidColorBrush>
         <SolidColorBrush x:Key="BorderColor">#AAAAAA</SolidColorBrush>
     </UserControl.Resources>
@@ -241,11 +241,11 @@
                                 <DataTemplate DataType="vm:BaseMonsterFormViewModel">
                                     <Grid ColumnDefinitions="8, *, 20, *, 8" >
                                         <Grid Grid.Column="1" RowDefinitions="20, Auto" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <Image Source="{Binding Element1, Converter={StaticResource TypeConverter}}" Height="20" />
+                                            <Image Source="{Binding Element1, Converter={StaticResource ElementIconConverter}}" Height="20" />
                                             <TextBlock Grid.Row="1" Text="{Binding Element1Display}" HorizontalAlignment="Center" />
                                         </Grid>
-                                        <Grid Grid.Column="3" RowDefinitions="20, Auto" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding Element2, Converter={StaticResource IsNotNoneOrEmptyConverter}}" >
-                                            <Image Grid.Column="0" Source="{Binding Element2, Converter={StaticResource TypeConverter}}" Height="20" />
+                                        <Grid Grid.Column="3" RowDefinitions="20, Auto" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding Element2, Converter={StaticResource IsNotNoneOrEmptyConverter}, ConverterParameter=2048}" >
+                                            <Image Grid.Column="0" Source="{Binding Element2, Converter={StaticResource ElementIconConverter}}" Height="20" />
                                             <TextBlock Grid.Row="1" Text="{Binding Element2Display}" HorizontalAlignment="Center" />
                                         </Grid>
                                     </Grid>
@@ -257,12 +257,12 @@
                                  <DataTemplate DataType="vm:BaseMonsterFormViewModel">
                                      <Grid ColumnDefinitions="*, *">
                                          <Grid Grid.Column="0" RowDefinitions="*, *" VerticalAlignment="Center" HorizontalAlignment="Center">
-                                             <TextBlock HorizontalAlignment="Center" Text="{Binding Intrinsic1}" IsVisible="{Binding Intrinsic1, Converter={StaticResource IsNotNoneOrEmptyConverter}}"/>
+                                             <TextBlock HorizontalAlignment="Center" Text="{Binding Intrinsic1}" IsVisible="{Binding Intrinsic1, Converter={StaticResource IsNotNoneOrEmptyConverter}, ConverterParameter=2048}"/>
                                              <TextBlock Grid.Row="1" HorizontalAlignment="Center"  Text="{Binding Intrinsic2}">
                                                  <TextBlock.IsVisible>
                                                      <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                                         <Binding Path="Intrinsic2" Converter="{StaticResource IsNotNoneOrEmptyConverter}"/>
-                                                         <Binding Path="Intrinsic3" Converter="{StaticResource IsNotNoneOrEmptyConverter}"/>
+                                                         <Binding Path="Intrinsic2" Converter="{StaticResource IsNotNoneOrEmptyConverter}, ConverterParameter=2048"/>
+                                                         <Binding Path="Intrinsic3" Converter="{StaticResource IsNotNoneOrEmptyConverter}, ConverterParameter=2048"/>
                                                      </MultiBinding>
                                                  </TextBlock.IsVisible>
                                              </TextBlock>
@@ -271,14 +271,14 @@
                                              <TextBlock Grid.Row="0" HorizontalAlignment="Center"  Text="{Binding Intrinsic2}">
                                                  <TextBlock.IsVisible>
                                                      <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                                         <Binding Path="Intrinsic2" Converter="{StaticResource IsNotNoneOrEmptyConverter}"/>
-                                                         <Binding Path="Intrinsic3" Converter="{StaticResource IsNoneOrEmptyConverter}"/>
+                                                         <Binding Path="Intrinsic2" Converter="{StaticResource IsNotNoneOrEmptyConverter}, ConverterParameter=2048"/>
+                                                         <Binding Path="Intrinsic3" Converter="{StaticResource IsNoneOrEmptyConverter}, ConverterParameter=2048"/>
                                                      </MultiBinding>
                                                  </TextBlock.IsVisible>
                                              </TextBlock>
                                              <TextBlock Grid.Row="1" HorizontalAlignment="Center"  Text="{Binding Intrinsic3}">
                                                  <TextBlock.IsVisible>
-                                                     <Binding Path="Intrinsic3" Converter="{StaticResource IsNotNoneOrEmptyConverter}"/>
+                                                     <Binding Path="Intrinsic3" Converter="{StaticResource IsNotNoneOrEmptyConverter}, ConverterParameter=2048"/>
                                                  </TextBlock.IsVisible>
                                              </TextBlock>
                                          </Grid>
@@ -328,7 +328,7 @@
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate DataType="vm:SkillDataViewModel">
                                     <Grid RowDefinitions="20, Auto" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <Image Source="{Binding Element, Converter={StaticResource TypeConverter}}" Height="20" />
+                                        <Image Source="{Binding Element, Converter={StaticResource ElementIconConverter}}" Height="20" />
                                         <TextBlock Grid.Row="1" Text="{Binding ElementDisplay}" HorizontalAlignment="Center" />
                                     </Grid>
                                 </DataTemplate>
@@ -337,7 +337,7 @@
                         <DataGridTemplateColumn Header="Cat" Width="Auto" SortMemberPath="Category">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate DataType="vm:SkillDataViewModel">
-                                    <Image Source="{Binding Category, Converter={StaticResource CategoryConverter}}" Height="20" />
+                                    <Image Source="{Binding Category, Converter={StaticResource ElementIconConverter}}" Height="20" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
