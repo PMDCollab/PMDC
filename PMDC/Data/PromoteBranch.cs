@@ -574,7 +574,8 @@ namespace PMDC.Data
             for (int ii = 0; ii < character.BaseSkills.Count; ii++)
                 newChar.BaseSkills[ii] = new SlotSkill(character.BaseSkills[ii]);
 
-            newChar.BaseIntrinsics[0] = forme.RollIntrinsic(DataManager.Instance.Save.Rand, 2);
+            string intrinsic = forme.RollIntrinsic(DataManager.Instance.Save.Rand, 2);
+            newChar.SetBaseIntrinsic(intrinsic);
 
             newChar.Discriminator = character.Discriminator;
             newChar.MetAt = character.MetAt;
