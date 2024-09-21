@@ -1,7 +1,7 @@
 ﻿<Project DefaultTargets="Build" Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <ProjectGuid>{BBF77001-98E9-4FCD-90FB-626B555CE418}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <RootNamespace>PMDC</RootNamespace>
     <AssemblyName>PMDC</AssemblyName>
     <AssemblyVersion>0.8.5</AssemblyVersion>
