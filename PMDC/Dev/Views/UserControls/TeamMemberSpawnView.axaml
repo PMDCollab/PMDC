@@ -42,7 +42,7 @@
             <Setter Property="BorderBrush" Value="{DynamicResource FocusColor}"/>
         </Style>
         <Style Selector="TextBox">
-            <Setter Property="Height" Value="32"/>
+            <Setter Property="Height" Value="36"/>
             <Setter Property="Padding" Value="4, 6" />
         </Style>
         <Style Selector="ListBox">
@@ -59,7 +59,7 @@
             <Setter Property="BorderThickness" Value="1, 1, 1, 0"/>
         </Style>
         <Style Selector="NumericUpDown">
-            <Setter Property="Height" Value="34"/>
+            <Setter Property="Height" Value="38"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
         <Style Selector="rviews|SearchComboBox">
@@ -96,19 +96,19 @@
                                                 Command="{Binding $parent[views:TeamMemberSpawnView].SpeciesTextBox_OnEnterCommand}"/>
                                 </TextBox.KeyBindings>
                             </TextBox>
-                            <TextBlock Text="Gender" FontWeight="Bold"></TextBlock>
+                            <TextBlock Text="Gender"></TextBlock>
                             <rviews:SearchComboBox Items="{Binding Genders}" SelectedIndex="{Binding ChosenGender}" VerticalAlignment="Center" Margin="0,0" />
-                            <TextBlock Text="Skin" FontWeight="Bold"></TextBlock>
+                            <TextBlock Text="Skin"></TextBlock>
                             <rviews:SearchComboBox Items="{Binding Skins}" SelectedIndex="{Binding ChosenSkin}" VerticalAlignment="Center" Margin="0,0" />
-                            <CheckBox  IsChecked="{Binding IsWeakMob}">Weak</CheckBox>
-                            <CheckBox IsChecked="{Binding Unrecruitable}" Margin="0, 0, 0, 0">Unrecruitable</CheckBox>
+                            <CheckBox IsChecked="{Binding IsWeakMob}">Weak</CheckBox>
+                            <CheckBox IsChecked="{Binding Unrecruitable}">Unrecruitable</CheckBox>
                         </StackPanel>
                     </Border>
                 </StackPanel>
                 <StackPanel Grid.Column="1">
                     <Border>
                         <StackPanel>
-                            <TextBlock Text="Moves" FontWeight="Bold"></TextBlock>
+                            <TextBlock Text="Moves"></TextBlock>
                             <TextBox 
                                 x:Name="SkillTextBox0"
                                 GotFocus="SkillTextBox0_OnGotFocus"
@@ -160,7 +160,7 @@
                  <StackPanel Grid.Column="2">
                     <Border>
                         <StackPanel>
-                            <TextBlock Text="Ability" FontWeight="Bold"></TextBlock>
+                            <TextBlock Text="Ability"></TextBlock>
                             <TextBox 
                                 x:Name="IntrinsicTextBox"
                                 Text="{Binding SearchIntrinsicFilter, Mode=TwoWay}"
@@ -174,7 +174,7 @@
                             </TextBox>
                             
                        
-                            <TextBlock Text="Level Range" FontWeight="Bold"></TextBlock>
+                            <TextBlock Text="Level Range"></TextBlock>
                             <Grid ColumnDefinitions="4*, *, 4*" Margin="0, 0, 0, 4">
                                 <NumericUpDown
                                     x:Name="MinTextBox"
@@ -197,20 +197,21 @@
                                     GotFocus="MaxTextBox_OnGotFocus"
                                 />
                             </Grid>
-                            <TextBlock Text="Tactic" FontWeight="Bold"></TextBlock>
+                            <TextBlock Text="Tactic"></TextBlock>
                             <rviews:SearchComboBox Items="{Binding Tactics}" SelectedIndex="{Binding ChosenTactic}" VerticalAlignment="Center" Margin="0,0"/>
-                            <TextBlock Text="Role" FontWeight="Bold"></TextBlock>
+                            <TextBlock Text="Role"></TextBlock>
                             <rviews:SearchComboBox Items="{Binding Roles}" SelectedIndex="{Binding ChosenRole}" VerticalAlignment="Center" Margin="0,0"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>
+                
                 <Grid Grid.Column="3" RowDefinitions="Auto, Auto">
-                    <TextBlock VerticalAlignment="Bottom" Grid.Row="0">Spawn Checks</TextBlock>
-                    <rviews:CollectionBox DataContext="{Binding SpawnConditions}" Margin="0, 0, 0, 4" Grid.Row="1" Height="157"/>
+                    <TextBlock VerticalAlignment="Bottom" Grid.Row="0">Spawn Features </TextBlock>
+                    <rviews:CollectionBox DataContext="{Binding SpawnFeatures}" Margin="0, 0, 0, 4" Grid.Row="1" Height="166"/>
                 </Grid>
                 <Grid Grid.Column="4" RowDefinitions="Auto, Auto">
-                    <TextBlock VerticalAlignment="Bottom" Grid.Row="0">Spawn Features </TextBlock>
-                    <rviews:CollectionBox DataContext="{Binding SpawnFeatures}" Margin="0, 0, 0, 4" Grid.Row="1" Height="157"/>
+                    <TextBlock VerticalAlignment="Bottom" Grid.Row="0">Spawn Checks</TextBlock>
+                    <rviews:CollectionBox DataContext="{Binding SpawnConditions}" Margin="0, 0, 0, 4" Grid.Row="1" Height="166"/>
                 </Grid>
             </Grid>
             <Rectangle Height="1" Stroke="{DynamicResource BorderColor}" Fill="{DynamicResource BorderColor}" StrokeThickness="1" Stretch="Fill" Margin="0, 6"></Rectangle>
@@ -257,12 +258,13 @@
                                  <DataTemplate DataType="vm:BaseMonsterFormViewModel">
                                      <Grid ColumnDefinitions="*, *">
                                          <Grid Grid.Column="0" RowDefinitions="*, *" VerticalAlignment="Center" HorizontalAlignment="Center">
-                                             <TextBlock HorizontalAlignment="Center" Text="{Binding Intrinsic1}" IsVisible="{Binding Intrinsic1, Converter={StaticResource IsNotNoneOrEmptyConverter}, ConverterParameter=2048}"/>
+                                             <TextBlock HorizontalAlignment="Center" Text="{Binding Intrinsic1}" IsVisible="{Binding Intrinsic1, Converter={StaticResource IsNotNoneOrEmptyConverter}, ConverterParameter='8'}"/>
                                              <TextBlock Grid.Row="1" HorizontalAlignment="Center"  Text="{Binding Intrinsic2}">
                                                  <TextBlock.IsVisible>
                                                      <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                                         <Binding Path="Intrinsic2" Converter="{StaticResource IsNotNoneOrEmptyConverter}, ConverterParameter=2048"/>
-                                                         <Binding Path="Intrinsic3" Converter="{StaticResource IsNotNoneOrEmptyConverter}, ConverterParameter=2048"/>
+                                                         <Binding Path="Intrinsic2" Converter="{StaticResource IsNotNoneOrEmptyConverter}" ConverterParameter="8"/>
+
+                                                         <Binding Path="Intrinsic3" Converter="{StaticResource IsNotNoneOrEmptyConverter}" ConverterParameter="8"/>
                                                      </MultiBinding>
                                                  </TextBlock.IsVisible>
                                              </TextBlock>
@@ -271,14 +273,14 @@
                                              <TextBlock Grid.Row="0" HorizontalAlignment="Center"  Text="{Binding Intrinsic2}">
                                                  <TextBlock.IsVisible>
                                                      <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                                         <Binding Path="Intrinsic2" Converter="{StaticResource IsNotNoneOrEmptyConverter}, ConverterParameter=2048"/>
-                                                         <Binding Path="Intrinsic3" Converter="{StaticResource IsNoneOrEmptyConverter}, ConverterParameter=2048"/>
+                                                         <Binding Path="Intrinsic2" Converter="{StaticResource IsNotNoneOrEmptyConverter}"  ConverterParameter="8"/>
+                                                         <Binding Path="Intrinsic3" Converter="{StaticResource IsNoneOrEmptyConverter}"  ConverterParameter="8" />
                                                      </MultiBinding>
                                                  </TextBlock.IsVisible>
                                              </TextBlock>
                                              <TextBlock Grid.Row="1" HorizontalAlignment="Center"  Text="{Binding Intrinsic3}">
                                                  <TextBlock.IsVisible>
-                                                     <Binding Path="Intrinsic3" Converter="{StaticResource IsNotNoneOrEmptyConverter}, ConverterParameter=2048"/>
+                                                     <Binding Path="Intrinsic3" Converter="{StaticResource IsNotNoneOrEmptyConverter}" ConverterParameter="8"/>
                                                  </TextBlock.IsVisible>
                                              </TextBlock>
                                          </Grid>
@@ -337,7 +339,7 @@
                         <DataGridTemplateColumn Header="Cat" Width="Auto" SortMemberPath="Category">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate DataType="vm:SkillDataViewModel">
-                                    <Image Source="{Binding Category, Converter={StaticResource ElementIconConverter}}" Height="20" />
+                                    <Image Source="{Binding Category, Converter={StaticResource SkillCategoryIconConverter}}" Height="20" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>

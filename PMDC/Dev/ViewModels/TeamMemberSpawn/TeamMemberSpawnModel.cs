@@ -1039,18 +1039,22 @@ namespace PMDC.Dev.ViewModels
 
         public void UpdateDataGrid()
         {
-            DataGridType nextView = DataGridType.Monster;
+            DataGridType nextView = CurrentDataGridView;
             if (FocusIndex >= 6)
             {
-                nextView = DataGridType.Other;
+                // nextView = DataGridType.Other;
             }
-            else if (FocusIndex >= 5)
+            else if (FocusIndex == 5)
             {
                 nextView = DataGridType.Intrinsic;
             }
             else if (FocusIndex >= 1)
             {
                 nextView = DataGridType.Skills;
+            }
+            else if (FocusIndex == 0)
+            {
+                nextView = DataGridType.Monster;
             }
 
             CurrentDataGridView = nextView;

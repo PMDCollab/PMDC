@@ -7,8 +7,7 @@ namespace PMDC.Dev.ViewModels
 {
     public class SkillDataViewModel : ViewModelBase
     {
-        private SkillData skillData;
-        private BasePowerState powerState;
+        private SkillDataSummary summary;
         public int Index { get; }
         private bool _monsterLearns;
         
@@ -16,9 +15,7 @@ namespace PMDC.Dev.ViewModels
         public SkillDataViewModel(string skillKey, int index)
         {
             Index = index;
-            skillData = DataManager.Instance.GetSkill(skillKey);
-            ElementDisplay = DataManager.Instance.GetElement(skillData.Data.Element).Name.ToLocal();
-            powerState = skillData.Data.SkillStates.GetWithDefault<BasePowerState>();
+            summary = (SkillDataSummary) DataManager.Instance.DataIndices[DataManager.DataType.Skill].Get(skillKey);
         }
 
 
@@ -35,57 +32,56 @@ namespace PMDC.Dev.ViewModels
         
         public string Name
         {
-            get { return skillData.Name.ToLocal();  }
+            get { return summary.Name.ToLocal();  }
         }
         
         public string Element
         {
-            get { return skillData.Data.Element;  }
+            get { return summary.Element;  }
         }
         
         public string ElementDisplay
         {
-            get;
+            get { return DataManager.Instance.GetElement(Element).Name.ToLocal(); }
         }
         
         public BattleData.SkillCategory Category
         {
-            get { return skillData.Data.Category; }
+            get { return summary.Category; }
         }
         public string CategoryDisplay
         {
-            get { return skillData.Data.Category.ToLocal();  }
+            get { return summary.Category.ToLocal();  }
         }
         
         public int BasePower
         {
-            get { return powerState != null ? powerState.Power : -1; }
+            get { return summary.BasePower; }
         }
         
         public int BaseCharges
         {
-            get { return skillData.BaseCharges; }
+            get { return summary.BaseCharges; }
         }
-
         
         public int Accuracy
         {
-            get { return skillData.Data.HitRate; }
+            get { return summary.Accuracy; }
         }
 
         public string RangeDescription
         {
-            get { return skillData.HitboxAction.GetDescription(); }
+            get { return summary.RangeDescription; }
         }
         
         public string Description
         {
-            get { return skillData.Desc.ToLocal(); }
+            get { return summary.Description.ToLocal(); }
         }
 
         public bool Released
         {
-            get { return skillData.Released; }
+            get { return summary.Released; }
         }
     }
 }

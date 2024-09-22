@@ -221,14 +221,14 @@ namespace PMDC.Dev.Views
         // TODO: Currently NumericUpDown doesn't get focused correctly
         private void MinTextBox_OnGotFocus(object sender, GotFocusEventArgs e)
         {
-            TeamMemberSpawnModel vm = DataContext as TeamMemberSpawnModel;
-            vm.SetFocusIndex(6);
+            // TeamMemberSpawnModel vm = DataContext as TeamMemberSpawnModel;
+            // vm.SetFocusIndex(6);
         }
         
         private void MaxTextBox_OnGotFocus(object sender, GotFocusEventArgs e)
         {
-            TeamMemberSpawnModel vm = DataContext as TeamMemberSpawnModel;
-            vm.SetFocusIndex(7);
+            // TeamMemberSpawnModel vm = DataContext as TeamMemberSpawnModel;
+            // vm.SetFocusIndex(7);
         }
         private void SpeciesTextBox_OnLostFocus(object sender, RoutedEventArgs e)
         {
