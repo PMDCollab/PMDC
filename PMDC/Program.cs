@@ -303,6 +303,9 @@ namespace PMDC
             {
                 DiagManager.Instance.CurSettings = DiagManager.Instance.LoadSettings();
 
+                DiagManager.Instance.DevMode = dev;
+                DiagManager.Instance.DebugLua = devLua;
+
                 DiagManager.Instance.LogInfo("=========================================");
                 DiagManager.Instance.LogInfo(String.Format("SESSION STARTED: {0}", String.Format("{0:yyyy/MM/dd HH:mm:ss}", DateTime.Now)));
                 DiagManager.Instance.LogInfo("Version: " + Versioning.GetVersion().ToString());
@@ -314,9 +317,6 @@ namespace PMDC
                 PathMod.InitNamespaces();
                 GraphicsManager.InitParams();
                 DiagManager.Instance.SetupInputs();
-
-                DiagManager.Instance.DevMode = dev;
-                DiagManager.Instance.DebugLua = devLua;
 
                 ModHeader newQuest = ModHeader.Invalid;
                 ModHeader[] newMods = new ModHeader[0] { };
