@@ -1,0 +1,388 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="using:PMDC.Dev.ViewModels"
+             xmlns:vm="using:PMDC.Dev.ViewModels"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:converters="clr-namespace:RogueEssence.Dev.Converters;assembly=RogueEssence.Editor.Avalonia"
+             xmlns:views="clr-namespace:PMDC.Dev.Views"
+             xmlns:rviews="clr-namespace:RogueEssence.Dev.Views;assembly=RogueEssence.Editor.Avalonia"
+             x:Class="PMDC.Dev.Views.TeamMemberSpawnView"
+             >
+
+    <Design.DataContext>
+        <vm:TeamMemberSpawnModel />    
+    </Design.DataContext>
+    <UserControl.Resources>
+        <converters:IsNoneOrEmptyConverter x:Key="IsNoneOrEmptyConverter"/>
+        <converters:IsNotNoneOrEmptyConverter x:Key="IsNotNoneOrEmptyConverter"/>
+        <converters:ComparisonConverter x:Key="ComparisonConverter"/>
+        <converters:OXConverter x:Key="OXConverter"/>
+        <converters:ElementIconConverter x:Key="ElementIconConverter"/>
+        <converters:SkillCategoryIconConverter x:Key="SkillCategoryIconConverter"/>
+        <SolidColorBrush x:Key="FocusColor">#54B4D3</SolidColorBrush>
+        <SolidColorBrush x:Key="BorderColor">#AAAAAA</SolidColorBrush>
+    </UserControl.Resources>
+    <UserControl.Styles>
+        <Style Selector="DataGrid TextBlock">
+            <Setter Property="TextWrapping" Value="WrapWithOverflow" />
+        </Style>
+        <Style Selector="DataGrid TextBox">
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="AcceptsReturn" Value="True" />
+        </Style>
+        <Style Selector="DataGridCell.center_column">
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="DataGridColumnHeader">
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBox:focus Border">
+            <Setter Property="BorderBrush" Value="{DynamicResource FocusColor}"/>
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="4, 6" />
+        </Style>
+        <Style Selector="ListBox">
+            <Setter Property="Margin" Value="0, 0, 0, 0"/>
+        </Style>
+        <Style Selector="TextBlock.header">
+            <Setter Property="Margin" Value="4, 0" />
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Padding" Value="0, 4" />
+        </Style>
+        <Style Selector="Border.header">
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+            <Setter Property="BorderThickness" Value="1, 1, 1, 0"/>
+        </Style>
+        <Style Selector="NumericUpDown">
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="rviews|SearchComboBox">
+            <Setter Property="Height" Value="28"/>
+        </Style>
+        <Style Selector="DataGrid">
+            <Setter Property="Height" Value="500"/>
+        </Style>
+        <Style Selector="rviews|SearchComboBox:focus Border">
+            <Setter Property="BorderBrush" Value="{DynamicResource FocusColor}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto, Auto, Auto, Auto">
+        <StackPanel Grid.Row="0">
+            <StackPanel.Styles>
+                <Style Selector="Border">
+                    <Setter Property="Margin" Value="0, 0, 6, 3" />
+                </Style>
+            </StackPanel.Styles>
+            <Grid ColumnDefinitions="*, *, *, *, *">
+                <StackPanel Grid.Column="0">
+                    <Border>
+                        <StackPanel>
+                            <TextBlock Text="Pokémon" FontWeight="Bold"></TextBlock>
+                            <TextBox
+                                     GotFocus="SpeciesTextBox_OnGotFocus"
+                                     LostFocus="SpeciesTextBox_OnLostFocus"
+                                     x:Name="SpeciesTextBox"
+                                     Text="{Binding SearchMonsterFilter, Mode=TwoWay}"
+                                     VerticalContentAlignment="Center">
+                                <TextBox.KeyBindings>
+                                    <KeyBinding Gesture="Enter" 
+                                                Command="{Binding $parent[views:TeamMemberSpawnView].SpeciesTextBox_OnEnterCommand}"/>
+                                </TextBox.KeyBindings>
+                            </TextBox>
+                            <TextBlock Text="Gender"></TextBlock>
+                            <rviews:SearchComboBox Items="{Binding Genders}" SelectedIndex="{Binding ChosenGender}" VerticalAlignment="Center" Margin="0,0" />
+                            <TextBlock Text="Skin"></TextBlock>
+                            <rviews:SearchComboBox Items="{Binding Skins}" SelectedIndex="{Binding ChosenSkin}" VerticalAlignment="Center" Margin="0,0" />
+                            <CheckBox IsChecked="{Binding IsWeakMob}">Weak</CheckBox>
+                            <CheckBox IsChecked="{Binding Unrecruitable}">Unrecruitable</CheckBox>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+                <StackPanel Grid.Column="1">
+                    <Border>
+                        <StackPanel>
+                            <TextBlock Text="Moves"></TextBlock>
+                            <TextBox 
+                                x:Name="SkillTextBox0"
+                                GotFocus="SkillTextBox0_OnGotFocus"
+                                LostFocus="SkillTextBox0_OnLostFocus"
+                                Text="{Binding SearchSkill0Filter, Mode=TwoWay}"
+                                VerticalContentAlignment="Center">
+                                <TextBox.KeyBindings>
+                                    <KeyBinding Gesture="Enter" 
+                                                Command="{Binding $parent[views:TeamMemberSpawnView].SkillTextBox_OnEnterCommand}"/>
+                                </TextBox.KeyBindings>
+                            </TextBox>
+                            <TextBox 
+                                x:Name="SkillTextBox1"
+                                GotFocus="SkillTextBox1_OnGotFocus"
+                                LostFocus="SkillTextBox1_OnLostFocus"
+                                Text="{Binding SearchSkill1Filter, Mode=TwoWay}"
+                                VerticalContentAlignment="Center">
+                                <TextBox.KeyBindings>
+                                    <KeyBinding Gesture="Enter" 
+                                                Command="{Binding $parent[views:TeamMemberSpawnView].SkillTextBox_OnEnterCommand}"/>
+                                </TextBox.KeyBindings>
+                            </TextBox>
+                            <TextBox 
+                                x:Name="SkillTextBox2"
+                                Text="{Binding SearchSkill2Filter, Mode=TwoWay}"
+                                GotFocus="SkillTextBox2_OnGotFocus"
+                                LostFocus="SkillTextBox2_OnLostFocus"
+                                VerticalContentAlignment="Center">
+                                <TextBox.KeyBindings>
+                                    <KeyBinding Gesture="Enter" 
+                                                Command="{Binding $parent[views:TeamMemberSpawnView].SkillTextBox_OnEnterCommand}"/>
+                                </TextBox.KeyBindings>
+                            </TextBox>
+                            <TextBox 
+                                x:Name="SkillTextBox3"
+                                Text="{Binding SearchSkill3Filter, Mode=TwoWay}"
+                                GotFocus="SkillTextBox3_OnGotFocus"
+                                LostFocus="SkillTextBox3_OnLostFocus"
+                                VerticalContentAlignment="Center">
+                                <TextBox.KeyBindings>
+                                    <KeyBinding Gesture="Enter" 
+                                                Command="{Binding $parent[views:TeamMemberSpawnView].SkillTextBox_OnEnterCommand}"/>
+                                </TextBox.KeyBindings>
+                            </TextBox>
+                            <CheckBox IsChecked="{Binding DisableUnusedSlots}">Disable Unused Slots</CheckBox>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+                 <StackPanel Grid.Column="2">
+                    <Border>
+                        <StackPanel>
+                            <TextBlock Text="Ability"></TextBlock>
+                            <TextBox 
+                                x:Name="IntrinsicTextBox"
+                                Text="{Binding SearchIntrinsicFilter, Mode=TwoWay}"
+                                GotFocus="IntrinsicTextBox_OnGotFocus"
+                                LostFocus="IntrinsicTextBox_OnLostFocus"
+                                VerticalContentAlignment="Center">
+                                <TextBox.KeyBindings>
+                                    <KeyBinding Gesture="Enter" 
+                                                Command="{Binding $parent[views:TeamMemberSpawnView].IntrinsicTextBox_OnEnterCommand}"/>
+                                </TextBox.KeyBindings>
+                            </TextBox>
+                            
+                       
+                            <TextBlock Text="Level Range"></TextBlock>
+                            <Grid ColumnDefinitions="4*, *, 4*" Margin="0, 0, 0, 4">
+                                <NumericUpDown
+                                    x:Name="MinTextBox"
+                                    Minimum="1" 
+                                    Maximum="100" 
+                                    Watermark="Min"
+                                    Value="{Binding Min}"
+                                    ValueChanged="MinTextBox_OnValueChanged"
+                                    GotFocus="MinTextBox_OnGotFocus"
+                                />
+                                <NumericUpDown
+                                    Grid.Column="2"
+                                    x:Name="MaxTextBox"  
+                                    Minimum="1" 
+                                    Maximum="100" 
+                                    Margin="-4, 0, 6, 0"
+                                    Watermark="Min"
+                                    Value="{Binding Max}"
+                                    ValueChanged="MaxTextBox_OnValueChanged"
+                                    GotFocus="MaxTextBox_OnGotFocus"
+                                />
+                            </Grid>
+                            <TextBlock Text="Tactic"></TextBlock>
+                            <rviews:SearchComboBox Items="{Binding Tactics}" SelectedIndex="{Binding ChosenTactic}" VerticalAlignment="Center" Margin="0,0"/>
+                            <TextBlock Text="Role"></TextBlock>
+                            <rviews:SearchComboBox Items="{Binding Roles}" SelectedIndex="{Binding ChosenRole}" VerticalAlignment="Center" Margin="0,0"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+                
+                <Grid Grid.Column="3" RowDefinitions="Auto, Auto">
+                    <TextBlock VerticalAlignment="Bottom" Grid.Row="0">Spawn Features </TextBlock>
+                    <rviews:CollectionBox DataContext="{Binding SpawnFeatures}" Margin="0, 0, 0, 4" Grid.Row="1" Height="166"/>
+                </Grid>
+                <Grid Grid.Column="4" RowDefinitions="Auto, Auto">
+                    <TextBlock VerticalAlignment="Bottom" Grid.Row="0">Spawn Checks</TextBlock>
+                    <rviews:CollectionBox DataContext="{Binding SpawnConditions}" Margin="0, 0, 0, 4" Grid.Row="1" Height="166"/>
+                </Grid>
+            </Grid>
+            <Rectangle Height="1" Stroke="{DynamicResource BorderColor}" Fill="{DynamicResource BorderColor}" StrokeThickness="1" Stretch="Fill" Margin="0, 6"></Rectangle>
+        </StackPanel>
+        
+        <Grid Grid.Row="3">
+            <!-- MONSTERS -->
+            <Grid RowDefinitions="Auto, Auto, Auto" IsVisible="{Binding CurrentDataGridView, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static vm:DataGridType.Monster }}">
+                <Grid Grid.Row="0" ColumnDefinitions="Auto, Auto" Margin="0, 0, 0, 6">
+                    <CheckBox Grid.Column="0" IsChecked="{Binding IncludeUnreleasedForms}" Margin="0, 0, 6, 0">Include Unreleased</CheckBox>
+                    <CheckBox Grid.Column="1" IsChecked="{Binding IncludeTemporaryForms}">Include Temporary</CheckBox>
+                </Grid>
+                <Border Grid.Row="1" Classes="header">
+                    <TextBlock Classes="header" >Pokémon</TextBlock>
+                </Border>
+                <DataGrid Grid.Row="2" Name="BaseMonsterDataGrid"
+                  Items="{Binding FilteredMonsterForms}"
+                  HorizontalScrollBarVisibility="Disabled"
+                  Margin="0" 
+                  RowHeight="50"
+                  SelectedItem="{Binding SelectedMonsterForm, Mode=TwoWay}"
+                  CellPointerPressed="MonsterDataGrid_OnCellPointerPressed"
+                  >
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="" CanUserSort="False" Binding="{Binding Name}" Width="300"/>
+                        <DataGridTemplateColumn Header="Types" Width="160"  >
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate DataType="vm:BaseMonsterFormViewModel">
+                                    <Grid ColumnDefinitions="8, *, 20, *, 8" >
+                                        <Grid Grid.Column="1" RowDefinitions="20, Auto" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Image Source="{Binding Element1, Converter={StaticResource ElementIconConverter}}" Height="20" />
+                                            <TextBlock Grid.Row="1" Text="{Binding Element1Display}" HorizontalAlignment="Center" />
+                                        </Grid>
+                                        <Grid Grid.Column="3" RowDefinitions="20, Auto" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding Element2, Converter={StaticResource IsNotNoneOrEmptyConverter}, ConverterParameter=2048}" >
+                                            <Image Grid.Column="0" Source="{Binding Element2, Converter={StaticResource ElementIconConverter}}" Height="20" />
+                                            <TextBlock Grid.Row="1" Text="{Binding Element2Display}" HorizontalAlignment="Center" />
+                                        </Grid>
+                                    </Grid>
+                                 </DataTemplate>
+                             </DataGridTemplateColumn.CellTemplate>
+                         </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="300" Header="Abilities">
+                             <DataGridTemplateColumn.CellTemplate>
+                                 <DataTemplate DataType="vm:BaseMonsterFormViewModel">
+                                     <Grid ColumnDefinitions="*, *">
+                                         <Grid Grid.Column="0" RowDefinitions="*, *" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                             <TextBlock HorizontalAlignment="Center" Text="{Binding Intrinsic1}" IsVisible="{Binding Intrinsic1, Converter={StaticResource IsNotNoneOrEmptyConverter}, ConverterParameter='8'}"/>
+                                             <TextBlock Grid.Row="1" HorizontalAlignment="Center"  Text="{Binding Intrinsic2}">
+                                                 <TextBlock.IsVisible>
+                                                     <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                         <Binding Path="Intrinsic2" Converter="{StaticResource IsNotNoneOrEmptyConverter}" ConverterParameter="8"/>
+
+                                                         <Binding Path="Intrinsic3" Converter="{StaticResource IsNotNoneOrEmptyConverter}" ConverterParameter="8"/>
+                                                     </MultiBinding>
+                                                 </TextBlock.IsVisible>
+                                             </TextBlock>
+                                         </Grid>
+                                         <Grid Grid.Column="1" RowDefinitions="*, *" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                             <TextBlock Grid.Row="0" HorizontalAlignment="Center"  Text="{Binding Intrinsic2}">
+                                                 <TextBlock.IsVisible>
+                                                     <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                         <Binding Path="Intrinsic2" Converter="{StaticResource IsNotNoneOrEmptyConverter}"  ConverterParameter="8"/>
+                                                         <Binding Path="Intrinsic3" Converter="{StaticResource IsNoneOrEmptyConverter}"  ConverterParameter="8" />
+                                                     </MultiBinding>
+                                                 </TextBlock.IsVisible>
+                                             </TextBlock>
+                                             <TextBlock Grid.Row="1" HorizontalAlignment="Center"  Text="{Binding Intrinsic3}">
+                                                 <TextBlock.IsVisible>
+                                                     <Binding Path="Intrinsic3" Converter="{StaticResource IsNotNoneOrEmptyConverter}" ConverterParameter="8"/>
+                                                 </TextBlock.IsVisible>
+                                             </TextBlock>
+                                         </Grid>
+                                     </Grid>
+                                 </DataTemplate>
+                             </DataGridTemplateColumn.CellTemplate>
+                         </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="HP" CellStyleClasses="center_column" Binding="{Binding BaseHP}" Width="Auto" />
+                        <DataGridTextColumn Header="Atk" CellStyleClasses="center_column" Binding="{Binding BaseAtk}" Width="Auto" />
+                        <DataGridTextColumn Header="Def" CellStyleClasses="center_column" Binding="{Binding BaseDef}" Width="Auto" />
+                        <DataGridTextColumn Header="SpA" CellStyleClasses="center_column" Binding="{Binding BaseMAtk}" Width="Auto" />
+                        <DataGridTextColumn Header="SpD" CellStyleClasses="center_column" Binding="{Binding BaseMDef}" Width="Auto" />
+                        <DataGridTextColumn Header="Spe" CellStyleClasses="center_column" Binding="{Binding BaseSpeed}" Width="Auto" />
+                        <DataGridTextColumn Header="BST" CellStyleClasses="center_column" Binding="{Binding BaseTotal}" Width="Auto" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+            
+            <Grid RowDefinitions="Auto, Auto, Auto" IsVisible="{Binding CurrentDataGridView, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static vm:DataGridType.Skills }}">
+                <Grid Grid.Row="0" RowDefinitions="Auto" Margin="0, 0, 0, 6">
+                    <CheckBox IsChecked="{Binding IncludeUnreleasedSkills}">Include Unreleased</CheckBox>
+                </Grid>
+                <Border Grid.Row="1" Classes="header">
+                    <TextBlock Classes="header">Moves</TextBlock>
+                </Border>
+                <DataGrid Grid.Row="2" Name="SkillsDataGrid"
+                  Items="{Binding FilteredSkillData}"
+                  CanUserResizeColumns="False"
+                  HorizontalScrollBarVisibility="Disabled"
+                  Margin="0" 
+                  RowHeight="50"
+                  SelectedItem="{Binding SelectedSkillData, Mode=TwoWay}"
+                  CellPointerPressed="SkillsDataGrid_OnCellPointerPressed"
+                  >
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Width="300" Header="">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate DataType="vm:SkillDataViewModel">
+                                    <Grid ColumnDefinitions="24, Auto">
+                                        <Image Source="{Binding MonsterLearns, Converter={StaticResource OXConverter}}" Stretch="None" Grid.Column="0"/>
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Grid.Column="1"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Type" Width="60" SortMemberPath="Element">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate DataType="vm:SkillDataViewModel">
+                                    <Grid RowDefinitions="20, Auto" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Image Source="{Binding Element, Converter={StaticResource ElementIconConverter}}" Height="20" />
+                                        <TextBlock Grid.Row="1" Text="{Binding ElementDisplay}" HorizontalAlignment="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Cat" Width="Auto" SortMemberPath="Category">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate DataType="vm:SkillDataViewModel">
+                                    <Image Source="{Binding Category, Converter={StaticResource SkillCategoryIconConverter}}" Height="20" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Pow" CellStyleClasses="center_column" Binding="{Binding BasePower}" Width="Auto" />
+                        <DataGridTextColumn Header="Acc" CellStyleClasses="center_column" Binding="{Binding Accuracy}" Width="Auto" />
+                        <DataGridTextColumn Header="PP" CellStyleClasses="center_column" Binding="{Binding BaseCharges}" Width="Auto" />
+                        <DataGridTextColumn Header="Range" CellStyleClasses="center_column"  Binding="{Binding RangeDescription}" Width="150" />
+                        <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="300" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+            
+            <!-- INTRINSIC -->
+            <Grid RowDefinitions="Auto, Auto, Auto" IsVisible="{Binding CurrentDataGridView, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:DataGridType.Intrinsic }}">
+                <Grid Grid.Row="0" RowDefinitions="Auto" Margin="0, 0, 0, 6">
+                    <CheckBox IsChecked="{Binding IncludeUnreleasedIntrinsics}">Include Unreleased</CheckBox>
+                </Grid>
+                <Border Grid.Row="1" Classes="header">
+                    <TextBlock Classes="header">Abilities</TextBlock>
+                </Border>
+                <DataGrid Grid.Row="2" Name="IntrinsicDataGrid"
+                  Items="{Binding FilteredIntrinsicData}"
+                  HorizontalScrollBarVisibility="Disabled"
+                  Margin="0" 
+                  RowHeight="50"
+                  SelectedItem="{Binding SelectedIntrinsic, Mode=TwoWay}"
+                  CellPointerPressed="IntrinsicDataGrid_OnCellPointerPressed"
+                  >
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Width="300" SortMemberPath="Name" Header="">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate DataType="vm:IntrinsicViewModel">
+                                    <Grid ColumnDefinitions="24, Auto">
+                                        <Image Source="{Binding MonsterLearns, Converter={StaticResource OXConverter}}" Stretch="None" Grid.Column="0"/>
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Grid.Column="1"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="600" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>
