@@ -66,7 +66,7 @@ namespace PMDC.Dev.ViewModels
         
         public int Accuracy
         {
-            get { return summary.Accuracy; }
+            get { return summary.HitRate; }
         }
 
         public string RangeDescription
