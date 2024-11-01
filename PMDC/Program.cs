@@ -441,6 +441,7 @@ namespace PMDC
                     //run conversions
                     using (GameBase game = new GameBase())
                     {
+                        GraphicsManager.SetWindowMode(1);
                         GraphicsManager.InitSystem(game.GraphicsDevice);
                         GraphicsManager.RunConversions(convertAssets);
                     }
@@ -451,6 +452,7 @@ namespace PMDC
                 {
                     using (GameBase game = new GameBase())
                     {
+                        GraphicsManager.SetWindowMode(1);
                         GraphicsManager.InitSystem(game.GraphicsDevice);
                         GraphicsManager.RebuildIndices(GraphicsManager.AssetType.All);
                     }
@@ -502,6 +504,7 @@ namespace PMDC
 
                     using (GameBase game = new GameBase())
                     {
+                        GraphicsManager.SetWindowMode(1);
                         GraphicsManager.InitSystem(game.GraphicsDevice);
                         GraphicsManager.RebuildIndices(GraphicsManager.AssetType.All);
                     }
