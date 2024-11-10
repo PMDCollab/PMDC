@@ -61,6 +61,11 @@ namespace PMDC.LevelGen
         /// </summary>
         public string SaveVar;
 
+        /// <summary>
+        /// The the status to compare to in order to allow the spawn to occur.
+        /// if it's set to true, it'll spawn only if the savevar is set to true
+        /// if it's set to false, it'll spawn only if the savevar is set to false
+        /// </summary>
         public bool Status;
 
         public MobCheckSaveVar()
