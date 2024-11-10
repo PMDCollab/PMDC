@@ -184,7 +184,7 @@ namespace PMDC.Dungeon
         {
             //delete the item from held items and inventory (just check all slots for the an item that matches and delete it)
             //later maybe make a more watertight way to check??
-            if (chara.EquippedItem.ID == fake.Item && chara.EquippedItem.HiddenValue == fake.Item)
+            if (chara.EquippedItem.ID == fake.Item && chara.EquippedItem.HiddenValue == fake.Species)
             {
                 chara.SilentDequipItem();
                 return;
