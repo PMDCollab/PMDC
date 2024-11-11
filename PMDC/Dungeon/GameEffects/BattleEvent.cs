@@ -223,7 +223,21 @@ namespace PMDC.Dungeon
                     if (context.User.MustHitNext || DataManager.Instance.Save.Rand.Next(0, 100) < acc)
                         hit = true;
                 }
-                context.User.MustHitNext = !hit;
+                if (hit)
+                {
+                    if (context.User == context.Target)
+                    {
+                        // Don't reset the miss chain if the target hit is the self
+                    }
+                    else if (context.ActionType == BattleActionType.Trap)
+                    {
+                        // Don't reset the miss chain if the action is a trap
+                    }
+                    else
+                        context.User.MissChain = 0;
+                }
+                else
+                    context.User.MissChain++;
 
                 if (hit)
                 {
