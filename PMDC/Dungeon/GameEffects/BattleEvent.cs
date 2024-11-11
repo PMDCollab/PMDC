@@ -8643,8 +8643,11 @@ namespace PMDC.Dungeon
                     countState.Count++;
                 if (context.User.CharStates.Contains<PoisonHealState>())
                 {
-                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_POISON_HEAL").ToLocal(), context.User.GetDisplayName(false)));
-                    yield return CoroutineManager.Instance.StartCoroutine(context.User.RestoreHP(Math.Max(1, context.User.MaxHP / RestoreHPFraction)));
+                    if (context.User.HP < context.User.MaxHP)
+                    {
+                        DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_POISON_HEAL").ToLocal(), context.User.GetDisplayName(false)));
+                        yield return CoroutineManager.Instance.StartCoroutine(context.User.RestoreHP(Math.Max(1, context.User.MaxHP / RestoreHPFraction), false));
+                    }
                 }
                 else
                 {
