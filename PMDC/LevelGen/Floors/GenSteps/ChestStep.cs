@@ -49,11 +49,6 @@ namespace PMDC.LevelGen
 
         public override void Apply(T map)
         {
-            Grid.LocTest checkBlock = (Loc testLoc) =>
-            {
-                return (map.TileBlocked(testLoc) || map.HasTileEffect(testLoc));
-            };
-
             //choose a room to put the chest in
             //do not choose a room that would cause disconnection of the floor
             List<int> possibleRooms = new List<int>();
