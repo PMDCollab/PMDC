@@ -14009,7 +14009,7 @@ namespace PMDC.Dungeon
     }
 
     /// <summary>
-    /// Event that removes its status from the user 
+    /// Event that removes its status from the user, automatically determining which ones they are
     /// This event can only be used on statuses
     /// </summary>
     [Serializable]
@@ -14033,7 +14033,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            yield return CoroutineManager.Instance.StartCoroutine(context.User.RemoveStatusEffect(((StatusEffect)owner).ID, ShowMessage));
+            yield return CoroutineManager.Instance.StartCoroutine(ownerChar.RemoveStatusEffect(((StatusEffect)owner).ID, ShowMessage));
         }
     }
     
