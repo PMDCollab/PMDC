@@ -76,9 +76,24 @@ namespace PMDC.Dungeon
         /// </summary>
         public bool RestrictMobilityPassable;
 
+        /// <summary>
+        /// The minimum range that an opponent must be in, before the AI will consider attacking moves.
+        /// </summary>
         public int AttackRange;
+
+        /// <summary>
+        /// The minimum range that an opponent must be in, before the AI will consider enemy-targeting status moves.
+        /// </summary>
         public int StatusRange;
+
+        /// <summary>
+        /// The minimum range that an opponent must be in, before the AI will consider self-targeting status moves.
+        /// </summary>
         public int SelfStatusRange;
+
+        /// <summary>
+        /// If attacked, will attack the opponents from any range regardless of their range limitation.
+        /// </summary>
         public bool AbandonRangeOnHit;
 
 

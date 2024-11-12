@@ -4,7 +4,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>PMDC</RootNamespace>
     <AssemblyName>PMDC</AssemblyName>
-    <AssemblyVersion>0.8.5</AssemblyVersion>
+    <AssemblyVersion>0.8.6</AssemblyVersion>
     <AssemblyCopyright>Audino 2024</AssemblyCopyright>
     <TargetFramework>net8.0</TargetFramework>
     <Deterministic>true</Deterministic>
@@ -50,7 +50,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <DocumentationFile>bin\x64\Debug\net5.0\PMDC.xml</DocumentationFile>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>bin\Debug\net8.0\PMDC.xml</DocumentationFile>
   </PropertyGroup>
 </Project>
