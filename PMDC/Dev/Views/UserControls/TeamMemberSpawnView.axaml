@@ -295,6 +295,8 @@
                         <DataGridTextColumn Header="SpD" CellStyleClasses="center_column" Binding="{Binding BaseMDef}" Width="Auto" />
                         <DataGridTextColumn Header="Spe" CellStyleClasses="center_column" Binding="{Binding BaseSpeed}" Width="Auto" />
                         <DataGridTextColumn Header="BST" CellStyleClasses="center_column" Binding="{Binding BaseTotal}" Width="Auto" />
+                        <DataGridTextColumn Header="EXP Yield" CellStyleClasses="center_column" Binding="{Binding ExpYield}" Width="Auto" />
+                        <DataGridTextColumn Header="Join Rate" CellStyleClasses="center_column" Binding="{Binding JoinRate}" Width="Auto" />
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>

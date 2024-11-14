@@ -463,13 +463,13 @@ namespace PMDC.Dev.ViewModels
         {
             BaseMonsterFormViewModel vm = monsterForms[index];
             
+            SetFormPossibleIntrinsics(vm.Key, vm.FormId);
+            updateIntrinsicData(_searchIntrinsicFilter);
             _applySearch = false;
             SelectedMonsterForm = vm;
             TeamSpawn.Spawn.BaseForm.Form = vm.FormId;
             TeamSpawn.Spawn.BaseForm.Species = vm.Key;
             SetFormPossibleSkills(vm.Key, vm.FormId);
-            SetFormPossibleIntrinsics(vm.Key, vm.FormId);
-            updateIntrinsicData(_searchIntrinsicFilter);
             SkillIndex = new List<int> { -1, -1, -1, -1 };
             TeamSpawn.Spawn.SpecifiedSkills = new List<string>();
             SearchSkill0Filter = "";
@@ -730,7 +730,7 @@ namespace PMDC.Dev.ViewModels
         private void InitializeTactics()
         {
             Tactics = new ObservableCollection<string>();
-            Dictionary<string, string> tacticNames = DataManager.Instance.DataIndices[DataManager.DataType.AI].GetLocalStringArray(true);
+            Dictionary<string, string> tacticNames = DataManager.Instance.DataIndices[DataManager.DataType.AI].GetLocalStringArray();
 
             tacticKeys = new List<string>();
 

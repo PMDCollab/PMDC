@@ -18,6 +18,8 @@ namespace PMDC.Dev.ViewModels
             
             this.key = key;
             this.formId = formId;
+            this.joinRate = data.JoinRate;
+            
             Index = index;
         }
         
@@ -122,6 +124,24 @@ namespace PMDC.Dev.ViewModels
             { 
                 return monsterForm.BaseHP + monsterForm.BaseAtk + monsterForm.BaseDef +
                      monsterForm.BaseMAtk +  monsterForm.BaseMDef +  monsterForm.BaseSpeed;
+            }
+        }
+
+        private int joinRate;
+
+        public int JoinRate
+        {
+            get
+            {
+                return joinRate;
+            }
+        }
+        
+        public int ExpYield
+        {
+            get
+            {
+                return monsterForm.ExpYield;
             }
         }
     }
