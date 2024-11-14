@@ -15174,6 +15174,8 @@ namespace PMDC.Dungeon
         {
             Character target = (AffectTarget ? context.Target : context.User);
             Character origin = (AffectTarget ? context.User : context.Target);
+            if (target.Dead || origin.Dead)
+                yield break;
 
             if (target.CharStates.Contains<AnchorState>())
                 yield break;
