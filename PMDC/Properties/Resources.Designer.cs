@@ -8,6 +8,9 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
+using System.IO;
+using Avalonia.Media.Imaging;
+
 namespace PMDC.Properties {
     using System;
     
@@ -60,14 +63,15 @@ namespace PMDC.Properties {
             }
         }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
-        /// </summary>
-        internal static System.Drawing.Icon Icon {
-            get {
-                object obj = ResourceManager.GetObject("Icon", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
-            }
-        }
+        // /// <summary>
+        // ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        // /// </summary>
+        // internal static System.Drawing.Icon Icon {
+        //     get {
+        //         object obj = ResourceManager.GetObject("Icon", resourceCulture);
+        //         return ((System.Drawing.Icon)(obj));
+        //     }
+        // }
+        
     }
 }
