@@ -300,6 +300,7 @@ namespace MapGenTest
         public static void MapMenu(string prevState, string zoneIndex, SegLoc floorIndex, ZoneSegmentBase structure)
         {
             ulong zoneSeed = MathUtils.Rand.NextUInt64();
+            int mapCount = 0;
             try
             {
                 ulong newSeed;
@@ -307,6 +308,12 @@ namespace MapGenTest
                     zoneSeed = newSeed;
 
                 Registry.SetValue(DiagManager.REG_PATH, "SeedChoice", zoneSeed.ToString());
+
+                int newMapCount;
+                if (Int32.TryParse(getRegValueOrDefault<string>("MapCountChoice", ""), out newMapCount))
+                    mapCount = newMapCount;
+
+                Registry.SetValue(DiagManager.REG_PATH, "MapCountChoice", newMapCount.ToString());
 
                 while (true)
                 {
@@ -320,7 +327,7 @@ namespace MapGenTest
                         GameProgress save = new MainProgress(MathUtils.Rand.NextUInt64(), Guid.NewGuid().ToString());
                         DataManager.Instance.SetProgress(save);
 
-                        ZoneGenContext newContext = CreateZoneGenContext(zoneSeed, zoneIndex, floorIndex, structure);
+                        ZoneGenContext newContext = CreateZoneGenContext(zoneSeed, zoneIndex, floorIndex, structure, mapCount);
 
                         IGenContext context = structure.GetMap(newContext);
 
@@ -353,6 +360,7 @@ namespace MapGenTest
                     if (key == ConsoleKey.Escape)
                     {
                         Registry.SetValue(DiagManager.REG_PATH, "SeedChoice", "");
+                        Registry.SetValue(DiagManager.REG_PATH, "MapCountChoice", "");
                         break;
                     }
                     else if (key == ConsoleKey.F2)
@@ -384,6 +392,11 @@ namespace MapGenTest
                         ulong customSeed;
                         if (UInt64.TryParse(input, out customSeed))
                             zoneSeed = customSeed;
+                        Console.WriteLine("Specify a n existing mapCount (default 0)");
+                        input = Console.ReadLine();
+                        int customMapCount;
+                        if (Int32.TryParse(input, out customMapCount))
+                            mapCount = customMapCount;
                     }
                     else if (key == ConsoleKey.F4)
                     {
@@ -395,6 +408,7 @@ namespace MapGenTest
                             zoneSeed = MathUtils.Rand.NextUInt64();
                     }
                     Registry.SetValue(DiagManager.REG_PATH, "SeedChoice", zoneSeed.ToString());
+                    Registry.SetValue(DiagManager.REG_PATH, "MapCountChoice", "");
                 }
             }
             catch (Exception ex)
@@ -402,6 +416,7 @@ namespace MapGenTest
                 System.Diagnostics.Debug.WriteLine("ERROR at F"+floorIndex.ID+" ZSEED:" + zoneSeed);
                 PrintError(ex);
                 Registry.SetValue(DiagManager.REG_PATH, "SeedChoice", "");
+                Registry.SetValue(DiagManager.REG_PATH, "MapCountChoice", "");
                 Console.ReadKey();
             }
         }
@@ -434,24 +449,24 @@ namespace MapGenTest
             return result;
         }
 
-        public static ZoneGenContext CreateZoneGenContext(ulong zoneSeed, string zoneIndex, SegLoc floorIndex, ZoneSegmentBase structure)
+        public static ZoneGenContext CreateZoneGenContext(ulong zoneSeed, string zoneIndex, SegLoc floorIndex, ZoneSegmentBase structure, int mapsLoaded)
         {
             ReNoise totalNoise = new ReNoise(zoneSeed);
             ulong[] doubleSeed = totalNoise.GetTwoUInt64((ulong)floorIndex.Segment);
             ZoneGenContext newContext = CreateZoneGenContextSegment(doubleSeed[0], zoneIndex, floorIndex.Segment, structure);
 
-            SetFloorSeed(newContext, doubleSeed[1], floorIndex);
+            SetFloorSeed(newContext, doubleSeed[1], floorIndex, mapsLoaded);
 
             return newContext;
         }
 
-        public static void SetFloorSeed(ZoneGenContext newContext, ulong noiseSeed, SegLoc floorIndex)
+        public static void SetFloorSeed(ZoneGenContext newContext, ulong noiseSeed, SegLoc floorIndex, int mapsLoaded)
         {
             INoise idNoise = new ReNoise(noiseSeed);
             newContext.CurrentID = floorIndex.ID;
             ulong finalSeed = (ulong)floorIndex.ID;
             finalSeed <<= 32;
-            finalSeed |= (ulong)0;//MapsLoaded;
+            finalSeed |= (ulong)mapsLoaded;
             newContext.Seed = idNoise.GetUInt64(finalSeed);
         }
 
@@ -521,7 +536,7 @@ namespace MapGenTest
 
                             try
                             {
-                                SetFloorSeed(zoneContext, doubleSeed[1], new SegLoc(nn, floorId));
+                                SetFloorSeed(zoneContext, doubleSeed[1], new SegLoc(nn, floorId), 0);
 
                                 TestFloor(watch, save, structure, zoneContext, null, null, null, null, generationTimes[key]);
                             }
@@ -572,7 +587,7 @@ namespace MapGenTest
 
                         try
                         {
-                            SetFloorSeed(zoneContext, doubleSeed[1], new SegLoc(nn, floorId));
+                            SetFloorSeed(zoneContext, doubleSeed[1], new SegLoc(nn, floorId), 0);
 
                             TestFloor(watch, save, structure, zoneContext, null, null, null, null, generationTimes[nn.ToString("D3")]);
                         }
@@ -627,7 +642,7 @@ namespace MapGenTest
                     int floor = floorId;
                     try
                     {
-                        SetFloorSeed(zoneContext, doubleSeed[1], new SegLoc(structureIndex, floorId));
+                        SetFloorSeed(zoneContext, doubleSeed[1], new SegLoc(structureIndex, floorId), 0);
 
                         TestFloor(watch, save, structure, zoneContext, generatedTerrain[floorId], generatedItems[floorId], generatedEnemies[floorId], generatedStats[floorId], generationTimes[floorId.ToString("D3")]);
                     }
@@ -689,7 +704,7 @@ namespace MapGenTest
                     zoneSeed = MathUtils.Rand.NextUInt64();
 
                     GameProgress save = new MainProgress(MathUtils.Rand.NextUInt64(), Guid.NewGuid().ToString());
-                    ZoneGenContext zoneContext = CreateZoneGenContext(zoneSeed, zoneIndex, floorIndex, structure);
+                    ZoneGenContext zoneContext = CreateZoneGenContext(zoneSeed, zoneIndex, floorIndex, structure, 0);
 
                     TestFloor(watch, save, structure, zoneContext, generatedTerrain, generatedItems, generatedEnemies, generatedStats, generationTimes);
                 }

@@ -457,9 +457,9 @@ namespace PMDC
                         GraphicsManager.RebuildIndices(GraphicsManager.AssetType.All);
                     }
 
+                    DataManager.InitInstance();
                     LuaEngine.InitInstance();
                     LuaEngine.Instance.LoadScripts();
-                    DataManager.InitInstance();
                     DataManager.Instance.LoadConversions();
                     RogueEssence.Dev.DevHelper.PrepareAssetConversion();
                     return;
@@ -511,9 +511,9 @@ namespace PMDC
 
                     //we need the datamanager for this, but only while data is hardcoded
                     //TODO: remove when data is no longer hardcoded
+                    DataManager.InitInstance();
                     LuaEngine.InitInstance();
                     LuaEngine.Instance.LoadScripts();
-                    DataManager.InitInstance();
                     DataManager.Instance.LoadConversions();
 
                     DataManager.InitDataDirs(PathMod.ModPath(""));
@@ -546,9 +546,9 @@ namespace PMDC
                 {
                     //we need the datamanager for this, but only while data is hardcoded
                     //TODO: remove when data is no longer hardcoded
+                    DataManager.InitInstance();
                     LuaEngine.InitInstance();
                     LuaEngine.Instance.LoadScripts();
-                    DataManager.InitInstance();
                     DiagManager.Instance.LogInfo("Reserializing indices");
                     DataManager.InitDataDirs(PathMod.ModPath(""));
                     RogueEssence.Dev.DevHelper.RunIndexing(convertIndices);
@@ -563,10 +563,10 @@ namespace PMDC
                 {
                     //print the guidebook in the chosen language
                     //we need the datamanager for this
-                    LuaEngine.InitInstance();
-                    LuaEngine.Instance.LoadScripts();
                     DataManager.InitInstance();
                     DataManager.Instance.InitData();
+                    LuaEngine.InitInstance();
+                    LuaEngine.Instance.LoadScripts();
                     //just print a guidebook and exit
                     StrategyGuide.PrintMoveGuide(guideCsv);
                     StrategyGuide.PrintItemGuide(guideCsv);
