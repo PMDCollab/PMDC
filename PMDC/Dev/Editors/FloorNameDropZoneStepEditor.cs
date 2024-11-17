@@ -23,7 +23,7 @@ namespace RogueEssence.Dev
         }
         public override string GetTypeString()
         {
-            return "Present Floor";
+            return "Show Floor Name";
         }
     }
 }
