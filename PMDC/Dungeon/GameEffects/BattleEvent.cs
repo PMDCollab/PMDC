@@ -17989,7 +17989,7 @@ namespace PMDC.Dungeon
             if (tile == null)
                 yield break;
 
-            if (tile.Data.GetData().BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(tile.Effect.ID))
+            if (((TerrainData)tile.Data.GetData()).BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(tile.Effect.ID))
             {
                 tile.Effect = new EffectTile(TrapID, true, tile.Effect.TileLoc);
                 tile.Effect.Owner = ZoneManager.Instance.CurrentMap.GetTileOwner(context.User);
@@ -18048,7 +18048,7 @@ namespace PMDC.Dungeon
             {
                 Loc endLoc = baseLoc + dir.GetLoc();
                 Tile tile = ZoneManager.Instance.CurrentMap.Tiles[endLoc.X][endLoc.Y];
-                if (tile.Data.GetData().BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(tile.Effect.ID))
+                if (((TerrainData)tile.Data.GetData()).BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(tile.Effect.ID))
                 {
                     tile.Effect = new EffectTile(TrapID, true, endLoc);
                     tile.Effect.Owner = ZoneManager.Instance.CurrentMap.GetTileOwner(context.Target);

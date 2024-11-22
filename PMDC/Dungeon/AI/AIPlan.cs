@@ -309,7 +309,7 @@ namespace PMDC.Dungeon
             //Check for restricted mobility types
             if (tile != null)
             {
-                TerrainData terrain = tile.Data.GetData();
+                TerrainData terrain = (TerrainData)tile.Data.GetData();
                 if ((terrain.BlockType & RestrictedMobilityTypes) != 0)
                 {
                     return true;

@@ -175,7 +175,7 @@ namespace PMDC.LevelGen
                         {
                             Loc loc = new Loc(xx, yy);
                             Tile tile = map.Tiles[xx][yy];
-                            TerrainData data = tile.Data.GetData();
+                            TerrainData data = (TerrainData)tile.Data.GetData();
                             if (data.BlockType == TerrainData.Mobility.Passable)
                                 ((IPlaceableGenContext<EffectTile>)map).PlaceItem(loc,  new EffectTile(mhtable.MonsterHouseWarningTile, true));
                         }
