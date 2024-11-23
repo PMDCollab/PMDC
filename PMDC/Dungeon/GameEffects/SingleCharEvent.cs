@@ -1334,7 +1334,7 @@ namespace PMDC.Dungeon
             if (tile == null)
                 yield break;
 
-            if (tile.Data.GetData().BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(tile.Effect.ID))
+            if (((TerrainData)tile.Data.GetData()).BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(tile.Effect.ID))
             {
                 tile.Effect = new EffectTile(TrapID, true, tile.Effect.TileLoc);
                 tile.Effect.Owner = ZoneManager.Instance.CurrentMap.GetTileOwner(context.User);
@@ -5557,7 +5557,7 @@ namespace PMDC.Dungeon
                 (Loc testLoc) =>
                 {
                     Tile testTile = ZoneManager.Instance.CurrentMap.GetTile(testLoc);
-                    if (testTile.Data.GetData().BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(testTile.Effect.ID))//hardcoded Walkable check
+                    if (((TerrainData)testTile.Data.GetData()).BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(testTile.Effect.ID))//hardcoded Walkable check
                     {
                         foreach (MapItem item in ZoneManager.Instance.CurrentMap.Items)
                         {
@@ -5661,7 +5661,7 @@ namespace PMDC.Dungeon
                 (Loc testLoc) =>
                 {
                     Tile testTile = ZoneManager.Instance.CurrentMap.GetTile(testLoc);
-                    if (testTile != null && !ZoneManager.Instance.CurrentMap.TileBlocked(testLoc) && testTile.Data.GetData().BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(testTile.Effect.ID))//hardcoded Walkable check
+                    if (testTile != null && !ZoneManager.Instance.CurrentMap.TileBlocked(testLoc) && ((TerrainData)testTile.Data.GetData()).BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(testTile.Effect.ID))//hardcoded Walkable check
                     {
                         foreach (MapItem item in ZoneManager.Instance.CurrentMap.Items)
                         {
@@ -5742,7 +5742,7 @@ namespace PMDC.Dungeon
                 (Loc testLoc) =>
                 {
                     Tile testTile = ZoneManager.Instance.CurrentMap.GetTile(testLoc);
-                    if (testTile != null && !ZoneManager.Instance.CurrentMap.TileBlocked(testLoc) && testTile.Data.GetData().BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(testTile.Effect.ID))//hardcoded Walkable check
+                    if (testTile != null && !ZoneManager.Instance.CurrentMap.TileBlocked(testLoc) && ((TerrainData)testTile.Data.GetData()).BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(testTile.Effect.ID))//hardcoded Walkable check
                     {
                         foreach (Character chara in ZoneManager.Instance.CurrentMap.ActiveTeam.EnumerateChars())
                         {
@@ -5860,7 +5860,7 @@ namespace PMDC.Dungeon
                 (Loc testLoc) =>
                 {
                     Tile testTile = ZoneManager.Instance.CurrentMap.GetTile(testLoc);
-                    if (testTile != null && !ZoneManager.Instance.CurrentMap.TileBlocked(testLoc) && testTile.Data.GetData().BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(testTile.Effect.ID))//hardcoded Walkable check
+                    if (testTile != null && !ZoneManager.Instance.CurrentMap.TileBlocked(testLoc) && ((TerrainData)testTile.Data.GetData()).BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(testTile.Effect.ID))//hardcoded Walkable check
                     {
                         foreach (MapItem item in ZoneManager.Instance.CurrentMap.Items)
                         {
@@ -5945,7 +5945,7 @@ namespace PMDC.Dungeon
                 (Loc testLoc) =>
                 {
                     Tile testTile = ZoneManager.Instance.CurrentMap.GetTile(testLoc);
-                    if (testTile != null && !ZoneManager.Instance.CurrentMap.TileBlocked(testLoc) && testTile.Data.GetData().BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(testTile.Effect.ID))//hardcoded Walkable check
+                    if (testTile != null && !ZoneManager.Instance.CurrentMap.TileBlocked(testLoc) && ((TerrainData)testTile.Data.GetData()).BlockType == TerrainData.Mobility.Passable && String.IsNullOrEmpty(testTile.Effect.ID))//hardcoded Walkable check
                     {
                         foreach (Character chara in ZoneManager.Instance.CurrentMap.ActiveTeam.EnumerateChars())
                         {

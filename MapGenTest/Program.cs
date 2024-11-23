@@ -58,9 +58,9 @@ namespace MapGenTest
             GraphicsManager.InitParams();
             Text.Init();
             Text.SetCultureCode("en");
+            DataManager.InitInstance();
             LuaEngine.InitInstance();
             LuaEngine.Instance.LoadScripts();
-            DataManager.InitInstance();
             DataManager.Instance.InitData();
 
             if (testExp)

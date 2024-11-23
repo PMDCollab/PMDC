@@ -156,7 +156,7 @@ namespace MapGenTest
                     Loc loc = new Loc(xx, yy);
                     char tileChar = ' ';
                     Tile tile = (Tile)context.GetTile(loc);
-                    TerrainData terrainData = tile.Data.GetData();
+                    TerrainData terrainData = (TerrainData)tile.Data.GetData();
                     if (terrainData.BlockType == TerrainData.Mobility.Passable)//floor
                     {
                         if (context.RoomTerrain.TileEquivalent(tile))
@@ -274,9 +274,9 @@ namespace MapGenTest
                     rewriteLine(farthestPrint, String.Format("X:{0}  Y:{1}", mapLoc.X.ToString("D3"), mapLoc.Y.ToString("D3")));
                     farthestPrint++;
                     Tile tile = context.Tiles[mapLoc.X][mapLoc.Y];
-                    rewriteLine(farthestPrint, String.Format("Terrain {0}: {1}", tile.Data.GetID(), !String.IsNullOrEmpty(tile.Data.GetID()) ? tile.Data.GetData().Name.ToLocal() : "---"));
+                    rewriteLine(farthestPrint, String.Format("Terrain {0}: {1}", tile.Data.GetID(), !String.IsNullOrEmpty(tile.Data.GetID()) ? ((TerrainData)tile.Data.GetData()).Name.ToLocal() : "---"));
                     farthestPrint++;
-                    rewriteLine(farthestPrint, String.Format("Tile {0}: {1}", tile.Effect.GetID(), !String.IsNullOrEmpty(tile.Effect.ID) ? tile.Effect.GetData().Name.ToLocal() : "---"));
+                    rewriteLine(farthestPrint, String.Format("Tile {0}: {1}", tile.Effect.GetID(), !String.IsNullOrEmpty(tile.Effect.ID) ? ((TileData)tile.Effect.GetData()).Name.ToLocal() : "---"));
                     farthestPrint++;
                     for(int ii = 0; ii < context.Map.EntryPoints.Count; ii++)
                     {

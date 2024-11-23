@@ -91,7 +91,8 @@ namespace PMDC.LevelGen
             //Prevents monster halls on tiles such as foliage that block light
             if (mhtable != null && mhtable.NoMonsterHallOnBlockLightTiles)
             {
-                if (map.Map.GetTile(originPoint) != null && map.Map.GetTile(originPoint).Data.GetData() != null && map.Map.GetTile(originPoint).Data.GetData().BlockLight)
+                Tile originTile = map.Map.GetTile(originPoint);
+                if (originTile != null && originTile.Data.GetData() != null && ((TerrainData)originTile.Data.GetData()).BlockLight)
                 {
                     return;
                 }
