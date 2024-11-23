@@ -276,7 +276,7 @@ namespace MapGenTest
                     Tile tile = context.Tiles[mapLoc.X][mapLoc.Y];
                     rewriteLine(farthestPrint, String.Format("Terrain {0}: {1}", tile.Data.GetID(), !String.IsNullOrEmpty(tile.Data.GetID()) ? ((TerrainData)tile.Data.GetData()).Name.ToLocal() : "---"));
                     farthestPrint++;
-                    rewriteLine(farthestPrint, String.Format("Tile {0}: {1}", tile.Effect.GetID(), !String.IsNullOrEmpty(tile.Effect.ID) ? ((TerrainData)tile.Effect.GetData()).Name.ToLocal() : "---"));
+                    rewriteLine(farthestPrint, String.Format("Tile {0}: {1}", tile.Effect.GetID(), !String.IsNullOrEmpty(tile.Effect.ID) ? ((TileData)tile.Effect.GetData()).Name.ToLocal() : "---"));
                     farthestPrint++;
                     for(int ii = 0; ii < context.Map.EntryPoints.Count; ii++)
                     {
