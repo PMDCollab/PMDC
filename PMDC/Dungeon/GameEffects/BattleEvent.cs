@@ -19615,63 +19615,63 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            yield return CoroutineManager.Instance.StartCoroutine(DungeonRecruit(owner, ownerChar, context, ActionScript));
+            yield return CoroutineManager.Instance.StartCoroutine(DungeonRecruit(owner, ownerChar, context.Target, ActionScript));
         }
 
-        public static IEnumerator<YieldInstruction> DungeonRecruit(GameEventOwner owner, Character ownerChar, BattleContext context, BattleScriptEvent actionScript)
+        public static IEnumerator<YieldInstruction> DungeonRecruit(GameEventOwner owner, Character ownerChar, Character targetChar, BattleScriptEvent actionScript)
         {
             GameManager.Instance.Fanfare("Fanfare/JoinTeam");
-            DungeonScene.Instance.RemoveChar(context.Target);
+            DungeonScene.Instance.RemoveChar(targetChar);
             AITactic tactic = DataManager.Instance.GetAITactic(DataManager.Instance.DefaultAI);
-            context.Target.Tactic = new AITactic(tactic);
-            DungeonScene.Instance.AddCharToTeam(Faction.Player, 0, false, context.Target);
-            context.Target.RefreshTraits();
-            context.Target.Tactic.Initialize(context.Target);
+            targetChar.Tactic = new AITactic(tactic);
+            DungeonScene.Instance.AddCharToTeam(Faction.Player, 0, false, targetChar);
+            targetChar.RefreshTraits();
+            targetChar.Tactic.Initialize(targetChar);
 
-            int oldFullness = context.Target.Fullness;
-            context.Target.FullRestore();
-            context.Target.Fullness = oldFullness;
+            int oldFullness = targetChar.Fullness;
+            targetChar.FullRestore();
+            targetChar.Fullness = oldFullness;
             //restore HP and status problems
             //{
-            //    context.Target.HP = context.Target.MaxHP;
+            //    targetChar.HP = targetChar.MaxHP;
 
             //    List<int> statuses = new List<int>();
-            //    foreach (StatusEffect oldStatus in context.Target.IterateStatusEffects())
+            //    foreach (StatusEffect oldStatus in targetChar.IterateStatusEffects())
             //        statuses.Add(oldStatus.ID);
 
             //    foreach (int statusID in statuses)
-            //        yield return CoroutineManager.Instance.StartCoroutine(context.Target.RemoveStatusEffect(statusID, false));
+            //        yield return CoroutineManager.Instance.StartCoroutine(targetChar.RemoveStatusEffect(statusID, false));
             //}
 
-            foreach (BackReference<Skill> skill in context.Target.Skills)
+            foreach (BackReference<Skill> skill in targetChar.Skills)
                 skill.Element.Enabled = DataManager.Instance.Save.GetDefaultEnable(skill.Element.SkillNum);
 
 
-            context.Target.OriginalUUID = DataManager.Instance.Save.UUID;
-            context.Target.OriginalTeam = DataManager.Instance.Save.ActiveTeam.Name;
-            context.Target.MetAt = ZoneManager.Instance.CurrentMap.GetColoredName();
-            context.Target.MetLoc = new ZoneLoc(ZoneManager.Instance.CurrentZoneID, ZoneManager.Instance.CurrentMapID);
-            context.Target.ActionEvents.Clear();
+            targetChar.OriginalUUID = DataManager.Instance.Save.UUID;
+            targetChar.OriginalTeam = DataManager.Instance.Save.ActiveTeam.Name;
+            targetChar.MetAt = ZoneManager.Instance.CurrentMap.GetColoredName();
+            targetChar.MetLoc = new ZoneLoc(ZoneManager.Instance.CurrentZoneID, ZoneManager.Instance.CurrentMapID);
+            targetChar.ActionEvents.Clear();
             if (actionScript != null)
-                context.Target.ActionEvents.Add((BattleEvent)actionScript.Clone());
-            ZoneManager.Instance.CurrentMap.UpdateExploration(context.Target);
+                targetChar.ActionEvents.Add((BattleEvent)actionScript.Clone());
+            ZoneManager.Instance.CurrentMap.UpdateExploration(targetChar);
 
             EmoteData emoteData = DataManager.Instance.GetEmote("glowing");
-            context.Target.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 2));
+            targetChar.StartEmote(new Emote(emoteData.Anim, emoteData.LocHeight, 2));
             yield return new WaitForFrames(40);
 
             int poseId = 50;
-            CharSheet sheet = GraphicsManager.GetChara(context.Target.Appearance.ToCharID());
+            CharSheet sheet = GraphicsManager.GetChara(targetChar.Appearance.ToCharID());
             int fallbackIndex = sheet.GetReferencedAnimIndex(poseId);
             if (fallbackIndex == poseId)
-                yield return CoroutineManager.Instance.StartCoroutine(context.Target.StartAnim(new CharAnimPose(context.Target.CharLoc, context.Target.CharDir, poseId, 0)));
+                yield return CoroutineManager.Instance.StartCoroutine(targetChar.StartAnim(new CharAnimPose(targetChar.CharLoc, targetChar.CharDir, poseId, 0)));
 
             //check against inventory capacity violation
-            if (!String.IsNullOrEmpty(context.Target.EquippedItem.ID) && DungeonScene.Instance.ActiveTeam.MaxInv == DungeonScene.Instance.ActiveTeam.GetInvCount())
+            if (!String.IsNullOrEmpty(targetChar.EquippedItem.ID) && DungeonScene.Instance.ActiveTeam.MaxInv == DungeonScene.Instance.ActiveTeam.GetInvCount())
             {
-                InvItem item = context.Target.EquippedItem;
-                yield return CoroutineManager.Instance.StartCoroutine(context.Target.DequipItem());
-                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(item, context.Target.CharLoc));
+                InvItem item = targetChar.EquippedItem;
+                yield return CoroutineManager.Instance.StartCoroutine(targetChar.DequipItem());
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropItem(item, targetChar.CharLoc));
             }
 
             if (DataManager.Instance.CurrentReplay == null)
@@ -19686,27 +19686,27 @@ namespace PMDC.Dungeon
                 if (nick)
                     yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(new NicknameMenu((string text) => { name = text; }, () => { })));
                 DataManager.Instance.LogUIStringPlay(name);
-                context.Target.Nickname = name;
+                targetChar.Nickname = name;
             }
             else
             {
                 //give nickname
-                context.Target.Nickname = DataManager.Instance.CurrentReplay.ReadUIString();
+                targetChar.Nickname = DataManager.Instance.CurrentReplay.ReadUIString();
             }
             if (DungeonScene.Instance.ActiveTeam.Name != "")
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_RECRUIT").ToLocal(), context.Target.GetDisplayName(true), DungeonScene.Instance.ActiveTeam.GetDisplayName()));
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_RECRUIT").ToLocal(), targetChar.GetDisplayName(true), DungeonScene.Instance.ActiveTeam.GetDisplayName()));
             else
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_RECRUIT_ANY").ToLocal(), context.Target.GetDisplayName(true)));
-            DataManager.Instance.Save.RegisterMonster(context.Target.BaseForm.Species);
-            DataManager.Instance.Save.RogueUnlockMonster(context.Target.BaseForm.Species);
-            yield return CoroutineManager.Instance.StartCoroutine(context.Target.OnMapStart());
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_RECRUIT_ANY").ToLocal(), targetChar.GetDisplayName(true)));
+            DataManager.Instance.Save.RegisterMonster(targetChar.BaseForm.Species);
+            DataManager.Instance.Save.RogueUnlockMonster(targetChar.BaseForm.Species);
+            yield return CoroutineManager.Instance.StartCoroutine(targetChar.OnMapStart());
 
             //yield return new WaitForFrames(120);
 
             if (DungeonScene.Instance.ActiveTeam.Players.Count > DungeonScene.Instance.ActiveTeam.GetMaxTeam(ZoneManager.Instance.CurrentZone))
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AskToSendHome());
 
-            yield return CoroutineManager.Instance.StartCoroutine(context.Target.StartAnim(new CharAnimIdle(context.Target.CharLoc, context.Target.CharDir)));
+            yield return CoroutineManager.Instance.StartCoroutine(targetChar.StartAnim(new CharAnimIdle(targetChar.CharLoc, targetChar.CharDir)));
         }
     }
 
