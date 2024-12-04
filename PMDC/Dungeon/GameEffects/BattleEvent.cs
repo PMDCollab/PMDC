@@ -19615,6 +19615,11 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
+            yield return CoroutineManager.Instance.StartCoroutine(DungeonRecruit(owner, ownerChar, context, ActionScript));
+        }
+
+        public static IEnumerator<YieldInstruction> DungeonRecruit(GameEventOwner owner, Character ownerChar, BattleContext context, BattleScriptEvent actionScript)
+        {
             GameManager.Instance.Fanfare("Fanfare/JoinTeam");
             DungeonScene.Instance.RemoveChar(context.Target);
             AITactic tactic = DataManager.Instance.GetAITactic(DataManager.Instance.DefaultAI);
@@ -19647,8 +19652,8 @@ namespace PMDC.Dungeon
             context.Target.MetAt = ZoneManager.Instance.CurrentMap.GetColoredName();
             context.Target.MetLoc = new ZoneLoc(ZoneManager.Instance.CurrentZoneID, ZoneManager.Instance.CurrentMapID);
             context.Target.ActionEvents.Clear();
-            if (ActionScript != null)
-                context.Target.ActionEvents.Add((BattleEvent)ActionScript.Clone());
+            if (actionScript != null)
+                context.Target.ActionEvents.Add((BattleEvent)actionScript.Clone());
             ZoneManager.Instance.CurrentMap.UpdateExploration(context.Target);
 
             EmoteData emoteData = DataManager.Instance.GetEmote("glowing");
@@ -19702,7 +19707,6 @@ namespace PMDC.Dungeon
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AskToSendHome());
 
             yield return CoroutineManager.Instance.StartCoroutine(context.Target.StartAnim(new CharAnimIdle(context.Target.CharLoc, context.Target.CharDir)));
-
         }
     }
 
