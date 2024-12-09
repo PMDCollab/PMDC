@@ -22,28 +22,27 @@ namespace PMDC.Dungeon
 
         public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
-            if (controlledChar.HP * Factor < controlledChar.MaxHP)
-            {
-                List<Character> seenCharacters = controlledChar.GetSeenCharacters(Alignment.Foe);
-                if (seenCharacters.Count == 0)
-                    return null;
+            if (controlledChar.HP * Factor >= controlledChar.MaxHP)
+                return null;
 
-                if (!controlledChar.CantInteract)//TODO: CantInteract doesn't always indicate forced attack, but this'll do for now.
+
+            List<Character> seenCharacters = controlledChar.GetSeenCharacters(Alignment.Foe);
+            if (seenCharacters.Count == 0)
+                return null;
+
+            if (!controlledChar.CantInteract)//TODO: CantInteract doesn't always indicate forced attack, but this'll do for now.
+            {
+                for (int ii = 0; ii < controlledChar.Skills.Count; ii++)
                 {
-                    for (int ii = 0; ii < controlledChar.Skills.Count; ii++)
+                    if (!String.IsNullOrEmpty(controlledChar.Skills[ii].Element.SkillNum) && controlledChar.Skills[ii].Element.Charges > 0 && !controlledChar.Skills[ii].Element.Sealed && controlledChar.Skills[ii].Element.Enabled)
                     {
-                        if (!String.IsNullOrEmpty(controlledChar.Skills[ii].Element.SkillNum) && controlledChar.Skills[ii].Element.Charges > 0 && !controlledChar.Skills[ii].Element.Sealed && controlledChar.Skills[ii].Element.Enabled)
-                        {
-                            if (controlledChar.Skills[ii].Element.SkillNum == "teleport")//Teleport; NOTE: specialized AI code!
-                                return new GameAction(GameAction.ActionType.UseSkill, Dir8.None, ii);
-                        }
+                        if (controlledChar.Skills[ii].Element.SkillNum == "teleport")//Teleport; NOTE: specialized AI code!
+                            return new GameAction(GameAction.ActionType.UseSkill, Dir8.None, ii);
                     }
                 }
-
-                return base.Think(controlledChar, preThink, rand);
             }
 
-            return null;
+            return base.Think(controlledChar, preThink, rand);
         }
     }
 }

@@ -443,7 +443,7 @@ namespace PMDC.Dungeon
         /// <param name="start"></param>
         /// <param name="ends"></param>
         /// <returns></returns>
-        private Loc[] getWrappedEnds(Loc start, Loc[] ends)
+        protected Loc[] getWrappedEnds(Loc start, Loc[] ends)
         {
             if (ZoneManager.Instance.CurrentMap.EdgeView != Map.ScrollEdge.Wrap)
                 return ends;
@@ -475,6 +475,7 @@ namespace PMDC.Dungeon
         /// <param name="ends"></param>
         /// <param name="freeGoal">Determines whether the goal should be reachable even if blocked.</param>
         /// <param name="respectPeers">Considers entities as blockers</param>
+        /// <param name="limit">Max number of paths to find</param>
         /// <returns></returns>
         protected List<Loc>[] GetPaths(Character controlledChar, Loc[] ends, bool freeGoal, bool respectPeers, int limit = 1)
         {
