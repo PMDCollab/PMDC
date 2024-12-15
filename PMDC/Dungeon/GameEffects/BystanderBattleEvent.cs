@@ -31,7 +31,7 @@ namespace PMDC.Dungeon
         {
             if (context.Data.Category == BattleData.SkillCategory.Magical
                 && context.User.HasIntrinsic(SupportAbility))
-                context.AddContextStateMult<DmgMult>(false,4, 3);
+                context.AddContextStateMult<DmgMult>(false, 4, 3);
             yield break;
         }
     }
