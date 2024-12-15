@@ -16,6 +16,11 @@ namespace PMDC.LevelGen
         public List<BaseRoomFilter> Filters { get; set; }
 
         /// <summary>
+        /// Allows halls as spawn.
+        /// </summary>
+        public bool IncludeHalls { get; set; }
+
+        /// <summary>
         /// Allows terminal rooms as spawn.
         /// </summary>
         public bool AllowTerminal { get; set; }
@@ -39,7 +44,7 @@ namespace PMDC.LevelGen
                 return;
 
 
-            List<int> openRooms = new List<int>();
+            List<RoomHallIndex> openRooms = new List<RoomHallIndex>();
             //get all places that traps are eligible
             for (int ii = 0; ii < map.RoomPlan.RoomCount; ii++)
             {
@@ -47,7 +52,18 @@ namespace PMDC.LevelGen
                     continue;
                 if (!this.AllowTerminal && map.RoomPlan.GetAdjacents(new RoomHallIndex(ii, false)).Count <= 1)
                     continue;
-                openRooms.Add(ii);
+                openRooms.Add(new RoomHallIndex(ii, false));
+            }
+
+
+            if (this.IncludeHalls)
+            {
+                for (int ii = 0; ii < map.RoomPlan.HallCount; ii++)
+                {
+                    if (!BaseRoomFilter.PassesAllFilters(map.RoomPlan.GetHallPlan(ii), this.Filters))
+                        continue;
+                    openRooms.Add(new RoomHallIndex(ii, true));
+                }
             }
 
             Dictionary<string, Map> mapCache = new Dictionary<string, Map>();
@@ -58,7 +74,7 @@ namespace PMDC.LevelGen
                 if (openRooms.Count > 0)
                 {
                     int randIndex = map.Rand.Next(openRooms.Count);
-                    FloorRoomPlan plan = map.RoomPlan.GetRoomPlan(openRooms[randIndex]);
+                    IRoomGen room = map.RoomPlan.GetRoomHall(openRooms[randIndex]).RoomGen;
                     PatternPlan chosenPattern = Maps.Pick(map.Rand);
 
                     Map placeMap;
@@ -68,6 +84,7 @@ namespace PMDC.LevelGen
                         mapCache[chosenPattern.MapID] = placeMap;
                     }
 
+                    // TODO: instead of transpose, just flipV and flipH with 50% for each?
                     bool transpose = (map.Rand.Next(2) == 0);
                     Loc size = placeMap.Size;
                     if (transpose)
@@ -95,11 +112,11 @@ namespace PMDC.LevelGen
                         case PatternPlan.PatternExtend.Single:
                             {
                                 //center the placeMap on the room, and add the locs that intersect
-                                Loc offset = plan.RoomGen.Draw.Center - size / 2;
+                                Loc offset = room.Draw.Center - size / 2;
                                 Rect centerRect = new Rect(offset, size);
-                                for (int xx = plan.RoomGen.Draw.X; xx < plan.RoomGen.Draw.End.X; xx++)
+                                for (int xx = room.Draw.X; xx < room.Draw.End.X; xx++)
                                 {
-                                    for (int yy = plan.RoomGen.Draw.Y; yy < plan.RoomGen.Draw.End.Y; yy++)
+                                    for (int yy = room.Draw.Y; yy < room.Draw.End.Y; yy++)
                                     {
                                         Loc destLoc = new Loc(xx, yy);
                                         if (Collision.InBounds(centerRect, destLoc))
@@ -116,11 +133,11 @@ namespace PMDC.LevelGen
                             {
                                 //center the placeMap on the room, and add the locs that intersect
                                 //if there is more room, extend the tiles outward
-                                Loc offset = plan.RoomGen.Draw.Center - size / 2;
+                                Loc offset = room.Draw.Center - size / 2;
                                 Rect centerRect = new Rect(offset, size);
-                                for (int xx = plan.RoomGen.Draw.X; xx < plan.RoomGen.Draw.End.X; xx++)
+                                for (int xx = room.Draw.X; xx < room.Draw.End.X; xx++)
                                 {
-                                    for (int yy = plan.RoomGen.Draw.Y; yy < plan.RoomGen.Draw.End.Y; yy++)
+                                    for (int yy = room.Draw.Y; yy < room.Draw.End.Y; yy++)
                                     {
                                         Loc destLoc = new Loc(xx, yy);
                                         bool accept = false;
@@ -162,11 +179,11 @@ namespace PMDC.LevelGen
                             {
                                 //tile the pattern horizontally, with centering
                                 //or vertically, if transposed
-                                Loc offset = plan.RoomGen.Draw.Center - size / 2;
+                                Loc offset = room.Draw.Center - size / 2;
                                 Rect centerRect = new Rect(offset, size);
-                                for (int xx = plan.RoomGen.Draw.X; xx < plan.RoomGen.Draw.End.X; xx++)
+                                for (int xx = room.Draw.X; xx < room.Draw.End.X; xx++)
                                 {
-                                    for (int yy = plan.RoomGen.Draw.Y; yy < plan.RoomGen.Draw.End.Y; yy++)
+                                    for (int yy = room.Draw.Y; yy < room.Draw.End.Y; yy++)
                                     {
                                         Loc destLoc = new Loc(xx, yy);
                                         bool accept = false;
@@ -188,11 +205,11 @@ namespace PMDC.LevelGen
                         case PatternPlan.PatternExtend.Repeat2D:
                             {
                                 //tile the pattern on the entire room
-                                Loc offset = plan.RoomGen.Draw.Center - size / 2;
+                                Loc offset = room.Draw.Center - size / 2;
                                 Rect centerRect = new Rect(offset, size);
-                                for (int xx = plan.RoomGen.Draw.X; xx < plan.RoomGen.Draw.End.X; xx++)
+                                for (int xx = room.Draw.X; xx < room.Draw.End.X; xx++)
                                 {
-                                    for (int yy = plan.RoomGen.Draw.Y; yy < plan.RoomGen.Draw.End.Y; yy++)
+                                    for (int yy = room.Draw.Y; yy < room.Draw.End.Y; yy++)
                                     {
                                         Loc destLoc = new Loc(xx, yy);
                                         Loc srcLoc = Loc.Wrap(destLoc - centerRect.Start, centerRect.Size);
