@@ -238,7 +238,7 @@ namespace PMDC.Dungeon
                     path.RemoveAt(0);
 
                 GameAction attack = null;
-                if (path.Count > 3)//if it takes more than 2 steps to get into position (list includes the loc for start position, for a total of 3), try a local attack
+                if (path.Count <= 1 || path.Count > 3)//if it takes more than 2 steps to get into position (list includes the loc for start position, for a total of 3), try a local attack
                 {
                     if (ZoneManager.Instance.CurrentMap.InRange(targetChar.CharLoc, controlledChar.CharLoc, 1))
                     {
