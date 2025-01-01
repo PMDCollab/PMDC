@@ -3046,119 +3046,161 @@ namespace PMDC.Dungeon
 
 
     [Serializable]
-    public class PickupEvent : SingleCharEvent
+    public abstract class GainItemEvent : SingleCharEvent
     {
         public int Chance;
         public List<AnimEvent> Anims;
 
-        public PickupEvent()
+        public GainItemEvent()
         {
             Anims = new List<AnimEvent>();
         }
-        public PickupEvent(int chance, params AnimEvent[] anims)
+        public GainItemEvent(int chance, params AnimEvent[] anims)
         {
             Chance = chance;
             Anims = new List<AnimEvent>();
             Anims.AddRange(anims);
         }
-        protected PickupEvent(PickupEvent other)
+        protected GainItemEvent(GainItemEvent other)
         {
             Anims = new List<AnimEvent>();
             Chance = other.Chance;
             foreach (AnimEvent anim in other.Anims)
                 Anims.Add((AnimEvent)anim.Clone());
         }
-        public override GameEvent Clone() { return new PickupEvent(this); }
+
+        protected abstract bool canObtain(InvItem invItem, Character target);
+        protected abstract InvItem getGatherItem();
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
-            //do not activate if already holding an item
-            if (!String.IsNullOrEmpty(context.User.EquippedItem.ID))
-                yield break;
-
-            //do not activate if inv is full
-            if (context.User.MemberTeam is ExplorerTeam)
-            {
-                if (((ExplorerTeam)context.User.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone) <= context.User.MemberTeam.GetInvCount())
-                    yield break;
-            }
-
-            if (ZoneManager.Instance.CurrentMap.MapTurns == 0 && ZoneManager.Instance.CurrentMap.ItemSpawns.Spawns.CanPick && DataManager.Instance.Save.Rand.Next(100) < Chance)
-            {
-                InvItem item = ZoneManager.Instance.CurrentMap.ItemSpawns.Pick(DataManager.Instance.Save.Rand);
-
-                //Actually, we'll just let you pickup an autocurse item and get stuck
-                //ItemData entry = DataManager.Instance.GetItem(item.ID);
-                //if (!entry.Cursed)
-                //{
-                //item.Cursed = false;
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_PICKUP").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName()), false, false, context.User, null);
-
-                foreach (AnimEvent anim in Anims)
-                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
-
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.EquipItem(item));
-                //}
-            }
-
-        }
-    }
-
-    [Serializable]
-    public class GatherEvent : SingleCharEvent
-    {
-        [DataType(1, DataManager.DataType.Item, false)]
-        public List<string> GatherItems;
-        public int Chance;
-        public List<AnimEvent> Anims;
-
-        public GatherEvent()
-        {
-            Anims = new List<AnimEvent>();
-            GatherItems = new List<string>();
-        }
-        public GatherEvent(List<string> gatherItem, int chance, params AnimEvent[] anims)
-        {
-            GatherItems = gatherItem;
-            Chance = chance;
-            Anims = new List<AnimEvent>();
-            Anims.AddRange(anims);
-        }
-        protected GatherEvent(GatherEvent other)
-        {
-            Anims = new List<AnimEvent>();
-            Chance = other.Chance;
-            foreach (AnimEvent anim in other.Anims)
-                Anims.Add((AnimEvent)anim.Clone());
-            GatherItems = new List<string>();
-            GatherItems.AddRange(other.GatherItems);
-        }
-        public override GameEvent Clone() { return new GatherEvent(this); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
-        {
-            //do not activate if already holding an item
-            if (!String.IsNullOrEmpty(context.User.EquippedItem.ID))
-                yield break;
-
-            //do not activate if inv is full
-            if (context.User.MemberTeam is ExplorerTeam)
-            {
-                if (((ExplorerTeam)context.User.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone) <= context.User.MemberTeam.GetInvCount())
-                    yield break;
-            }
-
             if (ZoneManager.Instance.CurrentMap.MapTurns == 0 && DataManager.Instance.Save.Rand.Next(100) < Chance)
             {
-                string gatherItem = GatherItems[DataManager.Instance.Save.Rand.Next(GatherItems.Count)];
-                InvItem invItem = new InvItem(gatherItem);
+                InvItem invItem = getGatherItem();
+
+                if (!canObtain(invItem, context.User))
+                    yield break;
+
+                ItemData item = DataManager.Instance.GetItem(invItem.ID);
+
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_PICKUP").ToLocal(), context.User.GetDisplayName(false), invItem.GetDisplayName()), false, false, context.User, null);
 
                 foreach (AnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
 
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.EquipItem(invItem));
+                if (!String.IsNullOrEmpty(context.User.EquippedItem.ID)) // the only way this block can be reached is if the inv item was stackable and the same as the held item
+                    context.User.EquippedItem.Amount = Math.Min(context.User.EquippedItem.Amount + invItem.Amount, item.MaxStack);
+                else
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.EquipItem(invItem));
             }
+        }
+    }
+
+
+
+    [Serializable]
+    public class PickupEvent : GainItemEvent
+    {
+        public PickupEvent()
+        {
+            Anims = new List<AnimEvent>();
+        }
+        public PickupEvent(int chance, params AnimEvent[] anims) : base(chance, anims)
+        {
+
+        }
+        protected PickupEvent(PickupEvent other) : base(other)
+        {
+        }
+
+        public override GameEvent Clone() { return new PickupEvent(this); }
+
+        protected override bool canObtain(InvItem invItem, Character target)
+        {
+            if (invItem == null)
+                return false;
+
+            //do not activate if already holding an item
+            if (!String.IsNullOrEmpty(target.EquippedItem.ID))
+                return false;
+
+            //do not activate if inv is full
+            if (target.MemberTeam is ExplorerTeam)
+            {
+                if (((ExplorerTeam)target.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone) <= target.MemberTeam.GetInvCount())
+                    return false;
+            }
+            return true;
+        }
+
+        protected override InvItem getGatherItem()
+        {
+            if (!ZoneManager.Instance.CurrentMap.ItemSpawns.CanPick)
+                return null;
+
+            InvItem invItem = ZoneManager.Instance.CurrentMap.ItemSpawns.Pick(DataManager.Instance.Save.Rand);
+
+            return invItem;
+        }
+    }
+
+    [Serializable]
+    public class GatherEvent : GainItemEvent
+    {
+        [DataType(1, DataManager.DataType.Item, false)]
+        public List<string> GatherItems;
+
+        public GatherEvent()
+        {
+            GatherItems = new List<string>();
+        }
+        public GatherEvent(List<string> gatherItem, int chance, params AnimEvent[] anims) : base(chance, anims)
+        {
+            GatherItems = gatherItem;
+        }
+        protected GatherEvent(GatherEvent other) : base(other)
+        {
+            GatherItems = new List<string>();
+            GatherItems.AddRange(other.GatherItems);
+        }
+        public override GameEvent Clone() { return new GatherEvent(this); }
+
+
+        protected override bool canObtain(InvItem invItem, Character target)
+        {
+            if (invItem == null)
+                return false;
+
+            //do not activate if already holding an item
+            if (!String.IsNullOrEmpty(target.EquippedItem.ID))
+            {
+                ItemData item = DataManager.Instance.GetItem(invItem.ID);
+
+                if (invItem.ID == target.EquippedItem.ID && item.MaxStack > 1 && target.EquippedItem.Amount < item.MaxStack)
+                    return true;
+                else
+                    return false;
+            }
+
+            //do not activate if inv is full
+            if (target.MemberTeam is ExplorerTeam)
+            {
+                if (((ExplorerTeam)target.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone) <= target.MemberTeam.GetInvCount())
+                    return false;
+            }
+            return true;
+        }
+
+        protected override InvItem getGatherItem()
+        {
+            string gatherItem = GatherItems[DataManager.Instance.Save.Rand.Next(GatherItems.Count)];
+            ItemData item = DataManager.Instance.GetItem(gatherItem);
+
+            InvItem invItem = new InvItem(gatherItem);
+            if (item.MaxStack > 1)
+                invItem.Amount = 1;
+
+            return invItem;
         }
     }
 
