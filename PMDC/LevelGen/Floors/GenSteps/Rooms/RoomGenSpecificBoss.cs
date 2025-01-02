@@ -112,5 +112,10 @@ namespace PMDC.LevelGen
             ((IPlaceableGenContext<EffectTile>)map).PlaceItem(Trigger + this.Draw.Start, newEffect);
             map.GetPostProc(Trigger + this.Draw.Start).Status |= (PostProcType.Panel | PostProcType.Item | PostProcType.Terrain);
         }
+
+        public void Dump(string name)
+        {
+
+        }
     }
 }

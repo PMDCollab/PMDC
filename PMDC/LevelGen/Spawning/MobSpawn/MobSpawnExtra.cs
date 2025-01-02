@@ -633,6 +633,11 @@ namespace PMDC.LevelGen
         public int StartFromID;
 
         /// <summary>
+        /// The level to start scaling at.
+        /// </summary>
+        public int MinLevel;
+
+        /// <summary>
         /// The numerator for the fractional level to add per floor.
         /// </summary>
         public int AddNumerator;
@@ -651,8 +656,9 @@ namespace PMDC.LevelGen
         {
 
         }
-        public MobSpawnLevelScale(int numerator, int denominator, bool rerollSkills) : this()
+        public MobSpawnLevelScale(int minLevel, int numerator, int denominator, bool rerollSkills) : this()
         {
+            MinLevel = minLevel;
             AddNumerator = numerator;
             AddDenominator = denominator;
             RerollSkills = rerollSkills;
@@ -660,6 +666,7 @@ namespace PMDC.LevelGen
 
         public MobSpawnLevelScale(MobSpawnLevelScale other) : this()
         {
+            MinLevel = other.MinLevel;
             StartFromID = other.StartFromID;
             AddNumerator = other.AddNumerator;
             AddDenominator = other.AddDenominator;
@@ -669,7 +676,7 @@ namespace PMDC.LevelGen
 
         public override void ApplyFeature(IMobSpawnMap map, Character newChar)
         {
-            newChar.Level += (map.ID-StartFromID) * AddNumerator / AddDenominator;
+            newChar.Level = MinLevel + (map.ID-StartFromID) * AddNumerator / AddDenominator;
             newChar.HP = newChar.MaxHP;
 
             if (RerollSkills)
