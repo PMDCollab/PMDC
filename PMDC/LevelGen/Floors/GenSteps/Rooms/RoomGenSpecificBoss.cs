@@ -115,7 +115,90 @@ namespace PMDC.LevelGen
 
         public void Dump(string name)
         {
+            Map map = new Map();
 
+            int width = this.Tiles.Length;
+            int height = this.Tiles[0].Length;
+            map.CreateNew(width, height);
+            map.Music = Song;
+
+            for (int xx = 0; xx < width; xx++)
+            {
+                for (int yy = 0; yy < height; yy++)
+                {
+                    map.Tiles[xx][yy] = (Tile)this.Tiles[xx][yy];
+                }
+            }
+            map.EntryPoints.Add(new LocRay8(Trigger, Dir8.Up));
+
+
+            MonsterTeam team = new MonsterTeam();
+            foreach(MobSpawn spawn in Bosses)
+            {
+                MonsterID formData = spawn.BaseForm;
+                MonsterData dex = DataManager.Instance.GetMonster(formData.Species);
+                if (formData.Form == -1)
+                {
+                    int form = map.Rand.Next(dex.Forms.Count);
+                    formData.Form = form;
+                }
+
+                BaseMonsterForm formEntry = dex.Forms[formData.Form];
+
+                if (formData.Gender == Gender.Unknown)
+                    formData.Gender = formEntry.RollGender(map.Rand);
+
+                if (String.IsNullOrEmpty(formData.Skin))
+                    formData.Skin = formEntry.RollSkin(map.Rand);
+
+                CharData character = new CharData();
+                character.BaseForm = formData;
+                character.Level = spawn.Level.Pick(map.Rand);
+
+                List<string> final_skills = formEntry.RollLatestSkills(character.Level, spawn.SpecifiedSkills);
+                for (int ii = 0; ii < final_skills.Count; ii++)
+                    character.BaseSkills[ii] = new SlotSkill(final_skills[ii]);
+
+                if (String.IsNullOrEmpty(spawn.Intrinsic))
+                    character.SetBaseIntrinsic(formEntry.RollIntrinsic(map.Rand, 2));
+                else
+                    character.SetBaseIntrinsic(spawn.Intrinsic);
+                Character newMob = new Character(character);
+                team.Players.Add(newMob);
+                AITactic tactic = DataManager.Instance.GetAITactic(spawn.Tactic);
+                newMob.Tactic = new AITactic(tactic);
+
+                MobSpawnLoc setLoc = null;
+                foreach (MobSpawnExtra extra in spawn.SpawnFeatures)
+                {
+                    MobSpawnLoc extraLoc = extra as MobSpawnLoc;
+                    if (extraLoc != null)
+                    {
+                        setLoc = extraLoc;
+                        break;
+                    }
+                }
+
+                newMob.CharLoc = setLoc.Loc;
+                newMob.CharDir = setLoc.Dir;
+            }
+            map.MapTeams.Add(team);
+
+            string groundTileset = "test_dungeon_floor";
+            string blockTileset = "test_dungeon_wall";
+            string waterTileset = "test_dungeon_secondary";
+
+            map.TextureMap[DataManager.Instance.GenFloor] = new AutoTile(groundTileset);
+            map.TextureMap[DataManager.Instance.GenWall] = new AutoTile(blockTileset);
+            map.TextureMap[DataManager.Instance.GenUnbreakable] = new AutoTile(blockTileset);
+            map.TextureMap["water"] = new AutoTile(waterTileset, groundTileset);
+            map.TextureMap["lava"] = new AutoTile(waterTileset, groundTileset);
+            map.TextureMap["pit"] = new AutoTile(waterTileset, groundTileset);
+
+            map.CalculateTerrainAutotiles(Loc.Zero, new Loc(map.Width, map.Height));
+
+
+            DataManager.SaveData(map, DataManager.MAP_PATH, name, DataManager.MAP_EXT);
         }
     }
 }

@@ -83,25 +83,16 @@ namespace PMDC.LevelGen
 
             DrawItems(map);
 
-            //then, for mobs, put them in wherever the activation tile is
-            Loc? trigger = null;
             for (int xx = 0; xx < this.Draw.Width; xx++)
             {
                 for (int yy = 0; yy < this.Draw.Height; yy++)
                 {
-                    if (this.roomMap.Tiles[xx][yy].Effect.ID == TriggerTile)
-                    {
-                        if (trigger != null)
-                            throw new InvalidOperationException("Found more than one boss trigger tile!");
-                        else
-                            trigger = new Loc(xx, yy);
-                    }
                     map.SetTile(new Loc(this.Draw.X + xx, this.Draw.Y + yy), this.roomMap.Tiles[xx][yy]);
                 }
             }
 
-            if (trigger == null)
-                throw new InvalidOperationException("Could not find boss trigger tile!");
+            if (this.roomMap.EntryPoints.Count < 1)
+                throw new InvalidOperationException("Could not find an entry point!");
 
 
             MobSpawnState mobSpawnState = new MobSpawnState();
@@ -128,13 +119,14 @@ namespace PMDC.LevelGen
                 }
             }
 
-            Tile triggerTile = (Tile)map.GetTile(trigger.Value);
+            Loc triggerLoc = this.roomMap.EntryPoints[0].Loc;
+            Tile triggerTile = (Tile)map.GetTile(triggerLoc);
             EffectTile newEffect = triggerTile.Effect;
             newEffect.TileStates.Set(new DangerState(true));
             newEffect.TileStates.Set(mobSpawnState);
             newEffect.TileStates.Set(new BoundsState(new Rect(this.Draw.Start - new Loc(1), this.Draw.Size + new Loc(2))));
             newEffect.TileStates.Set(new SongState(map.Map.Music));
-            map.GetPostProc(trigger.Value).Status |= (PostProcType.Panel | PostProcType.Item | PostProcType.Terrain);
+            map.GetPostProc(triggerLoc).Status |= (PostProcType.Panel | PostProcType.Item | PostProcType.Terrain);
 
             //this.FulfillRoomBorders(map, this.FulfillAll);
             this.SetRoomBorders(map);
