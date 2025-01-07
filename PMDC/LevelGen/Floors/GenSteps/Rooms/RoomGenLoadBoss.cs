@@ -110,7 +110,10 @@ namespace PMDC.LevelGen
                     }
                     newSpawn.Intrinsic = member.BaseIntrinsics[0];
 
+                    newSpawn.Tactic = member.Tactic.ID;
+
                     MobSpawnLoc setLoc = new MobSpawnLoc(this.Draw.Start + member.CharLoc);
+                    newSpawn.SpawnFeatures.Add(setLoc);
 
                     foreach (MobSpawnExtra extra in SpawnDetails)
                         newSpawn.SpawnFeatures.Add(extra.Copy());
@@ -120,13 +123,21 @@ namespace PMDC.LevelGen
             }
 
             Loc triggerLoc = this.roomMap.EntryPoints[0].Loc;
-            Tile triggerTile = (Tile)map.GetTile(triggerLoc);
-            EffectTile newEffect = triggerTile.Effect;
+            EffectTile newEffect = new EffectTile(TriggerTile, true, triggerLoc + this.Draw.Start);
             newEffect.TileStates.Set(new DangerState(true));
             newEffect.TileStates.Set(mobSpawnState);
             newEffect.TileStates.Set(new BoundsState(new Rect(this.Draw.Start - new Loc(1), this.Draw.Size + new Loc(2))));
-            newEffect.TileStates.Set(new SongState(map.Map.Music));
-            map.GetPostProc(triggerLoc).Status |= (PostProcType.Panel | PostProcType.Item | PostProcType.Terrain);
+            newEffect.TileStates.Set(new SongState(this.roomMap.Music));
+
+            MapStartEventState beginEvent = new MapStartEventState();
+            foreach (Priority priority in this.roomMap.MapEffect.OnMapStarts.GetPriorities())
+            {
+                foreach (SingleCharEvent step in this.roomMap.MapEffect.OnMapStarts.GetItems(priority))
+                    beginEvent.OnMapStarts.Add(priority, step);
+            }
+            newEffect.TileStates.Set(beginEvent);
+            ((IPlaceableGenContext<EffectTile>)map).PlaceItem(triggerLoc + this.Draw.Start, newEffect);
+            map.GetPostProc(triggerLoc + this.Draw.Start).Status |= (PostProcType.Panel | PostProcType.Item | PostProcType.Terrain);
 
             //this.FulfillRoomBorders(map, this.FulfillAll);
             this.SetRoomBorders(map);

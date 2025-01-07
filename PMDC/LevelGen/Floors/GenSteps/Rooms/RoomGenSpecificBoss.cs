@@ -117,6 +117,7 @@ namespace PMDC.LevelGen
         {
             Map map = new Map();
 
+            map.AssetName = name;
             int width = this.Tiles.Length;
             int height = this.Tiles[0].Length;
             map.CreateNew(width, height);
@@ -197,7 +198,14 @@ namespace PMDC.LevelGen
 
             map.CalculateTerrainAutotiles(Loc.Zero, new Loc(map.Width, map.Height));
 
-
+            BattlePositionEvent positionEvent = new BattlePositionEvent();
+            positionEvent.StartLocs = new LocRay8[4];
+            positionEvent.StartLocs[0] = new LocRay8(Loc.Zero, Dir8.Up);
+            positionEvent.StartLocs[1] = new LocRay8(new Loc(0, 1), Dir8.Up);
+            positionEvent.StartLocs[2] = new LocRay8(new Loc(-1, 1), Dir8.Up);
+            positionEvent.StartLocs[3] = new LocRay8(new Loc(1, 1), Dir8.Up);
+            map.MapEffect.OnMapStarts.Add(-15, positionEvent);
+            
             DataManager.SaveData(map, DataManager.MAP_PATH, name, DataManager.MAP_EXT);
         }
     }

@@ -4672,34 +4672,35 @@ namespace PMDC.Dungeon
             if (context.User != null)
                 yield break;
 
+            LocRay8 baseLoc = new LocRay8(DungeonScene.Instance.ActiveTeam.Leader.CharLoc, DungeonScene.Instance.ActiveTeam.Leader.CharDir);
             int total_alive = 0;
             foreach (Character target in DungeonScene.Instance.ActiveTeam.IterateByRank())
             {
                 if (!target.Dead)
                 {
                     target.HP = target.MaxHP;
-                    MoveChar(target, total_alive);
+                    MoveChar(baseLoc, target, total_alive);
 
                     total_alive++;
                 }
             }
         }
         
-        public void MoveChar(Character character, int total_alive)
+        public void MoveChar(LocRay8 baseLoc, Character character, int total_alive)
         {
-            character.CharDir = ZoneManager.Instance.CurrentMap.EntryPoints[0].Dir;
+            character.CharDir = baseLoc.Dir;
             if (total_alive < StartLocs.Length)
             {
-                character.CharLoc = ZoneManager.Instance.CurrentMap.EntryPoints[0].Loc + StartLocs[total_alive].Loc;
+                character.CharLoc = baseLoc.Loc + StartLocs[total_alive].Loc;
                 character.CharDir = StartLocs[total_alive].Dir;
             }
             else //default to close to leader
             {
-                Loc? result = ZoneManager.Instance.CurrentMap.GetClosestTileForChar(character, ZoneManager.Instance.CurrentMap.EntryPoints[0].Loc);
+                Loc? result = ZoneManager.Instance.CurrentMap.GetClosestTileForChar(character, baseLoc.Loc);
                 if (result.HasValue)
                     character.CharLoc = result.Value;
                 else
-                    character.CharLoc = ZoneManager.Instance.CurrentMap.EntryPoints[0].Loc;
+                    character.CharLoc = baseLoc.Loc;
             }
         }
 
@@ -6828,12 +6829,27 @@ namespace PMDC.Dungeon
 
             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30) + 20);
 
-            yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeIn(40));
-
 
             SongState song = ((EffectTile)owner).TileStates.GetWithDefault<SongState>();
             if (song != null)
                 GameManager.Instance.BGM(song.Song, true);
+
+
+            //TODO: shuffle this in with the fade-in event?
+            //we could just replay the map start event again
+            //but that may cause unintended repeated events...
+            SingleCharContext singleContext = new SingleCharContext(null);
+            MapStartEventState mapStart = ((EffectTile)owner).TileStates.GetWithDefault<MapStartEventState>();
+            if (mapStart != null)
+            {
+                foreach (Priority priority in mapStart.OnMapStarts.GetPriorities())
+                {
+                    foreach (SingleCharEvent step in mapStart.OnMapStarts.GetItems(priority))//the event is not technically owned by the parent owner, but we pass it in anyway
+                        yield return CoroutineManager.Instance.StartCoroutine(step.Apply(owner, null, singleContext));
+                }
+            }
+
+            yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeIn(40));
 
             //trigger their map entry methods
             foreach (Character respawn in respawns)
