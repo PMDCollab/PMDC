@@ -1185,7 +1185,7 @@ namespace PMDC.Dungeon
             if (forme != context.User.CurrentForm.Form)
             {
                 //transform it
-                context.User.Transform(new MonsterID(context.User.CurrentForm.Species, forme, context.User.CurrentForm.Skin, context.User.CurrentForm.Gender));
+                context.User.Promote(new MonsterID(context.User.CurrentForm.Species, forme, context.User.CurrentForm.Skin, context.User.CurrentForm.Gender));
             }
 
             yield break;
