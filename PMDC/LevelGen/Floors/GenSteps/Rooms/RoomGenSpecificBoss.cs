@@ -10,9 +10,10 @@ using RogueEssence.Data;
 
 namespace PMDC.LevelGen
 {
+    // TODO: v1.1: Delete
     /// <summary>
     /// Generates a boss room with specific tiles and mobs.
-    /// EDITOR UNFRIENDLY
+    /// DEPRECATED
     /// </summary>
     /// <typeparam name="T"></typeparam>
     [Serializable]
