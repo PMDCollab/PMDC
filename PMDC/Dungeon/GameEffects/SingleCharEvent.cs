@@ -5,7 +5,6 @@ using RogueEssence.Data;
 using RogueEssence.LevelGen;
 using RogueEssence.Content;
 using RogueEssence.Menu;
-using RogueEssence.Ground;
 using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Dev;
@@ -15,7 +14,6 @@ using RogueEssence.Script;
 using System.Linq;
 using Newtonsoft.Json;
 using System.Runtime.Serialization;
-using System.IO;
 using PMDC.LevelGen;
 
 namespace PMDC.Dungeon
@@ -7284,5 +7282,126 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new ShareOnWalksEvent(); }
 
         protected override PriorityList<SingleCharEvent> GetEvents(ItemData entry) => entry.OnWalks;
+    }
+
+    /// <summary>
+    /// Uses the table defined in NaturalRegenerationRateState Universal State to change the HP of a pokémon.
+    /// </summary>
+    [Serializable]
+    public class NaturalRegenerationEvent : SingleCharEvent
+    {
+        public NaturalRegenerationEvent() { }
+
+        public override GameEvent Clone() { return new NaturalRegenerationEvent(); }
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            NaturalRegenerationRateState rates = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<NaturalRegenerationRateState>();
+            int recovery = context.InCombat ? rates.HealthPercentRegenerationInBattle : rates.HealthPercentRegeneration;
+            int recoveryFlat = context.InCombat ? rates.FlatHealthRegenerationInBattle : rates.FlatHealthRegeneration;
+            if (context.User.Fullness <= 0)
+            {
+                recovery = rates.StarvingDamagePercentage;
+                recoveryFlat = rates.FlatStarvingDamage;
+            }
+            yield return CoroutineManager.Instance.StartCoroutine(context.User.ModifyHP((context.User.MaxHP * recovery) + (recoveryFlat)));
+        }
+    }
+
+    /// <summary>
+    /// Uses the table defined in HungerConsumptionRateState Universal State to change the hunger level of a pokémon.
+    /// </summary>
+    [Serializable]
+    public class NaturalHungerUpdateEvent : SingleCharEvent
+    {
+        public NaturalHungerUpdateEvent()
+        {
+        }
+        public NaturalHungerUpdateEvent(StringKey low_hunger, StringKey critical_hunger, StringKey starving, StringKey foe_starving)
+        {
+            LowHungerMessage = low_hunger;
+            CriticalHungerMessage = critical_hunger;
+            StarvingMessage = starving;
+            FoeStarvingMessage = foe_starving;
+        }
+        public NaturalHungerUpdateEvent(NaturalHungerUpdateEvent other)
+        {
+            LowHungerMessage = other.LowHungerMessage;
+            CriticalHungerMessage = other.CriticalHungerMessage;
+            StarvingMessage = other.StarvingMessage;
+            FoeStarvingMessage = other.FoeStarvingMessage;
+        }
+
+        [StringKey(0, true)]
+        public StringKey LowHungerMessage;
+        [StringKey(0, true)]
+        public StringKey CriticalHungerMessage;
+        [StringKey(0, true)]
+        public StringKey StarvingMessage;
+        [StringKey(0, true)]
+        public StringKey FoeStarvingMessage;
+        public override GameEvent Clone() { return new NaturalHungerUpdateEvent(this); }
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            HungerConsumptionRateState rates = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<HungerConsumptionRateState>();
+            int residual;
+            if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
+            {
+                if (context.User.MemberTeam.Leader == context.User)
+                {
+                    residual = rates.LeaderHungerConsumptionRate;
+                }
+                else if (context.User.MemberTeam.Players.Contains(context.User))
+                {
+                    residual = rates.PartyHungerConsumptionRate;
+                }
+                else
+                {
+                    residual = rates.GuestsHungerConsumptionRate;
+                }
+            }
+            else if(context.User.MemberTeam.MapFaction == Faction.Foe)
+            {
+                residual = rates.EnemyHungerConsumptionRate;
+            }
+            else
+            {
+                residual = rates.AllyHungerConsumptionRate;
+            }
+
+            int prevFullness = context.User.Fullness;
+            context.User.Fullness -= (residual + context.User.FullnessRemainder) / 1000;
+            context.User.FullnessRemainder = (residual + context.User.FullnessRemainder) % 1000;
+
+            if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
+            {
+                if (context.User.Fullness <= 0 && prevFullness > 0)
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(StarvingMessage.ToLocal(), context.User.GetDisplayName(true)));
+                else if (context.User.Fullness <= 10 && prevFullness > 10)
+                {
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(CriticalHungerMessage.ToLocal(), context.User.GetDisplayName(true)));
+                    GameManager.Instance.SE(GraphicsManager.HungerSE);
+                }
+                else if (context.User.Fullness <= 20 && prevFullness > 20)
+                {
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(LowHungerMessage.ToLocal(), context.User.GetDisplayName(true)));
+                    GameManager.Instance.SE(GraphicsManager.HungerSE);
+                }
+            }
+            else
+            {
+                if (context.User.Fullness <= 0 && prevFullness > 0)
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(FoeStarvingMessage.ToLocal(), context.User.GetDisplayName(false)));
+            }
+
+            if (context.User.Fullness <= 0)
+            {
+                context.User.Fullness = 0;
+                context.User.FullnessRemainder = 0;
+
+                if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
+                    GameManager.Instance.SE(GraphicsManager.HungerSE);
+            }
+            yield break;
+        }
     }
 }
