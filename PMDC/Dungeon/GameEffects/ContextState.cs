@@ -114,6 +114,14 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class HungerMult : ContextMultState
+    {
+        public HungerMult() { }
+        protected HungerMult(HungerMult other) : base(other) { }
+        public override GameplayState Clone() { return new HungerMult(this); }
+    }
+
+    [Serializable]
     public class TaintedDrain : ContextState
     {
         public int Mult;
@@ -603,5 +611,4 @@ namespace PMDC.Dungeon
         public DustState() { }
         public override GameplayState Clone() { return new DustState(); }
     }
-    
 }

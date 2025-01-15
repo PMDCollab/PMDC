@@ -7368,6 +7368,14 @@ namespace PMDC.Dungeon
                 residual = rates.AllyHungerConsumptionRate;
             }
 
+            HungerMult mult = context.ContextStates.GetWithDefault<HungerMult>();
+            if (mult != null) {
+                if (mult.Mult.Numerator > 0)
+                    residual = Math.Max(residual > 0 ? 1 : 0, residual * mult.Mult.Numerator / mult.Mult.Denominator);
+                else
+                    residual = 0;
+            }
+
             int prevFullness = context.User.Fullness;
             context.User.Fullness -= (residual + context.User.FullnessRemainder) / 1000;
             context.User.FullnessRemainder = (residual + context.User.FullnessRemainder) % 1000;
@@ -7401,6 +7409,54 @@ namespace PMDC.Dungeon
                 if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
                     GameManager.Instance.SE(GraphicsManager.HungerSE);
             }
+            yield break;
+        }
+    }
+
+    /// <summary>
+    /// Event that boosts/reduces the amount of hunger consumed by NaturalHungerUpdateEvent.
+    /// </summary>
+    [Serializable]
+    public class MultiplyHungerEvent : SingleCharEvent
+    {
+        /// <summary>
+        /// The numerator of the modifier
+        /// </summary>
+        public int Numerator;
+
+        /// <summary>
+        /// The denominator of the modififer
+        /// </summary>
+        public int Denominator;
+
+        public MultiplyHungerEvent()
+        {
+        }
+        public MultiplyHungerEvent(int numerator, int denominator)
+        {
+            Numerator = numerator;
+            Denominator = denominator;
+        }
+        protected MultiplyHungerEvent(MultiplyHungerEvent other)
+        {
+            Numerator = other.Numerator;
+            Denominator = other.Denominator;
+        }
+        public override GameEvent Clone() { return new MultiplyHungerEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+
+            HungerMult multState = context.ContextStates.GetWithDefault<HungerMult>();
+            if (multState == null)
+            {
+                ContextMultState newMult = (ContextMultState)Activator.CreateInstance<HungerMult>();
+                newMult.Mult = new Multiplier(Numerator, Denominator);
+                context.ContextStates.Set(newMult);
+            }
+            else
+                multState.Mult.AddMultiplier(Numerator, Denominator);
+
             yield break;
         }
     }
