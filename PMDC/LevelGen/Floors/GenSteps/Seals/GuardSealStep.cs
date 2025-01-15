@@ -13,7 +13,7 @@ namespace PMDC.LevelGen
 {
     /// <summary>
     /// One part of several steps used to create a sealed key room, or several thereof.
-    /// This step takes the target rooms and surrounds them with unbreakable walls, with one key block used to unlock them.
+    /// This step takes the target rooms and surrounds them with unbreakable walls, with several guards used to unlock them.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     [Serializable]
@@ -44,6 +44,12 @@ namespace PMDC.LevelGen
                         map.SetTile(loc, map.UnbreakableTerrain.Copy());
                         break;
                     case SealType.Locked:
+                        {
+                            if (!Grid.IsChokePoint(loc - Loc.One, Loc.One * 3, loc,
+                                map.TileBlocked, (Loc testLoc) => { return true; }))
+                                map.SetTile(loc, map.UnbreakableTerrain.Copy());
+                        }
+                        break;
                     case SealType.Key:
                         guardLocList.Add(loc);
                         break;

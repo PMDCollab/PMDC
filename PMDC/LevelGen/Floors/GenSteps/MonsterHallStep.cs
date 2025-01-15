@@ -63,7 +63,7 @@ namespace PMDC.LevelGen
                 return;
 
             //verify that it is a chokepoint
-            bool chokePoint = Grid.IsChokePoint(originPoint - new Loc(1), new Loc(3), originPoint,
+            bool chokePoint = Grid.IsChokePoint(originPoint - Loc.One, Loc.One * 3, originPoint,
                 map.TileBlocked, (Loc testLoc) => { return true; });
 
             if (!chokePoint)
