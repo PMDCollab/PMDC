@@ -7290,8 +7290,6 @@ namespace PMDC.Dungeon
     [Serializable]
     public class NaturalRegenerationEvent : SingleCharEvent
     {
-        public NaturalRegenerationEvent() { }
-
         public override GameEvent Clone() { return new NaturalRegenerationEvent(); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
@@ -7313,33 +7311,7 @@ namespace PMDC.Dungeon
     [Serializable]
     public class NaturalHungerUpdateEvent : SingleCharEvent
     {
-        public NaturalHungerUpdateEvent()
-        {
-        }
-        public NaturalHungerUpdateEvent(StringKey low_hunger, StringKey critical_hunger, StringKey starving, StringKey foe_starving)
-        {
-            LowHungerMessage = low_hunger;
-            CriticalHungerMessage = critical_hunger;
-            StarvingMessage = starving;
-            FoeStarvingMessage = foe_starving;
-        }
-        public NaturalHungerUpdateEvent(NaturalHungerUpdateEvent other)
-        {
-            LowHungerMessage = other.LowHungerMessage;
-            CriticalHungerMessage = other.CriticalHungerMessage;
-            StarvingMessage = other.StarvingMessage;
-            FoeStarvingMessage = other.FoeStarvingMessage;
-        }
-
-        [StringKey(0, true)]
-        public StringKey LowHungerMessage;
-        [StringKey(0, true)]
-        public StringKey CriticalHungerMessage;
-        [StringKey(0, true)]
-        public StringKey StarvingMessage;
-        [StringKey(0, true)]
-        public StringKey FoeStarvingMessage;
-        public override GameEvent Clone() { return new NaturalHungerUpdateEvent(this); }
+        public override GameEvent Clone() { return new NaturalHungerUpdateEvent(); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
             HungerConsumptionRateState rates = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<HungerConsumptionRateState>();
@@ -7383,22 +7355,22 @@ namespace PMDC.Dungeon
             if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
             {
                 if (context.User.Fullness <= 0 && prevFullness > 0)
-                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(StarvingMessage.ToLocal(), context.User.GetDisplayName(true)));
+                    DungeonScene.Instance.LogMsg(Text.FormatKey("MSG_HUNGER_EMPTY", context.User.GetDisplayName(true)));
                 else if (context.User.Fullness <= 10 && prevFullness > 10)
                 {
-                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(CriticalHungerMessage.ToLocal(), context.User.GetDisplayName(true)));
+                    DungeonScene.Instance.LogMsg(Text.FormatKey("MSG_HUNGER_CRITICAL", context.User.GetDisplayName(true)));
                     GameManager.Instance.SE(GraphicsManager.HungerSE);
                 }
                 else if (context.User.Fullness <= 20 && prevFullness > 20)
                 {
-                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(LowHungerMessage.ToLocal(), context.User.GetDisplayName(true)));
+                    DungeonScene.Instance.LogMsg(Text.FormatKey("MSG_HUNGER_LOW", context.User.GetDisplayName(true))); 
                     GameManager.Instance.SE(GraphicsManager.HungerSE);
                 }
             }
             else
             {
                 if (context.User.Fullness <= 0 && prevFullness > 0)
-                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(FoeStarvingMessage.ToLocal(), context.User.GetDisplayName(false)));
+                    DungeonScene.Instance.LogMsg(Text.FormatKey("MSG_HUNGER_EMPTY_FOE", context.User.GetDisplayName(false)));
             }
 
             if (context.User.Fullness <= 0)
