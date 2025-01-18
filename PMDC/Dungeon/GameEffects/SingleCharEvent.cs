@@ -5149,11 +5149,15 @@ namespace PMDC.Dungeon
                         yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(owner.GetID()));
 
                         MapLocState locState = ((MapStatus)owner).StatusStates.GetWithDefault<MapLocState>();
-                        if (locState != null)
-                        {
-                            Tile tile = ZoneManager.Instance.CurrentMap.Tiles[locState.Target.X][locState.Target.Y];
-                            tile.Effect = new EffectTile(tile.Effect.TileLoc);
-                        }
+                        if (locState == null)
+                            yield break;
+
+                        Loc testTile = locState.Target;
+                        if (!ZoneManager.Instance.CurrentMap.GetLocInMapBounds(ref testTile))
+                            yield break;
+
+                        Tile tile = ZoneManager.Instance.CurrentMap.Tiles[testTile.X][testTile.Y];
+                        tile.Effect = new EffectTile(tile.Effect.TileLoc);
                     }
                 }
             }
