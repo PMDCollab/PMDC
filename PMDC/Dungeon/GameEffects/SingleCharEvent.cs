@@ -7365,6 +7365,8 @@ namespace PMDC.Dungeon
         /// </summary>
         public int StarvePercent;
 
+        public NaturalPercentRegenEvent() { }
+
         public NaturalPercentRegenEvent(int percent, int percentCombat, int percentStarve)
         {
             RegenPercent = percent;
@@ -7406,7 +7408,7 @@ namespace PMDC.Dungeon
     /// Decrements hunger, used for end-of-turn.
     /// </summary>
     [Serializable]
-    public class NaturalHungerUpdateEvent : SingleCharEvent
+    public class NaturalHungerEvent : SingleCharEvent
     {
         /// <summary>
         /// The amount of hunger consumed by the leader every turn. How much rate amounts to 1 belly point is determined by Denominator.
@@ -7433,7 +7435,9 @@ namespace PMDC.Dungeon
         /// </summary>
         public int Denominator;
 
-        public NaturalHungerUpdateEvent(int denominator, int leader, int party, int guests, int enemy, int ally)
+        public NaturalHungerEvent() { }
+
+        public NaturalHungerEvent(int denominator, int leader, int party, int guests, int enemy, int ally)
         {
             Denominator = denominator;
             LeaderHungerRate = leader;
@@ -7443,7 +7447,7 @@ namespace PMDC.Dungeon
             AllyHungerRate = ally;
         }
 
-        protected NaturalHungerUpdateEvent(NaturalHungerUpdateEvent other)
+        protected NaturalHungerEvent(NaturalHungerEvent other)
         {
             Denominator = other.Denominator;
             LeaderHungerRate = other.LeaderHungerRate;
@@ -7453,7 +7457,7 @@ namespace PMDC.Dungeon
             AllyHungerRate = other.AllyHungerRate;
         }
 
-        public override GameEvent Clone() { return new NaturalHungerUpdateEvent(this); }
+        public override GameEvent Clone() { return new NaturalHungerEvent(this); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
             int residual = 0;
