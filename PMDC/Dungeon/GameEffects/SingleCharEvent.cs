@@ -5,7 +5,6 @@ using RogueEssence.Data;
 using RogueEssence.LevelGen;
 using RogueEssence.Content;
 using RogueEssence.Menu;
-using RogueEssence.Ground;
 using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Dev;
@@ -15,7 +14,6 @@ using RogueEssence.Script;
 using System.Linq;
 using Newtonsoft.Json;
 using System.Runtime.Serialization;
-using System.IO;
 using PMDC.LevelGen;
 
 namespace PMDC.Dungeon
@@ -7346,5 +7344,223 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new ShareOnWalksEvent(); }
 
         protected override PriorityList<SingleCharEvent> GetEvents(ItemData entry) => entry.OnWalks;
+    }
+
+    /// <summary>
+    /// Calculates regeneration, used for end-of-turn.
+    /// </summary>
+    [Serializable]
+    public class NaturalPercentRegenEvent : NaturalRegenEvent
+    {
+        /// <summary>
+        /// The percentage amount of HP recovered by characters every turn when out of battle. 10 means 1%. Negative values drain HP instead.
+        /// </summary>
+        public int RegenPercent;
+        /// <summary>
+        /// The percentage amount of HP recovered by characters every turn during battle. 10 means 1%. Negative values drain HP instead.
+        /// </summary>
+        public int RegenPercentCombat;
+        /// <summary>
+        /// The percentage amount of HP recovered by characters every turn while at 0 belly. 10 means 1%. Negative values drain HP instead.
+        /// </summary>
+        public int StarvePercent;
+
+        public NaturalPercentRegenEvent(int percent, int percentCombat, int percentStarve)
+        {
+            RegenPercent = percent;
+            RegenPercentCombat = percentCombat;
+            StarvePercent = percentStarve;
+        }
+
+        protected NaturalPercentRegenEvent(NaturalPercentRegenEvent other)
+        {
+            RegenPercent = other.RegenPercent;
+            RegenPercentCombat = other.RegenPercentCombat;
+            StarvePercent = other.StarvePercent;
+        }
+
+        public override GameEvent Clone() { return new NaturalPercentRegenEvent(this); }
+
+        public override int calculateRegen(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            int recovery = context.InCombat ? RegenPercentCombat : RegenPercent;
+            if (context.User.Fullness <= 0)
+                recovery = StarvePercent;
+
+            return context.User.MaxHP * recovery;
+        }
+    }
+
+    [Serializable]
+    public abstract class NaturalRegenEvent : SingleCharEvent
+    {
+        public abstract int calculateRegen(GameEventOwner owner, Character ownerChar, SingleCharContext context);
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            int regen = calculateRegen(owner, ownerChar, context);
+            yield return CoroutineManager.Instance.StartCoroutine(context.User.ModifyHP(regen));
+        }
+    }
+
+    /// <summary>
+    /// Decrements hunger, used for end-of-turn.
+    /// </summary>
+    [Serializable]
+    public class NaturalHungerUpdateEvent : SingleCharEvent
+    {
+        /// <summary>
+        /// The amount of hunger consumed by the leader every turn. How much rate amounts to 1 belly point is determined by Denominator.
+        /// </summary>
+        public int LeaderHungerRate;
+        /// <summary>
+        /// The amount of hunger consumed by non-leader party members every turn. How much rate amounts to 1 belly point is determined by Denominator.
+        /// </summary>
+        public int PartyHungerRate;
+        /// <summary>
+        /// The amount of hunger consumed by guest party members every turn. How much rate amounts to 1 belly point is determined by Denominator.
+        /// </summary>
+        public int GuestsHungerRate;
+        /// <summary>
+        /// The amount of hunger consumed by enemies every turn. How much rate amounts to 1 belly point is determined by Denominator.
+        /// </summary>
+        public int EnemyHungerRate;
+        /// <summary>
+        /// The amount of hunger consumed by ally characters every turn. How much rate amounts to 1 belly point is determined by Denominator.
+        /// </summary>
+        public int AllyHungerRate;
+        /// <summary>
+        /// The amount of Hunger Rate that amounts to one belly point.
+        /// </summary>
+        public int Denominator;
+
+        public NaturalHungerUpdateEvent(int denominator, int leader, int party, int guests, int enemy, int ally)
+        {
+            Denominator = denominator;
+            LeaderHungerRate = leader;
+            PartyHungerRate = party;
+            GuestsHungerRate = guests;
+            EnemyHungerRate = enemy;
+            AllyHungerRate = ally;
+        }
+
+        protected NaturalHungerUpdateEvent(NaturalHungerUpdateEvent other)
+        {
+            Denominator = other.Denominator;
+            LeaderHungerRate = other.LeaderHungerRate;
+            PartyHungerRate = other.PartyHungerRate;
+            GuestsHungerRate = other.GuestsHungerRate;
+            EnemyHungerRate = other.EnemyHungerRate;
+            AllyHungerRate = other.AllyHungerRate;
+        }
+
+        public override GameEvent Clone() { return new NaturalHungerUpdateEvent(this); }
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            int residual = 0;
+            if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
+            {
+                if (context.User.MemberTeam.Leader == context.User)
+                    residual = LeaderHungerRate;
+                else if (context.User.MemberTeam.Players.Contains(context.User))
+                    residual = PartyHungerRate;
+                else
+                    residual = GuestsHungerRate;
+            }
+            else if(context.User.MemberTeam.MapFaction == Faction.Foe)
+                residual = EnemyHungerRate;
+            else
+                residual = AllyHungerRate;
+
+            HungerMult mult = context.ContextStates.GetWithDefault<HungerMult>();
+            if (mult != null) {
+                if (mult.Mult.Numerator > 0)
+                    residual = Math.Max(residual > 0 ? 1 : 0, residual * mult.Mult.Numerator / mult.Mult.Denominator);
+                else
+                    residual = 0;
+            }
+
+            int prevFullness = context.User.Fullness;
+            context.User.Fullness -= (residual + context.User.FullnessRemainder) / Denominator;
+            context.User.FullnessRemainder = (residual + context.User.FullnessRemainder) % Denominator;
+
+            if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
+            {
+                if (context.User.Fullness <= 0 && prevFullness > 0)
+                    DungeonScene.Instance.LogMsg(Text.FormatKey("MSG_HUNGER_EMPTY", context.User.GetDisplayName(true)));
+                else if (context.User.Fullness <= 10 && prevFullness > 10)
+                {
+                    DungeonScene.Instance.LogMsg(Text.FormatKey("MSG_HUNGER_CRITICAL", context.User.GetDisplayName(true)));
+                    GameManager.Instance.SE(GraphicsManager.HungerSE);
+                }
+                else if (context.User.Fullness <= 20 && prevFullness > 20)
+                {
+                    DungeonScene.Instance.LogMsg(Text.FormatKey("MSG_HUNGER_LOW", context.User.GetDisplayName(true))); 
+                    GameManager.Instance.SE(GraphicsManager.HungerSE);
+                }
+            }
+            else
+            {
+                if (context.User.Fullness <= 0 && prevFullness > 0)
+                    DungeonScene.Instance.LogMsg(Text.FormatKey("MSG_HUNGER_EMPTY_FOE", context.User.GetDisplayName(false)));
+            }
+
+            if (context.User.Fullness <= 0)
+            {
+                context.User.Fullness = 0;
+                context.User.FullnessRemainder = 0;
+
+                if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
+                    GameManager.Instance.SE(GraphicsManager.HungerSE);
+            }
+            yield break;
+        }
+    }
+
+    /// <summary>
+    /// Event that boosts/reduces the amount of hunger consumed by NaturalHungerUpdateEvent.
+    /// </summary>
+    [Serializable]
+    public class MultiplyHungerEvent : SingleCharEvent
+    {
+        /// <summary>
+        /// The numerator of the modifier
+        /// </summary>
+        public int Numerator;
+
+        /// <summary>
+        /// The denominator of the modififer
+        /// </summary>
+        public int Denominator;
+
+        public MultiplyHungerEvent()
+        {
+        }
+        public MultiplyHungerEvent(int numerator, int denominator)
+        {
+            Numerator = numerator;
+            Denominator = denominator;
+        }
+        protected MultiplyHungerEvent(MultiplyHungerEvent other)
+        {
+            Numerator = other.Numerator;
+            Denominator = other.Denominator;
+        }
+        public override GameEvent Clone() { return new MultiplyHungerEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+
+            HungerMult multState = context.ContextStates.GetWithDefault<HungerMult>();
+            if (multState == null)
+            {
+                ContextMultState newMult = (ContextMultState)Activator.CreateInstance<HungerMult>();
+                newMult.Mult = new Multiplier(Numerator, Denominator);
+                context.ContextStates.Set(newMult);
+            }
+            else
+                multState.Mult.AddMultiplier(Numerator, Denominator);
+
+            yield break;
+        }
     }
 }
