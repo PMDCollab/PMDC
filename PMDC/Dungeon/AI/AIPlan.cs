@@ -341,15 +341,19 @@ namespace PMDC.Dungeon
                 }
             }
 
+            bool hazardTerrain = false;
             if (tile.Data.ID == "lava" && !controlledChar.HasElement("fire"))//check for lava; NOTE: specialized AI code!
-                return true;
+                hazardTerrain = true;
             if (tile.Data.ID == "water_poison" && !controlledChar.HasElement("poison") && !controlledChar.HasElement("steel"))//check for poison; NOTE: specialized AI code!
-                return true;
+                hazardTerrain = true;
             if (tile.Data.ID == DataManager.Instance.GenWall && controlledChar.MemberTeam is ExplorerTeam)//check for block; NOTE: specialized AI code!
+                hazardTerrain = true;
+
+            if (hazardTerrain)
             {
                 //we can still walk on it if we're already in a block
                 Tile curTile = ZoneManager.Instance.CurrentMap.GetTile(controlledChar.CharLoc);
-                if (curTile.Data.ID != DataManager.Instance.GenWall)
+                if (curTile.Data.ID != tile.Data.ID)
                     return true;
             }
 

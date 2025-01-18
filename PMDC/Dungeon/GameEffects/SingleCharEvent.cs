@@ -1183,7 +1183,7 @@ namespace PMDC.Dungeon
             if (forme != context.User.CurrentForm.Form)
             {
                 //transform it
-                context.User.Transform(new MonsterID(context.User.CurrentForm.Species, forme, context.User.CurrentForm.Skin, context.User.CurrentForm.Gender));
+                context.User.Promote(new MonsterID(context.User.CurrentForm.Species, forme, context.User.CurrentForm.Skin, context.User.CurrentForm.Gender));
             }
 
             yield break;
@@ -3044,119 +3044,161 @@ namespace PMDC.Dungeon
 
 
     [Serializable]
-    public class PickupEvent : SingleCharEvent
+    public abstract class GainItemEvent : SingleCharEvent
     {
         public int Chance;
         public List<AnimEvent> Anims;
 
-        public PickupEvent()
+        public GainItemEvent()
         {
             Anims = new List<AnimEvent>();
         }
-        public PickupEvent(int chance, params AnimEvent[] anims)
+        public GainItemEvent(int chance, params AnimEvent[] anims)
         {
             Chance = chance;
             Anims = new List<AnimEvent>();
             Anims.AddRange(anims);
         }
-        protected PickupEvent(PickupEvent other)
+        protected GainItemEvent(GainItemEvent other)
         {
             Anims = new List<AnimEvent>();
             Chance = other.Chance;
             foreach (AnimEvent anim in other.Anims)
                 Anims.Add((AnimEvent)anim.Clone());
         }
-        public override GameEvent Clone() { return new PickupEvent(this); }
+
+        protected abstract bool canObtain(InvItem invItem, Character target);
+        protected abstract InvItem getGatherItem();
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
-            //do not activate if already holding an item
-            if (!String.IsNullOrEmpty(context.User.EquippedItem.ID))
-                yield break;
-
-            //do not activate if inv is full
-            if (context.User.MemberTeam is ExplorerTeam)
-            {
-                if (((ExplorerTeam)context.User.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone) <= context.User.MemberTeam.GetInvCount())
-                    yield break;
-            }
-
-            if (ZoneManager.Instance.CurrentMap.MapTurns == 0 && ZoneManager.Instance.CurrentMap.ItemSpawns.Spawns.CanPick && DataManager.Instance.Save.Rand.Next(100) < Chance)
-            {
-                InvItem item = ZoneManager.Instance.CurrentMap.ItemSpawns.Pick(DataManager.Instance.Save.Rand);
-
-                //Actually, we'll just let you pickup an autocurse item and get stuck
-                //ItemData entry = DataManager.Instance.GetItem(item.ID);
-                //if (!entry.Cursed)
-                //{
-                //item.Cursed = false;
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_PICKUP").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName()), false, false, context.User, null);
-
-                foreach (AnimEvent anim in Anims)
-                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
-
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.EquipItem(item));
-                //}
-            }
-
-        }
-    }
-
-    [Serializable]
-    public class GatherEvent : SingleCharEvent
-    {
-        [DataType(1, DataManager.DataType.Item, false)]
-        public List<string> GatherItems;
-        public int Chance;
-        public List<AnimEvent> Anims;
-
-        public GatherEvent()
-        {
-            Anims = new List<AnimEvent>();
-            GatherItems = new List<string>();
-        }
-        public GatherEvent(List<string> gatherItem, int chance, params AnimEvent[] anims)
-        {
-            GatherItems = gatherItem;
-            Chance = chance;
-            Anims = new List<AnimEvent>();
-            Anims.AddRange(anims);
-        }
-        protected GatherEvent(GatherEvent other)
-        {
-            Anims = new List<AnimEvent>();
-            Chance = other.Chance;
-            foreach (AnimEvent anim in other.Anims)
-                Anims.Add((AnimEvent)anim.Clone());
-            GatherItems = new List<string>();
-            GatherItems.AddRange(other.GatherItems);
-        }
-        public override GameEvent Clone() { return new GatherEvent(this); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
-        {
-            //do not activate if already holding an item
-            if (!String.IsNullOrEmpty(context.User.EquippedItem.ID))
-                yield break;
-
-            //do not activate if inv is full
-            if (context.User.MemberTeam is ExplorerTeam)
-            {
-                if (((ExplorerTeam)context.User.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone) <= context.User.MemberTeam.GetInvCount())
-                    yield break;
-            }
-
             if (ZoneManager.Instance.CurrentMap.MapTurns == 0 && DataManager.Instance.Save.Rand.Next(100) < Chance)
             {
-                string gatherItem = GatherItems[DataManager.Instance.Save.Rand.Next(GatherItems.Count)];
-                InvItem invItem = new InvItem(gatherItem);
+                InvItem invItem = getGatherItem();
+
+                if (!canObtain(invItem, context.User))
+                    yield break;
+
+                ItemData item = DataManager.Instance.GetItem(invItem.ID);
+
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_PICKUP").ToLocal(), context.User.GetDisplayName(false), invItem.GetDisplayName()), false, false, context.User, null);
 
                 foreach (AnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
 
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.EquipItem(invItem));
+                if (!String.IsNullOrEmpty(context.User.EquippedItem.ID)) // the only way this block can be reached is if the inv item was stackable and the same as the held item
+                    context.User.EquippedItem.Amount = Math.Min(context.User.EquippedItem.Amount + invItem.Amount, item.MaxStack);
+                else
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.EquipItem(invItem));
             }
+        }
+    }
+
+
+
+    [Serializable]
+    public class PickupEvent : GainItemEvent
+    {
+        public PickupEvent()
+        {
+            Anims = new List<AnimEvent>();
+        }
+        public PickupEvent(int chance, params AnimEvent[] anims) : base(chance, anims)
+        {
+
+        }
+        protected PickupEvent(PickupEvent other) : base(other)
+        {
+        }
+
+        public override GameEvent Clone() { return new PickupEvent(this); }
+
+        protected override bool canObtain(InvItem invItem, Character target)
+        {
+            if (invItem == null)
+                return false;
+
+            //do not activate if already holding an item
+            if (!String.IsNullOrEmpty(target.EquippedItem.ID))
+                return false;
+
+            //do not activate if inv is full
+            if (target.MemberTeam is ExplorerTeam)
+            {
+                if (((ExplorerTeam)target.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone) <= target.MemberTeam.GetInvCount())
+                    return false;
+            }
+            return true;
+        }
+
+        protected override InvItem getGatherItem()
+        {
+            if (!ZoneManager.Instance.CurrentMap.ItemSpawns.CanPick)
+                return null;
+
+            InvItem invItem = ZoneManager.Instance.CurrentMap.ItemSpawns.Pick(DataManager.Instance.Save.Rand);
+
+            return invItem;
+        }
+    }
+
+    [Serializable]
+    public class GatherEvent : GainItemEvent
+    {
+        [DataType(1, DataManager.DataType.Item, false)]
+        public List<string> GatherItems;
+
+        public GatherEvent()
+        {
+            GatherItems = new List<string>();
+        }
+        public GatherEvent(List<string> gatherItem, int chance, params AnimEvent[] anims) : base(chance, anims)
+        {
+            GatherItems = gatherItem;
+        }
+        protected GatherEvent(GatherEvent other) : base(other)
+        {
+            GatherItems = new List<string>();
+            GatherItems.AddRange(other.GatherItems);
+        }
+        public override GameEvent Clone() { return new GatherEvent(this); }
+
+
+        protected override bool canObtain(InvItem invItem, Character target)
+        {
+            if (invItem == null)
+                return false;
+
+            //do not activate if already holding an item
+            if (!String.IsNullOrEmpty(target.EquippedItem.ID))
+            {
+                ItemData item = DataManager.Instance.GetItem(invItem.ID);
+
+                if (invItem.ID == target.EquippedItem.ID && item.MaxStack > 1 && target.EquippedItem.Amount < item.MaxStack)
+                    return true;
+                else
+                    return false;
+            }
+
+            //do not activate if inv is full
+            if (target.MemberTeam is ExplorerTeam)
+            {
+                if (((ExplorerTeam)target.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone) <= target.MemberTeam.GetInvCount())
+                    return false;
+            }
+            return true;
+        }
+
+        protected override InvItem getGatherItem()
+        {
+            string gatherItem = GatherItems[DataManager.Instance.Save.Rand.Next(GatherItems.Count)];
+            ItemData item = DataManager.Instance.GetItem(gatherItem);
+
+            InvItem invItem = new InvItem(gatherItem);
+            if (item.MaxStack > 1)
+                invItem.Amount = 1;
+
+            return invItem;
         }
     }
 
@@ -4247,9 +4289,9 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
             foreach(Character player in DungeonScene.Instance.ActiveTeam.EnumerateChars())
-                DataManager.Instance.Save.RestrictCharLevel(player, Level, false, false);
+                DataManager.Instance.Save.RestrictCharLevel(player, Level, false, false, true);
             foreach (Character player in DungeonScene.Instance.ActiveTeam.Assembly)
-                DataManager.Instance.Save.RestrictCharLevel(player, Level, false, false);
+                DataManager.Instance.Save.RestrictCharLevel(player, Level, false, false, false);
             yield break;
         }
     }
@@ -4628,34 +4670,35 @@ namespace PMDC.Dungeon
             if (context.User != null)
                 yield break;
 
+            LocRay8 baseLoc = new LocRay8(DungeonScene.Instance.ActiveTeam.Leader.CharLoc, DungeonScene.Instance.ActiveTeam.Leader.CharDir);
             int total_alive = 0;
             foreach (Character target in DungeonScene.Instance.ActiveTeam.IterateByRank())
             {
                 if (!target.Dead)
                 {
                     target.HP = target.MaxHP;
-                    MoveChar(target, total_alive);
+                    MoveChar(baseLoc, target, total_alive);
 
                     total_alive++;
                 }
             }
         }
         
-        public void MoveChar(Character character, int total_alive)
+        public void MoveChar(LocRay8 baseLoc, Character character, int total_alive)
         {
-            character.CharDir = ZoneManager.Instance.CurrentMap.EntryPoints[0].Dir;
+            character.CharDir = baseLoc.Dir;
             if (total_alive < StartLocs.Length)
             {
-                character.CharLoc = ZoneManager.Instance.CurrentMap.EntryPoints[0].Loc + StartLocs[total_alive].Loc;
+                character.CharLoc = baseLoc.Loc + StartLocs[total_alive].Loc;
                 character.CharDir = StartLocs[total_alive].Dir;
             }
             else //default to close to leader
             {
-                Loc? result = ZoneManager.Instance.CurrentMap.GetClosestTileForChar(character, ZoneManager.Instance.CurrentMap.EntryPoints[0].Loc);
+                Loc? result = ZoneManager.Instance.CurrentMap.GetClosestTileForChar(character, baseLoc.Loc);
                 if (result.HasValue)
                     character.CharLoc = result.Value;
                 else
-                    character.CharLoc = ZoneManager.Instance.CurrentMap.EntryPoints[0].Loc;
+                    character.CharLoc = baseLoc.Loc;
             }
         }
 
@@ -5104,11 +5147,15 @@ namespace PMDC.Dungeon
                         yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(owner.GetID()));
 
                         MapLocState locState = ((MapStatus)owner).StatusStates.GetWithDefault<MapLocState>();
-                        if (locState != null)
-                        {
-                            Tile tile = ZoneManager.Instance.CurrentMap.Tiles[locState.Target.X][locState.Target.Y];
-                            tile.Effect = new EffectTile(tile.Effect.TileLoc);
-                        }
+                        if (locState == null)
+                            yield break;
+
+                        Loc testTile = locState.Target;
+                        if (!ZoneManager.Instance.CurrentMap.GetLocInMapBounds(ref testTile))
+                            yield break;
+
+                        Tile tile = ZoneManager.Instance.CurrentMap.Tiles[testTile.X][testTile.Y];
+                        tile.Effect = new EffectTile(tile.Effect.TileLoc);
                     }
                 }
             }
@@ -6784,12 +6831,27 @@ namespace PMDC.Dungeon
 
             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30) + 20);
 
-            yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeIn(40));
-
 
             SongState song = ((EffectTile)owner).TileStates.GetWithDefault<SongState>();
             if (song != null)
                 GameManager.Instance.BGM(song.Song, true);
+
+
+            //TODO: shuffle this in with the fade-in event?
+            //we could just replay the map start event again
+            //but that may cause unintended repeated events...
+            SingleCharContext singleContext = new SingleCharContext(null);
+            MapStartEventState mapStart = ((EffectTile)owner).TileStates.GetWithDefault<MapStartEventState>();
+            if (mapStart != null)
+            {
+                foreach (Priority priority in mapStart.OnMapStarts.GetPriorities())
+                {
+                    foreach (SingleCharEvent step in mapStart.OnMapStarts.GetItems(priority))//the event is not technically owned by the parent owner, but we pass it in anyway
+                        yield return CoroutineManager.Instance.StartCoroutine(step.Apply(owner, null, singleContext));
+                }
+            }
+
+            yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeIn(40));
 
             //trigger their map entry methods
             foreach (Character respawn in respawns)
