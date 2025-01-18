@@ -7347,60 +7347,129 @@ namespace PMDC.Dungeon
     }
 
     /// <summary>
-    /// Uses the table defined in NaturalRegenerationRateState Universal State to change the HP of a pokémon.
+    /// Calculates regeneration, used for end-of-turn.
     /// </summary>
     [Serializable]
-    public class NaturalRegenerationEvent : SingleCharEvent
+    public class NaturalPercentRegenEvent : NaturalRegenEvent
     {
-        public override GameEvent Clone() { return new NaturalRegenerationEvent(); }
+        /// <summary>
+        /// The percentage amount of HP recovered by characters every turn when out of battle. 10 means 1%. Negative values drain HP instead.
+        /// </summary>
+        public int RegenPercent;
+        /// <summary>
+        /// The percentage amount of HP recovered by characters every turn during battle. 10 means 1%. Negative values drain HP instead.
+        /// </summary>
+        public int RegenPercentCombat;
+        /// <summary>
+        /// The percentage amount of HP recovered by characters every turn while at 0 belly. 10 means 1%. Negative values drain HP instead.
+        /// </summary>
+        public int StarvePercent;
+
+        public NaturalPercentRegenEvent(int percent, int percentCombat, int percentStarve)
+        {
+            RegenPercent = percent;
+            RegenPercentCombat = percentCombat;
+            StarvePercent = percentStarve;
+        }
+
+        protected NaturalPercentRegenEvent(NaturalPercentRegenEvent other)
+        {
+            RegenPercent = other.RegenPercent;
+            RegenPercentCombat = other.RegenPercentCombat;
+            StarvePercent = other.StarvePercent;
+        }
+
+        public override GameEvent Clone() { return new NaturalPercentRegenEvent(this); }
+
+        public override int calculateRegen(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            int recovery = context.InCombat ? RegenPercentCombat : RegenPercent;
+            if (context.User.Fullness <= 0)
+                recovery = StarvePercent;
+
+            return context.User.MaxHP * recovery;
+        }
+    }
+
+    [Serializable]
+    public abstract class NaturalRegenEvent : SingleCharEvent
+    {
+        public abstract int calculateRegen(GameEventOwner owner, Character ownerChar, SingleCharContext context);
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
-            NaturalRegenerationRateState rates = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<NaturalRegenerationRateState>();
-            int recovery = context.InCombat ? rates.HealthPercentRegenerationInBattle : rates.HealthPercentRegeneration;
-            int recoveryFlat = context.InCombat ? rates.FlatHealthRegenerationInBattle : rates.FlatHealthRegeneration;
-            if (context.User.Fullness <= 0)
-            {
-                recovery = rates.StarvingDamagePercentage;
-                recoveryFlat = rates.FlatStarvingDamage;
-            }
-            yield return CoroutineManager.Instance.StartCoroutine(context.User.ModifyHP((context.User.MaxHP * recovery) + (recoveryFlat)));
+            int regen = calculateRegen(owner, ownerChar, context);
+            yield return CoroutineManager.Instance.StartCoroutine(context.User.ModifyHP(regen));
         }
     }
 
     /// <summary>
-    /// Uses the table defined in HungerConsumptionRateState Universal State to change the hunger level of a pokémon.
+    /// Decrements hunger, used for end-of-turn.
     /// </summary>
     [Serializable]
     public class NaturalHungerUpdateEvent : SingleCharEvent
     {
-        public override GameEvent Clone() { return new NaturalHungerUpdateEvent(); }
+        /// <summary>
+        /// The amount of hunger consumed by the leader every turn. How much rate amounts to 1 belly point is determined by Denominator.
+        /// </summary>
+        public int LeaderHungerRate;
+        /// <summary>
+        /// The amount of hunger consumed by non-leader party members every turn. How much rate amounts to 1 belly point is determined by Denominator.
+        /// </summary>
+        public int PartyHungerRate;
+        /// <summary>
+        /// The amount of hunger consumed by guest party members every turn. How much rate amounts to 1 belly point is determined by Denominator.
+        /// </summary>
+        public int GuestsHungerRate;
+        /// <summary>
+        /// The amount of hunger consumed by enemies every turn. How much rate amounts to 1 belly point is determined by Denominator.
+        /// </summary>
+        public int EnemyHungerRate;
+        /// <summary>
+        /// The amount of hunger consumed by ally characters every turn. How much rate amounts to 1 belly point is determined by Denominator.
+        /// </summary>
+        public int AllyHungerRate;
+        /// <summary>
+        /// The amount of Hunger Rate that amounts to one belly point.
+        /// </summary>
+        public int Denominator;
+
+        public NaturalHungerUpdateEvent(int denominator, int leader, int party, int guests, int enemy, int ally)
+        {
+            Denominator = denominator;
+            LeaderHungerRate = leader;
+            PartyHungerRate = party;
+            GuestsHungerRate = guests;
+            EnemyHungerRate = enemy;
+            AllyHungerRate = ally;
+        }
+
+        protected NaturalHungerUpdateEvent(NaturalHungerUpdateEvent other)
+        {
+            Denominator = other.Denominator;
+            LeaderHungerRate = other.LeaderHungerRate;
+            PartyHungerRate = other.PartyHungerRate;
+            GuestsHungerRate = other.GuestsHungerRate;
+            EnemyHungerRate = other.EnemyHungerRate;
+            AllyHungerRate = other.AllyHungerRate;
+        }
+
+        public override GameEvent Clone() { return new NaturalHungerUpdateEvent(this); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
-            HungerConsumptionRateState rates = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<HungerConsumptionRateState>();
-            int residual;
+            int residual = 0;
             if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
             {
                 if (context.User.MemberTeam.Leader == context.User)
-                {
-                    residual = rates.LeaderHungerConsumptionRate;
-                }
+                    residual = LeaderHungerRate;
                 else if (context.User.MemberTeam.Players.Contains(context.User))
-                {
-                    residual = rates.PartyHungerConsumptionRate;
-                }
+                    residual = PartyHungerRate;
                 else
-                {
-                    residual = rates.GuestsHungerConsumptionRate;
-                }
+                    residual = GuestsHungerRate;
             }
             else if(context.User.MemberTeam.MapFaction == Faction.Foe)
-            {
-                residual = rates.EnemyHungerConsumptionRate;
-            }
+                residual = EnemyHungerRate;
             else
-            {
-                residual = rates.AllyHungerConsumptionRate;
-            }
+                residual = AllyHungerRate;
 
             HungerMult mult = context.ContextStates.GetWithDefault<HungerMult>();
             if (mult != null) {
@@ -7411,8 +7480,8 @@ namespace PMDC.Dungeon
             }
 
             int prevFullness = context.User.Fullness;
-            context.User.Fullness -= (residual + context.User.FullnessRemainder) / 1000;
-            context.User.FullnessRemainder = (residual + context.User.FullnessRemainder) % 1000;
+            context.User.Fullness -= (residual + context.User.FullnessRemainder) / Denominator;
+            context.User.FullnessRemainder = (residual + context.User.FullnessRemainder) % Denominator;
 
             if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
             {
