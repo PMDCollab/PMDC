@@ -31,8 +31,9 @@ namespace PMDC.LevelGen
             {
                 if (!String.IsNullOrEmpty(newChar.Skills[ii].Element.SkillNum))
                 {
-                    SkillData data = DataManager.Instance.GetSkill(newChar.Skills[ii].Element.SkillNum);
-                    newChar.SetSkillCharges(ii, MathUtils.DivUp(data.BaseCharges, 2));
+                    EntryDataIndex idx = DataManager.Instance.DataIndices[DataManager.DataType.Skill];
+                    SkillDataSummary summary = (SkillDataSummary)idx.Get(newChar.Skills[ii].Element.SkillNum);
+                    newChar.SetSkillCharges(ii, MathUtils.DivUp(summary.BaseCharges, 2));
                 }
             }
         }

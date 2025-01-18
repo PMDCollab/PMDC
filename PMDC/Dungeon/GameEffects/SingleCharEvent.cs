@@ -1344,7 +1344,7 @@ namespace PMDC.Dungeon
     public abstract class HandoutExpEvent : SingleCharEvent
     {
         /// <summary>
-        /// 
+        /// Give EXP regardless of marking.
         /// </summary>
         public bool IgnoreMark;
 
@@ -4778,8 +4778,9 @@ namespace PMDC.Dungeon
 
             foreach (InvItem item in DungeonScene.Instance.ActiveTeam.EnumerateInv())
             {
-                ItemData entry = DataManager.Instance.GetItem(item.ID);
-                if (entry.MaxStack < 0 && entry.UsageType == ItemData.UseType.UseOther)
+                EntryDataIndex idx = DataManager.Instance.DataIndices[DataManager.DataType.Item];
+                ItemEntrySummary summary = (ItemEntrySummary)idx.Get(item.ID);
+                if (summary.MaxStack < 0 && summary.UsageType == ItemData.UseType.UseOther)
                     item.HiddenValue = "";
             }
         }
