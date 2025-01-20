@@ -6,13 +6,13 @@ namespace PMDC.LevelGen
 {
     /// <summary>
     /// Adds the entrance and exit to the floor.  Is room-conscious.
-    /// The algorithm will try to place them within and outside of a certain specified range.
+    /// The algorithm will try to place them within and outside of a certain specified range in tiles.
     /// </summary>
     /// <typeparam name="TGenContext"></typeparam>
     /// <typeparam name="TEntrance"></typeparam>
     /// <typeparam name="TExit"></typeparam>
     [Serializable]
-    public class FloorStairsDistanceStep<TGenContext, TEntrance, TExit> : FloorStairsStep<TGenContext, TEntrance, TExit>
+    public class FloorStairsDistanceStep<TGenContext, TEntrance, TExit> : BaseFloorStairsStep<TGenContext, TEntrance, TExit>
         where TGenContext : class, IFloorPlanGenContext, IPlaceableGenContext<TEntrance>, IPlaceableGenContext<TExit>
         where TEntrance : IEntrance
         where TExit : IExit
@@ -32,7 +32,7 @@ namespace PMDC.LevelGen
         }
 
         /// <summary>
-        /// Range of distance in tiles that entrances and exits mut be apart.  start-inclusive, end-exclusive
+        /// Range of distance in tiles that entrances and exits must be apart.  start-inclusive, end-exclusive
         /// </summary>
         public IntRange Distance { get; set; }
 
