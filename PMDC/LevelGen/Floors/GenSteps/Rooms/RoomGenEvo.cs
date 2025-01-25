@@ -22,8 +22,8 @@ namespace PMDC.LevelGen
         //.......
 
         const int ROOM_OFFSET = 1;
-        const int MAP_HEIGHT = 6;
         const int MAP_WIDTH = 7;
+        const int MAP_HEIGHT = 6;
 
         public RoomGenEvo() { }
         public override RoomGen<T> Copy() { return new RoomGenEvo<T>(); }
@@ -144,8 +144,8 @@ namespace PMDC.LevelGen
         //.#.#.
         //.....
 
-        const int MAP_HEIGHT = 6;
         const int MAP_WIDTH = 5;
+        const int MAP_HEIGHT = 6;
 
         public RoomGenEvoSmall() { }
         public override RoomGen<T> Copy() { return new RoomGenEvoSmall<T>(); }
@@ -188,6 +188,102 @@ namespace PMDC.LevelGen
             map.GetPostProc(new Loc(Draw.X + 3, Draw.Y + 4)).Status |= PostProcType.Terrain;
 
             SetRoomBorders(map);
+        }
+
+        public override string ToString()
+        {
+            return string.Format("{0}", this.GetType().GetFormattedTypeName());
+        }
+    }
+
+
+
+    /// <summary>
+    /// Generates an evolution room.  It's 7x8 in size and hardcoded to look a specific way.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    [Serializable]
+    public class RoomGenEvoDiamond<T> : PermissiveRoomGen<T> where T : ITiledGenContext, IPostProcGenContext, IPlaceableGenContext<EffectTile>
+    {
+        //###.###
+        //##...##
+        //#..#..#
+        //..---..
+        //..---..
+        //#..#..#
+        //##...##
+        //###.###
+
+        const int MAP_WIDTH = 7;
+        const int MAP_HEIGHT = 8;
+
+        public RoomGenEvoDiamond() { }
+        public override RoomGen<T> Copy() { return new RoomGenEvoDiamond<T>(); }
+
+        public override Loc ProposeSize(IRandom rand)
+        {
+            return new Loc(MAP_WIDTH, MAP_HEIGHT);
+        }
+
+        public override void DrawOnMap(T map)
+        {
+            if (MAP_WIDTH != Draw.Width || MAP_HEIGHT != Draw.Height)
+            {
+                DrawMapDefault(map);
+                return;
+            }
+
+            int diameter = Math.Min(this.Draw.Width, this.Draw.Height);
+
+            for (int ii = 0; ii < this.Draw.Width; ii++)
+            {
+                for (int jj = 0; jj < this.Draw.Height; jj++)
+                {
+                    if (RoomGenDiamond<T>.IsTileWithinDiamond(ii, jj, diameter, this.Draw.Size))
+                        map.SetTile(new Loc(this.Draw.X + ii, this.Draw.Y + jj), map.RoomTerrain.Copy());
+                }
+            }
+
+            int platWidth = 3;
+            int platHeight = 2;
+            Loc platStart = Draw.Start + new Loc(2, 3);
+            map.PlaceItem(new Loc(platStart.X + 1, platStart.Y), new EffectTile("tile_evo", true));
+            for (int x = 0; x < platWidth; x++)
+            {
+                for (int y = 0; y < platHeight; y++)
+                {
+                    map.GetPostProc(new Loc(platStart.X + x, platStart.Y + y)).Status |= PostProcType.Panel;
+                    map.GetPostProc(new Loc(platStart.X + x, platStart.Y + y)).Status |= PostProcType.Terrain;
+                }
+            }
+            map.SetTile(new Loc(Draw.X + 3, Draw.Y + 2), map.WallTerrain.Copy());
+            map.GetPostProc(new Loc(Draw.X + 3, Draw.Y + 2)).Status |= PostProcType.Terrain;
+            map.SetTile(new Loc(Draw.X + 3, Draw.Y + 5), map.WallTerrain.Copy());
+            map.GetPostProc(new Loc(Draw.X + 3, Draw.Y + 5)).Status |= PostProcType.Terrain;
+
+            SetRoomBorders(map);
+        }
+
+        protected override void PrepareFulfillableBorders(IRandom rand)
+        {
+            int diameter = Math.Min(this.Draw.Width, this.Draw.Height);
+            for (int jj = 0; jj < this.Draw.Width; jj++)
+            {
+                if (RoomGenDiamond<T>.IsTileWithinDiamond(jj, 0, diameter, this.Draw.Size))
+                {
+                    this.FulfillableBorder[Dir4.Up][jj] = true;
+                    this.FulfillableBorder[Dir4.Down][jj] = true;
+                }
+            }
+
+            for (int jj = 0; jj < this.Draw.Height; jj++)
+            {
+                if (RoomGenDiamond<T>.IsTileWithinDiamond(0, jj, diameter, this.Draw.Size))
+                {
+                    this.FulfillableBorder[Dir4.Left][jj] = true;
+                    this.FulfillableBorder[Dir4.Right][jj] = true;
+                }
+            }
         }
 
         public override string ToString()
