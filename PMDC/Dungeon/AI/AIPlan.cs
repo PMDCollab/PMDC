@@ -1807,6 +1807,43 @@ namespace PMDC.Dungeon
             int totalValue = 0;
             int maxValue = 0;
 
+            if (data.Category == BattleData.SkillCategory.Status)
+            {
+                // special case for tile targeting moves
+
+                foreach (BattleEvent effect in data.OnHitTiles.EnumerateInOrder())
+                {
+                    if (effect is SetTrapEvent)
+                    {
+                        bool hitSomething = false;
+                        foreach (Character target in seenChars)
+                        {
+                            if (DungeonScene.Instance.IsTargeted(controlledChar, target, explosion.TargetAlignments) && hitTiles.Contains(target.CharLoc))
+                                hitSomething = true;
+                        }
+
+                        if (hitSomething)
+                        {
+                            int totalTiles = 0;
+                            int freeTiles = 0;
+                            foreach (Loc targetLoc in hitTiles)
+                            {
+                                Tile checkTile = ZoneManager.Instance.CurrentMap.Tiles[targetLoc.X][targetLoc.Y];
+
+                                if (checkTile.Data.ID == DataManager.Instance.GenFloor && String.IsNullOrEmpty(checkTile.Effect.ID))
+                                    freeTiles += 1;
+                                totalTiles += 1;
+                            }
+
+                            if (totalTiles == 0)
+                                return new HitValue(0, false);
+
+                            return new HitValue(freeTiles * 90 / totalTiles, false);
+                        }
+                    }
+                }
+            }
+
             foreach (Character target in seenChars)
             {
                 if (DungeonScene.Instance.IsTargeted(controlledChar, target, explosion.TargetAlignments) && hitTiles.Contains(target.CharLoc))
@@ -1816,7 +1853,7 @@ namespace PMDC.Dungeon
                         directHit = true;
 
                     int newVal;
-                    
+
                     if (entry != null)//for moves
                         newVal = GetAttackValue(controlledChar, skillIndex, entry, seenChars, target, rangeMod, defaultVal);
                     else//for items
@@ -2173,17 +2210,6 @@ namespace PMDC.Dungeon
         {
             if (data.Category == BattleData.SkillCategory.Status || data.Category == BattleData.SkillCategory.None)
             {
-                foreach (BattleEvent effect in data.OnHitTiles.EnumerateInOrder())
-                {
-                    if (effect is SetTrapEvent)
-                    {
-                        Tile checkTile = ZoneManager.Instance.CurrentMap.Tiles[target.CharLoc.X][target.CharLoc.Y];
-                        if (String.IsNullOrEmpty(checkTile.Effect.ID))
-                            return -70;
-                        return 0;
-                    }
-                }
-
                 //heal checker/status removal checker/other effects
                 foreach (BattleEvent effect in data.OnHits.EnumerateInOrder())
                 {

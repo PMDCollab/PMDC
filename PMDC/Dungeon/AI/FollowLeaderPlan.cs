@@ -139,7 +139,7 @@ namespace PMDC.Dungeon
                 return new GameAction(GameAction.ActionType.Wait, Dir8.None);
 
 
-            //get the A* path to the target; if the direction goes farther from the character, return false
+            // TODO: ?get the A* path to the target; if the direction goes farther from the character, return false
 
             return TrySelectWalk(controlledChar, testDir);
         }
