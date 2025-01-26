@@ -42,7 +42,7 @@ namespace PMDC.LevelGen
 
         public RoomGenLoadBoss()
         {
-            MapID = "";
+            TriggerTile = "";
             SpawnDetails = new List<MobSpawnExtra>();
         }
 

@@ -4,10 +4,17 @@ using RogueEssence.Dungeon;
 using System.Collections.Generic;
 using RogueEssence;
 using RogueEssence.LevelGen;
+using RogueEssence.Dev;
+using RogueEssence.Data;
+using RogueEssence.Content;
+using RogueEssence.Ground;
+using PMDC.Dungeon;
+using Newtonsoft.Json;
 
 namespace PMDC.LevelGen
 {
     /// <summary>
+    /// THIS CLASS IS DEPRECATED.  Use RoomGenLoadEvo with a custom map using this shape instead.
     /// Generates an evolution room.  It's 7x6 in size and hardcoded to look a specific way.
     /// </summary>
     /// <typeparam name="T"></typeparam>
@@ -80,6 +87,7 @@ namespace PMDC.LevelGen
             int platHeight = 2;
             Loc platStart = Draw.Start + new Loc(2, ROOM_OFFSET);
             map.PlaceItem(new Loc(platStart.X + 1, platStart.Y), new EffectTile("tile_evo", true));
+            //TODO: when it's possible to specify the border digging, this entire class can be deprecated
             for (int x = 0; x < platWidth; x++)
             {
                 for (int y = 0; y < platHeight; y++)
@@ -131,6 +139,7 @@ namespace PMDC.LevelGen
 
 
     /// <summary>
+    /// THIS CLASS IS DEPRECATED.  Use RoomGenLoadEvo with a custom map using this shape instead.
     /// Generates an evolution room.  It's 5x6 in size and hardcoded to look a specific way.
     /// </summary>
     /// <typeparam name="T"></typeparam>
@@ -172,6 +181,7 @@ namespace PMDC.LevelGen
             int platHeight = 2;
             Loc platStart = Draw.Start + new Loc(1, 2);
             map.PlaceItem(new Loc(platStart.X + 1, platStart.Y), new EffectTile("tile_evo", true));
+
             for (int x = 0; x < platWidth; x++)
             {
                 for (int y = 0; y < platHeight; y++)
@@ -199,96 +209,150 @@ namespace PMDC.LevelGen
 
 
     /// <summary>
-    /// Generates an evolution room.  It's 7x8 in size and hardcoded to look a specific way.
+    /// Generates an evo room by loading a map as the room.
+    /// Includes tiles, items, enemies, and mapstarts.
+    /// Borders are specified by the walkable tile.
+    /// Also, this will specifically apply postproc mask to terrain that is not the RoomTerrain
+    /// Also, will apply postproc mask to the 3x2 tile area around the evo platform.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     [Serializable]
-    public class RoomGenEvoDiamond<T> : PermissiveRoomGen<T> where T : ITiledGenContext, IPostProcGenContext, IPlaceableGenContext<EffectTile>
+    public class RoomGenLoadEvo<T> : RoomGenLoadMapBase<T> where T : BaseMapGenContext
     {
-        //###.###
-        //##...##
-        //#..#..#
-        //..---..
-        //..---..
-        //#..#..#
-        //##...##
-        //###.###
+        const int PLAT_WIDTH = 3;
+        const int PLAT_HEIGHT = 2;
+        const int PLAT_START_X = -1;
+        const int PLAT_START_Y = 0;
 
-        const int MAP_WIDTH = 7;
-        const int MAP_HEIGHT = 8;
+        /// <summary>
+        /// The ID of the tile used for evo.
+        /// </summary>
+        [JsonConverter(typeof(TileConverter))]
+        [DataType(0, DataManager.DataType.Tile, false)]
+        public string TriggerTile;
 
-        public RoomGenEvoDiamond() { }
-        public override RoomGen<T> Copy() { return new RoomGenEvoDiamond<T>(); }
-
-        public override Loc ProposeSize(IRandom rand)
+        public RoomGenLoadEvo()
         {
-            return new Loc(MAP_WIDTH, MAP_HEIGHT);
+            TriggerTile = "";
         }
+
+
+        protected RoomGenLoadEvo(RoomGenLoadEvo<T> other) : base(other)
+        {
+            this.TriggerTile = other.TriggerTile;
+        }
+
+        public override RoomGen<T> Copy() { return new RoomGenLoadEvo<T>(this); }
+
+
 
         public override void DrawOnMap(T map)
         {
-            if (MAP_WIDTH != Draw.Width || MAP_HEIGHT != Draw.Height)
+            if (this.Draw.Width != this.roomMap.Width || this.Draw.Height != this.roomMap.Height)
             {
-                DrawMapDefault(map);
+                this.DrawMapDefault(map);
                 return;
             }
 
-            int diameter = Math.Min(this.Draw.Width, this.Draw.Height);
+            //no copying is needed here since the map is disposed of after use
 
-            for (int ii = 0; ii < this.Draw.Width; ii++)
+            DrawTiles(map);
+
+            DrawDecorations(map);
+
+            DrawItems(map);
+
+            DrawMobs(map);
+
+            DrawEntrances(map);
+
+            this.FulfillRoomBorders(map, false);
+
+            this.SetRoomBorders(map);
+
+            for (int xx = 0; xx < Draw.Width; xx++)
             {
-                for (int jj = 0; jj < this.Draw.Height; jj++)
+                for (int yy = 0; yy < Draw.Height; yy++)
                 {
-                    if (RoomGenDiamond<T>.IsTileWithinDiamond(ii, jj, diameter, this.Draw.Size))
-                        map.SetTile(new Loc(this.Draw.X + ii, this.Draw.Y + jj), map.RoomTerrain.Copy());
+                    if (this.roomMap.Tiles[xx][yy].Data.ID != DataManager.Instance.GenFloor)
+                        map.GetPostProc(new Loc(Draw.X + xx, Draw.Y + yy)).AddMask(new PostProcTile(PreventChanges));
+                    if (this.roomMap.Tiles[xx][yy].Effect.ID == TriggerTile)
+                    {
+                        for (int x2 = 0; x2 < PLAT_WIDTH; x2++)
+                        {
+                            for (int y2 = 0; y2 < PLAT_HEIGHT; y2++)
+                            {
+                                Loc dest = new Loc(xx + PLAT_START_X + x2, yy + PLAT_START_Y + y2);
+                                map.GetPostProc(Draw.Start + dest).AddMask(new PostProcTile(PreventChanges));
+                            }
+                        }
+                    }
                 }
             }
-
-            int platWidth = 3;
-            int platHeight = 2;
-            Loc platStart = Draw.Start + new Loc(2, 3);
-            map.PlaceItem(new Loc(platStart.X + 1, platStart.Y), new EffectTile("tile_evo", true));
-            for (int x = 0; x < platWidth; x++)
-            {
-                for (int y = 0; y < platHeight; y++)
-                {
-                    map.GetPostProc(new Loc(platStart.X + x, platStart.Y + y)).Status |= PostProcType.Panel;
-                    map.GetPostProc(new Loc(platStart.X + x, platStart.Y + y)).Status |= PostProcType.Terrain;
-                }
-            }
-            map.SetTile(new Loc(Draw.X + 3, Draw.Y + 2), map.WallTerrain.Copy());
-            map.GetPostProc(new Loc(Draw.X + 3, Draw.Y + 2)).Status |= PostProcType.Terrain;
-            map.SetTile(new Loc(Draw.X + 3, Draw.Y + 5), map.WallTerrain.Copy());
-            map.GetPostProc(new Loc(Draw.X + 3, Draw.Y + 5)).Status |= PostProcType.Terrain;
-
-            SetRoomBorders(map);
         }
 
         protected override void PrepareFulfillableBorders(IRandom rand)
         {
-            int diameter = Math.Min(this.Draw.Width, this.Draw.Height);
-            for (int jj = 0; jj < this.Draw.Width; jj++)
+            // NOTE: Because the context is not passed in when preparing borders,
+            // the tile ID representing an opening must be specified on this class instead.
+            if (this.Draw.Width != this.roomMap.Width || this.Draw.Height != this.roomMap.Height)
             {
-                if (RoomGenDiamond<T>.IsTileWithinDiamond(jj, 0, diameter, this.Draw.Size))
+                foreach (Dir4 dir in DirExt.VALID_DIR4)
                 {
-                    this.FulfillableBorder[Dir4.Up][jj] = true;
-                    this.FulfillableBorder[Dir4.Down][jj] = true;
+                    for (int jj = 0; jj < this.FulfillableBorder[dir].Length; jj++)
+                        this.FulfillableBorder[dir][jj] = true;
                 }
             }
-
-            for (int jj = 0; jj < this.Draw.Height; jj++)
+            else
             {
-                if (RoomGenDiamond<T>.IsTileWithinDiamond(0, jj, diameter, this.Draw.Size))
+                HashSet<Dir4> satisfiedBorders = new HashSet<Dir4>();
+                for (int ii = 0; ii < this.Draw.Width; ii++)
                 {
-                    this.FulfillableBorder[Dir4.Left][jj] = true;
-                    this.FulfillableBorder[Dir4.Right][jj] = true;
+                    if (this.roomMap.Tiles[ii][0].Data.ID == DataManager.Instance.GenFloor)
+                    {
+                        this.FulfillableBorder[Dir4.Up][ii] = true;
+                        satisfiedBorders.Add(Dir4.Up);
+                    }
+                    if (this.roomMap.Tiles[ii][this.Draw.Height - 1].Data.ID == DataManager.Instance.GenFloor)
+                    {
+                        this.FulfillableBorder[Dir4.Down][ii] = true;
+                        satisfiedBorders.Add(Dir4.Down);
+                    }
+                }
+
+                for (int ii = 0; ii < this.Draw.Height; ii++)
+                {
+                    if (this.roomMap.Tiles[0][ii].Data.ID == DataManager.Instance.GenFloor)
+                    {
+                        this.FulfillableBorder[Dir4.Left][ii] = true;
+                        satisfiedBorders.Add(Dir4.Left);
+                    }
+                    if (this.roomMap.Tiles[this.Draw.Width - 1][ii].Data.ID == DataManager.Instance.GenFloor)
+                    {
+                        this.FulfillableBorder[Dir4.Right][ii] = true;
+                        satisfiedBorders.Add(Dir4.Right);
+                    }
+                }
+
+                //backup plan: permit any borders that do not have unbreakables
+                for (int ii = 0; ii < this.Draw.Width; ii++)
+                {
+                    if (!satisfiedBorders.Contains(Dir4.Up) && this.roomMap.Tiles[ii][0].Data.ID != DataManager.Instance.GenUnbreakable)
+                        this.FulfillableBorder[Dir4.Up][ii] = true;
+
+                    if (!satisfiedBorders.Contains(Dir4.Down) && this.roomMap.Tiles[ii][this.Draw.Height - 1].Data.ID != DataManager.Instance.GenUnbreakable)
+                        this.FulfillableBorder[Dir4.Down][ii] = true;
+                }
+
+                for (int ii = 0; ii < this.Draw.Height; ii++)
+                {
+                    if (!satisfiedBorders.Contains(Dir4.Left) && this.roomMap.Tiles[0][ii].Data.ID != DataManager.Instance.GenUnbreakable)
+                        this.FulfillableBorder[Dir4.Left][ii] = true;
+
+                    if (!satisfiedBorders.Contains(Dir4.Right) && this.roomMap.Tiles[this.Draw.Width - 1][ii].Data.ID != DataManager.Instance.GenUnbreakable)
+                        this.FulfillableBorder[Dir4.Right][ii] = true;
                 }
             }
-        }
-
-        public override string ToString()
-        {
-            return string.Format("{0}", this.GetType().GetFormattedTypeName());
         }
     }
 }
