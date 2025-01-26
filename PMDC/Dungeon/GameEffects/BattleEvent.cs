@@ -11389,38 +11389,42 @@ namespace PMDC.Dungeon
     public class WeatherRequiredEvent : BattleEvent
     {
         /// <summary>
-        /// The status ID to check for
+        /// The status IDs to check for
         /// </summary> 
-        [JsonConverter(typeof(StatusConverter))]
-        [DataType(0, DataManager.DataType.MapStatus, false)]
-        public string WeatherID;
+        [JsonConverter(typeof(SkillListConverter))]
+        [DataType(1, DataManager.DataType.MapStatus, false)]
+        public List<string> AcceptedWeather;
 
         /// <summary>
-        /// The message displayed in the dungeon log if the conditon is met 
+        /// The message displayed in the dungeon log if the conditon is not met 
         /// </summary> 
         public StringKey Message;
 
-        public WeatherRequiredEvent() { WeatherID = ""; }
-        public WeatherRequiredEvent(string statusID, StringKey msg)
+        public WeatherRequiredEvent() { AcceptedWeather = new List<string>(); }
+        public WeatherRequiredEvent(StringKey msg, params string[] statusIDs)
         {
-            WeatherID = statusID;
+            AcceptedWeather = new List<string>();
+            AcceptedWeather.AddRange(statusIDs);
             Message = msg;
         }
         protected WeatherRequiredEvent(WeatherRequiredEvent other)
         {
-            WeatherID = other.WeatherID;
+            AcceptedWeather = new List<string>();
+            AcceptedWeather.AddRange(other.AcceptedWeather);
             Message = other.Message;
         }
         public override GameEvent Clone() { return new WeatherRequiredEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (!ZoneManager.Instance.CurrentMap.Status.ContainsKey(WeatherID))
+            foreach (string weatherId in AcceptedWeather)
             {
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(Message.ToLocal(), context.User.GetDisplayName(false)));
-                context.CancelState.Cancel = true;
+                if (ZoneManager.Instance.CurrentMap.Status.ContainsKey(weatherId))
+                    yield break;
             }
-            yield break;
+
+            DungeonScene.Instance.LogMsg(Text.FormatGrammar(Message.ToLocal(), context.User.GetDisplayName(false)));
+            context.CancelState.Cancel = true;
         }
     }
 
