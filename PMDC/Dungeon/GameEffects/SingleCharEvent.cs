@@ -1083,6 +1083,111 @@ namespace PMDC.Dungeon
     }
 
 
+
+
+    [Serializable]
+    public class UseStateItemEvent : SingleCharEvent
+    {
+        [StringKey(2, false)]
+        public Dictionary<ItemData.UseType, StringKey> UseMsgs;
+
+        public UseStateItemEvent()
+        {
+            UseMsgs = new Dictionary<ItemData.UseType, StringKey>();
+        }
+        public UseStateItemEvent(Dictionary<ItemData.UseType, StringKey> useMsgs)
+        {
+            UseMsgs = useMsgs;
+        }
+        public UseStateItemEvent(UseStateItemEvent other)
+        {
+            UseMsgs = new Dictionary<ItemData.UseType, StringKey>();
+            foreach (ItemData.UseType useType in other.UseMsgs.Keys)
+                UseMsgs[useType] = other.UseMsgs[useType];
+        }
+        public override GameEvent Clone() { return new UseStateItemEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            string itemId = ((StatusEffect)owner).StatusStates.GetWithDefault<IDState>().ID;
+
+            BattleContext newContext = new BattleContext(BattleActionType.Item);
+            newContext.User = context.User;
+            newContext.UsageSlot = BattleContext.FORCED_SLOT;
+
+            ItemData entry = DataManager.Instance.GetItem(itemId);
+
+            newContext.StartDir = newContext.User.CharDir;
+            newContext.Data = new BattleData(entry.UseEvent);
+            newContext.Data.ID = itemId;
+            newContext.Data.DataType = DataManager.DataType.Item;
+            newContext.Explosion = new ExplosionData(entry.Explosion);
+            newContext.Strikes = 1;
+            newContext.Item = new InvItem(itemId);
+            newContext.HitboxAction = entry.UseAction.Clone();
+            StringKey useMsg;
+            if (UseMsgs.TryGetValue(entry.UsageType, out useMsg))
+                newContext.SetActionMsg(Text.FormatGrammar(useMsg.ToLocal(), context.User.GetDisplayName(false), newContext.Item.GetDisplayName()));
+
+
+            //if (context.CancelState.Cancel) { yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30)); yield break; }
+            //yield return CoroutinesManager.Instance.StartCoroutine(context.User.BeforeTryAction(context));
+            //if (context.CancelState.Cancel) { yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30)); yield break; }
+            //yield return CoroutinesManager.Instance.StartCoroutine(PreProcessAction(context));
+            newContext.StrikeStartTile = newContext.User.CharLoc;
+            ////move has been made; end-turn must be done from this point onwards
+
+            //HandleItemUse
+
+            //yield return CoroutinesManager.Instance.StartCoroutine(context.User.BeforeAction(context));
+            //if (context.CancelState.Cancel) { yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30)); yield break; }
+
+            //PreExecuteItem
+
+            newContext.PrintActionMsg();
+
+            //yield return CoroutinesManager.Instance.StartCoroutine(ExecuteAction(context));
+            //if (context.CancelState.Cancel) { yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30)); yield break; }
+            //yield return CoroutinesManager.Instance.StartCoroutine(RepeatActions(context));
+
+
+            //TODO: turn this into a full move invocation, so that modifiers that stop item use can take effect
+            //for now, just give its effects to the user, as detailed below (and remove later):
+
+            newContext.ExplosionTile = newContext.User.CharLoc;
+
+            newContext.Target = newContext.User;
+
+
+            yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.ProcessEndAnim(newContext.User, newContext.Target, newContext.Data));
+
+            yield return CoroutineManager.Instance.StartCoroutine(newContext.Data.Hit(newContext));
+        }
+
+        public IEnumerator<YieldInstruction> LocalExecuteAction(BattleContext baseContext)
+        {
+            BattleContext context = new BattleContext(baseContext, true);
+
+            yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.PerformAction(context));
+            if (context.CancelState.Cancel) yield break;
+        }
+
+
+        public IEnumerator<YieldInstruction> TrapRepeatActions(BattleContext context)
+        {
+            //increment for multistrike
+            context.StrikesMade++;
+            while (context.StrikesMade < context.Strikes)
+            {
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.PreProcessAction(context));
+                yield return CoroutineManager.Instance.StartCoroutine(LocalExecuteAction(context));
+
+                context.StrikesMade++;
+            }
+        }
+    }
+
+
     [Serializable]
     public class WeatherFormeEvent : SingleCharEvent
     {

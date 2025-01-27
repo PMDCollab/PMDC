@@ -3030,6 +3030,7 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
+            //TODO: decouple this with BerryNeededEvent
             if (context.ActionType == BattleActionType.Item)
             {
                 ItemData itemData = DataManager.Instance.GetItem(context.Item.ID);
@@ -11833,6 +11834,51 @@ namespace PMDC.Dungeon
         }
     }
 
+
+
+    /// <summary>
+    /// Event that groups multiple battle events into one event,
+    /// but only applies when the hitbox action is an item or throw action that has a berry
+    /// </summary>
+    [Serializable]
+    public class BerryNeededEvent : BattleEvent
+    {
+
+        /// <summary>
+        /// The list of battle events that will be applied if the condition is met 
+        /// </summary>
+        public List<BattleEvent> BaseEvents;
+
+        public BerryNeededEvent() { BaseEvents = new List<BattleEvent>(); }
+        public BerryNeededEvent(params BattleEvent[] effects)
+        {
+            BaseEvents = new List<BattleEvent>();
+            foreach (BattleEvent effect in effects)
+                BaseEvents.Add(effect);
+        }
+        protected BerryNeededEvent(BerryNeededEvent other)
+            : this()
+        {
+            foreach (BattleEvent battleEffect in other.BaseEvents)
+                BaseEvents.Add((BattleEvent)battleEffect.Clone());
+        }
+        public override GameEvent Clone() { return new BerryNeededEvent(this); }
+
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.ActionType == BattleActionType.Item || context.ActionType == BattleActionType.Throw)
+            {
+                ItemData itemData = DataManager.Instance.GetItem(context.Item.ID);
+                if (itemData.ItemStates.Contains<BerryState>())
+                {
+                    foreach (BattleEvent battleEffect in BaseEvents)
+                        yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
+                }
+            }
+        }
+    }
+
     /// <summary>
     /// Event that groups multiple battle events into one event, but only applies if a StatusBattleEvent was used
     /// and its status matches one of the specified status
@@ -12070,7 +12116,8 @@ namespace PMDC.Dungeon
             }
         }
     }
-    
+
+
     /// <summary>
     /// Event that groups multiple battle events into one event, but only applies if the used item has the WandState item state
     /// </summary>
@@ -12694,7 +12741,31 @@ namespace PMDC.Dungeon
             return true;
         }
     }
-    
+
+    /// <summary>
+    /// Event that sets the value in the SlotState based on what move slot was used when the status is applied
+    /// </summary>
+    [Serializable]
+    public class StatusItemBattleEvent : StatusBattleEvent
+    {
+        public StatusItemBattleEvent() { }
+        public StatusItemBattleEvent(string statusID, bool affectTarget, bool silentCheck) : base(statusID, affectTarget, silentCheck) { }
+        protected StatusItemBattleEvent(StatusItemBattleEvent other) : base(other) { }
+        public override GameEvent Clone() { return new StatusItemBattleEvent(this); }
+
+        protected override bool ModStatus(GameEventOwner owner, BattleContext context, Character target, Character origin, StatusEffect status)
+        {
+            if (context.ActionType == BattleActionType.Item || context.ActionType == BattleActionType.Throw)
+            {
+                string itemId = context.Item.ID;
+
+                status.StatusStates.GetWithDefault<IDState>().ID = itemId;
+                return true;
+            }
+            return false;
+        }
+    }
+
     /// <summary>
     /// Event that disables a move slot by using the value in the SlotState status state in the specified status when the status is applied
     /// </summary>
