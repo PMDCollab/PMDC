@@ -343,7 +343,24 @@ namespace PMDC.Dungeon
     [Serializable]
     public class PreItemEvent : BattleEvent
     {
-        public override GameEvent Clone() { return new PreItemEvent(); }
+        [StringKey(2, false)]
+        public Dictionary<ItemData.UseType, StringKey> UseMsgs;
+
+        public PreItemEvent()
+        {
+            UseMsgs = new Dictionary<ItemData.UseType, StringKey>();
+        }
+        public PreItemEvent(Dictionary<ItemData.UseType, StringKey> useMsgs)
+        {
+            UseMsgs = useMsgs;
+        }
+        public PreItemEvent(PreItemEvent other)
+        {
+            UseMsgs = new Dictionary<ItemData.UseType, StringKey>();
+            foreach (ItemData.UseType useType in other.UseMsgs.Keys)
+                UseMsgs[useType] = other.UseMsgs[useType];
+        }
+        public override GameEvent Clone() { return new PreItemEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
@@ -385,29 +402,9 @@ namespace PMDC.Dungeon
                 context.Item.Amount = 1;
             }
             context.HitboxAction = entry.UseAction.Clone();
-            switch (entry.UsageType)
-            {
-                case ItemData.UseType.Eat:
-                    {
-                        context.SetActionMsg(Text.FormatGrammar(new StringKey("MSG_USE_EAT").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName()));
-                        break;
-                    }
-                case ItemData.UseType.Drink:
-                    {
-                        context.SetActionMsg(Text.FormatGrammar(new StringKey("MSG_USE_DRINK").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName()));
-                        break;
-                    }
-                case ItemData.UseType.Learn:
-                    {
-                        context.SetActionMsg(Text.FormatGrammar(new StringKey("MSG_USE_OPERATE").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName()));
-                        break;
-                    }
-                case ItemData.UseType.Use:
-                    {
-                        context.SetActionMsg(Text.FormatGrammar(new StringKey("MSG_USE").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName()));
-                        break;
-                    }
-            }
+            StringKey useMsg;
+            if (UseMsgs.TryGetValue(entry.UsageType, out useMsg))
+                context.SetActionMsg(Text.FormatGrammar(useMsg.ToLocal(), context.User.GetDisplayName(false), context.Item.GetDisplayName()));
 
             if (item.Cursed)
             {
@@ -417,6 +414,20 @@ namespace PMDC.Dungeon
             }
 
             yield break;
+        }
+
+
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            //TODO: remove on v1.1
+            if (Serializer.OldVersion < new Version(0, 8, 9))
+            {
+                UseMsgs[ItemData.UseType.Eat] = new StringKey("MSG_USE_EAT");
+                UseMsgs[ItemData.UseType.Drink] = new StringKey("MSG_USE_DRINK");
+                UseMsgs[ItemData.UseType.Learn] = new StringKey("MSG_USE_OPERATE");
+                UseMsgs[ItemData.UseType.Use] = new StringKey("MSG_USE");
+            }
         }
     }
 
@@ -16627,18 +16638,30 @@ namespace PMDC.Dungeon
         /// </summary>
         public bool SilentCheck;
 
-        public UseFoeItemEvent() { }
-        public UseFoeItemEvent(bool topDown, bool heldOnly, string priorityItem, HashSet<FlagType> eligibles, bool affectTarget, bool silentCheck)
+
+        [StringKey(2, false)]
+        public Dictionary<ItemData.UseType, StringKey> UseMsgs;
+
+        public UseFoeItemEvent()
+        {
+            UseMsgs = new Dictionary<ItemData.UseType, StringKey>();
+        }
+        public UseFoeItemEvent(bool topDown, bool heldOnly, string priorityItem, HashSet<FlagType> eligibles, bool affectTarget, bool silentCheck, Dictionary<ItemData.UseType, StringKey> useMsgs)
             : base(topDown, heldOnly, priorityItem, eligibles)
         {
             AffectTarget = affectTarget;
             SilentCheck = silentCheck;
+            UseMsgs = useMsgs;
         }
         protected UseFoeItemEvent(UseFoeItemEvent other)
             : base(other)
         {
             AffectTarget = other.AffectTarget;
             SilentCheck = other.SilentCheck;
+
+            UseMsgs = new Dictionary<ItemData.UseType, StringKey>();
+            foreach (ItemData.UseType useType in other.UseMsgs.Keys)
+                UseMsgs[useType] = other.UseMsgs[useType];
         }
         public override GameEvent Clone() { return new UseFoeItemEvent(this); }
 
@@ -16694,29 +16717,11 @@ namespace PMDC.Dungeon
                         newContext.Item.Amount = 1;
                     }
                     newContext.HitboxAction = entry.UseAction.Clone();
-                    switch (entry.UsageType)
-                    {
-                        case ItemData.UseType.Eat:
-                            {
-                                newContext.SetActionMsg(Text.FormatGrammar(new StringKey("MSG_STEAL_EAT").ToLocal(), newContext.User.GetDisplayName(false), newContext.Item.GetDisplayName()));
-                                break;
-                            }
-                        case ItemData.UseType.Drink:
-                            {
-                                newContext.SetActionMsg(Text.FormatGrammar(new StringKey("MSG_STEAL_DRINK").ToLocal(), newContext.User.GetDisplayName(false), newContext.Item.GetDisplayName()));
-                                break;
-                            }
-                        case ItemData.UseType.Learn:
-                            {
-                                newContext.SetActionMsg(Text.FormatGrammar(new StringKey("MSG_STEAL_OPERATE").ToLocal(), newContext.User.GetDisplayName(false), newContext.Item.GetDisplayName()));
-                                break;
-                            }
-                        case ItemData.UseType.Use:
-                            {
-                                newContext.SetActionMsg(Text.FormatGrammar(new StringKey("MSG_STEAL_USE").ToLocal(), newContext.User.GetDisplayName(false), newContext.Item.GetDisplayName()));
-                                break;
-                            }
-                    }
+
+                    StringKey useMsg;
+                    if (UseMsgs.TryGetValue(entry.UsageType, out useMsg))
+                        newContext.SetActionMsg(Text.FormatGrammar(useMsg.ToLocal(), newContext.User.GetDisplayName(false), newContext.Item.GetDisplayName()));
+
 
 
                     //if (context.CancelState.Cancel) { yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30)); yield break; }
@@ -16755,6 +16760,19 @@ namespace PMDC.Dungeon
 
                     yield return CoroutineManager.Instance.StartCoroutine(newContext.Data.Hit(newContext));
                 }
+            }
+        }
+
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            //TODO: remove on v1.1
+            if (Serializer.OldVersion < new Version(0, 8, 9))
+            {
+                UseMsgs[ItemData.UseType.Eat] = new StringKey("MSG_STEAL_EAT");
+                UseMsgs[ItemData.UseType.Drink] = new StringKey("MSG_STEAL_DRINK");
+                UseMsgs[ItemData.UseType.Learn] = new StringKey("MSG_STEAL_OPERATE");
+                UseMsgs[ItemData.UseType.Use] = new StringKey("MSG_STEAL_USE");
             }
         }
     }
