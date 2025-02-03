@@ -8501,6 +8501,7 @@ namespace PMDC.Dungeon
             yield break;
         }
     }
+
     [Serializable]
     public class FreezeEvent : BattleEvent
     {
