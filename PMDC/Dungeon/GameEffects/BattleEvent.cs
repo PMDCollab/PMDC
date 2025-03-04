@@ -19770,7 +19770,7 @@ namespace PMDC.Dungeon
 
             if (DataManager.Instance.CurrentReplay == null)
             {
-                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(new MemberFeaturesMenu(DungeonScene.Instance.ActiveTeam.Players.Count - 1, false, false)));
+                yield return CoroutineManager.Instance.StartCoroutine(MenuManager.Instance.ProcessMenuCoroutine(new MemberFeaturesMenu(DungeonScene.Instance.ActiveTeam, DungeonScene.Instance.ActiveTeam.Players.Count - 1, false, false, false)));
 
                 bool nick = false;
                 string name = "";
