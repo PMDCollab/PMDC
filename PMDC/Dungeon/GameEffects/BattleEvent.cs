@@ -20126,7 +20126,7 @@ namespace PMDC.Dungeon
 
         public ScriptedConditionalEvent() { Script = ""; ArgTable = "{}"; BaseEvents = new List<BattleEvent>(); }
         public ScriptedConditionalEvent(string script) { Script = script; ArgTable = "{}"; BaseEvents = new List<BattleEvent>(); }
-        public ScriptedConditionalEvent(string script, string argTable, List<BattleEvent> events ) { Script = script; ArgTable = argTable; BaseEvents = events}
+        public ScriptedConditionalEvent(string script, string argTable, List<BattleEvent> events ) { Script = script; ArgTable = argTable; BaseEvents = events; }
         protected ScriptedConditionalEvent(ScriptedConditionalEvent other)
         {
             Script = other.Script;
