@@ -12,6 +12,9 @@ using PMDC.Dev;
 using PMDC.Data;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using NLua;
+using RogueEssence.Script;
+using System.Linq;
 
 namespace PMDC.Dungeon
 {
@@ -10211,7 +10214,55 @@ namespace PMDC.Dungeon
             yield break;
         }
     }
-    
+
+    /// <summary>
+    /// Event that prevents the move from landing if the target does not have the specified type
+    /// </summary> 
+    [Serializable]
+    public class TargetElementNeededEvent : BattleEvent
+    {
+        /// <summary>
+        /// The element ID to check for
+        /// </summary> 
+        [JsonConverter(typeof(ElementConverter))]
+        [DataType(0, DataManager.DataType.Element, false)]
+        public string ElementID;
+
+        /// <summary>
+        /// The message displayed in the dungeon log if the conditon is met 
+        /// </summary> 
+        public StringKey Message;
+
+        /// <summary>
+        /// If set, the move will land only if the target has the specified type instead
+        /// </summary>
+        public bool Inverted;
+
+        public TargetElementNeededEvent() { ElementID = ""; }
+        public TargetElementNeededEvent(string statusID, StringKey msg)
+        {
+            ElementID = statusID;
+            Message = msg;
+        }
+        protected TargetElementNeededEvent(TargetElementNeededEvent other)
+        {
+            ElementID = other.ElementID;
+            Message = other.Message;
+        }
+        public override GameEvent Clone() { return new TargetElementNeededEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            bool condition = context.Target.Element1 == ElementID || context.Target.Element2 == ElementID;
+            if (Inverted) condition = !condition;
+            if (condition)
+            {
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(Message.ToLocal(), context.Target.GetDisplayName(false)));
+                context.CancelState.Cancel = true;
+            }
+            yield break;
+        }
+    }
     /// <summary>
     /// Event that modifies the damage multiplier if the character is inflicted with a major status condition
     /// </summary> 
@@ -20062,5 +20113,43 @@ namespace PMDC.Dungeon
         protected override PriorityList<BattleEvent> GetEvents(ItemData entry) => entry.OnHitTiles;
     }
 
-}
+    /// <summary>
+    /// Event that activates if the supplied battle script returns true
+    /// If the script does not return a boolean, it will still count as true as long as it is not nil
+    /// </summary>
+    public class ScriptedConditionalEvent : BattleScriptEvent
+    {
+        /// <summary>
+        /// The list of battle events that plays if the condition is met
+        /// </summary>
+        public List<BattleEvent> BaseEvents;
 
+        public ScriptedConditionalEvent() { Script = ""; ArgTable = "{}"; BaseEvents = new List<BattleEvent>(); }
+        public ScriptedConditionalEvent(string script) { Script = script; ArgTable = "{}"; BaseEvents = new List<BattleEvent>(); }
+        public ScriptedConditionalEvent(string script, string argTable, List<BattleEvent> events ) { Script = script; ArgTable = argTable; BaseEvents = events; }
+        protected ScriptedConditionalEvent(ScriptedConditionalEvent other)
+        {
+            Script = other.Script;
+            ArgTable = other.ArgTable;
+            BaseEvents = other.BaseEvents;
+        }
+        public override GameEvent Clone() { return new ScriptedConditionalEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            LuaTable args = LuaEngine.Instance.RunString("return " + ArgTable).First() as LuaTable;
+            object[] parameters = new object[] { owner, ownerChar, context, args };
+            string name = LuaEngine.EVENT_BATTLE_NAME + "." + Script;
+            LuaFunction func_iter = LuaEngine.Instance.CreateCoroutineIterator(name, parameters);
+
+            object result = func_iter.Call().First();
+            if (result is bool && (bool)result == true || result is not null)
+            {
+                foreach (BattleEvent battleEffect in BaseEvents)
+                    yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
+            }
+
+        }
+    }
+
+}
