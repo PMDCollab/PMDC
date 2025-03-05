@@ -10233,6 +10233,11 @@ namespace PMDC.Dungeon
         /// </summary> 
         public StringKey Message;
 
+        /// <summary>
+        /// If set, the move will land only if the target has the specified type instead
+        /// </summary>
+        public bool Inverted;
+
         public TargetElementNeededEvent() { ElementID = ""; }
         public TargetElementNeededEvent(string statusID, StringKey msg)
         {
@@ -10248,7 +10253,9 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.Target.Element1 != ElementID && context.Target.Element2 != ElementID)
+            bool condition = context.Target.Element1 == ElementID || context.Target.Element2 == ElementID;
+            if (Inverted) condition = !condition;
+            if (condition)
             {
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(Message.ToLocal(), context.Target.GetDisplayName(false)));
                 context.CancelState.Cancel = true;
