@@ -15,6 +15,7 @@ using System.Linq;
 using Newtonsoft.Json;
 using System.Runtime.Serialization;
 using PMDC.LevelGen;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace PMDC.Dungeon
 {
@@ -7516,6 +7517,9 @@ namespace PMDC.Dungeon
         public abstract int calculateRegen(GameEventOwner owner, Character ownerChar, SingleCharContext context);
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
+            if (context.User.Dead)
+                yield break;
+
             int regen = calculateRegen(owner, ownerChar, context);
             yield return CoroutineManager.Instance.StartCoroutine(context.User.ModifyHP(regen));
         }
@@ -7577,6 +7581,9 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new NaturalHungerEvent(this); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
+            if (context.User.Dead)
+                yield break;
+
             int residual = 0;
             if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
             {
