@@ -472,8 +472,6 @@ namespace PMDC.Dungeon
     [Serializable]
     public class HealEvent : SingleCharEvent
     {
-        
-
         public HealEvent() { }
         public override GameEvent Clone() { return new HealEvent(); }
 
@@ -482,6 +480,19 @@ namespace PMDC.Dungeon
             yield return CoroutineManager.Instance.StartCoroutine(context.User.RestoreHP(((StatusEffect)owner).StatusStates.GetWithDefault<HPState>().HP));
         }
     }
+
+    [Serializable]
+    public class DamageEvent : SingleCharEvent
+    {
+        public DamageEvent() { }
+        public override GameEvent Clone() { return new HealEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(((StatusEffect)owner).StatusStates.GetWithDefault<HPState>().HP));
+        }
+    }
+
     [Serializable]
     public class DamageAreaEvent : SingleCharEvent
     {

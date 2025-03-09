@@ -14739,36 +14739,45 @@ namespace PMDC.Dungeon
         /// The total distance to hop
         /// </summary>
         public int Distance;
-        
+
         /// <summary>
         /// Whether to hop forwards or backwards
         /// </summary>
         public bool Reverse;
 
+        /// <summary>
+        /// Whether to affect the user or target
+        /// </summary>
+        public bool AffectTarget;
+
         public HopEvent() { }
         public HopEvent(int distance, bool reverse)
         {
-            Distance = distance; Reverse = reverse;
+            Distance = distance;
+            Reverse = reverse;
         }
         protected HopEvent(HopEvent other)
         {
             Distance = other.Distance;
             Reverse = other.Reverse;
+            AffectTarget = other.AffectTarget;
         }
         public override GameEvent Clone() { return new HopEvent(this); }
 
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.User.Dead)
+            Character target = (AffectTarget ? context.Target : context.User);
+
+            if (target.Dead)
                 yield break;
             //jump back a number of spaces
-            if (context.User.CharStates.Contains<AnchorState>())
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_ANCHORED").ToLocal(), context.User.GetDisplayName(false)));
+            if (target.CharStates.Contains<AnchorState>())
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_ANCHORED").ToLocal(), target.GetDisplayName(false)));
             else
             {
-                Dir8 hopDir = (Reverse ? context.User.CharDir.Reverse() : context.User.CharDir);
-                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.JumpTo(context.User, hopDir, Distance));
+                Dir8 hopDir = (Reverse ? target.CharDir.Reverse() : target.CharDir);
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.JumpTo(target, hopDir, Distance));
             }
         }
     }
