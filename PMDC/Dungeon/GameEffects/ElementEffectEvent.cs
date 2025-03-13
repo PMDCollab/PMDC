@@ -244,6 +244,29 @@ namespace PMDC.Dungeon
         }
     }
     [Serializable]
+    public class TypeAddEvent : ElementEffectEvent
+    {
+        [JsonConverter(typeof(ElementConverter))]
+        [DataType(0, DataManager.DataType.Element, false)]
+        public string Element;
+
+        public TypeAddEvent() { Element = ""; }
+        public TypeAddEvent(string element) { Element = element; }
+        protected TypeAddEvent(TypeAddEvent other) { Element = other.Element; }
+        public override GameEvent Clone() { return new TypeAddEvent(this); }
+        public override void Apply(GameEventOwner owner, Character ownerChar, string moveType, string targetType, ref int effectiveness)
+        {
+            int secondMatchup = PreTypeEvent.CalculateTypeMatchup(Element, targetType);
+            if (secondMatchup == PreTypeEvent.N_E)
+                effectiveness = PreTypeEvent.N_E;
+            else
+            {
+                int diff = secondMatchup - PreTypeEvent.NRM;
+                effectiveness = Math.Clamp(effectiveness + diff, PreTypeEvent.NVE, PreTypeEvent.S_E);
+            }
+        }
+    }
+    [Serializable]
     public class NormalizeEvent : ElementEffectEvent
     {
         public override GameEvent Clone() { return new NormalizeEvent(); }

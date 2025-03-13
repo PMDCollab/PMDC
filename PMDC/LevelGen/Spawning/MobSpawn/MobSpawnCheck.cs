@@ -93,6 +93,21 @@ namespace PMDC.LevelGen
     }
 
     /// <summary>
+    /// Spawns the mob if the map hasnt started yet.  DOESNT WORK.
+    /// </summary>
+    [Serializable]
+    public class MobCheckMapStart : MobSpawnCheck
+    {
+        public override MobCheckMapStart Copy() { return new MobCheckMapStart(); }
+
+        public override bool CanSpawn()
+        {
+            throw new NotImplementedException();
+        }
+
+    }
+
+    /// <summary>
     /// Spawns the mob if the time of day is right.  DOESNT WORK.
     /// </summary>
     [Serializable]
