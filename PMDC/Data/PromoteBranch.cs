@@ -504,7 +504,7 @@ namespace PMDC.Data
             int amount = 0;
             foreach (Character partner in character.MemberTeam.Players)
             {
-                if (partner.BaseForm.Species == Species)
+                if (partner.BaseForm.Species == Species && partner != character)
                     amount++;
             }
             return amount >= Amount;

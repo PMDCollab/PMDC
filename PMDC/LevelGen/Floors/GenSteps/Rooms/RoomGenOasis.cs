@@ -63,18 +63,50 @@ namespace PMDC.LevelGen
             if (this.Draw.Width != this.Tiles.Length || this.Draw.Height != this.Tiles[0].Length)
                 return;
 
+            // place the wate
+            bool[][] waterGrid = new bool[this.Draw.Width][];
+            bool[][] outerWallGrid = new bool[this.Draw.Width][];
+            for (int xx = 0; xx < this.Draw.Width; xx++)
+            {
+                outerWallGrid[xx] = new bool[this.Draw.Height];
+                waterGrid[xx] = new bool[this.Draw.Height];
+                for (int yy = 0; yy < this.Draw.Height; yy++)
+                {
+                    if (canPlaceWater(xx, yy))
+                        waterGrid[xx][yy] = true;
+                }
+            }
+
+            Grid.FloodFill(new Rect(0, 0, this.Draw.Width, this.Draw.Height),
+                    (Loc testLoc) =>
+                    {
+                        return outerWallGrid[testLoc.X][testLoc.Y] || waterGrid[testLoc.X][testLoc.Y];
+                    },
+                    (Loc testLoc) =>
+                    {
+                        return outerWallGrid[testLoc.X][testLoc.Y] || waterGrid[testLoc.X][testLoc.Y];
+                    },
+                    (Loc fillLoc) =>
+                    {
+                        outerWallGrid[fillLoc.X][fillLoc.Y] = true;
+                    },
+                    new Loc(0, 0));
+
             List<Loc> freeTiles = new List<Loc>();
             //then convert all the inner tiles to water
             for (int xx = 0; xx < this.Draw.Width; xx++)
             {
                 for (int yy = 0; yy < this.Draw.Height; yy++)
                 {
-                    if (canPlaceWater(xx, yy))
-                        map.SetTile(new Loc(this.Draw.X + xx, this.Draw.Y + yy), WaterTerrain.Copy());
-                    else if (this.Tiles[xx][yy])
+                    if (this.Tiles[xx][yy])
                     {
-                        //this is ground.  eligible for item.
-                        freeTiles.Add(new Loc(this.Draw.X + xx, this.Draw.Y + yy));
+                        if (!outerWallGrid[xx][yy])
+                            map.SetTile(new Loc(this.Draw.X + xx, this.Draw.Y + yy), WaterTerrain.Copy());
+                        else
+                        {
+                            //this is ground.  eligible for item.
+                            freeTiles.Add(new Loc(this.Draw.X + xx, this.Draw.Y + yy));
+                        }
                     }
                 }
             }

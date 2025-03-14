@@ -13,25 +13,42 @@ namespace PMDC.Dungeon
     {
         [DataType(0, DataManager.DataType.Tile, false)]
         public HashSet<string> StairIds;
-        public FleeStairsPlan(AIFlags iq, HashSet<string> destLocations) : base(iq)
+        public int Factor;
+        public bool Omniscient;
+
+        public FleeStairsPlan(AIFlags iq, HashSet<string> destLocations, bool omniscient = false, int factor = 1) : base(iq)
         {
             StairIds = destLocations;
+            Omniscient = omniscient;
+            Factor = factor;
         }
 
         protected FleeStairsPlan(FleeStairsPlan other) : base(other)
         {
             StairIds = other.StairIds;
+            Omniscient = other.Omniscient;
+            Factor = other.Factor;
         }
         public override BasePlan CreateNew() { return new FleeStairsPlan(this); }
 
         public override GameAction Think(Character controlledChar, bool preThink, IRandom rand)
         {
+            if (controlledChar.HP * Factor >= controlledChar.MaxHP)
+                return null;
+
+            if (controlledChar.CantWalk)
+                return null;
+
             Map map = ZoneManager.Instance.CurrentMap;
 
             Loc seen = Character.GetSightDims();
-            
-            Rect sightBounds = Rect.FromPoints(controlledChar.CharLoc - seen, controlledChar.CharLoc + seen + Loc.One);
-            sightBounds = controlledChar.MemberTeam.ContainingMap.GetClampedSight(sightBounds);
+
+            Rect sightBounds = new Rect(Loc.Zero, controlledChar.MemberTeam.ContainingMap.Size);
+            if (!Omniscient)
+            {
+                Rect.FromPoints(controlledChar.CharLoc - seen, controlledChar.CharLoc + seen + Loc.One);
+                sightBounds = controlledChar.MemberTeam.ContainingMap.GetClampedSight(sightBounds);
+            }
             
             // Get all the visible stairs within vision
             List<Loc> stairLocs = new List<Loc>();  
@@ -42,107 +59,52 @@ namespace PMDC.Dungeon
                     Loc loc = new Loc(xx, yy);
                     
                     Tile tile = map.GetTile(loc);
-                    if (tile != null && tile.Effect.Revealed && StairIds.Contains(tile.Effect.ID) && controlledChar.CanSeeLoc(loc, controlledChar.GetCharSight()))
+                    if (tile != null && tile.Effect.Revealed && StairIds.Contains(tile.Effect.ID) && 
+                        (Omniscient || controlledChar.CanSeeLoc(loc, controlledChar.GetCharSight())))
                     {
                         //do nothing if positioned at the stairs
                         if (loc == controlledChar.CharLoc)
                         {
-                            return new GameAction(GameAction.ActionType.Wait, Dir8.None);;
+                            return new GameAction(GameAction.ActionType.Wait, Dir8.None);
                         }
                         stairLocs.Add(loc);   
                     };
                 }
             }
-            GameAction result = null;
 
-            foreach(Loc stairLoc in stairLocs)
-            {
-                if (controlledChar.CanSeeLoc(stairLoc, controlledChar.GetCharSight()))
-                {
-                    List<Loc>[] paths = GetPaths(controlledChar, new Loc[1] { stairLoc }, true, false);
-                    List<Loc> path = paths[0];
-                    
-                    Dir8 dirToChar = ZoneManager.Instance.CurrentMap.GetClosestDir8(controlledChar.CharLoc, stairLoc);
-                    if (path.Count > 1)
-                        dirToChar = ZoneManager.Instance.CurrentMap.GetClosestDir8(path[path.Count - 1],
-                            path[path.Count - 2]);
-                    
-                    result = tryDir(controlledChar, stairLoc, dirToChar, !preThink);
-                    if (result != null)
-                        return result;
-                    if (dirToChar.IsDiagonal())
-                    {
-                        Loc diff = controlledChar.CharLoc - stairLoc;
-                        DirH horiz;
-                        DirV vert;
-                        dirToChar.Separate(out horiz, out vert);
-                        //start with the one that covers the most distance
-                        if (Math.Abs(diff.X) < Math.Abs(diff.Y))
-                        {
-                            result = tryDir(controlledChar, stairLoc, vert.ToDir8(), !preThink);
-                            if (result != null)
-                                return result;
-                            result = tryDir(controlledChar, stairLoc, horiz.ToDir8(), !preThink);
-                            if (result != null)
-                                return result;
-                        }
-                        else
-                        {
-                            result = tryDir(controlledChar, stairLoc, horiz.ToDir8(), !preThink);
-                            if (result != null)
-                                return result;
-                            result = tryDir(controlledChar, stairLoc, vert.ToDir8(), !preThink);
-                            if (result != null)
-                                return result;
-                        }
-                    }
-                    else
-                    {
-                        result = tryDir(controlledChar, stairLoc, DirExt.AddAngles(dirToChar, Dir8.DownLeft),
-                            !preThink);
-                        if (result != null)
-                            return result;
-                        result = tryDir(controlledChar, stairLoc, DirExt.AddAngles(dirToChar, Dir8.DownRight),
-                            !preThink);
-                        if (result != null)
-                            return result;
-                    }
-                }
-            }
-            
+            List<Loc> path = GetEscapePath(controlledChar, stairLocs.ToArray());
+            if (path.Count > 1)
+                return SelectChoiceFromPath(controlledChar, path);
+
             return null;
         }
 
-        private GameAction tryDir(Character controlledChar, Loc stairLoc, Dir8 testDir, bool respectPeers)
+        protected List<Loc> GetEscapePath(Character controlledChar, Loc[] ends)
         {
-            //check to see if it's possible to move in this direction
-            bool blocked = Grid.IsDirBlocked(controlledChar.CharLoc, testDir,
-                (Loc testLoc) =>
-                {
-                    if (IsPathBlocked(controlledChar, testLoc))
-                        return true;
+            Loc[] wrappedEnds = getWrappedEnds(controlledChar.CharLoc, ends);
 
-                    if (ZoneManager.Instance.CurrentMap.WrapLoc(testLoc) != stairLoc && respectPeers)
-                    {
-                        Character destChar = ZoneManager.Instance.CurrentMap.GetCharAtLoc(testLoc);
-                        if (!canPassChar(controlledChar, destChar, false))
-                            return true;
-                    }
+            //requires a valid target tile
+            Grid.LocTest checkDiagBlock = (Loc loc) => {
+                return (ZoneManager.Instance.CurrentMap.TileBlocked(loc, controlledChar.Mobility, true));
+                //enemy/ally blockings don't matter for diagonals
+            };
 
-                    return false;
-                },
-                (Loc testLoc) =>
-                {
-                    return (ZoneManager.Instance.CurrentMap.TileBlocked(testLoc, controlledChar.Mobility, true));
-                },
-                1);
+            Grid.LocTest checkBlock = (Loc testLoc) => {
 
-            //if that direction is good, send the command to move in that direction
-            if (blocked)
-                return null;
-            
-            //get the A* path to the target; if the direction goes farther from the character, return false
-            return TrySelectWalk(controlledChar, testDir);
+                if (IsPathBlocked(controlledChar, testLoc))
+                    return true;
+
+                if (BlockedByChar(controlledChar, testLoc, Alignment.Foe))
+                    return true;
+
+                return false;
+            };
+
+            Rect sightBounds = new Rect(Loc.Zero, controlledChar.MemberTeam.ContainingMap.Size);
+            if (!Omniscient)
+                sightBounds = new Rect(controlledChar.CharLoc - Character.GetSightDims(), Character.GetSightDims() * 2 + new Loc(1));
+            List<Loc>[] paths = Grid.FindNPaths(sightBounds.Start, sightBounds.Size, controlledChar.CharLoc, wrappedEnds, checkBlock, checkDiagBlock, 1, false);
+            return paths[0];
         }
     }
 }

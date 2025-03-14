@@ -31,8 +31,9 @@ namespace PMDC.LevelGen
             {
                 if (!String.IsNullOrEmpty(newChar.Skills[ii].Element.SkillNum))
                 {
-                    SkillData data = DataManager.Instance.GetSkill(newChar.Skills[ii].Element.SkillNum);
-                    newChar.SetSkillCharges(ii, MathUtils.DivUp(data.BaseCharges, 2));
+                    EntryDataIndex idx = DataManager.Instance.DataIndices[DataManager.DataType.Skill];
+                    SkillDataSummary summary = (SkillDataSummary)idx.Get(newChar.Skills[ii].Element.SkillNum);
+                    newChar.SetSkillCharges(ii, MathUtils.DivUp(summary.BaseCharges, 2));
                 }
             }
         }
@@ -633,6 +634,11 @@ namespace PMDC.LevelGen
         public int StartFromID;
 
         /// <summary>
+        /// The level to start scaling at.
+        /// </summary>
+        public int MinLevel;
+
+        /// <summary>
         /// The numerator for the fractional level to add per floor.
         /// </summary>
         public int AddNumerator;
@@ -642,28 +648,51 @@ namespace PMDC.LevelGen
         /// </summary>
         public int AddDenominator;
 
+        /// <summary>
+        /// Reroll the skills to be that of the resulting level.
+        /// </summary>
+        public bool RerollSkills;
+
         public MobSpawnLevelScale()
         {
 
         }
-        public MobSpawnLevelScale(int numerator, int denominator) : this()
+        public MobSpawnLevelScale(int minLevel, int numerator, int denominator, bool rerollSkills) : this()
         {
+            MinLevel = minLevel;
             AddNumerator = numerator;
             AddDenominator = denominator;
+            RerollSkills = rerollSkills;
         }
 
         public MobSpawnLevelScale(MobSpawnLevelScale other) : this()
         {
+            MinLevel = other.MinLevel;
             StartFromID = other.StartFromID;
             AddNumerator = other.AddNumerator;
             AddDenominator = other.AddDenominator;
+            RerollSkills = other.RerollSkills;
         }
         public override MobSpawnExtra Copy() { return new MobSpawnLevelScale(this); }
 
         public override void ApplyFeature(IMobSpawnMap map, Character newChar)
         {
-            newChar.Level += (map.ID-StartFromID) * AddNumerator / AddDenominator;
+            newChar.Level = MinLevel + (map.ID-StartFromID) * AddNumerator / AddDenominator;
             newChar.HP = newChar.MaxHP;
+
+            if (RerollSkills)
+            {
+                BaseMonsterForm form = DataManager.Instance.GetMonster(newChar.BaseForm.Species).Forms[newChar.BaseForm.Form];
+
+                List<string> final_skills = form.RollLatestSkills(newChar.Level, new List<string>());
+                for (int ii = 0; ii < Character.MAX_SKILL_SLOTS; ii++)
+                {
+                    if (ii < final_skills.Count)
+                        newChar.BaseSkills[ii] = new SlotSkill(final_skills[ii]);
+                    else
+                        newChar.BaseSkills[ii] = new SlotSkill();
+                }
+            }
         }
 
         public override string ToString()

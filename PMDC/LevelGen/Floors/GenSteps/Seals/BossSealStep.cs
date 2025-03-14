@@ -112,7 +112,6 @@ namespace PMDC.LevelGen
 
             ResultEventState resultEvent = new ResultEventState();
             resultEvent.ResultEvents.Add(new OpenVaultEvent(lockList));
-
             bossEffect.TileStates.Set(resultEvent);
         }
 

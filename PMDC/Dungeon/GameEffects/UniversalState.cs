@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
-using RogueElements;
-using RogueEssence;
 using RogueEssence.Data;
 using RogueEssence.Dev;
 using RogueEssence.Dungeon;
-using RogueEssence.LevelGen;
 
 namespace PMDC.Dungeon
 {

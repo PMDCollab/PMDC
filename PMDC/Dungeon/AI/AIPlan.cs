@@ -341,15 +341,19 @@ namespace PMDC.Dungeon
                 }
             }
 
+            bool hazardTerrain = false;
             if (tile.Data.ID == "lava" && !controlledChar.HasElement("fire"))//check for lava; NOTE: specialized AI code!
-                return true;
+                hazardTerrain = true;
             if (tile.Data.ID == "water_poison" && !controlledChar.HasElement("poison") && !controlledChar.HasElement("steel"))//check for poison; NOTE: specialized AI code!
-                return true;
+                hazardTerrain = true;
             if (tile.Data.ID == DataManager.Instance.GenWall && controlledChar.MemberTeam is ExplorerTeam)//check for block; NOTE: specialized AI code!
+                hazardTerrain = true;
+
+            if (hazardTerrain)
             {
                 //we can still walk on it if we're already in a block
                 Tile curTile = ZoneManager.Instance.CurrentMap.GetTile(controlledChar.CharLoc);
-                if (curTile.Data.ID != DataManager.Instance.GenWall)
+                if (curTile.Data.ID != tile.Data.ID)
                     return true;
             }
 
@@ -443,7 +447,7 @@ namespace PMDC.Dungeon
         /// <param name="start"></param>
         /// <param name="ends"></param>
         /// <returns></returns>
-        private Loc[] getWrappedEnds(Loc start, Loc[] ends)
+        protected Loc[] getWrappedEnds(Loc start, Loc[] ends)
         {
             if (ZoneManager.Instance.CurrentMap.EdgeView != Map.ScrollEdge.Wrap)
                 return ends;
@@ -475,6 +479,7 @@ namespace PMDC.Dungeon
         /// <param name="ends"></param>
         /// <param name="freeGoal">Determines whether the goal should be reachable even if blocked.</param>
         /// <param name="respectPeers">Considers entities as blockers</param>
+        /// <param name="limit">Max number of paths to find</param>
         /// <returns></returns>
         protected List<Loc>[] GetPaths(Character controlledChar, Loc[] ends, bool freeGoal, bool respectPeers, int limit = 1)
         {
@@ -1802,6 +1807,43 @@ namespace PMDC.Dungeon
             int totalValue = 0;
             int maxValue = 0;
 
+            if (data.Category == BattleData.SkillCategory.Status)
+            {
+                // special case for tile targeting moves
+
+                foreach (BattleEvent effect in data.OnHitTiles.EnumerateInOrder())
+                {
+                    if (effect is SetTrapEvent)
+                    {
+                        bool hitSomething = false;
+                        foreach (Character target in seenChars)
+                        {
+                            if (DungeonScene.Instance.IsTargeted(controlledChar, target, explosion.TargetAlignments) && hitTiles.Contains(target.CharLoc))
+                                hitSomething = true;
+                        }
+
+                        if (hitSomething)
+                        {
+                            int totalTiles = 0;
+                            int freeTiles = 0;
+                            foreach (Loc targetLoc in hitTiles)
+                            {
+                                Tile checkTile = ZoneManager.Instance.CurrentMap.Tiles[targetLoc.X][targetLoc.Y];
+
+                                if (checkTile.Data.ID == DataManager.Instance.GenFloor && String.IsNullOrEmpty(checkTile.Effect.ID))
+                                    freeTiles += 1;
+                                totalTiles += 1;
+                            }
+
+                            if (totalTiles == 0)
+                                return new HitValue(0, false);
+
+                            return new HitValue(freeTiles * 90 / totalTiles, false);
+                        }
+                    }
+                }
+            }
+
             foreach (Character target in seenChars)
             {
                 if (DungeonScene.Instance.IsTargeted(controlledChar, target, explosion.TargetAlignments) && hitTiles.Contains(target.CharLoc))
@@ -1811,7 +1853,7 @@ namespace PMDC.Dungeon
                         directHit = true;
 
                     int newVal;
-                    
+
                     if (entry != null)//for moves
                         newVal = GetAttackValue(controlledChar, skillIndex, entry, seenChars, target, rangeMod, defaultVal);
                     else//for items
@@ -2168,17 +2210,6 @@ namespace PMDC.Dungeon
         {
             if (data.Category == BattleData.SkillCategory.Status || data.Category == BattleData.SkillCategory.None)
             {
-                foreach (BattleEvent effect in data.OnHitTiles.EnumerateInOrder())
-                {
-                    if (effect is SetTrapEvent)
-                    {
-                        Tile checkTile = ZoneManager.Instance.CurrentMap.Tiles[target.CharLoc.X][target.CharLoc.Y];
-                        if (String.IsNullOrEmpty(checkTile.Effect.ID))
-                            return -70;
-                        return 0;
-                    }
-                }
-
                 //heal checker/status removal checker/other effects
                 foreach (BattleEvent effect in data.OnHits.EnumerateInOrder())
                 {

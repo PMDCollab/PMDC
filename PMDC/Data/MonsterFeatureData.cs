@@ -77,8 +77,10 @@ namespace PMDC.Data
             Dictionary<int, FormFeatureSummary> formFeatureData = new Dictionary<int, FormFeatureSummary>();
             string family = num;
             MonsterData preEvo = data;
-            while (!String.IsNullOrEmpty(preEvo.PromoteFrom))
+            HashSet<string> traversed = new HashSet<string>();
+            while (!String.IsNullOrEmpty(preEvo.PromoteFrom) && !traversed.Contains(preEvo.PromoteFrom))
             {
+                traversed.Add(family);
                 family = preEvo.PromoteFrom.ToString();
                 preEvo = DataManager.LoadEntryData<MonsterData>(family, DataManager.DataType.Monster.ToString());
             }

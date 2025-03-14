@@ -1,6 +1,5 @@
 ﻿using System;
 using RogueEssence.Data;
-using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Dev;
 using Newtonsoft.Json;

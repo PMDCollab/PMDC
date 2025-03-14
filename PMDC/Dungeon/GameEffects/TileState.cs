@@ -122,6 +122,22 @@ namespace PMDC.Dungeon
         public override GameplayState Clone() { return new MobSpawnState(this); }
     }
     [Serializable]
+    public class MapStartEventState : TileState
+    {
+        public PriorityList<SingleCharEvent> OnMapStarts;
+        public MapStartEventState() { OnMapStarts = new PriorityList<SingleCharEvent>(); }
+        protected MapStartEventState(MapStartEventState other)
+            : this()
+        {
+            foreach (Priority priority in other.OnMapStarts.GetPriorities())
+            {
+                foreach (SingleCharEvent step in other.OnMapStarts.GetItems(priority))
+                    OnMapStarts.Add(priority, step);
+            }
+        }
+        public override GameplayState Clone() { return new MapStartEventState(this); }
+    }
+    [Serializable]
     public class ResultEventState : TileState
     {
         public List<SingleCharEvent> ResultEvents;

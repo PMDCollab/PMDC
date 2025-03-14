@@ -10,7 +10,6 @@ namespace PMDC.LevelGen
     /// Litters placeables on a room in specified patterns.
     /// </summary>
     /// <typeparam name="TGenContext"></typeparam>
-    /// <typeparam name="TSpawnable"></typeparam>
     [Serializable]
     public class PatternTerrainStep<TGenContext> : PatternPlacerStep<TGenContext>
         where TGenContext : class, ITiledGenContext, IFloorPlanGenContext

@@ -235,4 +235,38 @@ namespace PMDC.LevelGen
             map.Map.Status.Add(MapStatus, status);
         }
     }
+
+    /// <summary>
+    /// Sets music about the map.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    [Serializable]
+    public class MapMusicStep<T> : GenStep<T> where T : BaseMapGenContext
+    {
+        /// <summary>
+        /// The default map music.
+        /// </summary>
+        [Music(0)]
+        public string Music;
+
+        public MapMusicStep()
+        {
+            Music = "";
+        }
+        public MapMusicStep(string music)
+        {
+            Music = music;
+        }
+
+        public override void Apply(T map)
+        {
+            map.Map.Music = Music;
+        }
+
+
+        public override string ToString()
+        {
+            return String.Format("{0}: Song:{1}", this.GetType().GetFormattedTypeName(), Music);
+        }
+    }
 }

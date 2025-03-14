@@ -5,7 +5,6 @@ using RogueEssence.Data;
 using RogueEssence.LevelGen;
 using RogueEssence.Content;
 using RogueEssence.Menu;
-using RogueEssence.Ground;
 using RogueEssence;
 using RogueEssence.Dungeon;
 using RogueEssence.Dev;
@@ -15,8 +14,8 @@ using RogueEssence.Script;
 using System.Linq;
 using Newtonsoft.Json;
 using System.Runtime.Serialization;
-using System.IO;
 using PMDC.LevelGen;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace PMDC.Dungeon
 {
@@ -474,8 +473,6 @@ namespace PMDC.Dungeon
     [Serializable]
     public class HealEvent : SingleCharEvent
     {
-        
-
         public HealEvent() { }
         public override GameEvent Clone() { return new HealEvent(); }
 
@@ -484,6 +481,19 @@ namespace PMDC.Dungeon
             yield return CoroutineManager.Instance.StartCoroutine(context.User.RestoreHP(((StatusEffect)owner).StatusStates.GetWithDefault<HPState>().HP));
         }
     }
+
+    [Serializable]
+    public class DamageEvent : SingleCharEvent
+    {
+        public DamageEvent() { }
+        public override GameEvent Clone() { return new HealEvent(); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            yield return CoroutineManager.Instance.StartCoroutine(context.User.InflictDamage(((StatusEffect)owner).StatusStates.GetWithDefault<HPState>().HP));
+        }
+    }
+
     [Serializable]
     public class DamageAreaEvent : SingleCharEvent
     {
@@ -1085,6 +1095,111 @@ namespace PMDC.Dungeon
     }
 
 
+
+
+    [Serializable]
+    public class UseStateItemEvent : SingleCharEvent
+    {
+        [StringKey(2, false)]
+        public Dictionary<ItemData.UseType, StringKey> UseMsgs;
+
+        public UseStateItemEvent()
+        {
+            UseMsgs = new Dictionary<ItemData.UseType, StringKey>();
+        }
+        public UseStateItemEvent(Dictionary<ItemData.UseType, StringKey> useMsgs)
+        {
+            UseMsgs = useMsgs;
+        }
+        public UseStateItemEvent(UseStateItemEvent other)
+        {
+            UseMsgs = new Dictionary<ItemData.UseType, StringKey>();
+            foreach (ItemData.UseType useType in other.UseMsgs.Keys)
+                UseMsgs[useType] = other.UseMsgs[useType];
+        }
+        public override GameEvent Clone() { return new UseStateItemEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            string itemId = ((StatusEffect)owner).StatusStates.GetWithDefault<IDState>().ID;
+
+            BattleContext newContext = new BattleContext(BattleActionType.Item);
+            newContext.User = context.User;
+            newContext.UsageSlot = BattleContext.FORCED_SLOT;
+
+            ItemData entry = DataManager.Instance.GetItem(itemId);
+
+            newContext.StartDir = newContext.User.CharDir;
+            newContext.Data = new BattleData(entry.UseEvent);
+            newContext.Data.ID = itemId;
+            newContext.Data.DataType = DataManager.DataType.Item;
+            newContext.Explosion = new ExplosionData(entry.Explosion);
+            newContext.Strikes = 1;
+            newContext.Item = new InvItem(itemId);
+            newContext.HitboxAction = entry.UseAction.Clone();
+            StringKey useMsg;
+            if (UseMsgs.TryGetValue(entry.UsageType, out useMsg))
+                newContext.SetActionMsg(Text.FormatGrammar(useMsg.ToLocal(), context.User.GetDisplayName(false), newContext.Item.GetDisplayName()));
+
+
+            //if (context.CancelState.Cancel) { yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30)); yield break; }
+            //yield return CoroutinesManager.Instance.StartCoroutine(context.User.BeforeTryAction(context));
+            //if (context.CancelState.Cancel) { yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30)); yield break; }
+            //yield return CoroutinesManager.Instance.StartCoroutine(PreProcessAction(context));
+            newContext.StrikeStartTile = newContext.User.CharLoc;
+            ////move has been made; end-turn must be done from this point onwards
+
+            //HandleItemUse
+
+            //yield return CoroutinesManager.Instance.StartCoroutine(context.User.BeforeAction(context));
+            //if (context.CancelState.Cancel) { yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30)); yield break; }
+
+            //PreExecuteItem
+
+            newContext.PrintActionMsg();
+
+            //yield return CoroutinesManager.Instance.StartCoroutine(ExecuteAction(context));
+            //if (context.CancelState.Cancel) { yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30)); yield break; }
+            //yield return CoroutinesManager.Instance.StartCoroutine(RepeatActions(context));
+
+
+            //TODO: turn this into a full move invocation, so that modifiers that stop item use can take effect
+            //for now, just give its effects to the user, as detailed below (and remove later):
+
+            newContext.ExplosionTile = newContext.User.CharLoc;
+
+            newContext.Target = newContext.User;
+
+
+            yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.ProcessEndAnim(newContext.User, newContext.Target, newContext.Data));
+
+            yield return CoroutineManager.Instance.StartCoroutine(newContext.Data.Hit(newContext));
+        }
+
+        public IEnumerator<YieldInstruction> LocalExecuteAction(BattleContext baseContext)
+        {
+            BattleContext context = new BattleContext(baseContext, true);
+
+            yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.PerformAction(context));
+            if (context.CancelState.Cancel) yield break;
+        }
+
+
+        public IEnumerator<YieldInstruction> TrapRepeatActions(BattleContext context)
+        {
+            //increment for multistrike
+            context.StrikesMade++;
+            while (context.StrikesMade < context.Strikes)
+            {
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.PreProcessAction(context));
+                yield return CoroutineManager.Instance.StartCoroutine(LocalExecuteAction(context));
+
+                context.StrikesMade++;
+            }
+        }
+    }
+
+
     [Serializable]
     public class WeatherFormeEvent : SingleCharEvent
     {
@@ -1185,7 +1300,7 @@ namespace PMDC.Dungeon
             if (forme != context.User.CurrentForm.Form)
             {
                 //transform it
-                context.User.Transform(new MonsterID(context.User.CurrentForm.Species, forme, context.User.CurrentForm.Skin, context.User.CurrentForm.Gender));
+                context.User.Promote(new MonsterID(context.User.CurrentForm.Species, forme, context.User.CurrentForm.Skin, context.User.CurrentForm.Gender));
             }
 
             yield break;
@@ -1346,7 +1461,7 @@ namespace PMDC.Dungeon
     public abstract class HandoutExpEvent : SingleCharEvent
     {
         /// <summary>
-        /// 
+        /// Give EXP regardless of marking.
         /// </summary>
         public bool IgnoreMark;
 
@@ -3046,119 +3161,161 @@ namespace PMDC.Dungeon
 
 
     [Serializable]
-    public class PickupEvent : SingleCharEvent
+    public abstract class GainItemEvent : SingleCharEvent
     {
         public int Chance;
         public List<AnimEvent> Anims;
 
-        public PickupEvent()
+        public GainItemEvent()
         {
             Anims = new List<AnimEvent>();
         }
-        public PickupEvent(int chance, params AnimEvent[] anims)
+        public GainItemEvent(int chance, params AnimEvent[] anims)
         {
             Chance = chance;
             Anims = new List<AnimEvent>();
             Anims.AddRange(anims);
         }
-        protected PickupEvent(PickupEvent other)
+        protected GainItemEvent(GainItemEvent other)
         {
             Anims = new List<AnimEvent>();
             Chance = other.Chance;
             foreach (AnimEvent anim in other.Anims)
                 Anims.Add((AnimEvent)anim.Clone());
         }
-        public override GameEvent Clone() { return new PickupEvent(this); }
+
+        protected abstract bool canObtain(InvItem invItem, Character target);
+        protected abstract InvItem getGatherItem();
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
-            //do not activate if already holding an item
-            if (!String.IsNullOrEmpty(context.User.EquippedItem.ID))
-                yield break;
-
-            //do not activate if inv is full
-            if (context.User.MemberTeam is ExplorerTeam)
-            {
-                if (((ExplorerTeam)context.User.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone) <= context.User.MemberTeam.GetInvCount())
-                    yield break;
-            }
-
-            if (ZoneManager.Instance.CurrentMap.MapTurns == 0 && ZoneManager.Instance.CurrentMap.ItemSpawns.Spawns.CanPick && DataManager.Instance.Save.Rand.Next(100) < Chance)
-            {
-                InvItem item = ZoneManager.Instance.CurrentMap.ItemSpawns.Pick(DataManager.Instance.Save.Rand);
-
-                //Actually, we'll just let you pickup an autocurse item and get stuck
-                //ItemData entry = DataManager.Instance.GetItem(item.ID);
-                //if (!entry.Cursed)
-                //{
-                //item.Cursed = false;
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_PICKUP").ToLocal(), context.User.GetDisplayName(false), item.GetDisplayName()), false, false, context.User, null);
-
-                foreach (AnimEvent anim in Anims)
-                    yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
-
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.EquipItem(item));
-                //}
-            }
-
-        }
-    }
-
-    [Serializable]
-    public class GatherEvent : SingleCharEvent
-    {
-        [DataType(1, DataManager.DataType.Item, false)]
-        public List<string> GatherItems;
-        public int Chance;
-        public List<AnimEvent> Anims;
-
-        public GatherEvent()
-        {
-            Anims = new List<AnimEvent>();
-            GatherItems = new List<string>();
-        }
-        public GatherEvent(List<string> gatherItem, int chance, params AnimEvent[] anims)
-        {
-            GatherItems = gatherItem;
-            Chance = chance;
-            Anims = new List<AnimEvent>();
-            Anims.AddRange(anims);
-        }
-        protected GatherEvent(GatherEvent other)
-        {
-            Anims = new List<AnimEvent>();
-            Chance = other.Chance;
-            foreach (AnimEvent anim in other.Anims)
-                Anims.Add((AnimEvent)anim.Clone());
-            GatherItems = new List<string>();
-            GatherItems.AddRange(other.GatherItems);
-        }
-        public override GameEvent Clone() { return new GatherEvent(this); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
-        {
-            //do not activate if already holding an item
-            if (!String.IsNullOrEmpty(context.User.EquippedItem.ID))
-                yield break;
-
-            //do not activate if inv is full
-            if (context.User.MemberTeam is ExplorerTeam)
-            {
-                if (((ExplorerTeam)context.User.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone) <= context.User.MemberTeam.GetInvCount())
-                    yield break;
-            }
-
             if (ZoneManager.Instance.CurrentMap.MapTurns == 0 && DataManager.Instance.Save.Rand.Next(100) < Chance)
             {
-                string gatherItem = GatherItems[DataManager.Instance.Save.Rand.Next(GatherItems.Count)];
-                InvItem invItem = new InvItem(gatherItem);
+                InvItem invItem = getGatherItem();
+
+                if (!canObtain(invItem, context.User))
+                    yield break;
+
+                ItemData item = DataManager.Instance.GetItem(invItem.ID);
+
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_PICKUP").ToLocal(), context.User.GetDisplayName(false), invItem.GetDisplayName()), false, false, context.User, null);
 
                 foreach (AnimEvent anim in Anims)
                     yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
 
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.EquipItem(invItem));
+                if (!String.IsNullOrEmpty(context.User.EquippedItem.ID)) // the only way this block can be reached is if the inv item was stackable and the same as the held item
+                    context.User.EquippedItem.Amount = Math.Min(context.User.EquippedItem.Amount + invItem.Amount, item.MaxStack);
+                else
+                    yield return CoroutineManager.Instance.StartCoroutine(context.User.EquipItem(invItem));
             }
+        }
+    }
+
+
+
+    [Serializable]
+    public class PickupEvent : GainItemEvent
+    {
+        public PickupEvent()
+        {
+            Anims = new List<AnimEvent>();
+        }
+        public PickupEvent(int chance, params AnimEvent[] anims) : base(chance, anims)
+        {
+
+        }
+        protected PickupEvent(PickupEvent other) : base(other)
+        {
+        }
+
+        public override GameEvent Clone() { return new PickupEvent(this); }
+
+        protected override bool canObtain(InvItem invItem, Character target)
+        {
+            if (invItem == null)
+                return false;
+
+            //do not activate if already holding an item
+            if (!String.IsNullOrEmpty(target.EquippedItem.ID))
+                return false;
+
+            //do not activate if inv is full
+            if (target.MemberTeam is ExplorerTeam)
+            {
+                if (((ExplorerTeam)target.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone) <= target.MemberTeam.GetInvCount())
+                    return false;
+            }
+            return true;
+        }
+
+        protected override InvItem getGatherItem()
+        {
+            if (!ZoneManager.Instance.CurrentMap.ItemSpawns.CanPick)
+                return null;
+
+            InvItem invItem = ZoneManager.Instance.CurrentMap.ItemSpawns.Pick(DataManager.Instance.Save.Rand);
+
+            return invItem;
+        }
+    }
+
+    [Serializable]
+    public class GatherEvent : GainItemEvent
+    {
+        [DataType(1, DataManager.DataType.Item, false)]
+        public List<string> GatherItems;
+
+        public GatherEvent()
+        {
+            GatherItems = new List<string>();
+        }
+        public GatherEvent(List<string> gatherItem, int chance, params AnimEvent[] anims) : base(chance, anims)
+        {
+            GatherItems = gatherItem;
+        }
+        protected GatherEvent(GatherEvent other) : base(other)
+        {
+            GatherItems = new List<string>();
+            GatherItems.AddRange(other.GatherItems);
+        }
+        public override GameEvent Clone() { return new GatherEvent(this); }
+
+
+        protected override bool canObtain(InvItem invItem, Character target)
+        {
+            if (invItem == null)
+                return false;
+
+            //do not activate if already holding an item
+            if (!String.IsNullOrEmpty(target.EquippedItem.ID))
+            {
+                ItemData item = DataManager.Instance.GetItem(invItem.ID);
+
+                if (invItem.ID == target.EquippedItem.ID && item.MaxStack > 1 && target.EquippedItem.Amount < item.MaxStack)
+                    return true;
+                else
+                    return false;
+            }
+
+            //do not activate if inv is full
+            if (target.MemberTeam is ExplorerTeam)
+            {
+                if (((ExplorerTeam)target.MemberTeam).GetMaxInvSlots(ZoneManager.Instance.CurrentZone) <= target.MemberTeam.GetInvCount())
+                    return false;
+            }
+            return true;
+        }
+
+        protected override InvItem getGatherItem()
+        {
+            string gatherItem = GatherItems[DataManager.Instance.Save.Rand.Next(GatherItems.Count)];
+            ItemData item = DataManager.Instance.GetItem(gatherItem);
+
+            InvItem invItem = new InvItem(gatherItem);
+            if (item.MaxStack > 1)
+                invItem.Amount = 1;
+
+            return invItem;
         }
     }
 
@@ -4249,9 +4406,9 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
             foreach(Character player in DungeonScene.Instance.ActiveTeam.EnumerateChars())
-                DataManager.Instance.Save.RestrictCharLevel(player, Level, false, false);
+                DataManager.Instance.Save.RestrictCharLevel(player, Level, false, false, true);
             foreach (Character player in DungeonScene.Instance.ActiveTeam.Assembly)
-                DataManager.Instance.Save.RestrictCharLevel(player, Level, false, false);
+                DataManager.Instance.Save.RestrictCharLevel(player, Level, false, false, false);
             yield break;
         }
     }
@@ -4630,34 +4787,35 @@ namespace PMDC.Dungeon
             if (context.User != null)
                 yield break;
 
+            LocRay8 baseLoc = new LocRay8(DungeonScene.Instance.ActiveTeam.Leader.CharLoc, DungeonScene.Instance.ActiveTeam.Leader.CharDir);
             int total_alive = 0;
             foreach (Character target in DungeonScene.Instance.ActiveTeam.IterateByRank())
             {
                 if (!target.Dead)
                 {
                     target.HP = target.MaxHP;
-                    MoveChar(target, total_alive);
+                    MoveChar(baseLoc, target, total_alive);
 
                     total_alive++;
                 }
             }
         }
         
-        public void MoveChar(Character character, int total_alive)
+        public void MoveChar(LocRay8 baseLoc, Character character, int total_alive)
         {
-            character.CharDir = ZoneManager.Instance.CurrentMap.EntryPoints[0].Dir;
+            character.CharDir = baseLoc.Dir;
             if (total_alive < StartLocs.Length)
             {
-                character.CharLoc = ZoneManager.Instance.CurrentMap.EntryPoints[0].Loc + StartLocs[total_alive].Loc;
+                character.CharLoc = baseLoc.Loc + StartLocs[total_alive].Loc;
                 character.CharDir = StartLocs[total_alive].Dir;
             }
             else //default to close to leader
             {
-                Loc? result = ZoneManager.Instance.CurrentMap.GetClosestTileForChar(character, ZoneManager.Instance.CurrentMap.EntryPoints[0].Loc);
+                Loc? result = ZoneManager.Instance.CurrentMap.GetClosestTileForChar(character, baseLoc.Loc);
                 if (result.HasValue)
                     character.CharLoc = result.Value;
                 else
-                    character.CharLoc = ZoneManager.Instance.CurrentMap.EntryPoints[0].Loc;
+                    character.CharLoc = baseLoc.Loc;
             }
         }
 
@@ -4737,8 +4895,9 @@ namespace PMDC.Dungeon
 
             foreach (InvItem item in DungeonScene.Instance.ActiveTeam.EnumerateInv())
             {
-                ItemData entry = DataManager.Instance.GetItem(item.ID);
-                if (entry.MaxStack < 0 && entry.UsageType == ItemData.UseType.UseOther)
+                EntryDataIndex idx = DataManager.Instance.DataIndices[DataManager.DataType.Item];
+                ItemEntrySummary summary = (ItemEntrySummary)idx.Get(item.ID);
+                if (summary.MaxStack < 0 && summary.UsageType == ItemData.UseType.UseOther)
                     item.HiddenValue = "";
             }
         }
@@ -5106,11 +5265,15 @@ namespace PMDC.Dungeon
                         yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(owner.GetID()));
 
                         MapLocState locState = ((MapStatus)owner).StatusStates.GetWithDefault<MapLocState>();
-                        if (locState != null)
-                        {
-                            Tile tile = ZoneManager.Instance.CurrentMap.Tiles[locState.Target.X][locState.Target.Y];
-                            tile.Effect = new EffectTile(tile.Effect.TileLoc);
-                        }
+                        if (locState == null)
+                            yield break;
+
+                        Loc testTile = locState.Target;
+                        if (!ZoneManager.Instance.CurrentMap.GetLocInMapBounds(ref testTile))
+                            yield break;
+
+                        Tile tile = ZoneManager.Instance.CurrentMap.Tiles[testTile.X][testTile.Y];
+                        tile.Effect = new EffectTile(tile.Effect.TileLoc);
                     }
                 }
             }
@@ -6786,12 +6949,27 @@ namespace PMDC.Dungeon
 
             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(30) + 20);
 
-            yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeIn(40));
-
 
             SongState song = ((EffectTile)owner).TileStates.GetWithDefault<SongState>();
             if (song != null)
                 GameManager.Instance.BGM(song.Song, true);
+
+
+            //TODO: shuffle this in with the fade-in event?
+            //we could just replay the map start event again
+            //but that may cause unintended repeated events...
+            SingleCharContext singleContext = new SingleCharContext(null);
+            MapStartEventState mapStart = ((EffectTile)owner).TileStates.GetWithDefault<MapStartEventState>();
+            if (mapStart != null)
+            {
+                foreach (Priority priority in mapStart.OnMapStarts.GetPriorities())
+                {
+                    foreach (SingleCharEvent step in mapStart.OnMapStarts.GetItems(priority))//the event is not technically owned by the parent owner, but we pass it in anyway
+                        yield return CoroutineManager.Instance.StartCoroutine(step.Apply(owner, null, singleContext));
+                }
+            }
+
+            yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.FadeIn(40));
 
             //trigger their map entry methods
             foreach (Character respawn in respawns)
@@ -7284,5 +7462,233 @@ namespace PMDC.Dungeon
         public override GameEvent Clone() { return new ShareOnWalksEvent(); }
 
         protected override PriorityList<SingleCharEvent> GetEvents(ItemData entry) => entry.OnWalks;
+    }
+
+    /// <summary>
+    /// Calculates regeneration, used for end-of-turn.
+    /// </summary>
+    [Serializable]
+    public class NaturalPercentRegenEvent : NaturalRegenEvent
+    {
+        /// <summary>
+        /// The percentage amount of HP recovered by characters every turn when out of battle. 10 means 1%. Negative values drain HP instead.
+        /// </summary>
+        public int RegenPercent;
+        /// <summary>
+        /// The percentage amount of HP recovered by characters every turn during battle. 10 means 1%. Negative values drain HP instead.
+        /// </summary>
+        public int RegenPercentCombat;
+        /// <summary>
+        /// The percentage amount of HP recovered by characters every turn while at 0 belly. 10 means 1%. Negative values drain HP instead.
+        /// </summary>
+        public int StarvePercent;
+
+        public NaturalPercentRegenEvent() { }
+
+        public NaturalPercentRegenEvent(int percent, int percentCombat, int percentStarve)
+        {
+            RegenPercent = percent;
+            RegenPercentCombat = percentCombat;
+            StarvePercent = percentStarve;
+        }
+
+        protected NaturalPercentRegenEvent(NaturalPercentRegenEvent other)
+        {
+            RegenPercent = other.RegenPercent;
+            RegenPercentCombat = other.RegenPercentCombat;
+            StarvePercent = other.StarvePercent;
+        }
+
+        public override GameEvent Clone() { return new NaturalPercentRegenEvent(this); }
+
+        public override int calculateRegen(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            int recovery = context.InCombat ? RegenPercentCombat : RegenPercent;
+            if (context.User.Fullness <= 0)
+                recovery = StarvePercent;
+
+            return context.User.MaxHP * recovery;
+        }
+    }
+
+    [Serializable]
+    public abstract class NaturalRegenEvent : SingleCharEvent
+    {
+        public abstract int calculateRegen(GameEventOwner owner, Character ownerChar, SingleCharContext context);
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            if (context.User.Dead)
+                yield break;
+
+            int regen = calculateRegen(owner, ownerChar, context);
+            yield return CoroutineManager.Instance.StartCoroutine(context.User.ModifyHP(regen));
+        }
+    }
+
+    /// <summary>
+    /// Decrements hunger, used for end-of-turn.
+    /// </summary>
+    [Serializable]
+    public class NaturalHungerEvent : SingleCharEvent
+    {
+        /// <summary>
+        /// The amount of hunger consumed by the leader every turn. How much rate amounts to 1 belly point is determined by Denominator.
+        /// </summary>
+        public int LeaderHungerRate;
+        /// <summary>
+        /// The amount of hunger consumed by non-leader party members every turn. How much rate amounts to 1 belly point is determined by Denominator.
+        /// </summary>
+        public int PartyHungerRate;
+        /// <summary>
+        /// The amount of hunger consumed by guest party members every turn. How much rate amounts to 1 belly point is determined by Denominator.
+        /// </summary>
+        public int GuestsHungerRate;
+        /// <summary>
+        /// The amount of hunger consumed by enemies every turn. How much rate amounts to 1 belly point is determined by Denominator.
+        /// </summary>
+        public int EnemyHungerRate;
+        /// <summary>
+        /// The amount of hunger consumed by ally characters every turn. How much rate amounts to 1 belly point is determined by Denominator.
+        /// </summary>
+        public int AllyHungerRate;
+        /// <summary>
+        /// The amount of Hunger Rate that amounts to one belly point.
+        /// </summary>
+        public int Denominator;
+
+        public NaturalHungerEvent() { }
+
+        public NaturalHungerEvent(int denominator, int leader, int party, int guests, int enemy, int ally)
+        {
+            Denominator = denominator;
+            LeaderHungerRate = leader;
+            PartyHungerRate = party;
+            GuestsHungerRate = guests;
+            EnemyHungerRate = enemy;
+            AllyHungerRate = ally;
+        }
+
+        protected NaturalHungerEvent(NaturalHungerEvent other)
+        {
+            Denominator = other.Denominator;
+            LeaderHungerRate = other.LeaderHungerRate;
+            PartyHungerRate = other.PartyHungerRate;
+            GuestsHungerRate = other.GuestsHungerRate;
+            EnemyHungerRate = other.EnemyHungerRate;
+            AllyHungerRate = other.AllyHungerRate;
+        }
+
+        public override GameEvent Clone() { return new NaturalHungerEvent(this); }
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            if (context.User.Dead)
+                yield break;
+
+            int residual = 0;
+            if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
+            {
+                if (context.User.MemberTeam.Leader == context.User)
+                    residual = LeaderHungerRate;
+                else if (context.User.MemberTeam.Players.Contains(context.User))
+                    residual = PartyHungerRate;
+                else
+                    residual = GuestsHungerRate;
+            }
+            else if(context.User.MemberTeam.MapFaction == Faction.Foe)
+                residual = EnemyHungerRate;
+            else
+                residual = AllyHungerRate;
+
+            HungerMult mult = context.ContextStates.GetWithDefault<HungerMult>();
+            if (mult != null) {
+                if (mult.Mult.Numerator > 0)
+                    residual = Math.Max(residual > 0 ? 1 : 0, residual * mult.Mult.Numerator / mult.Mult.Denominator);
+                else
+                    residual = 0;
+            }
+
+            int prevFullness = context.User.Fullness;
+            context.User.Fullness -= (residual + context.User.FullnessRemainder) / Denominator;
+            context.User.FullnessRemainder = (residual + context.User.FullnessRemainder) % Denominator;
+
+            if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
+            {
+                if (context.User.Fullness <= 0 && prevFullness > 0)
+                    DungeonScene.Instance.LogMsg(Text.FormatKey("MSG_HUNGER_EMPTY", context.User.GetDisplayName(true)));
+                else if (context.User.Fullness <= 10 && prevFullness > 10)
+                {
+                    DungeonScene.Instance.LogMsg(Text.FormatKey("MSG_HUNGER_CRITICAL", context.User.GetDisplayName(true)));
+                    GameManager.Instance.SE(GraphicsManager.HungerSE);
+                }
+                else if (context.User.Fullness <= 20 && prevFullness > 20)
+                {
+                    DungeonScene.Instance.LogMsg(Text.FormatKey("MSG_HUNGER_LOW", context.User.GetDisplayName(true))); 
+                    GameManager.Instance.SE(GraphicsManager.HungerSE);
+                }
+            }
+            else
+            {
+                if (context.User.Fullness <= 0 && prevFullness > 0)
+                    DungeonScene.Instance.LogMsg(Text.FormatKey("MSG_HUNGER_EMPTY_FOE", context.User.GetDisplayName(false)));
+            }
+
+            if (context.User.Fullness <= 0)
+            {
+                context.User.Fullness = 0;
+                context.User.FullnessRemainder = 0;
+
+                if (context.User.MemberTeam == DungeonScene.Instance.ActiveTeam)
+                    GameManager.Instance.SE(GraphicsManager.HungerSE);
+            }
+            yield break;
+        }
+    }
+
+    /// <summary>
+    /// Event that boosts/reduces the amount of hunger consumed by NaturalHungerUpdateEvent.
+    /// </summary>
+    [Serializable]
+    public class MultiplyHungerEvent : SingleCharEvent
+    {
+        /// <summary>
+        /// The numerator of the modifier
+        /// </summary>
+        public int Numerator;
+
+        /// <summary>
+        /// The denominator of the modififer
+        /// </summary>
+        public int Denominator;
+
+        public MultiplyHungerEvent()
+        {
+        }
+        public MultiplyHungerEvent(int numerator, int denominator)
+        {
+            Numerator = numerator;
+            Denominator = denominator;
+        }
+        protected MultiplyHungerEvent(MultiplyHungerEvent other)
+        {
+            Numerator = other.Numerator;
+            Denominator = other.Denominator;
+        }
+        public override GameEvent Clone() { return new MultiplyHungerEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+
+            HungerMult multState = context.ContextStates.GetWithDefault<HungerMult>();
+            if (multState == null)
+            {
+                ContextMultState newMult = (ContextMultState)Activator.CreateInstance<HungerMult>();
+                newMult.Mult = new Multiplier(Numerator, Denominator);
+                context.ContextStates.Set(newMult);
+            }
+            else
+                multState.Mult.AddMultiplier(Numerator, Denominator);
+
+            yield break;
+        }
     }
 }
