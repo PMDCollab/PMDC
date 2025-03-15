@@ -20127,7 +20127,7 @@ namespace PMDC.Dungeon
     }
 
     /// <summary>
-    /// Event that activates if the supplied battle script returns true
+    /// Event that activates if the supplied condition script returns true
     /// If the script does not return a boolean, it will still count as true as long as it is not nil
     /// </summary>
     public class ScriptedConditionalEvent : BattleScriptEvent
@@ -20152,7 +20152,7 @@ namespace PMDC.Dungeon
         {
             LuaTable args = LuaEngine.Instance.RunString("return " + ArgTable).First() as LuaTable;
             object[] parameters = new object[] { owner, ownerChar, context, args };
-            string name = LuaEngine.EVENT_BATTLE_NAME + "." + Script;
+            string name = LuaEngine.EVENT_CONDITION_NAME + "." + Script;
             LuaFunction func_iter = LuaEngine.Instance.CreateCoroutineIterator(name, parameters);
 
             object result = func_iter.Call().First();
