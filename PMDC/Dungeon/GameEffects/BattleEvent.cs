@@ -11531,7 +11531,7 @@ namespace PMDC.Dungeon
     }
 
     /// <summary>
-    /// Event that groups multiple battle events into one event, but only applies if the target's type matches the specified type
+    /// Event that groups multiple battle events into one event, but only applies if the character's type matches the specified type
     /// </summary>
     [Serializable]
     public class CharElementNeededEvent : BattleEvent
@@ -11549,11 +11549,23 @@ namespace PMDC.Dungeon
         [DataType(0, DataManager.DataType.Element, false)]
         public string NeededElement;
 
-        public CharElementNeededEvent() { BaseEvents = new List<BattleEvent>(); NeededElement = ""; }
-        public CharElementNeededEvent(string element, params BattleEvent[] effects)
+        /// <summary>
+        /// Whether to run the type check on the user or target
+        /// </summary> 
+        public bool AffectTarget;
+
+        /// <summary>
+        /// If set, the events will only be applied if none of the character's types match the specified type
+        /// </summary>
+        public bool Inverted;
+
+        public CharElementNeededEvent() { BaseEvents = new List<BattleEvent>(); NeededElement = ""; AffectTarget = true; Inverted = false; }
+        public CharElementNeededEvent(string element, bool affectTarget, bool inverted, params BattleEvent[] effects)
             : this()
         {
             NeededElement = element;
+            AffectTarget = affectTarget;
+            Inverted = inverted;
             foreach (BattleEvent effect in effects)
                 BaseEvents.Add(effect);
         }
@@ -11569,7 +11581,8 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.Target.HasElement(NeededElement))
+            Character character = AffectTarget ? context.Target : context.User;
+            if (Inverted ^ character.HasElement(NeededElement)) //if inverted, must not correspond. If not inverted, must correspond
             {
                 foreach (BattleEvent battleEffect in BaseEvents)
                     yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
