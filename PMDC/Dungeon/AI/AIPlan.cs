@@ -2729,20 +2729,26 @@ namespace PMDC.Dungeon
                                 AbsorbElementEvent absorbEffect = (AbsorbElementEvent)effect;
                                 if (absorbEffect.AbsorbElement == data.Element)
                                 {
-                                    bool redundantStatus = false;
+                                    int powerMult = 0;
                                     foreach (BattleEvent result in absorbEffect.BaseEvents)
                                     {
                                         if (result is StatusElementBattleEvent)
                                         {
                                             StatusElementBattleEvent absorbResult = (StatusElementBattleEvent)result;
-                                            if (target.StatusEffects.ContainsKey(absorbResult.StatusID))
-                                                redundantStatus = true;
+                                            if (!target.StatusEffects.ContainsKey(absorbResult.StatusID))
+                                                powerMult -= 50;
+                                        }
+                                        else if (result is RestoreHPEvent)
+                                        {
+                                            RestoreHPEvent absorbResult = (RestoreHPEvent)result;
+                                            int healHP = Math.Max(1, target.MaxHP * absorbResult.HPNum / absorbResult.HPDen);
+                                            int hpToHeal = target.MaxHP - target.HP;
+                                            if (healHP <= hpToHeal)
+                                                powerMult -= 50;
                                         }
                                     }
-                                    if (redundantStatus)
-                                        power = 0;
-                                    else
-                                        power /= -2;
+                                    power *= powerMult;
+                                    power /= 100;
                                     break;
                                 }
                             }
