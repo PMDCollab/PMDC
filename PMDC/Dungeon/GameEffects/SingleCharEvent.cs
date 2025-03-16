@@ -2596,6 +2596,34 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    [Serializable]
+    public class BellyNeededEvent : SingleCharEvent
+    {
+        public SingleCharEvent BaseEvent;
+
+        public int Fullness;
+
+        public BellyNeededEvent() { }
+        public BellyNeededEvent(int fullness, SingleCharEvent baseEffect)
+        {
+            Fullness = fullness;
+            BaseEvent = baseEffect;
+        }
+        protected BellyNeededEvent(BellyNeededEvent other)
+        {
+            Fullness = other.Fullness;
+            BaseEvent = (SingleCharEvent)other.BaseEvent.Clone();
+        }
+        public override GameEvent Clone() { return new MaxHPNeededEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            if (context.User.Fullness >= Fullness)
+                yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, context));
+        }
+    }
+
     [Serializable]
     public class WeatherNeededSingleEvent : SingleCharEvent
     {
@@ -2680,7 +2708,7 @@ namespace PMDC.Dungeon
                 {
                     if (!target.Dead && DungeonScene.Instance.GetMatchup(context.User, target) == Alignment.Friend)
                     {
-                        if (target.HP < target.MaxHP)
+                        if (target.HP < target.MaxHP && target.Fullness > 0)
                             yield return CoroutineManager.Instance.StartCoroutine(target.RestoreHP(Math.Max(1, target.MaxHP / HealHPFraction), false));
                     }
                 }
