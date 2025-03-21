@@ -19374,6 +19374,7 @@ namespace PMDC.Dungeon
                 emitter.SetupEmit(member.CharLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), member.CharLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2), member.CharDir);
                 DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
                 DungeonScene.Instance.AddCharToTeam(Faction.Player, 0, false, member);
+                member.Absentee = false;
                 member.Tactic = new AITactic(member.Tactic);
                 member.RefreshTraits();
                 member.Tactic.Initialize(member);
@@ -19725,6 +19726,8 @@ namespace PMDC.Dungeon
         {
             GameManager.Instance.Fanfare("Fanfare/JoinTeam");
             DungeonScene.Instance.RemoveChar(targetChar);
+            //should be default false, set this just in case
+            targetChar.Absentee = false;
             AITactic tactic = DataManager.Instance.GetAITactic(DataManager.Instance.DefaultAI);
             targetChar.Tactic = new AITactic(tactic);
             DungeonScene.Instance.AddCharToTeam(Faction.Player, 0, false, targetChar);
