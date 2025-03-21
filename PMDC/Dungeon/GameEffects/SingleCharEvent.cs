@@ -908,6 +908,7 @@ namespace PMDC.Dungeon
         [Sound(0)]
         public string TriggerSound;
         public FiniteEmitter TriggerEmitter;
+        public int TriggerDelay;
 
         public GiveStatusEvent() { States = new StateCollection<StatusState>(); StatusID = ""; }
         public GiveStatusEvent(string statusID, StateCollection<StatusState> states) : this(statusID, states, false) { }
@@ -944,6 +945,7 @@ namespace PMDC.Dungeon
             TriggerMsg = other.TriggerMsg;
             TriggerSound = other.TriggerSound;
             TriggerEmitter = (FiniteEmitter)other.TriggerEmitter.Clone();
+            TriggerDelay = other.TriggerDelay;
         }
         public override GameEvent Clone() { return new GiveStatusEvent(this); }
 
@@ -976,6 +978,8 @@ namespace PMDC.Dungeon
                     endEmitter.SetupEmit(context.User.MapLoc, context.User.MapLoc, context.User.CharDir);
                     DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
                 }
+                if (TriggerDelay > 0)
+                    yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(TriggerDelay));
 
                 yield return CoroutineManager.Instance.StartCoroutine(context.User.ExecuteAddStatus(statusContext));
             }
