@@ -2831,6 +2831,7 @@ namespace PMDC.Dungeon
         protected PinchNeededEvent(PinchNeededEvent other) : this()
         {
             Denominator = other.Denominator;
+            AffectTarget = other.AffectTarget;
             foreach (BattleEvent battleEffect in other.BaseEvents)
                 BaseEvents.Add((BattleEvent)battleEffect.Clone());
         }
