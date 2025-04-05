@@ -6944,6 +6944,38 @@ namespace PMDC.Dungeon
     }
 
     /// <summary>
+    /// Event that cancels the action (intended to be used with -Needed events)
+    /// </summary>
+    [Serializable]
+    public class CancelActionEvent : BattleEvent
+    {
+        /// <summary>
+        /// The message displayed in the dungeon log 
+        /// </summary>
+        [StringKey(0, true)]
+        public StringKey Message;
+
+        public CancelActionEvent() { }
+        public CancelActionEvent(StringKey message) : this()
+        {
+            Message = message;
+        }
+        protected CancelActionEvent(CancelActionEvent other) : this()
+        {
+            Message = other.Message;
+        }
+        public override GameEvent Clone() { return new CancelActionEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (Message.IsValid())
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(Message.ToLocal(), context.User.GetDisplayName(false)));
+            context.CancelState.Cancel = true;
+            yield break;
+        }
+    }
+
+    /// <summary>
     /// Event that prevents the character from doing certain battle action types
     /// </summary>
     [Serializable]
