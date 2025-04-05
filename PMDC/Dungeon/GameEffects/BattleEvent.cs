@@ -10884,7 +10884,7 @@ namespace PMDC.Dungeon
                     return context.GetContextStateMult<DmgMult>().Multiply(0);
 
                 int power = context.Data.SkillStates.GetWithDefault<BasePowerState>().Power;
-                int damage = context.GetContextStateMult<DmgMult>().Multiply((context.GetContextStateInt<UserLevel>(0) / 3 + 6) * attackStat * power / defenseStat / 50 * DataManager.Instance.Save.Rand.Next(90, 101) / 100);
+                int damage = context.GetContextStateMult<DmgMult>().Multiply((context.GetContextStateInt<UserLevel>(0) / 3 + 6) * attackStat * power) / defenseStat / 50 * DataManager.Instance.Save.Rand.Next(90, 101) / 100;
 
                 if (!(context.ActionType == BattleActionType.Skill && context.Data.ID == DataManager.Instance.DefaultSkill))
                     damage = Math.Max(1, damage);
