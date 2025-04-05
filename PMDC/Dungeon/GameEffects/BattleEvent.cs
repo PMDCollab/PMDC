@@ -12,6 +12,9 @@ using PMDC.Dev;
 using PMDC.Data;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using NLua;
+using RogueEssence.Script;
+using System.Linq;
 
 namespace PMDC.Dungeon
 {
@@ -10244,7 +10247,55 @@ namespace PMDC.Dungeon
             yield break;
         }
     }
-    
+
+    /// <summary>
+    /// Event that prevents the move from landing if the target does not have the specified type
+    /// </summary> 
+    [Serializable]
+    public class TargetElementNeededEvent : BattleEvent
+    {
+        /// <summary>
+        /// The element ID to check for
+        /// </summary> 
+        [JsonConverter(typeof(ElementConverter))]
+        [DataType(0, DataManager.DataType.Element, false)]
+        public string ElementID;
+
+        /// <summary>
+        /// The message displayed in the dungeon log if the conditon is met 
+        /// </summary> 
+        public StringKey Message;
+
+        /// <summary>
+        /// If set, the move will land only if the target has the specified type instead
+        /// </summary>
+        public bool Inverted;
+
+        public TargetElementNeededEvent() { ElementID = ""; }
+        public TargetElementNeededEvent(string statusID, StringKey msg)
+        {
+            ElementID = statusID;
+            Message = msg;
+        }
+        protected TargetElementNeededEvent(TargetElementNeededEvent other)
+        {
+            ElementID = other.ElementID;
+            Message = other.Message;
+        }
+        public override GameEvent Clone() { return new TargetElementNeededEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            bool condition = context.Target.Element1 == ElementID || context.Target.Element2 == ElementID;
+            if (Inverted) condition = !condition;
+            if (condition)
+            {
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(Message.ToLocal(), context.Target.GetDisplayName(false)));
+                context.CancelState.Cancel = true;
+            }
+            yield break;
+        }
+    }
     /// <summary>
     /// Event that modifies the damage multiplier if the character is inflicted with a major status condition
     /// </summary> 
@@ -11513,7 +11564,7 @@ namespace PMDC.Dungeon
     }
 
     /// <summary>
-    /// Event that groups multiple battle events into one event, but only applies if the target's type matches the specified type
+    /// Event that groups multiple battle events into one event, but only applies if the character's type matches the specified type
     /// </summary>
     [Serializable]
     public class CharElementNeededEvent : BattleEvent
@@ -11531,11 +11582,23 @@ namespace PMDC.Dungeon
         [DataType(0, DataManager.DataType.Element, false)]
         public string NeededElement;
 
-        public CharElementNeededEvent() { BaseEvents = new List<BattleEvent>(); NeededElement = ""; }
-        public CharElementNeededEvent(string element, params BattleEvent[] effects)
+        /// <summary>
+        /// Whether to run the type check on the user or target
+        /// </summary> 
+        public bool AffectTarget;
+
+        /// <summary>
+        /// If set, the events will only be applied if none of the character's types match the specified type
+        /// </summary>
+        public bool Inverted;
+
+        public CharElementNeededEvent() { BaseEvents = new List<BattleEvent>(); NeededElement = ""; AffectTarget = true; Inverted = false; }
+        public CharElementNeededEvent(string element, bool affectTarget, bool inverted, params BattleEvent[] effects)
             : this()
         {
             NeededElement = element;
+            AffectTarget = affectTarget;
+            Inverted = inverted;
             foreach (BattleEvent effect in effects)
                 BaseEvents.Add(effect);
         }
@@ -11551,7 +11614,8 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.Target.HasElement(NeededElement))
+            Character character = AffectTarget ? context.Target : context.User;
+            if (Inverted ^ character.HasElement(NeededElement)) //if inverted, must not correspond. If not inverted, must correspond
             {
                 foreach (BattleEvent battleEffect in BaseEvents)
                     yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
@@ -20106,6 +20170,4 @@ namespace PMDC.Dungeon
 
         protected override PriorityList<BattleEvent> GetEvents(ItemData entry) => entry.OnHitTiles;
     }
-
 }
-
