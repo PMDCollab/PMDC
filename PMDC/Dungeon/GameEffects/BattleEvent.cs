@@ -10249,54 +10249,6 @@ namespace PMDC.Dungeon
     }
 
     /// <summary>
-    /// Event that prevents the move from landing if the target does not have the specified type
-    /// </summary> 
-    [Serializable]
-    public class TargetElementNeededEvent : BattleEvent
-    {
-        /// <summary>
-        /// The element ID to check for
-        /// </summary> 
-        [JsonConverter(typeof(ElementConverter))]
-        [DataType(0, DataManager.DataType.Element, false)]
-        public string ElementID;
-
-        /// <summary>
-        /// The message displayed in the dungeon log if the conditon is met 
-        /// </summary> 
-        public StringKey Message;
-
-        /// <summary>
-        /// If set, the move will land only if the target has the specified type instead
-        /// </summary>
-        public bool Inverted;
-
-        public TargetElementNeededEvent() { ElementID = ""; }
-        public TargetElementNeededEvent(string statusID, StringKey msg)
-        {
-            ElementID = statusID;
-            Message = msg;
-        }
-        protected TargetElementNeededEvent(TargetElementNeededEvent other)
-        {
-            ElementID = other.ElementID;
-            Message = other.Message;
-        }
-        public override GameEvent Clone() { return new TargetElementNeededEvent(this); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            bool condition = context.Target.Element1 == ElementID || context.Target.Element2 == ElementID;
-            if (Inverted) condition = !condition;
-            if (condition)
-            {
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(Message.ToLocal(), context.Target.GetDisplayName(false)));
-                context.CancelState.Cancel = true;
-            }
-            yield break;
-        }
-    }
-    /// <summary>
     /// Event that modifies the damage multiplier if the character is inflicted with a major status condition
     /// </summary> 
     [Serializable]
