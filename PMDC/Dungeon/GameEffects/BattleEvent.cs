@@ -2312,7 +2312,7 @@ namespace PMDC.Dungeon
         public AbsorbElementEvent(string element, params BattleEvent[] effects)
             : this(element, false, effects) { }
         public AbsorbElementEvent(string element, bool singleDraw, params BattleEvent[] effects)
-            : this(element, false, false, new EmptyFiniteEmitter(), "", effects) { }
+            : this(element, singleDraw, false, new EmptyFiniteEmitter(), "", effects) { }
         public AbsorbElementEvent(string element, bool singleDraw, bool giveMsg, FiniteEmitter emitter, string sound, params BattleEvent[] effects)
             : this()
         {
