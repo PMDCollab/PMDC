@@ -245,4 +245,15 @@ namespace RogueEssence.Dev
             return "Status";
         }
     }
+	public class Intrinsic3ChanceEditor : Editor<Intrinsic3Chance>
+    {
+        public override string GetString(Intrinsic3Chance obj, Type type, object[] attributes)
+        {
+            return "Allow Hidden Ability";
+        }
+        public override string GetTypeString()
+        {
+            return "Allow Hidden Ability ";
+        }
+    }
 }
