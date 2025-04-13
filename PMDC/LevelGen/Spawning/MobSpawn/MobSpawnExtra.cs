@@ -882,4 +882,23 @@ namespace PMDC.LevelGen
             return string.Format("{0}", this.GetType().GetFormattedTypeName());
         }
     }
+	
+	/// <summary>
+    /// Allow mob to spawn with a chance to roll for Intrinsic3.
+    /// </summary>
+    [Serializable]
+    public class Intrinsic3Chance : MobSpawnExtra
+    {
+        public override MobSpawnExtra Copy() { return new Intrinsic3Chance(); }
+
+        public override bool ApplyFeature()
+        {
+            return true;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("{0}", this.GetType().GetFormattedTypeName());
+        }
+    }
 }
