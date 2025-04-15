@@ -12,6 +12,7 @@ using NLua;
 using System.Linq;
 using PMDC.Dungeon;
 using System.Runtime.Serialization;
+using System.Diagnostics;
 
 namespace PMDC.LevelGen
 {
@@ -854,8 +855,6 @@ namespace PMDC.LevelGen
     }
 
 
-
-
     /// <summary>
     /// Spawn the mob with a discriminator.  This is used for personality calculations.
     /// </summary>
@@ -891,9 +890,38 @@ namespace PMDC.LevelGen
     {
         public override MobSpawnExtra Copy() { return new Intrinsic3Chance(); }
 
-        public override bool ApplyFeature()
+		public override void ApplyFeature(IMobSpawnMap map, Character newChar)
         {
-            return true;
+            MonsterID form = newChar.BaseForm;
+			MonsterData data = DataManager.Instance.GetMonster(form.Species);
+			BaseMonsterForm baseForm = data.Forms[form.Form];
+            BaseMonsterForm baseFormTwo = DataManager.Instance.GetMonster(newChar.BaseForm.Species).Forms[newChar.BaseForm.Form];
+			
+			/// DataManager.Instance.DefaultIntrinsic resolves to True if the ability is not there.
+            /// If false, then mob does have an Intrinsic 3.
+            if (baseForm.Intrinsic3 != DataManager.Instance.DefaultIntrinsic)
+			{
+				var rand = new Random();
+                int roll;
+
+                /// If not true, then mob has both Intrinsic 0 and Intrinsic 1 (in addition to Intrinsic 3).
+                if (baseForm.Intrinsic2 != DataManager.Instance.DefaultIntrinsic)
+					{roll = rand.Next(3); /// Hidden ability has 1-in-3 chance.
+                    Debug.WriteLine("Here! Good!");}
+				else /// Mob only has Intrinsic 0 (in addition to Intrinsic 3).
+					{roll = rand.Next(2); /// Hidden ability has 1-in-2 chance.
+                    Debug.WriteLine("Here! Bad!");}
+				
+				Debug.WriteLine("roll is " + roll);
+                if (roll == 0)
+                    {///newChar.BaseIntrinsics[0] = null;
+                    string ability = baseForm.Intrinsic3;
+                    newChar.LearnIntrinsic(ability, 0);
+                    ///newChar.SetBaseIntrinsic(baseForm.Intrinsic3);
+                    ///newChar.Intrinsics[0] = new BackReference<Intrinsic>(new Intrinsic(baseForm.Intrinsic3));
+                    ///newChar.RefreshTraits();
+                    Debug.WriteLine(baseForm.Intrinsic3 + " has been triggered!");}
+			}
         }
 
         public override string ToString()

@@ -249,11 +249,11 @@ namespace RogueEssence.Dev
     {
         public override string GetString(Intrinsic3Chance obj, Type type, object[] attributes)
         {
-            return "Allow Hidden Ability";
+            return "Roll for Hidden Ability";
         }
         public override string GetTypeString()
         {
-            return "Allow Hidden Ability ";
+            return "Roll for Hidden Ability";
         }
     }
 }
