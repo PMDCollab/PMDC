@@ -895,32 +895,19 @@ namespace PMDC.LevelGen
             MonsterID form = newChar.BaseForm;
 			MonsterData data = DataManager.Instance.GetMonster(form.Species);
 			BaseMonsterForm baseForm = data.Forms[form.Form];
-            BaseMonsterForm baseFormTwo = DataManager.Instance.GetMonster(newChar.BaseForm.Species).Forms[newChar.BaseForm.Form];
 			
-			/// DataManager.Instance.DefaultIntrinsic resolves to True if the ability is not there.
-            /// If false, then mob does have an Intrinsic 3.
-            if (baseForm.Intrinsic3 != DataManager.Instance.DefaultIntrinsic)
+            if (baseForm.Intrinsic3 != DataManager.Instance.DefaultIntrinsic) /// DataManager.Instance.DefaultIntrinsic resolves to True if the ability is not there. If false, then mob does have an Intrinsic 3.
 			{
 				var rand = new Random();
                 int roll;
 
-                /// If not true, then mob has both Intrinsic 0 and Intrinsic 1 (in addition to Intrinsic 3).
-                if (baseForm.Intrinsic2 != DataManager.Instance.DefaultIntrinsic)
-					{roll = rand.Next(3); /// Hidden ability has 1-in-3 chance.
-                    Debug.WriteLine("Here! Good!");}
+                if (baseForm.Intrinsic2 != DataManager.Instance.DefaultIntrinsic) /// If not true, then mob has both Intrinsic 0 and Intrinsic 1 (in addition to Intrinsic 3).
+					roll = rand.Next(3); /// Hidden ability has 1-in-3 chance.
 				else /// Mob only has Intrinsic 0 (in addition to Intrinsic 3).
-					{roll = rand.Next(2); /// Hidden ability has 1-in-2 chance.
-                    Debug.WriteLine("Here! Bad!");}
+					roll = rand.Next(2); /// Hidden ability has 1-in-2 chance.
 				
-				Debug.WriteLine("roll is " + roll);
                 if (roll == 0)
-                    {///newChar.BaseIntrinsics[0] = null;
-                    string ability = baseForm.Intrinsic3;
-                    newChar.LearnIntrinsic(ability, 0);
-                    ///newChar.SetBaseIntrinsic(baseForm.Intrinsic3);
-                    ///newChar.Intrinsics[0] = new BackReference<Intrinsic>(new Intrinsic(baseForm.Intrinsic3));
-                    ///newChar.RefreshTraits();
-                    Debug.WriteLine(baseForm.Intrinsic3 + " has been triggered!");}
+                    newChar.LearnIntrinsic(baseForm.Intrinsic3, 0, false);
 			}
         }
 
