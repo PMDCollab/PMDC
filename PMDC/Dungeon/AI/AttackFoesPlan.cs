@@ -80,9 +80,9 @@ namespace PMDC.Dungeon
             }
 
             //if we have another move we can make, take this turn to reposition
-            int extraTurns = controlledChar.MovementSpeed - controlledChar.TiersUsed;
+            int extraTurns = ZoneManager.Instance.CurrentMap.CurrentTurnMap.GetRemainingTurns(controlledChar);
 
-            if (extraTurns <= 0)
+            if (extraTurns <= 1)
             {
                 //attempt to use a move
                 GameAction attack = TryAttackChoice(rand, controlledChar, AttackPattern);
