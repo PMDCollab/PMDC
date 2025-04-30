@@ -12,6 +12,7 @@ using NLua;
 using System.Linq;
 using PMDC.Dungeon;
 using System.Runtime.Serialization;
+using System.Diagnostics;
 
 namespace PMDC.LevelGen
 {
@@ -854,8 +855,6 @@ namespace PMDC.LevelGen
     }
 
 
-
-
     /// <summary>
     /// Spawn the mob with a discriminator.  This is used for personality calculations.
     /// </summary>
@@ -875,6 +874,41 @@ namespace PMDC.LevelGen
         public override void ApplyFeature(IMobSpawnMap map, Character newChar)
         {
             newChar.Discriminator = Discriminator;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("{0}", this.GetType().GetFormattedTypeName());
+        }
+    }
+	
+	/// <summary>
+    /// Allow mob to spawn with a chance to roll for Intrinsic3.
+    /// </summary>
+    [Serializable]
+    public class Intrinsic3Chance : MobSpawnExtra
+    {
+        public override MobSpawnExtra Copy() { return new Intrinsic3Chance(); }
+
+		public override void ApplyFeature(IMobSpawnMap map, Character newChar)
+        {
+            MonsterID form = newChar.BaseForm;
+			MonsterData data = DataManager.Instance.GetMonster(form.Species);
+			BaseMonsterForm baseForm = data.Forms[form.Form];
+			
+            if (baseForm.Intrinsic3 != DataManager.Instance.DefaultIntrinsic) /// DataManager.Instance.DefaultIntrinsic resolves to True if the ability is not there. If false, then mob does have an Intrinsic 3.
+			{
+				var rand = new Random();
+                int roll;
+
+                if (baseForm.Intrinsic2 != DataManager.Instance.DefaultIntrinsic) /// If not true, then mob has both Intrinsic 0 and Intrinsic 1 (in addition to Intrinsic 3).
+					roll = rand.Next(3); /// Hidden ability has 1-in-3 chance.
+				else /// Mob only has Intrinsic 0 (in addition to Intrinsic 3).
+					roll = rand.Next(2); /// Hidden ability has 1-in-2 chance.
+				
+                if (roll == 0)
+                    newChar.LearnIntrinsic(baseForm.Intrinsic3, 0, false);
+			}
         }
 
         public override string ToString()
