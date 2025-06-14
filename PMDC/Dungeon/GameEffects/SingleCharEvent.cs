@@ -5011,8 +5011,14 @@ namespace PMDC.Dungeon
             character.CharDir = baseLoc.Dir;
             if (total_alive < StartLocs.Length)
             {
-                character.CharLoc = baseLoc.Loc + StartLocs[total_alive].Loc;
-                character.CharDir = StartLocs[total_alive].Dir;
+                Loc endLoc = baseLoc.Loc + StartLocs[total_alive].Loc;
+                if (ZoneManager.Instance.CurrentMap.GetLocInMapBounds(ref endLoc))
+                {
+                    character.CharLoc = endLoc;
+                    character.CharDir = StartLocs[total_alive].Dir;
+                }
+                else
+                    throw new InvalidOperationException(String.Format("Attempted to move character to {0} out of bounds!", endLoc));
             }
             else //default to close to leader
             {
