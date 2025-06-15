@@ -72,9 +72,12 @@ namespace PMDC.Dungeon
                 }
             }
 
-            List<Loc> path = GetEscapePath(controlledChar, stairLocs.ToArray());
-            if (path.Count > 1)
-                return SelectChoiceFromPath(controlledChar, path);
+            if (stairLocs.Count > 0)
+            {
+                List<Loc> path = GetEscapePath(controlledChar, stairLocs.ToArray());
+                if (path.Count > 1)
+                    return SelectChoiceFromPath(controlledChar, path);
+            }
 
             return null;
         }
