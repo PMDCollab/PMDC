@@ -16,6 +16,9 @@ using PMDC.Dungeon;
 using RogueEssence.LevelGen;
 using System.Runtime.Remoting;
 using Avalonia.X11;
+using System.Linq;
+using NLua;
+using RogueEssence.Script;
 
 namespace RogueEssence.Dev
 {
@@ -243,6 +246,21 @@ namespace RogueEssence.Dev
         public override string GetTypeString()
         {
             return "Status";
+        }
+    }
+    public class MobSpawnScriptEditor : Editor<MobSpawnScript>
+    {
+        public override string GetString(MobSpawnScript obj, Type type, object[] attributes)
+        {
+            LuaTable tbl = LuaEngine.Instance.RunString("return " + obj.ArgTable).First() as LuaTable;
+            if (tbl is not null && tbl.Keys.Count > 0)
+                return string.Format("Script: {0} [{1}]", obj.Script.ToString(), tbl.Keys.Count.ToString());
+            else
+                return string.Format("Script: {0}", obj.Script.ToString());
+        }
+        public override string GetTypeString()
+        {
+            return "Spawn Script";
         }
     }
 	public class Intrinsic3ChanceEditor : Editor<Intrinsic3Chance>

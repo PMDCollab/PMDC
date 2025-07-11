@@ -715,6 +715,7 @@ namespace PMDC
             DataEditor.AddEditor(new MobSpawnLuaTableEditor());
             DataEditor.AddEditor(new MobSpawnDiscriminatorEditor());
             DataEditor.AddEditor(new MobSpawnStatusEditor());
+            DataEditor.AddEditor(new MobSpawnScriptEditor());
 
             DataEditor.AddEditor(new MapTilesEditor());
             DataEditor.AddEditor(new BaseEmitterEditor());
