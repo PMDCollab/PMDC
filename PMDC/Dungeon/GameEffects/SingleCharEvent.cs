@@ -6845,10 +6845,11 @@ namespace PMDC.Dungeon
                     SkinTableState table = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<SkinTableState>();
                     copyMob.BaseForm.Skin = table.AltColor;
                 }
-                if (DataManager.Instance.Save.Rand.Next(100) < ItemPercent)
+                if (map.ItemSpawns.CanPick && DataManager.Instance.Save.Rand.Next(100) < ItemPercent)
                 {
+                    InvItem invItem = map.ItemSpawns.Pick(DataManager.Instance.Save.Rand);
                     MobSpawnItem item = new MobSpawnItem(false);
-                    item.Items.Add(map.ItemSpawns.Pick(DataManager.Instance.Save.Rand), 10);
+                    item.Items.Add(invItem, 10);
                     copyMob.SpawnFeatures.Add(item);
                 }
                 houseMobs.Add(copyMob);
