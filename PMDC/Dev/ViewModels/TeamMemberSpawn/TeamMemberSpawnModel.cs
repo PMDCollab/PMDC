@@ -258,10 +258,14 @@ namespace PMDC.Dev.ViewModels
             set { this.RaiseAndSetIfChanged(ref TeamSpawn.Spawn.Level.Min, value); }
         }
         
+        /// <summary>
+        /// Maximums of level ranges are internally stored as exclusive, so the displayed value must be the internal value - 1, but kept above the min to look clean.
+        /// Conversely, when the value is edited, the internal value must be set to the displayed value + 1.
+        /// </summary>
         public int Max
         {
-            get { return TeamSpawn.Spawn.Level.Max; }
-            set { this.RaiseAndSetIfChanged(ref TeamSpawn.Spawn.Level.Max, value); }
+            get { return Math.Max(TeamSpawn.Spawn.Level.Max - 1, TeamSpawn.Spawn.Level.Min); }
+            set { this.RaiseAndSetIfChanged(ref TeamSpawn.Spawn.Level.Max, value + 1); }
         }
             
         private DataGridType _gridViewType = DataGridType.Monster; 
