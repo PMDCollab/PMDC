@@ -6186,7 +6186,7 @@ namespace PMDC.Dungeon
             }
 
             //force everyone to skip their turn
-            DungeonScene.Instance.SkipRemainingTurns();
+            DungeonScene.Instance.SkipToMainLeader();
 
             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(0));
         }
@@ -6392,7 +6392,7 @@ namespace PMDC.Dungeon
             }
 
             //force everyone to skip their turn
-            DungeonScene.Instance.SkipRemainingTurns();
+            DungeonScene.Instance.SkipToMainLeader();
 
             yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(0));
         }
@@ -6756,7 +6756,7 @@ namespace PMDC.Dungeon
 
             //force everyone to skip their turn for this entire session
             if (NeedTurnEnd)
-                DungeonScene.Instance.SkipRemainingTurns();
+                DungeonScene.Instance.SkipToMainLeader();
         }
     }
 
@@ -7197,7 +7197,7 @@ namespace PMDC.Dungeon
             }
 
             //force everyone to skip their turn for this entire session
-            DungeonScene.Instance.SkipRemainingTurns();
+            DungeonScene.Instance.SkipToMainLeader();
         }
 
 
