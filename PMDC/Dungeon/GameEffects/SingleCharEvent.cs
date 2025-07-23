@@ -1525,7 +1525,7 @@ namespace PMDC.Dungeon
                         }
                     }
                 }
-                DataManager.Instance.Save.SeenMonster(context.User.BaseForm.Species);
+                DataManager.Instance.Save.SeenMonster(context.User.BaseForm);
             }
         }
 
@@ -4395,7 +4395,7 @@ namespace PMDC.Dungeon
             character.FullRestore();
             character.Fullness = oldFullness;
 
-            DataManager.Instance.Save.RegisterMonster(character.BaseForm.Species);
+            DataManager.Instance.Save.RegisterMonster(character.BaseForm);
             DataManager.Instance.Save.RogueUnlockMonster(character.BaseForm.Species);
             yield break;
         }
@@ -4589,7 +4589,7 @@ namespace PMDC.Dungeon
 
             yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(Text.FormatGrammar(new StringKey("DLG_EVO_COMPLETE").ToLocal(), oldName, entry.GetColoredName())));
 
-            DataManager.Instance.Save.RegisterMonster(character.BaseForm.Species);
+            DataManager.Instance.Save.RegisterMonster(character.BaseForm);
             DataManager.Instance.Save.RogueUnlockMonster(character.BaseForm.Species);
             yield return CoroutineManager.Instance.StartCoroutine(character.OnMapStart());
 
