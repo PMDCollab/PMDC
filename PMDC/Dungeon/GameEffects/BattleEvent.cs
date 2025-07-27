@@ -19852,7 +19852,7 @@ namespace PMDC.Dungeon
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_RECRUIT").ToLocal(), targetChar.GetDisplayName(true), DungeonScene.Instance.ActiveTeam.GetDisplayName()));
             else
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_RECRUIT_ANY").ToLocal(), targetChar.GetDisplayName(true)));
-            DataManager.Instance.Save.RegisterMonster(targetChar.BaseForm.Species);
+            DataManager.Instance.Save.RegisterMonster(targetChar.BaseForm);
             DataManager.Instance.Save.RogueUnlockMonster(targetChar.BaseForm.Species);
             yield return CoroutineManager.Instance.StartCoroutine(targetChar.OnMapStart());
 
