@@ -13407,7 +13407,7 @@ namespace PMDC.Dungeon
                     context.User.DeleteSkill(moveSlot);
             }
             else
-                context.User.ChangeSkill(moveSlot, moveIndex, -1);
+                context.User.ChangeSkill(moveSlot, moveIndex, -1, DataManager.Instance.Save.GetDefaultEnable(moveIndex));
             if (!group)
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_SKETCH").ToLocal(), context.User.GetDisplayName(false), entry.GetIconName()));
         }
@@ -13457,7 +13457,7 @@ namespace PMDC.Dungeon
                         yield break;
                     }
                 }
-                context.User.ChangeSkill(context.UsageSlot, chosenMove, NewMoveCharges);
+                context.User.ChangeSkill(context.UsageSlot, chosenMove, NewMoveCharges, DataManager.Instance.Save.GetDefaultEnable(chosenMove));
                 DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_MIMIC").ToLocal(), context.User.GetDisplayName(false), entry.GetIconName()));
             }
             else
@@ -17743,7 +17743,7 @@ namespace PMDC.Dungeon
 
             //moves
             for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
-                target.ChangeSkill(ii, user.Skills[ii].Element.SkillNum, TransformCharges);
+                target.ChangeSkill(ii, user.Skills[ii].Element.SkillNum, TransformCharges, DataManager.Instance.Save.GetDefaultEnable(user.Skills[ii].Element.SkillNum));
 
             //set the status
             if (!String.IsNullOrEmpty(StatusID))
@@ -17824,9 +17824,9 @@ namespace PMDC.Dungeon
                     for (int ii = 0; ii < CharData.MAX_SKILL_SLOTS; ii++)
                     {
                         if (ii < final_moves.Count)
-                            context.Target.ChangeSkill(ii, final_moves[ii], TransformCharges);
+                            context.Target.ChangeSkill(ii, final_moves[ii], TransformCharges, DataManager.Instance.Save.GetDefaultEnable(final_moves[ii]));
                         else
-                            context.Target.ChangeSkill(ii, "", -1);
+                            context.Target.ChangeSkill(ii, "", -1, false);
                     }
 
                     //set the status
