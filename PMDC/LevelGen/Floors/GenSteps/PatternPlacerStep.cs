@@ -9,10 +9,19 @@ namespace PMDC.LevelGen
     [Serializable]
     public abstract class PatternPlacerStep<T> : GenStep<T> where T : class, IFloorPlanGenContext
     {
+        /// <summary>
+        /// Amount of patterns to place.
+        /// </summary>
         public RandRange Amount;
 
+        /// <summary>
+        /// The maps to load and read as patterns.  Any non-walkable tiles are counted as marked for the pattern.
+        /// </summary>
         public SpawnList<PatternPlan> Maps;
 
+        /// <summary>
+        /// Filters for rooms to spawn in.
+        /// </summary>
         public List<BaseRoomFilter> Filters { get; set; }
 
         /// <summary>
