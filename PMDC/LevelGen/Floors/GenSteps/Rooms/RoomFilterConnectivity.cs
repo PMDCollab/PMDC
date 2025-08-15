@@ -3,6 +3,9 @@ using RogueElements;
 
 namespace PMDC.LevelGen
 {
+    /// <summary>
+    /// Filters for rooms based on their connectivity.
+    /// </summary>
     [Serializable]
     public class RoomFilterConnectivity : BaseRoomFilter
     {
@@ -14,6 +17,9 @@ namespace PMDC.LevelGen
             this.Connection = connectivity;
         }
 
+        /// <summary>
+        /// The connectivity types to filter for.
+        /// </summary>
         public ConnectivityRoom.Connectivity Connection;
 
         public override bool PassesFilter(IRoomPlan plan)
