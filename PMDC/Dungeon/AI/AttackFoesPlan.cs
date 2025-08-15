@@ -81,6 +81,8 @@ namespace PMDC.Dungeon
 
             //if we have another move we can make, take this turn to reposition
             int extraTurns = ZoneManager.Instance.CurrentMap.CurrentTurnMap.GetRemainingTurns(controlledChar) - 1;
+            if (AttackPattern == AttackChoice.DumbAttack)
+                extraTurns = 0;
 
             if (extraTurns <= 1)
             {
