@@ -8153,7 +8153,7 @@ namespace PMDC.Dungeon
 
             if (!String.IsNullOrEmpty(dropID) && !String.IsNullOrEmpty(raiseID))
             {
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_MOODY").ToLocal(), context.User.GetDisplayName(false)));
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_MOODY").ToLocal(), ownerChar.GetDisplayName(false)));
 
                 StatusEffect lowerStatus = new StatusEffect(dropID);
                 lowerStatus.LoadFromData();
