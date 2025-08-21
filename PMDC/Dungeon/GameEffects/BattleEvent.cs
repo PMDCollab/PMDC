@@ -15444,7 +15444,7 @@ namespace PMDC.Dungeon
 
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.WarpNear(target, context.Target.CharLoc, false));
                 if (target.MemberTeam.MapFaction != Faction.Player)
-                    target.EndTurnLock = true;
+                    target.TurnUsed = true;
                 totalWarp++;
             }
             if (totalWarp > 0)
@@ -15493,7 +15493,7 @@ namespace PMDC.Dungeon
 
                 yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.WarpNear(target, context.TargetTile, false));
                 if (target.MemberTeam.MapFaction != Faction.Player)
-                    target.EndTurnLock = true;
+                    target.TurnUsed = true;
                 totalWarp++;
             }
             if (totalWarp == 0)
