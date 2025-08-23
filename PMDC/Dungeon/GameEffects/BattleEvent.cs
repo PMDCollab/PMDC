@@ -7924,6 +7924,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
             Character target = (AffectTarget ? context.Target : context.User);
+            Character origin = (AffectTarget ? context.User : context.Target);
             if (target.Dead)
                 yield break;
 
@@ -7954,7 +7955,7 @@ namespace PMDC.Dungeon
             setStatus.LoadFromData();
             setStatus.StatusStates.Set(new StackState(Stack));
 
-            yield return CoroutineManager.Instance.StartCoroutine(target.AddStatusEffect(Anonymous ? null : context.User, setStatus));
+            yield return CoroutineManager.Instance.StartCoroutine(target.AddStatusEffect(Anonymous ? null : origin, setStatus));
         }
 
         private int modStat(int value, string status, Character target)
@@ -12502,7 +12503,7 @@ namespace PMDC.Dungeon
 
         public SkyDropStatusBattleEvent() { }
         public SkyDropStatusBattleEvent(string statusID, string altStatusID, bool affectTarget, bool silentCheck)
-            : base(statusID, affectTarget, silentCheck, false) { AltStatusID = altStatusID; }
+            : base(statusID, affectTarget, silentCheck, false, false) { AltStatusID = altStatusID; }
         protected SkyDropStatusBattleEvent(SkyDropStatusBattleEvent other)
             : base(other) { AltStatusID = other.AltStatusID; }
         public override GameEvent Clone() { return new SkyDropStatusBattleEvent(this); }
@@ -12539,7 +12540,6 @@ namespace PMDC.Dungeon
     [Serializable]
     public class CoupledStatusBattleEvent : StatusBattleEvent
     {
-        
         /// <summary>
         /// The alternate status to apply
         /// </summary>
@@ -12549,7 +12549,7 @@ namespace PMDC.Dungeon
 
         public CoupledStatusBattleEvent() { }
         public CoupledStatusBattleEvent(string statusID, string altStatusID, bool affectTarget, bool silentCheck)
-            : base(statusID, affectTarget, silentCheck, false) { AltStatusID = altStatusID; }
+            : base(statusID, affectTarget, silentCheck, false, false) { AltStatusID = altStatusID; }
         protected CoupledStatusBattleEvent(CoupledStatusBattleEvent other)
             : base(other) { AltStatusID = other.AltStatusID; }
         public override GameEvent Clone() { return new CoupledStatusBattleEvent(this); }
@@ -12580,12 +12580,17 @@ namespace PMDC.Dungeon
         [JsonConverter(typeof(StatusConverter))]
         [DataType(0, DataManager.DataType.Status, false)]
         public string StatusID;
-        
+
         /// <summary>
         /// Whether to affect the target or user 
         /// </summary>
         public bool AffectTarget;
-        
+
+        /// <summary>
+        /// Whether the user of the status should be treated as the target 
+        /// </summary>
+        public bool SelfInflicted;
+
         /// <summary>
         /// Whether to display a message if the status fails to apply
         /// </summary>
@@ -12609,19 +12614,21 @@ namespace PMDC.Dungeon
 
         public StatusBattleEvent() { Anims = new List<BattleAnimEvent>(); StatusID = ""; }
         public StatusBattleEvent(string statusID, bool affectTarget, bool silentCheck)
-         : this(statusID, affectTarget, silentCheck, false) { }
-        public StatusBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool anonymous)
+         : this(statusID, affectTarget, silentCheck, false, false) { }
+        public StatusBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool selfInflict, bool anonymous)
         {
             StatusID = statusID;
             AffectTarget = affectTarget;
+            SelfInflicted = selfInflict;
             SilentCheck = silentCheck;
             Anonymous = anonymous;
             Anims = new List<BattleAnimEvent>();
         }
-        public StatusBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool anonymous, StringKey trigger, params BattleAnimEvent[] anims)
+        public StatusBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool selfInflict, bool anonymous, StringKey trigger, params BattleAnimEvent[] anims)
         {
             StatusID = statusID;
             AffectTarget = affectTarget;
+            SelfInflicted = selfInflict;
             SilentCheck = silentCheck;
             Anonymous = anonymous;
             TriggerMsg = trigger;
@@ -12632,6 +12639,7 @@ namespace PMDC.Dungeon
         {
             StatusID = other.StatusID;
             AffectTarget = other.AffectTarget;
+            SelfInflicted = other.SelfInflicted;
             SilentCheck = other.SilentCheck;
             Anonymous = other.Anonymous;
             TriggerMsg = other.TriggerMsg;
@@ -12647,6 +12655,8 @@ namespace PMDC.Dungeon
         {
             Character target = (AffectTarget ? context.Target : context.User);
             Character origin = (AffectTarget ? context.User : context.Target);
+            if (SelfInflicted)
+                origin = target;
             if (target.Dead)
                 yield break;
 
@@ -12716,14 +12726,14 @@ namespace PMDC.Dungeon
         public int Stack;
 
         public StatusStackBattleEvent() { }
-        public StatusStackBattleEvent(string statusID, bool affectTarget, bool silentCheck, int stack) : this(statusID, affectTarget, silentCheck, false, stack) { }
-        public StatusStackBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool anonymous, int stack)
-            : base(statusID, affectTarget, silentCheck, anonymous)
+        public StatusStackBattleEvent(string statusID, bool affectTarget, bool silentCheck, int stack) : this(statusID, affectTarget, silentCheck, false, false, stack) { }
+        public StatusStackBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool selfInflict, bool anonymous, int stack)
+            : base(statusID, affectTarget, silentCheck, selfInflict, anonymous)
         {
             Stack = stack;
         }
-        public StatusStackBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool anonymous, int stack, StringKey trigger)
-            : base(statusID, affectTarget, silentCheck, anonymous, trigger)
+        public StatusStackBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool selfInflict, bool anonymous, int stack, StringKey trigger)
+            : base(statusID, affectTarget, silentCheck, selfInflict, anonymous, trigger)
         {
             Stack = stack;
         }
@@ -12755,9 +12765,9 @@ namespace PMDC.Dungeon
         public string Element;
 
         public StatusElementBattleEvent() { Element = ""; }
-        public StatusElementBattleEvent(string statusID, bool affectTarget, bool silentCheck, string element) : this(statusID, affectTarget, silentCheck, false, element) { }
-        public StatusElementBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool anonymous, string element)
-            : base(statusID, affectTarget, silentCheck, anonymous)
+        public StatusElementBattleEvent(string statusID, bool affectTarget, bool silentCheck, string element) : this(statusID, affectTarget, silentCheck, false, false, element) { }
+        public StatusElementBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool selfInflict, bool anonymous, string element)
+            : base(statusID, affectTarget, silentCheck, selfInflict, anonymous)
         {
             Element = element;
         }
@@ -12784,8 +12794,8 @@ namespace PMDC.Dungeon
         public StateCollection<StatusState> States;
 
         public StatusStateBattleEvent() { States = new StateCollection<StatusState>(); }
-        public StatusStateBattleEvent(string statusID, bool affectTarget, bool silentCheck, StateCollection<StatusState> states) : this(statusID, affectTarget, silentCheck, false, states) { }
-        public StatusStateBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool anonymous, StateCollection<StatusState> states) : base(statusID, affectTarget, silentCheck, anonymous)
+        public StatusStateBattleEvent(string statusID, bool affectTarget, bool silentCheck, StateCollection<StatusState> states) : this(statusID, affectTarget, silentCheck, false, false, states) { }
+        public StatusStateBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool selfInflict, bool anonymous, StateCollection<StatusState> states) : base(statusID, affectTarget, silentCheck, selfInflict, anonymous)
         {
             States = states;
         }
@@ -12847,9 +12857,9 @@ namespace PMDC.Dungeon
 
         public DisableBattleEvent() { LastSlotStatusID = ""; }
         public DisableBattleEvent(string statusID, string prevMoveID)
-            : this(statusID, prevMoveID, false, false) { }
-        public DisableBattleEvent(string statusID, string prevMoveID, bool anonymous, bool randomFallback)
-            : base(statusID, true, false, anonymous)
+            : this(statusID, prevMoveID, false, false, false) { }
+        public DisableBattleEvent(string statusID, string prevMoveID, bool selfInflict, bool anonymous, bool randomFallback)
+            : base(statusID, true, false, selfInflict, anonymous)
         {
             LastSlotStatusID = prevMoveID;
             RandomFallback = randomFallback;
@@ -12902,8 +12912,8 @@ namespace PMDC.Dungeon
     public class CounterDisableBattleEvent : StatusBattleEvent
     {
         public CounterDisableBattleEvent() { }
-        public CounterDisableBattleEvent(string statusID) : base(statusID, false, true, false) { }
-        public CounterDisableBattleEvent(string statusID, StringKey trigger) : base(statusID, false, true, false, trigger) { }
+        public CounterDisableBattleEvent(string statusID) : base(statusID, false, true, false, false) { }
+        public CounterDisableBattleEvent(string statusID, StringKey trigger) : base(statusID, false, true, false, false, trigger) { }
         protected CounterDisableBattleEvent(CounterDisableBattleEvent other) : base(other) { }
         public override GameEvent Clone() { return new CounterDisableBattleEvent(this); }
 
@@ -12936,7 +12946,7 @@ namespace PMDC.Dungeon
         public string WeatherID;
 
         public WeatherStackEvent() { WeatherID = ""; }
-        public WeatherStackEvent(string statusID, bool affectTarget, bool silentCheck, string weatherID) : base(statusID, affectTarget, silentCheck, false)
+        public WeatherStackEvent(string statusID, bool affectTarget, bool silentCheck, string weatherID) : base(statusID, affectTarget, silentCheck, false, false)
         {
             WeatherID = weatherID;
         }
@@ -12970,8 +12980,8 @@ namespace PMDC.Dungeon
         public int HPFraction;
 
         public StatusHPBattleEvent() { }
-        public StatusHPBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool anonymous, int hpFraction)
-            : base(statusID, affectTarget, silentCheck, anonymous)
+        public StatusHPBattleEvent(string statusID, bool affectTarget, bool silentCheck, bool selfInflict, bool anonymous, int hpFraction)
+            : base(statusID, affectTarget, silentCheck, selfInflict, anonymous)
         {
             HPFraction = hpFraction;
         }
@@ -12996,8 +13006,8 @@ namespace PMDC.Dungeon
     public class FutureAttackEvent : StatusBattleEvent
     {
         public FutureAttackEvent() { }
-        public FutureAttackEvent(string statusID, bool affectTarget, bool silentCheck, bool anonymous)
-            : base(statusID, affectTarget, silentCheck, anonymous)
+        public FutureAttackEvent(string statusID)
+            : base(statusID, true, false)
         { }
         protected FutureAttackEvent(FutureAttackEvent other)
             : base(other) { }
@@ -13020,9 +13030,7 @@ namespace PMDC.Dungeon
     {
         public GiveContinuousDamageEvent() { }
         public GiveContinuousDamageEvent(string statusID, bool affectTarget, bool silentCheck)
-            : this(statusID, affectTarget, silentCheck, false) { }
-        public GiveContinuousDamageEvent(string statusID, bool affectTarget, bool silentCheck, bool anonymous)
-            : base(statusID, affectTarget, silentCheck, anonymous) { }
+            : base(statusID, affectTarget, silentCheck, false, false) { }
         protected GiveContinuousDamageEvent(GiveContinuousDamageEvent other)
             : base(other) { }
         public override GameEvent Clone() { return new GiveContinuousDamageEvent(this); }
