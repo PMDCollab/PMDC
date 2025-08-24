@@ -44,23 +44,33 @@ namespace PMDC.Dungeon
             if (controlledChar.CantWalk)
                 return null;
 
-            //check for being hit already.  if hit, will forever abandon this plan
-            if (controlledChar.GetStatusEffect(StatusIndex) != null)
-                return null;
+            bool suspicion = false;
+            //check for being hit already.  if hit, and it's been less than 10 turns ago, flip on the suspicion flag
+            StatusEffect lastHit = controlledChar.GetStatusEffect(StatusIndex);
+            if (lastHit != null)
+            {
+                if (lastHit.StatusStates.Get<CountDownState>().Counter < 10)
+                    suspicion = true;
+            }
 
             //check for being already in the light.  if in the light, skip this plan
-            for (int xx = -1; xx <= 1; xx++)
+            if (!suspicion)
             {
-                for (int yy = -1; yy <= 1; yy++)
+                for (int xx = -1; xx <= 1; xx++)
                 {
-                    // must stay in the dark
-                    if (!TileBlocksLight(controlledChar.CharLoc + new Loc(xx, yy)))
-                        return null;
+                    for (int yy = -1; yy <= 1; yy++)
+                    {
+                        // must stay in the dark
+                        if (!TileBlocksLight(controlledChar.CharLoc + new Loc(xx, yy)))
+                            return null;
+                    }
                 }
             }
 
             Character targetChar = null;
             int minRange = DarkRange + 1;
+            if (suspicion)
+                minRange = 80;
             foreach (Character testChar in ZoneManager.Instance.CurrentMap.ActiveTeam.IterateByRank())
             {
                 int testDist = ZoneManager.Instance.CurrentMap.GetClosestDist8(testChar.CharLoc, controlledChar.CharLoc);
@@ -81,7 +91,7 @@ namespace PMDC.Dungeon
 
                 //is it possible to move in that direction?
                 //if so, use it
-                result = tryDir(controlledChar, targetChar, dirToChar, !preThink);
+                result = tryDir(controlledChar, targetChar, dirToChar, suspicion, !preThink);
                 if (result != null)
                     return result;
                 if (dirToChar.IsDiagonal())
@@ -93,29 +103,29 @@ namespace PMDC.Dungeon
                     //start with the one that covers the most distance
                     if (Math.Abs(diff.X) < Math.Abs(diff.Y))
                     {
-                        result = tryDir(controlledChar, targetChar, vert.ToDir8(), !preThink);
+                        result = tryDir(controlledChar, targetChar, vert.ToDir8(), suspicion, !preThink);
                         if (result != null)
                             return result;
-                        result = tryDir(controlledChar, targetChar, horiz.ToDir8(), !preThink);
+                        result = tryDir(controlledChar, targetChar, horiz.ToDir8(), suspicion, !preThink);
                         if (result != null)
                             return result;
                     }
                     else
                     {
-                        result = tryDir(controlledChar, targetChar, horiz.ToDir8(), !preThink);
+                        result = tryDir(controlledChar, targetChar, horiz.ToDir8(), suspicion, !preThink);
                         if (result != null)
                             return result;
-                        result = tryDir(controlledChar, targetChar, vert.ToDir8(), !preThink);
+                        result = tryDir(controlledChar, targetChar, vert.ToDir8(), suspicion, !preThink);
                         if (result != null)
                             return result;
                     }
                 }
                 else
                 {
-                    result = tryDir(controlledChar, targetChar, DirExt.AddAngles(dirToChar, Dir8.DownLeft), !preThink);
+                    result = tryDir(controlledChar, targetChar, DirExt.AddAngles(dirToChar, Dir8.DownLeft), suspicion, !preThink);
                     if (result != null)
                         return result;
-                    result = tryDir(controlledChar, targetChar, DirExt.AddAngles(dirToChar, Dir8.DownRight), !preThink);
+                    result = tryDir(controlledChar, targetChar, DirExt.AddAngles(dirToChar, Dir8.DownRight), suspicion, !preThink);
                     if (result != null)
                         return result;
                 }
@@ -138,18 +148,22 @@ namespace PMDC.Dungeon
             return false;
         }
 
-        private GameAction tryDir(Character controlledChar, Character targetChar, Dir8 testDir, bool respectPeers)
+        private GameAction tryDir(Character controlledChar, Character targetChar, Dir8 testDir, bool suspicion, bool respectPeers)
         {
             Loc endLoc = controlledChar.CharLoc + testDir.GetLoc();
 
-            //do not go even one tile near light-exposed tiles
-            for (int xx = -1; xx <= 1; xx++)
+
+            if (!suspicion)
             {
-                for (int yy = -1; yy <= 1; yy++)
+                //do not go even one tile near light-exposed tiles
+                for (int xx = -1; xx <= 1; xx++)
                 {
-                    // must stay in the dark
-                    if (!TileBlocksLight(endLoc + new Loc(xx, yy)))
-                        return null;
+                    for (int yy = -1; yy <= 1; yy++)
+                    {
+                        // must stay in the dark
+                        if (!TileBlocksLight(endLoc + new Loc(xx, yy)))
+                            return null;
+                    }
                 }
             }
 
