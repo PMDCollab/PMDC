@@ -285,6 +285,7 @@ namespace PMDC.Dungeon
                     case "wait_attack":
                     case "turret":
                     case "shopkeeper":
+                    case "lurker":
                         return true;
                 }
             }
