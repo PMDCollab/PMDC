@@ -9446,27 +9446,33 @@ namespace PMDC.Dungeon
     [Serializable]
     public class DamageMoneyEvent : BattleEvent
     {
-        
+
         /// <summary>
-        /// The drop money mutliplier given by the damage dealt times the multiplier
+        /// The drop money mutliplier given by level * damage dealt * numerator / denominator
         /// </summary>
-        public int Multiplier;
+        public int Numerator;
+
+        /// <summary>
+        /// The drop money mutliplier given by level * damage dealt * numerator / denominator
+        /// </summary>
+        public int Denominator;
 
         public DamageMoneyEvent() { }
-        public DamageMoneyEvent(int multiplier) { Multiplier = multiplier; }
+        public DamageMoneyEvent(int numerator, int denominator) { Numerator = numerator; Denominator = denominator; }
         protected DamageMoneyEvent(DamageMoneyEvent other)
         {
-            Multiplier = other.Multiplier;
+            Numerator = other.Numerator;
+            Denominator = other.Denominator;
         }
         public override GameEvent Clone() { return new DamageMoneyEvent(this); }
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            int damage = context.GetContextStateInt<TotalDamageDealt>(true, 0);
-            int gainedMoney = damage * Multiplier;
+            int damage = context.GetContextStateInt<DamageDealt>(false, 0);
+            int gainedMoney = damage * context.Target.Level * Numerator / Denominator;
             if (gainedMoney > 0)
             {
-                foreach (Loc tile in context.StrikeLandTiles)
-                    yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropMoney(gainedMoney, tile, tile));
+                Loc endLoc = DungeonScene.Instance.MoveShotUntilBlocked(context.User, context.Target.CharLoc, context.User.CharDir, 2, Alignment.None, false, false);
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.DropMoney(gainedMoney, endLoc, context.Target.CharLoc));
             }
         }
     }
@@ -10548,6 +10554,29 @@ namespace PMDC.Dungeon
             foreach (BattleAnimEvent anim in Anims)
                 yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
 
+        }
+    }
+
+    /// <summary>
+    /// Event that changes the attack to physical or special depending on the user's best base attacking stat
+    /// </summary> 
+    [Serializable]
+    public class BestCategoryEvent : BattleEvent
+    {
+        public BestCategoryEvent() { }
+        protected BestCategoryEvent(BestCategoryEvent other)
+        {
+            
+        }
+        public override GameEvent Clone() { return new BestCategoryEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.User.Atk < context.User.MAtk)
+                context.Data.Category = BattleData.SkillCategory.Magical;
+            else
+                context.Data.Category = BattleData.SkillCategory.Physical;
+            yield break;
         }
     }
 
