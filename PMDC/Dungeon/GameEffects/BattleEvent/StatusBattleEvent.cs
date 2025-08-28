@@ -724,72 +724,7 @@ namespace PMDC.Dungeon
         }
     }
     
-    /// <summary>
-    /// Event that reverts the character's stat changes
-    /// </summary>
-    [Serializable]
-    public class ReverseStateStatusBattleEvent : BattleEvent
-    {
-        /// <summary>
-        /// If the status contains the one of the specified status states, then it's stack amount can be reverted
-        /// </summary>
-        [StringTypeConstraint(1, typeof(StatusState))]
-        public List<FlagType> States;
-        
-        /// <summary>
-        /// Whether to affect the target or user
-        /// </summary>
-        public bool AffectTarget;
-  
-        /// <summary>
-        /// The message displayed in the dungeon log 
-        /// </summary>
-        [StringKey(0, true)]
-        public StringKey Msg;
 
-        public ReverseStateStatusBattleEvent() { States = new List<FlagType>(); }
-        public ReverseStateStatusBattleEvent(Type state, bool affectTarget, StringKey msg) : this()
-        {
-            States.Add(new FlagType(state));
-            AffectTarget = affectTarget;
-            Msg = msg;
-        }
-        protected ReverseStateStatusBattleEvent(ReverseStateStatusBattleEvent other) : this()
-        {
-            States.AddRange(other.States);
-            AffectTarget = other.AffectTarget;
-            Msg = other.Msg;
-        }
-        public override GameEvent Clone() { return new ReverseStateStatusBattleEvent(this); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            Character target = (AffectTarget ? context.Target : context.User);
-            if (target.Dead)
-                yield break;
-
-            bool affected = false;
-            foreach (StatusEffect status in target.IterateStatusEffects())
-            {
-                bool hasState = false;
-                foreach (FlagType state in States)
-                {
-                    if (status.StatusStates.Contains(state.FullType))
-                        hasState = true;
-                }
-                if (hasState)
-                {
-                    StackState stack = status.StatusStates.GetWithDefault<StackState>();
-                    stack.Stack = stack.Stack * -1;
-                    affected = true;
-                }
-            }
-            if (affected && Msg.IsValid())
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(Msg.ToLocal(), target.GetDisplayName(false)));
-        }
-
-    }
-    
     /// <summary>
     /// Event that removes the status if the status contains the one of the specified status states
     /// </summary>
@@ -962,40 +897,6 @@ namespace PMDC.Dungeon
     }
 
     
-    /// <summary>
-    /// Event that decreases the counter in the status's CountDownState when the character does an action
-    /// The status is removed when the countdown reaches 0
-    /// This event can only be used on statuses
-    /// </summary>
-    [Serializable]
-    public class CountDownOnActionEvent : BattleEvent
-    {
-        /// <summary>
-        /// Whether to display the message when the status is removed 
-        /// </summary>
-        public bool ShowMessage;
-
-        public CountDownOnActionEvent() { }
-        public CountDownOnActionEvent(bool showMessage)
-        {
-            ShowMessage = showMessage;
-        }
-        protected CountDownOnActionEvent(CountDownOnActionEvent other)
-        {
-            ShowMessage = other.ShowMessage;
-        }
-        public override GameEvent Clone() { return new CountDownOnActionEvent(this); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            if (context.UsageSlot == BattleContext.FORCED_SLOT)
-                yield break;
-
-            ((StatusEffect)owner).StatusStates.GetWithDefault<CountDownState>().Counter--;
-            if (((StatusEffect)owner).StatusStates.GetWithDefault<CountDownState>().Counter <= 0)
-                yield return CoroutineManager.Instance.StartCoroutine(context.User.RemoveStatusEffect(((StatusEffect)owner).ID, ShowMessage));
-        }
-    }
 
     /// <summary>
     /// Event that causes the user to transfer statuses to the target
@@ -1665,49 +1566,6 @@ namespace PMDC.Dungeon
     }
 
 
-    /// <summary>
-    /// Event that removes the RecentState status state
-    /// This event can only be used on statuses 
-    /// </summary> 
-    [Serializable]
-    public class RemoveRecentEvent : BattleEvent
-    {
-        public RemoveRecentEvent() { }
-        public override GameEvent Clone() { return new RemoveRecentEvent(); }
 
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            ((StatusEffect)owner).StatusStates.Remove<RecentState>();//allow the counter to count down
-            yield break;
-        }
-    }
-
-    /// <summary>
-    /// Event that sets the CountDownState counter to 0 if the character receives any damage
-    /// </summary> 
-    [Serializable]
-    public class ForceWakeEvent : BattleEvent
-    {
-        public ForceWakeEvent() { }
-        public override GameEvent Clone() { return new ForceWakeEvent(); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            int damage = context.GetContextStateInt<DamageDealt>(0);
-            bool hit = context.ContextStates.Contains<AttackHit>();
-            bool recent = ((StatusEffect)owner).StatusStates.Contains<RecentState>();
-            if (!recent && context.Target != context.User)//don't immediately count down after status is inflicted
-            {
-                if (damage > 0)
-                {
-                    //yield return CoroutineManager.Instance.StartCoroutine(context.Target.RemoveStatusEffect(((StatusEffect)owner).ID, true));
-                    ((StatusEffect)owner).StatusStates.GetWithDefault<CountDownState>().Counter = 0;
-                }
-                else if (hit)
-                    ((StatusEffect)owner).StatusStates.GetWithDefault<CountDownState>().Counter = Math.Max(((StatusEffect)owner).StatusStates.GetWithDefault<CountDownState>().Counter - 1, 0);
-            }
-            yield break;
-        }
-    }
 }
 

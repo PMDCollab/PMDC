@@ -19,340 +19,7 @@ using System.Linq;
 namespace PMDC.Dungeon
 {
 
-    /// <summary>
-    /// Event that modifies the critical change rate based on how effective the move is
-    /// </summary>
-    [Serializable]
-    public class CritEffectiveEvent : BattleEvent
-    {
-        
-        /// <summary>
-        /// Whether to check if the move is not effective instead
-        /// </summary>
-        public bool Reverse;
-        
-        /// <summary>
-        /// The added critical rate chance
-        /// </summary>
-        public int AddCrit;
 
-        public CritEffectiveEvent() { }
-        public CritEffectiveEvent(bool reverse, int addCrit)
-        {
-            Reverse = reverse;
-            AddCrit = addCrit;
-        }
-        protected CritEffectiveEvent(CritEffectiveEvent other)
-        {
-            Reverse = other.Reverse;
-            AddCrit = other.AddCrit;
-        }
-        public override GameEvent Clone() { return new CritEffectiveEvent(this); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            int typeMatchup = PreTypeEvent.GetDualEffectiveness(context.User, context.Target, context.Data);
-            typeMatchup -= PreTypeEvent.NRM_2;
-            if (Reverse)
-                typeMatchup *= -1;
-            if (typeMatchup > 0)
-                context.AddContextStateInt<CritLevel>(AddCrit);
-
-            yield break;
-        }
-    }
-
-
-
-
-    /// <summary>
-    /// Event that modifies the specified stack boost by adding the value in the StackState status state
-    /// </summary>
-    [Serializable]
-    public class UserStatBoostEvent : BattleEvent
-    {
-        /// <summary>
-        /// The stat to modify
-        /// </summary>
-        public Stat Stat;
-
-        public UserStatBoostEvent() { }
-        public UserStatBoostEvent(Stat stat)
-        {
-            Stat = stat;
-        }
-        protected UserStatBoostEvent(UserStatBoostEvent other)
-        {
-            Stat = other.Stat;
-        }
-        public override GameEvent Clone() { return new UserStatBoostEvent(this); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            int boost = ((StatusEffect)owner).StatusStates.GetWithDefault<StackState>().Stack;
-            switch (Stat)
-            {
-                case Stat.Attack:
-                    context.AddContextStateInt<UserAtkBoost>(boost);
-                    break;
-                case Stat.Defense:
-                    context.AddContextStateInt<UserDefBoost>(boost);
-                    break;
-                case Stat.MAtk:
-                    context.AddContextStateInt<UserSpAtkBoost>(boost);
-                    break;
-                case Stat.MDef:
-                    context.AddContextStateInt<UserSpDefBoost>(boost);
-                    break;
-                case Stat.HitRate:
-                    context.AddContextStateInt<UserAccuracyBoost>(boost);
-                    break;
-                case Stat.Range:
-                    context.RangeMod += boost;
-                    break;
-            }
-            yield break;
-        }
-    }
-    
-    /// <summary>
-    /// Event that modifies the specified stack boost by adding the value in the StackState status state
-    /// </summary>
-    [Serializable]
-    public class TargetStatBoostEvent : BattleEvent
-    {
-
-        /// <summary>
-        /// The stat to modify
-        /// </summary>
-        public Stat Stat;
-
-        public TargetStatBoostEvent() { }
-        public TargetStatBoostEvent(Stat stat)
-        {
-            Stat = stat;
-        }
-        protected TargetStatBoostEvent(TargetStatBoostEvent other)
-        {
-            Stat = other.Stat;
-        }
-        public override GameEvent Clone() { return new TargetStatBoostEvent(this); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            int boost = ((StatusEffect)owner).StatusStates.GetWithDefault<StackState>().Stack;
-            switch (Stat)
-            {
-                case Stat.Attack:
-                    context.AddContextStateInt<TargetAtkBoost>(boost);
-                    break;
-                case Stat.Defense:
-                    context.AddContextStateInt<TargetDefBoost>(boost);
-                    break;
-                case Stat.MAtk:
-                    context.AddContextStateInt<TargetSpAtkBoost>(boost);
-                    break;
-                case Stat.MDef:
-                    context.AddContextStateInt<TargetSpDefBoost>(boost);
-                    break;
-                case Stat.DodgeRate:
-                    context.AddContextStateInt<TargetEvasionBoost>(boost);
-                    break;
-            }
-            yield break;
-        }
-    }
-    
-    /// <summary>
-    /// Event that modifies the specified stack boost
-    /// </summary>
-    [Serializable]
-    public class TargetStatAddEvent : BattleEvent
-    {
-        
-        /// <summary>
-        /// The stat to modify
-        /// </summary>
-        public Stat Stat;
-        
-        /// <summary>
-        /// The value to modify the stat by
-        /// </summary>
-        public int Mod;
-
-        public TargetStatAddEvent() { }
-        public TargetStatAddEvent(Stat stat, int mod)
-        {
-            Stat = stat;
-            Mod = mod;
-        }
-        protected TargetStatAddEvent(TargetStatAddEvent other)
-        {
-            Stat = other.Stat;
-            Mod = other.Mod;
-        }
-        public override GameEvent Clone() { return new TargetStatAddEvent(this); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            switch (Stat)
-            {
-                case Stat.Attack:
-                    context.AddContextStateInt<TargetAtkBoost>(Mod);
-                    break;
-                case Stat.Defense:
-                    context.AddContextStateInt<TargetDefBoost>(Mod);
-                    break;
-                case Stat.MAtk:
-                    context.AddContextStateInt<TargetSpAtkBoost>(Mod);
-                    break;
-                case Stat.MDef:
-                    context.AddContextStateInt<TargetSpDefBoost>(Mod);
-                    break;
-                case Stat.DodgeRate:
-                    context.AddContextStateInt<TargetEvasionBoost>(Mod);
-                    break;
-            }
-            yield break;
-        }
-    }
-    
-
-    
-    /// <summary>
-    /// Event that boosts the critical chance rate
-    /// </summary>
-    [Serializable]
-    public class BoostCriticalEvent : BattleEvent
-    {
-        
-        /// <summary>
-        /// The modified critical chance rate
-        /// 1 - 25%
-        /// 2 - 50%
-        /// 3 - 75%
-        /// 4 - 100%
-        /// </summary>
-        public int AddCrit;
-
-        public BoostCriticalEvent() { }
-        public BoostCriticalEvent(int addCrit)
-        {
-            AddCrit = addCrit;
-        }
-        protected BoostCriticalEvent(BoostCriticalEvent other)
-        {
-            AddCrit = other.AddCrit;
-        }
-        public override GameEvent Clone() { return new BoostCriticalEvent(this); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            context.AddContextStateInt<CritLevel>(AddCrit);
-            yield break;
-        }
-    }
-    
-    /// <summary>
-    /// Event that sets the critical rate chance to 0
-    /// </summary>
-    [Serializable]
-    public class BlockCriticalEvent : BattleEvent
-    {
-        public override GameEvent Clone() { return new BlockCriticalEvent(); }
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            CritLevel critLevel = context.ContextStates.GetWithDefault<CritLevel>();
-            if (critLevel != null)
-                critLevel.Count = 0;
-            yield break;
-        }
-    }
-
-    /// <summary>
-    /// Event that boosts the rate in the AdditionalEffectState skill state
-    /// </summary>
-    [Serializable]
-    public class BoostAdditionalEvent : BattleEvent
-    {
-        public BoostAdditionalEvent() { }
-        public override GameEvent Clone() { return new BoostAdditionalEvent(); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            AdditionalEffectState state = ((BattleData)context.Data).SkillStates.GetWithDefault<AdditionalEffectState>();
-            if (state != null)
-                state.EffectChance *= 2;
-            yield break;
-        }
-    }
-
-    /// <summary>
-    /// Event that sets the rate in the AdditionalEffectState skill state to 0
-    /// </summary>
-    [Serializable]
-    public class BlockAdditionalEvent : BattleEvent
-    {
-        public override GameEvent Clone() { return new BlockAdditionalEvent(); }
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            AdditionalEffectState state = ((BattleData)context.Data).SkillStates.GetWithDefault<AdditionalEffectState>();
-            if (state != null)
-                state.EffectChance = 0;
-            yield break;
-        }
-    }
-
-
-    /// <summary>
-    /// Event that allows the user to move again
-    /// </summary>
-    [Serializable]
-    public class PreserveTurnEvent : BattleEvent
-    {
-        /// <summary>
-        /// The message displayed in the dungeon log  
-        /// </summary>
-        public StringKey Msg;
-        
-        /// <summary>
-        /// The list of battle VFXs played if the condition is met
-        /// </summary>
-        public List<BattleAnimEvent> Anims;
-
-        public PreserveTurnEvent()
-        {
-            Anims = new List<BattleAnimEvent>();
-        }
-        public PreserveTurnEvent(StringKey msg, params BattleAnimEvent[] anims)
-        {
-            Msg = msg;
-            Anims = new List<BattleAnimEvent>();
-            Anims.AddRange(anims);
-        }
-        protected PreserveTurnEvent(PreserveTurnEvent other)
-        {
-            Msg = other.Msg;
-            Anims = new List<BattleAnimEvent>();
-            foreach (BattleAnimEvent anim in other.Anims)
-                Anims.Add((BattleAnimEvent)anim.Clone());
-        }
-
-        public override GameEvent Clone() { return new PreserveTurnEvent(this); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            DungeonScene.Instance.LogMsg(Text.FormatGrammar(Msg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
-
-            foreach (BattleAnimEvent anim in Anims)
-                yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
-
-            context.TurnCancel.Cancel = true;
-
-            yield break;
-        }
-    }
-    
     /// <summary>
     /// Event that bounces status conditions move back to the user
     /// </summary>
@@ -434,86 +101,56 @@ namespace PMDC.Dungeon
     }
 
 
-
     /// <summary>
-    /// Event that sets the AttackEndure context state if the character is at full HP
+    /// Event that allows the user to move again
     /// </summary>
     [Serializable]
-    public class FullEndureEvent : BattleEvent
-    {
-        public override GameEvent Clone() { return new FullEndureEvent(); }
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            if (context.Target.HP == context.Target.MaxHP)
-                context.ContextStates.Set(new AttackEndure());
-            yield break;
-        }
-    }
-    
-    /// <summary>
-    /// Event that sets the AttackEndure context state if the character is hit by the specified skill category
-    /// </summary>
-    [Serializable]
-    public class EndureCategoryEvent : BattleEvent
+    public class PreserveTurnEvent : BattleEvent
     {
         /// <summary>
-        /// The affected skill category
+        /// The message displayed in the dungeon log  
         /// </summary>
-        public BattleData.SkillCategory Category;
-
-        public EndureCategoryEvent() { }
-        public EndureCategoryEvent(BattleData.SkillCategory category)
-        {
-            Category = category;
-        }
-        protected EndureCategoryEvent(EndureCategoryEvent other)
-        {
-            Category = other.Category;
-        }
-        public override GameEvent Clone() { return new EndureCategoryEvent(this); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            if (context.Data.Category == Category || Category == BattleData.SkillCategory.None)
-                context.ContextStates.Set(new AttackEndure());
-            yield break;
-        }
-    }
-
-    /// <summary>
-    /// Event that sets the AttackEndure context state if the character is hit by the specified move type
-    /// </summary>
-    [Serializable]
-    public class EndureElementEvent : BattleEvent
-    {
+        public StringKey Msg;
+        
         /// <summary>
-        /// The affected move type
+        /// The list of battle VFXs played if the condition is met
         /// </summary>
-        [JsonConverter(typeof(ElementConverter))]
-        [DataType(0, DataManager.DataType.Element, false)]
-        public string Element;
+        public List<BattleAnimEvent> Anims;
 
-        public EndureElementEvent() { Element = ""; }
-        public EndureElementEvent(string element)
+        public PreserveTurnEvent()
         {
-            Element = element;
+            Anims = new List<BattleAnimEvent>();
         }
-        protected EndureElementEvent(EndureElementEvent other)
+        public PreserveTurnEvent(StringKey msg, params BattleAnimEvent[] anims)
         {
-            Element = other.Element;
+            Msg = msg;
+            Anims = new List<BattleAnimEvent>();
+            Anims.AddRange(anims);
         }
-        public override GameEvent Clone() { return new EndureElementEvent(this); }
+        protected PreserveTurnEvent(PreserveTurnEvent other)
+        {
+            Msg = other.Msg;
+            Anims = new List<BattleAnimEvent>();
+            foreach (BattleAnimEvent anim in other.Anims)
+                Anims.Add((BattleAnimEvent)anim.Clone());
+        }
+
+        public override GameEvent Clone() { return new PreserveTurnEvent(this); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            if (context.Data.Element == Element)
-                context.ContextStates.Set(new AttackEndure());
+            DungeonScene.Instance.LogMsg(Text.FormatGrammar(Msg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
+
+            foreach (BattleAnimEvent anim in Anims)
+                yield return CoroutineManager.Instance.StartCoroutine(anim.Apply(owner, ownerChar, context));
+
+            context.TurnCancel.Cancel = true;
+
             yield break;
         }
     }
 
-    
-    
+
     
     /// <summary>
     /// Event that sets the user direction to face the enemy
@@ -536,28 +173,6 @@ namespace PMDC.Dungeon
         }
     }
     
-    
-
-    
-    
-    /// <summary>
-    /// Event that sets the AttackedThisTurnState status state to be true, indicating that the character attacked this turn
-    /// This event can only be used on statuses
-    /// </summary>
-    [Serializable]
-    public class AttackedThisTurnEvent : BattleEvent
-    {
-        public override GameEvent Clone() { return new AttackedThisTurnEvent(); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            AttackedThisTurnState recent = ((StatusEffect)owner).StatusStates.GetWithDefault<AttackedThisTurnState>();
-            recent.Attacked = true;
-            yield break;
-        }
-    }
-
-
 
     /// <summary>
     /// Event that adds the specified context state 
@@ -705,239 +320,19 @@ namespace PMDC.Dungeon
     }
 
 
-
-    
     /// <summary>
-    /// Event that sets the specified map status
+    /// Event that sets the character and tile sight to be clear
     /// </summary>
     [Serializable]
-    public class GiveMapStatusEvent : BattleEvent
+    public class LuminousEvent : BattleEvent
     {
-        /// <summary>
-        /// The map status to add
-        /// </summary>
-        [JsonConverter(typeof(MapStatusConverter))]
-        [DataType(0, DataManager.DataType.MapStatus, false)]
-        public string StatusID;
-        
-        /// <summary>
-        /// The amount of turns the map status will last
-        /// </summary>
-        public int Counter;
-        
-        /// <summary>
-        /// The message displayed in the dungeon log when the map status is added
-        /// </summary>
-        [StringKey(0, true)]
-        public StringKey MsgOverride;
-
-        /// <summary>
-        /// If the user contains one of the specified CharStates, then the weather is extended by the multiplier
-        /// </summary>
-        [StringTypeConstraint(1, typeof(CharState))]
-        public List<FlagType> States;
-
-        public GiveMapStatusEvent() { States = new List<FlagType>(); StatusID = ""; }
-        public GiveMapStatusEvent(string id)
-        {
-            States = new List<FlagType>();
-            StatusID = id;
-        }
-        public GiveMapStatusEvent(string id, int counter)
-        {
-            States = new List<FlagType>();
-            StatusID = id;
-            Counter = counter;
-        }
-        public GiveMapStatusEvent(string id, int counter, StringKey msg)
-        {
-            States = new List<FlagType>();
-            StatusID = id;
-            Counter = counter;
-            MsgOverride = msg;
-        }
-        public GiveMapStatusEvent(string id, int counter, StringKey msg, Type state)
-        {
-            States = new List<FlagType>();
-            StatusID = id;
-            Counter = counter;
-            MsgOverride = msg;
-            States.Add(new FlagType(state));
-        }
-        protected GiveMapStatusEvent(GiveMapStatusEvent other)
-            : this()
-        {
-            StatusID = other.StatusID;
-            Counter = other.Counter;
-            MsgOverride = other.MsgOverride;
-            States.AddRange(other.States);
-        }
-        public override GameEvent Clone() { return new GiveMapStatusEvent(this); }
+        public override GameEvent Clone() { return new LuminousEvent(); }
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
         {
-            //add the map status
-            MapStatus status = new MapStatus(StatusID);
-            status.LoadFromData();
-            if (Counter != 0)
-                status.StatusStates.GetWithDefault<MapCountDownState>().Counter = Counter;
-
-            bool hasState = false;
-            foreach (FlagType state in States)
-            {
-                if (context.User.CharStates.Contains(state.FullType))
-                    hasState = true;
-            }
-            if (hasState)
-                status.StatusStates.GetWithDefault<MapCountDownState>().Counter = status.StatusStates.GetWithDefault<MapCountDownState>().Counter * 5;
-
-            if (!MsgOverride.IsValid())
-                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
-            else
-            {
-                //message only if the status isn't already there
-                MapStatus statusToCheck;
-                if (!ZoneManager.Instance.CurrentMap.Status.TryGetValue(status.ID, out statusToCheck))
-                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(MsgOverride.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
-                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status, false));
-            }
-        }
-    }
-
-
-    /// <summary>
-    /// Event that removes all the map statuses 
-    /// </summary>
-    [Serializable]
-    public class RemoveWeatherEvent : BattleEvent
-    {
-        public override GameEvent Clone() { return new RemoveWeatherEvent(); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            //remove all other weather effects
-            List<string> removingIDs = new List<string>();
-            foreach (MapStatus removeStatus in ZoneManager.Instance.CurrentMap.Status.Values)
-            {
-                if (removeStatus.StatusStates.Contains<MapWeatherState>())
-                    removingIDs.Add(removeStatus.ID);
-            }
-            foreach (string removeID in removingIDs)
-                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RemoveMapStatus(removeID));
-        }
-    }
-
-    /// <summary>
-    /// Event that sets the map status depending on the user's type 
-    /// </summary>
-    [Serializable]
-    public class TypeWeatherEvent : BattleEvent
-    {
-        /// <summary>
-        /// The element that maps to a map status. 
-        /// </summary>
-        [JsonConverter(typeof(ElementMapStatusDictConverter))]
-        [DataType(1, DataManager.DataType.Element, false)]
-        [DataType(2, DataManager.DataType.MapStatus, false)]
-        public Dictionary<string, string> WeatherPair;
-
-        public TypeWeatherEvent() { WeatherPair = new Dictionary<string, string>(); }
-        public TypeWeatherEvent(Dictionary<string, string> weather)
-        {
-            WeatherPair = weather;
-        }
-        protected TypeWeatherEvent(TypeWeatherEvent other)
-            : this()
-        {
-            foreach (string element in other.WeatherPair.Keys)
-                WeatherPair.Add(element, other.WeatherPair[element]);
-        }
-        public override GameEvent Clone() { return new TypeWeatherEvent(this); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            string weather;
-            if (WeatherPair.TryGetValue(context.User.Element1, out weather))
-            {
-                //add the map status
-                MapStatus status = new MapStatus(weather);
-                status.LoadFromData();
-                status.StatusStates.GetWithDefault<MapCountDownState>().Counter = -1;
-                ElementData elementData = DataManager.Instance.GetElement(context.User.Element1);
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_ELEMENT_WEATHER").ToLocal(), context.User.GetDisplayName(false), elementData.GetIconName(), ((MapStatusData)status.GetData()).GetColoredName()));
-                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
-            }
-            else if (WeatherPair.TryGetValue(context.User.Element2, out weather))
-            {
-                //add the map status
-                MapStatus status = new MapStatus(weather);
-                status.LoadFromData();
-                status.StatusStates.GetWithDefault<MapCountDownState>().Counter = -1;
-                ElementData elementData = DataManager.Instance.GetElement(context.User.Element2);
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_ELEMENT_WEATHER").ToLocal(), context.User.GetDisplayName(false), elementData.GetIconName(), ((MapStatusData)status.GetData()).GetColoredName()));
-                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
-            }
-            else//clear weather
-            {
-                //add the map status
-                MapStatus status = new MapStatus(DataManager.Instance.DefaultMapStatus);
-                status.LoadFromData();
-                status.StatusStates.GetWithDefault<MapCountDownState>().Counter = -1;
-                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
-            }
-        }
-    }
-    
-    /// <summary>
-    /// Event that bans the last move the character used by setting the move ID in the MapIDState
-    /// </summary>
-    [Serializable]
-    public class BanMoveEvent : BattleEvent
-    {
-        /// <summary>
-        /// The status that will store the move ID in MapIDState
-        /// This should usually be "move_ban" 
-        /// </summary>
-        [JsonConverter(typeof(MapStatusConverter))]
-        [DataType(0, DataManager.DataType.MapStatus, false)]
-        public string BanStatusID;
-        
-        /// <summary>
-        /// The status that contains the last used move in IDState status state
-        /// This should usually be "last_used_move"
-        /// </summary>
-        [JsonConverter(typeof(StatusConverter))]
-        [DataType(0, DataManager.DataType.Status, false)]
-        public string LastMoveStatusID;
-
-        public BanMoveEvent() { BanStatusID = ""; LastMoveStatusID = ""; }
-        public BanMoveEvent(string banStatusID, string prevMoveID)
-        {
-            BanStatusID = banStatusID;
-            LastMoveStatusID = prevMoveID;
-        }
-        protected BanMoveEvent(BanMoveEvent other)
-        {
-            BanStatusID = other.BanStatusID;
-            LastMoveStatusID = other.LastMoveStatusID;
-        }
-        public override GameEvent Clone() { return new BanMoveEvent(this); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            StatusEffect testStatus = context.Target.GetStatusEffect(LastMoveStatusID);
-            if (testStatus != null)
-            {
-                //add disable move based on the last move used
-                string lockedMove = testStatus.StatusStates.GetWithDefault<IDState>().ID;
-                //add the map status
-                MapStatus status = new MapStatus(BanStatusID);
-                status.LoadFromData();
-                status.StatusStates.GetWithDefault<MapIDState>().ID = lockedMove;
-                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.AddMapStatus(status));
-            }
-            else
-                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_BAN_FAIL").ToLocal(), context.Target.GetDisplayName(false)));
+            ZoneManager.Instance.CurrentMap.CharSight = Map.SightRange.Clear;
+            ZoneManager.Instance.CurrentMap.TileSight = Map.SightRange.Clear;
+            yield break;
         }
     }
 
@@ -1065,26 +460,7 @@ namespace PMDC.Dungeon
             yield break;
         }
     }
-    
-    
 
-
-
-    /// <summary>
-    /// Event that sets the character and tile sight to be clear
-    /// </summary>
-    [Serializable]
-    public class LuminousEvent : BattleEvent
-    {
-        public override GameEvent Clone() { return new LuminousEvent(); }
-
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            ZoneManager.Instance.CurrentMap.CharSight = Map.SightRange.Clear;
-            ZoneManager.Instance.CurrentMap.TileSight = Map.SightRange.Clear;
-            yield break;
-        }
-    }
 
 
     

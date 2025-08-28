@@ -1641,25 +1641,5 @@ namespace PMDC.Dungeon
         }
     }
 
-
-    /// <summary>
-    /// Event that sets the rate in the AdditionalEffectState skill state to 0 and boosts the damage multiplier
-    /// </summary>
-    [Serializable]
-    public class SheerForceEvent : BattleEvent
-    {
-        public override GameEvent Clone() { return new BlockAdditionalEvent(); }
-        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
-        {
-            AdditionalEffectState state = ((BattleData)context.Data).SkillStates.GetWithDefault<AdditionalEffectState>();
-            if (state != null)
-            {
-                state.EffectChance = 0;
-                context.AddContextStateMult<DmgMult>(false, 4, 3);
-            }
-            yield break;
-        }
-    }
-
 }
 
