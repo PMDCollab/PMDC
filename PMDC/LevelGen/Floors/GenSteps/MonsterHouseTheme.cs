@@ -310,6 +310,51 @@ namespace PMDC.LevelGen
 
 
 
+
+    /// <summary>
+    /// Directly spawns the items, whether they're in any spawn group or not.
+    /// </summary>
+
+    [Serializable]
+    public class ItemThemeDirect : ItemTheme
+    {
+        public SpawnList<MapItem> DirectList;
+
+        public ItemThemeDirect() { DirectList = new SpawnList<MapItem>(); }
+        public ItemThemeDirect(RandRange amount, SpawnList<MapItem> list) : base(amount)
+        {
+            DirectList = list;
+        }
+        protected ItemThemeDirect(ItemThemeDirect other) : base(other)
+        {
+            DirectList = other.DirectList;
+        }
+        public override ItemTheme Copy() { return new ItemThemeDirect(this); }
+
+        public override List<MapItem> GenerateItems(BaseMapGenContext map, SpawnList<MapItem> specialItems)
+        {
+            int itemCount = Amount.Pick(map.Rand);
+            List<MapItem> spawners = new List<MapItem>();
+
+            SpawnList<MapItem> subList = new SpawnList<MapItem>();
+
+            for (int ii = 0; ii < DirectList.Count; ii++)
+            {
+                MapItem spawn = DirectList.GetSpawn(ii);
+                subList.Add(spawn, specialItems.GetSpawnRate(ii));
+            }
+
+            if (subList.Count == 0)
+                return spawners;
+
+            for (int ii = 0; ii < itemCount; ii++)
+                spawners.Add(subList.Pick(map.Rand));
+
+            return spawners;
+        }
+    }
+
+
     [Serializable]
     public class ItemThemeRange : ItemTheme
     {
