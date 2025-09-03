@@ -4,8 +4,8 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>PMDC</RootNamespace>
     <AssemblyName>PMDC</AssemblyName>
-    <AssemblyVersion>0.8.10</AssemblyVersion>
-    <AssemblyCopyright>Audino 2024</AssemblyCopyright>
+    <AssemblyVersion>0.8.11</AssemblyVersion>
+    <AssemblyCopyright>Audino 2025</AssemblyCopyright>
     <TargetFramework>net8.0</TargetFramework>
     <Deterministic>true</Deterministic>
     <RuntimeIdentifiers>win-x64;osx-x64;linux-x64</RuntimeIdentifiers>
