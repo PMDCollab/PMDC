@@ -38,13 +38,13 @@ jobs:
       - name: Build Mac Server
         run: dotnet publish -c Release -r osx-x64 RogueEssence/WaypointServer/WaypointServer.csproj;mv RogueEssence/publish/osx-x64/WaypointServer.app/ publish/osx-x64/
       - name: Zip Windows x86
-        run: cd publish/win-x86/;zip -r pmdc-windows-x86.zip PMDO/ WaypointServer/
+        run: cd publish/win-x86/;zip -r windows-x86.zip PMDO/ WaypointServer/
       - name: Zip Windows
-        run: cd publish/win-x64/;zip -r pmdc-windows-x64.zip PMDO/ WaypointServer/
+        run: cd publish/win-x64/;zip -r windows-x64.zip PMDO/ WaypointServer/
       - name: Zip Linux
-        run: cd publish/linux-x64/;zip -r pmdc-linux-x64.zip PMDO/ WaypointServer/
+        run: cd publish/linux-x64/;zip -r linux-x64.zip PMDO/ WaypointServer/
       - name: Zip Mac
-        run: cd publish/osx-x64/;zip -r pmdc-osx-x64.zip PMDO/ WaypointServer.app/
+        run: cd publish/osx-x64/;zip -r osx-x64.zip PMDO/ WaypointServer.app/
       - name: Set Version
         run: echo "version=$(sed -En 's,<\AssemblyVersion>(.+)</AssemblyVersion>,\1,p' PMDC/PMDC.csproj)" >> $GITHUB_OUTPUT
         id: version
@@ -64,8 +64,8 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./publish/win-x86/pmdc-windows-x86.zip
-          asset_name: windows-x86.zip
+          asset_path: ./publish/win-x86/windows-x86.zip
+          asset_name: pmdc-pmdc-windows-x86.zip
           asset_content_type: application/zip
       - name: Upload Windows
         uses: actions/upload-release-asset@v1
@@ -73,8 +73,8 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./publish/win-x64/pmdc-windows-x64.zip
-          asset_name: windows-x64.zip
+          asset_path: ./publish/win-x64/windows-x64.zip
+          asset_name: pmdc-windows-x64.zip
           asset_content_type: application/zip
       - name: Upload Linux
         uses: actions/upload-release-asset@v1
@@ -82,8 +82,8 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./publish/linux-x64/pmdc-linux-x64.zip
-          asset_name: linux-x64.zip
+          asset_path: ./publish/linux-x64/linux-x64.zip
+          asset_name: pmdc-linux-x64.zip
           asset_content_type: application/zip
       - name: Upload Mac
         uses: actions/upload-release-asset@v1
@@ -91,6 +91,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./publish/osx-x64/pmdc-osx-x64.zip
-          asset_name: osx-x64.zip
+          asset_path: ./publish/osx-x64/osx-x64.zip
+          asset_name: pmdc-osx-x64.zip
           asset_content_type: application/zip
