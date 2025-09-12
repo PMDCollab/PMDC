@@ -14,7 +14,7 @@ using RogueEssence.Dev;
 
 namespace PMDC.Dev.Views
 {
-    public class TeamMemberSpawnView : UserControl
+    public partial class TeamMemberSpawnView : UserControl
     {
                
         private List<string> _focusOrder = new List<string> { 
@@ -28,13 +28,7 @@ namespace PMDC.Dev.Views
         {
             this.InitializeComponent();
         }
-
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
-
-        }
-        
+    
         protected override void OnInitialized()
         {
             base.OnInitialized();
