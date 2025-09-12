@@ -29,6 +29,9 @@ namespace PMDC.LevelGen
         /// </summary>
         public Priority MobPriority;
 
+        /// <summary>
+        /// The steps used to generate the vault rooms.  These must create the room and paint the tiles.  Rewards and mobs within the rooms are handled by other properties.
+        /// </summary>
         public List<IGenPriority> VaultSteps;
 
         /// <summary>
@@ -61,6 +64,9 @@ namespace PMDC.LevelGen
         [RangeBorder(0, true, true)]
         public RangeDict<IStepSpawner<ListMapGenContext, EffectTile>> TileSpawners;
 
+        /// <summary>
+        /// Spawners for tiles
+        /// </summary>
         [RangeBorder(0, true, true)]
         public RangeDict<RandomRoomSpawnStep<ListMapGenContext, EffectTile>> TilePlacements;
 
@@ -72,8 +78,15 @@ namespace PMDC.LevelGen
         //special enemies will have their level scaled according to the paramrange provided by the floor
         //levels will be a spawnrangelist of ints, autocalculated with increments of 3-4
 
+        /// <summary>
+        /// Amount of mobs to place in total, across all available rooms.
+        /// </summary>
         [RangeBorder(0, true, true)]
         public RangeDict<RandRange> MobAmount;
+
+        /// <summary>
+        /// Spawners for mobs
+        /// </summary>
         [RangeBorder(0, true, true)]
         public RangeDict<PlaceRandomMobsStep<ListMapGenContext>> MobPlacements;
 

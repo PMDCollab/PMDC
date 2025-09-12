@@ -65,7 +65,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./publish/win-x86/windows-x86.zip
-          asset_name: windows-x86.zip
+          asset_name: pmdc-pmdc-windows-x86.zip
           asset_content_type: application/zip
       - name: Upload Windows
         uses: actions/upload-release-asset@v1
@@ -74,7 +74,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./publish/win-x64/windows-x64.zip
-          asset_name: windows-x64.zip
+          asset_name: pmdc-windows-x64.zip
           asset_content_type: application/zip
       - name: Upload Linux
         uses: actions/upload-release-asset@v1
@@ -83,7 +83,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./publish/linux-x64/linux-x64.zip
-          asset_name: linux-x64.zip
+          asset_name: pmdc-linux-x64.zip
           asset_content_type: application/zip
       - name: Upload Mac
         uses: actions/upload-release-asset@v1
@@ -92,5 +92,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./publish/osx-x64/osx-x64.zip
-          asset_name: osx-x64.zip
+          asset_name: pmdc-osx-x64.zip
           asset_content_type: application/zip

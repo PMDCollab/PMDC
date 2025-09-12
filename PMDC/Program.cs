@@ -715,6 +715,7 @@ namespace PMDC
             DataEditor.AddEditor(new MobSpawnLuaTableEditor());
             DataEditor.AddEditor(new MobSpawnDiscriminatorEditor());
             DataEditor.AddEditor(new MobSpawnStatusEditor());
+            DataEditor.AddEditor(new MobSpawnScriptEditor());
 
             DataEditor.AddEditor(new MapTilesEditor());
             DataEditor.AddEditor(new BaseEmitterEditor());
@@ -755,6 +756,7 @@ namespace PMDC
 
             //TODO: there is no parameterless interface for hashset
             //so instead we have to do the painful process of manually adding every hashset of every type we actually use.  ugh
+            DataEditor.AddEditor(new HashSetEditor<BattleActionType>());
             DataEditor.AddEditor(new HashSetEditor<int>());
             DataEditor.AddEditor(new HashSetEditor<string>());
 

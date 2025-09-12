@@ -21,17 +21,33 @@ namespace PMDC.LevelGen
         /// </summary>
         public Priority Priority;
 
-        //they're generated on runtime, so they use map RNG, thus use spawnlists
+        /// <summary>
+        /// The specially designed pool of items to spawn for the monster house. These + the items normally found on the monsterhouse floor are fed into ItemThemes to decide what items to spawn.
+        /// </summary>
         [RangeBorder(0, true, true)]
         public SpawnRangeList<MapItem> Items;
+
+        /// <summary>
+        /// Themeing for items to spawn in th monsterhouse. Can use specific items from Items, or the item pool of the floor itself.
+        /// </summary>
         [RangeBorder(0, true, true)]
         public SpawnRangeList<ItemTheme> ItemThemes;
+
+        /// <summary>
+        /// The specially designed pool of mobs to spawn for the monster house. These + the mobs normally found on the monsterhouse floor are fed into MobThemes to decide what items to spawn.
+        /// </summary>
         [RangeBorder(0, true, true)]
         public SpawnRangeList<MobSpawn> Mobs;
-        //special enemies will have their level scaled according to the paramrange provided by the floor
-        //levels will be a spawnrangelist of ints, autocalculated with increments of 3-4
+
+        /// <summary>
+        /// Themeing for mobs to spawn in th monsterhouse. Can use specific mobs from Mobs, or the spawn pool of the floor itself.
+        /// </summary>
         [RangeBorder(0, true, true)]
         public SpawnRangeList<MobTheme> MobThemes;
+
+        /// <summary>
+        /// The type of monster house to initialize as a base before populating with items and mobs.
+        /// </summary>
         public SpawnList<IMonsterHouseBaseStep> HouseStepSpawns;
 
         //spreads an item through the floors

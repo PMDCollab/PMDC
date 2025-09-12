@@ -1,21 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using RogueEssence.Content;
 using RogueEssence.Dungeon;
-using RogueEssence.Data;
-using System.Drawing;
 using RogueElements;
-using Avalonia.Controls;
-using RogueEssence.Dev.Views;
-using System.Collections;
-using Avalonia;
-using System.Reactive.Subjects;
 using PMDC.LevelGen;
-using PMDC.Dungeon;
-using RogueEssence.LevelGen;
-using System.Runtime.Remoting;
-using Avalonia.X11;
 
 namespace RogueEssence.Dev
 {
@@ -228,21 +215,15 @@ namespace RogueEssence.Dev
             return "Descriminator";
         }
     }
-    public class MobSpawnStatusEditor : Editor<MobSpawnStatus>
+	public class Intrinsic3ChanceEditor : Editor<Intrinsic3Chance>
     {
-        public override string GetString(MobSpawnStatus obj, Type type, object[] attributes)
+        public override string GetString(Intrinsic3Chance obj, Type type, object[] attributes)
         {
-            if (obj.Statuses.Count != 1)
-                return string.Format("Status: [{0}]", obj.Statuses.Count.ToString());
-            else
-            {
-                EntrySummary summary = DataManager.Instance.DataIndices[DataManager.DataType.Status].Get(obj.Statuses.GetSpawn(0).ID);
-                return string.Format("Status: {0}", summary.Name.ToLocal());
-            }
+            return "Roll for Hidden Ability";
         }
         public override string GetTypeString()
         {
-            return "Status";
+            return "Roll for Hidden Ability";
         }
     }
 }

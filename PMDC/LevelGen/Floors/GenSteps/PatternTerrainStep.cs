@@ -7,7 +7,7 @@ using RogueEssence.Dungeon;
 namespace PMDC.LevelGen
 {
     /// <summary>
-    /// Litters placeables on a room in specified patterns.
+    /// Litters terrain on a room in specified patterns.
     /// </summary>
     /// <typeparam name="TGenContext"></typeparam>
     [Serializable]

@@ -908,6 +908,7 @@ namespace PMDC.Dungeon
         [Sound(0)]
         public string TriggerSound;
         public FiniteEmitter TriggerEmitter;
+        public int TriggerDelay;
 
         public GiveStatusEvent() { States = new StateCollection<StatusState>(); StatusID = ""; }
         public GiveStatusEvent(string statusID, StateCollection<StatusState> states) : this(statusID, states, false) { }
@@ -944,6 +945,7 @@ namespace PMDC.Dungeon
             TriggerMsg = other.TriggerMsg;
             TriggerSound = other.TriggerSound;
             TriggerEmitter = (FiniteEmitter)other.TriggerEmitter.Clone();
+            TriggerDelay = other.TriggerDelay;
         }
         public override GameEvent Clone() { return new GiveStatusEvent(this); }
 
@@ -976,6 +978,8 @@ namespace PMDC.Dungeon
                     endEmitter.SetupEmit(context.User.MapLoc, context.User.MapLoc, context.User.CharDir);
                     DungeonScene.Instance.CreateAnim(endEmitter, DrawLayer.NoDraw);
                 }
+                if (TriggerDelay > 0)
+                    yield return new WaitForFrames(GameManager.Instance.ModifyBattleSpeed(TriggerDelay));
 
                 yield return CoroutineManager.Instance.StartCoroutine(context.User.ExecuteAddStatus(statusContext));
             }
@@ -1521,7 +1525,7 @@ namespace PMDC.Dungeon
                         }
                     }
                 }
-                DataManager.Instance.Save.SeenMonster(context.User.BaseForm.Species);
+                DataManager.Instance.Save.SeenMonster(context.User.BaseForm);
             }
         }
 
@@ -2366,6 +2370,110 @@ namespace PMDC.Dungeon
             }
         }
     }
+
+
+    /// <summary>
+    /// Event that warps a character to a random location within the specified distance
+    /// </summary>
+    [Serializable]
+    public class RandomWarpSingleEvent : SingleCharEvent
+    {
+
+        /// <summary>
+        /// The max warp distance 
+        /// </summary>
+        public int Distance;
+
+        /// <summary>
+        /// The message displayed in the dungeon log 
+        /// </summary>
+        [StringKey(0, true)]
+        public StringKey TriggerMsg;
+
+        public RandomWarpSingleEvent() { }
+        public RandomWarpSingleEvent(int distance)
+        {
+            Distance = distance;
+        }
+        public RandomWarpSingleEvent(int distance, StringKey triggerMsg)
+        {
+            Distance = distance;
+            TriggerMsg = triggerMsg;
+        }
+        protected RandomWarpSingleEvent(RandomWarpSingleEvent other)
+        {
+            Distance = other.Distance;
+        }
+        public override GameEvent Clone() { return new RandomWarpSingleEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            Character target = context.User;
+            if (target.Dead)
+                yield break;
+            //warp within the space
+            if (target.CharStates.Contains<AnchorState>())
+            {
+                if (!TriggerMsg.IsValid())
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_ANCHORED").ToLocal(), target.GetDisplayName(false)));
+            }
+            else
+            {
+                if (TriggerMsg.IsValid())
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(TriggerMsg.ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
+
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.RandomWarp(target, Distance));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Event that makes the user hop by the specified distance
+    /// </summary>
+    [Serializable]
+    public class HopSingleEvent : SingleCharEvent
+    {
+        /// <summary>
+        /// The total distance to hop
+        /// </summary>
+        public int Distance;
+
+        /// <summary>
+        /// Whether to hop forwards or backwards
+        /// </summary>
+        public bool Reverse;
+
+        public HopSingleEvent() { }
+        public HopSingleEvent(int distance, bool reverse)
+        {
+            Distance = distance;
+            Reverse = reverse;
+        }
+        protected HopSingleEvent(HopSingleEvent other)
+        {
+            Distance = other.Distance;
+            Reverse = other.Reverse;
+        }
+        public override GameEvent Clone() { return new HopSingleEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            Character target = context.User;
+
+            if (target.Dead)
+                yield break;
+            //jump back a number of spaces
+            if (target.CharStates.Contains<AnchorState>())
+                DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_ANCHORED").ToLocal(), target.GetDisplayName(false)));
+            else
+            {
+                Dir8 hopDir = (Reverse ? target.CharDir.Reverse() : target.CharDir);
+                yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.Instance.JumpTo(target, hopDir, Distance));
+            }
+        }
+    }
+
+
     [Serializable]
     public class EarlyBirdEvent : SingleCharEvent
     {
@@ -2596,10 +2704,107 @@ namespace PMDC.Dungeon
         }
     }
 
+
+    /// <summary>
+    /// Event that activates if the user's HP is below threshold
+    /// </summary>
+    [Serializable]
+    public class PinchNeededSingleEvent : SingleCharEvent
+    {
+        /// <summary>
+        /// The denominator of the HP percentage 
+        /// </summary>
+        public int Denominator;
+
+        /// <summary>
+        /// The list of battle events applied if the condition is met
+        /// </summary>
+        public List<SingleCharEvent> BaseEvents;
+
+        public PinchNeededSingleEvent() { BaseEvents = new List<SingleCharEvent>(); }
+        public PinchNeededSingleEvent(int denominator, params SingleCharEvent[] effects) : this()
+        {
+            Denominator = denominator;
+            foreach (SingleCharEvent effect in effects)
+                BaseEvents.Add(effect);
+        }
+        protected PinchNeededSingleEvent(PinchNeededSingleEvent other) : this()
+        {
+            Denominator = other.Denominator;
+            foreach (SingleCharEvent singleEffect in other.BaseEvents)
+                BaseEvents.Add((SingleCharEvent)singleEffect.Clone());
+        }
+        public override GameEvent Clone() { return new PinchNeededSingleEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            Character target = context.User;
+
+            if (target.HP <= target.MaxHP / Math.Max(1, Denominator))
+            {
+                foreach (SingleCharEvent battleEffect in BaseEvents)
+                    yield return CoroutineManager.Instance.StartCoroutine(battleEffect.Apply(owner, ownerChar, context));
+            }
+        }
+    }
+
+    [Serializable]
+    public class BellyNeededEvent : SingleCharEvent
+    {
+        public SingleCharEvent BaseEvent;
+
+        public int Fullness;
+
+        public BellyNeededEvent() { }
+        public BellyNeededEvent(int fullness, SingleCharEvent baseEffect)
+        {
+            Fullness = fullness;
+            BaseEvent = baseEffect;
+        }
+        protected BellyNeededEvent(BellyNeededEvent other)
+        {
+            Fullness = other.Fullness;
+            BaseEvent = (SingleCharEvent)other.BaseEvent.Clone();
+        }
+        public override GameEvent Clone() { return new MaxHPNeededEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            if (context.User.Fullness >= Fullness)
+                yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, context));
+        }
+    }
+
+    [Serializable]
+    public class ReactToHitEvent : SingleCharEvent
+    {
+        [JsonConverter(typeof(StatusConverter))]
+        [DataType(0, DataManager.DataType.Status, false)]
+        public string HitStatusID;
+        public SingleCharEvent BaseEvent;
+
+        public ReactToHitEvent() { HitStatusID = ""; }
+        public ReactToHitEvent(string id, SingleCharEvent baseEffect) { HitStatusID = id; BaseEvent = baseEffect; }
+        protected ReactToHitEvent(ReactToHitEvent other)
+        {
+            HitStatusID = other.HitStatusID;
+            BaseEvent = (SingleCharEvent)other.BaseEvent.Clone();
+        }
+        public override GameEvent Clone() { return new ReactToHitEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
+        {
+            StatusEffect damagestatus = context.User.GetStatusEffect(HitStatusID);
+            if (damagestatus != null)
+                yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, context));
+        }
+    }
+
     [Serializable]
     public class WeatherNeededSingleEvent : SingleCharEvent
     {
         [JsonConverter(typeof(MapStatusConverter))]
+        [DataType(0, DataManager.DataType.MapStatus, false)]
         public string WeatherID;
         public SingleCharEvent BaseEvent;
 
@@ -2680,7 +2885,7 @@ namespace PMDC.Dungeon
                 {
                     if (!target.Dead && DungeonScene.Instance.GetMatchup(context.User, target) == Alignment.Friend)
                     {
-                        if (target.HP < target.MaxHP)
+                        if (target.HP < target.MaxHP && target.Fullness > 0)
                             yield return CoroutineManager.Instance.StartCoroutine(target.RestoreHP(Math.Max(1, target.MaxHP / HealHPFraction), false));
                     }
                 }
@@ -4190,7 +4395,7 @@ namespace PMDC.Dungeon
             character.FullRestore();
             character.Fullness = oldFullness;
 
-            DataManager.Instance.Save.RegisterMonster(character.BaseForm.Species);
+            DataManager.Instance.Save.RegisterMonster(character.BaseForm);
             DataManager.Instance.Save.RogueUnlockMonster(character.BaseForm.Species);
             yield break;
         }
@@ -4384,7 +4589,7 @@ namespace PMDC.Dungeon
 
             yield return CoroutineManager.Instance.StartCoroutine(GameManager.Instance.LogSkippableMsg(Text.FormatGrammar(new StringKey("DLG_EVO_COMPLETE").ToLocal(), oldName, entry.GetColoredName())));
 
-            DataManager.Instance.Save.RegisterMonster(character.BaseForm.Species);
+            DataManager.Instance.Save.RegisterMonster(character.BaseForm);
             DataManager.Instance.Save.RogueUnlockMonster(character.BaseForm.Species);
             yield return CoroutineManager.Instance.StartCoroutine(character.OnMapStart());
 
@@ -4806,8 +5011,14 @@ namespace PMDC.Dungeon
             character.CharDir = baseLoc.Dir;
             if (total_alive < StartLocs.Length)
             {
-                character.CharLoc = baseLoc.Loc + StartLocs[total_alive].Loc;
-                character.CharDir = StartLocs[total_alive].Dir;
+                Loc endLoc = baseLoc.Loc + StartLocs[total_alive].Loc;
+                if (ZoneManager.Instance.CurrentMap.GetLocInMapBounds(ref endLoc))
+                {
+                    character.CharLoc = endLoc;
+                    character.CharDir = StartLocs[total_alive].Dir;
+                }
+                else
+                    throw new InvalidOperationException(String.Format("Attempted to move character to {0} out of bounds!", endLoc));
             }
             else //default to close to leader
             {
@@ -6634,10 +6845,11 @@ namespace PMDC.Dungeon
                     SkinTableState table = DataManager.Instance.UniversalEvent.UniversalStates.GetWithDefault<SkinTableState>();
                     copyMob.BaseForm.Skin = table.AltColor;
                 }
-                if (DataManager.Instance.Save.Rand.Next(100) < ItemPercent)
+                if (map.ItemSpawns.CanPick && DataManager.Instance.Save.Rand.Next(100) < ItemPercent)
                 {
+                    InvItem invItem = map.ItemSpawns.Pick(DataManager.Instance.Save.Rand);
                     MobSpawnItem item = new MobSpawnItem(false);
-                    item.Items.Add(map.ItemSpawns.Pick(DataManager.Instance.Save.Rand), 10);
+                    item.Items.Add(invItem, 10);
                     copyMob.SpawnFeatures.Add(item);
                 }
                 houseMobs.Add(copyMob);
@@ -7023,7 +7235,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
             TurnOrder currentTurn = ZoneManager.Instance.CurrentMap.CurrentTurnMap.CurrentOrder;
-            if (currentTurn.Faction == Faction.Player && currentTurn.TurnIndex == 0 && currentTurn.TurnTier == 0)//only check on a fresh turn
+            if (currentTurn.Faction == Faction.Player && currentTurn.TurnIndex == 0 && currentTurn.TurnTier == TurnOrder.TURN_TIER_0)//only check on a fresh turn
             {
                 foreach (Character player in ZoneManager.Instance.CurrentMap.ActiveTeam.Players)
                 {
@@ -7063,7 +7275,7 @@ namespace PMDC.Dungeon
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, SingleCharContext context)
         {
             TurnOrder currentTurn = ZoneManager.Instance.CurrentMap.CurrentTurnMap.CurrentOrder;
-            if (currentTurn.Faction == Faction.Player && currentTurn.TurnIndex == 0 && currentTurn.TurnTier == 0)//only check on a fresh turn
+            if (currentTurn.Faction == Faction.Player && currentTurn.TurnIndex == 0 && currentTurn.TurnTier == TurnOrder.TURN_TIER_0)//only check on a fresh turn
             {
                 if (DataManager.Instance.Save.TotalTurns >= TurnTotal)
                 {

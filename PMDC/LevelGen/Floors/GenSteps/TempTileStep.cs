@@ -12,9 +12,7 @@ using RogueEssence.Data;
 namespace PMDC.LevelGen
 {
     /// <summary>
-    /// One part of several steps used to create a switch-opened sealed room, or several thereof.
-    /// This step takes the target rooms and surrounds them with unbreakable walls, with one key block used to unlock them.
-    /// The filter must be able to single out the key rooms intended for this process.
+    /// Places a temporary tile on the map by specifying a tile type and the map status used to count down and remove it.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     [Serializable]

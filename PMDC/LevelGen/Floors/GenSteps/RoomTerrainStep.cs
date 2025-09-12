@@ -13,6 +13,9 @@ namespace PMDC.LevelGen
     [Serializable]
     public class RoomTerrainStep<T> : GenStep<T> where T : class, IFloorPlanGenContext
     {
+        /// <summary>
+        /// Number of rooms to paint.
+        /// </summary>
         public RandRange Amount;
 
         public List<BaseRoomFilter> Filters { get; set; }

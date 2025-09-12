@@ -2101,16 +2101,18 @@ namespace PMDC.Dungeon
 
         public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, StatusCheckContext context)
         {
-            if (owner != context.Status)//can't check on self
+            if (context.User == context.Target) // can't check self-inflicted effect
+                yield break;
+            if (owner == context.Status)//can't check its own status addition
+                yield break;
+
+            if (context.Status.StatusStates.Contains<StatChangeState>())//if it is a stat change
             {
-                if (context.Status.StatusStates.Contains<StatChangeState>())
+                if (context.StackDiff < 0)
                 {
-                    if (context.StackDiff < 0)
-                    {
-                        SingleCharContext singleContext = new SingleCharContext(context.Target);
-                        DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_STAT_DROP_TRIGGER").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
-                        yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, singleContext));
-                    }
+                    SingleCharContext singleContext = new SingleCharContext(context.Target);
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(new StringKey("MSG_STAT_DROP_TRIGGER").ToLocal(), ownerChar.GetDisplayName(false), owner.GetDisplayName()));
+                    yield return CoroutineManager.Instance.StartCoroutine(BaseEvent.Apply(owner, ownerChar, singleContext));
                 }
             }
         }

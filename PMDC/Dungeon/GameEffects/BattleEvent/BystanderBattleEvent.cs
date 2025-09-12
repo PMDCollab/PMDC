@@ -10,6 +10,8 @@ using Newtonsoft.Json;
 
 namespace PMDC.Dungeon
 {
+    //For battle events that occur for characters that aren't the target of the attack
+
     [Serializable]
     public class SupportAbilityEvent : BattleEvent
     {
