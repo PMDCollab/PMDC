@@ -54,17 +54,17 @@ namespace MapGenTest
                 {
                     Console.Clear();
                     Console.WriteLine(state);
-                    Console.WriteLine("Choose a zone|ESC=Exit|F2=Stress Test");
+                    Console.WriteLine("Choose a zone|Left/Right Arrow to Browse|ESC=Exit|F2=Stress Test");
 
                     int longestWidth = 0;
-                    for (int ii = offset; ii < zoneNames.Count; ii++)
+                    for (int ii = 0; ii < zoneNames.Count; ii++)
                     {
                         string label = GetSelectionString(ii, zoneNames[ii]);
                         if (label.Length > longestWidth)
                             longestWidth = label.Length;
                     }
-                    int cols = Math.Min(3, MathUtils.DivUp(Console.WindowWidth, longestWidth));
-                    int rows = Math.Max(Math.Min(12, zoneNames.Count - offset), MathUtils.DivUp(zoneNames.Count - offset, cols));
+                    int cols = 3;
+                    int rows = 10;
 
                     for (int ii = 0; ii < rows; ii++)
                     {
@@ -73,7 +73,7 @@ namespace MapGenTest
                         for (int jj = 0; jj < cols; jj++)
                         {
                             int index = ii + rows * jj;
-                            if (index + offset < zoneNames.Count)
+                            if (index + offset < zoneNames.Count && index < 26)
                             {
                                 choiceStr += "{" + jj + "," + "-" + longestWidth + "}  ";
                                 choiceList.Add(GetSelectionString(index, zoneNames[index + offset]));
@@ -108,15 +108,12 @@ namespace MapGenTest
                                     break;
                             }
                         }
-
-                        if (key.KeyChar >= '0' && key.KeyChar <= '9')
-                            zoneIndex = zoneNames[key.KeyChar - '0' + offset];
                         if (key.KeyChar >= 'a' && key.KeyChar <= 'z')
-                            zoneIndex = zoneNames[key.KeyChar - 'a' + 10 + offset];
-                        if (key.Key == ConsoleKey.UpArrow)
-                            offset -= 10;
-                        if (key.Key == ConsoleKey.DownArrow)
-                            offset += 10;
+                            zoneIndex = zoneNames[key.KeyChar - 'a' + offset];
+                        if (key.Key == ConsoleKey.LeftArrow && offset > 0)
+                            offset -= 26;
+                        if (key.Key == ConsoleKey.RightArrow && offset + 26 < zoneNames.Count)
+                            offset += 26;
                     }
                     if (!String.IsNullOrEmpty(zoneIndex))
                     {
@@ -140,7 +137,7 @@ namespace MapGenTest
 
         public static string GetSelectionString(int index, string str)
         {
-            char select = (char)(index > 9 ? 'A' + index - 10 : '0' + index);
+            char select = (char)('A' + index);
             return select.ToString() + ") " + str;
         }
 
