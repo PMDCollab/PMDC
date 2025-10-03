@@ -208,10 +208,8 @@ namespace MapGenTest
                             }
                         }
 
-                        if (key.KeyChar >= '0' && key.KeyChar <= '9')
-                            structureIndex = key.KeyChar - '0';
                         if (key.KeyChar >= 'a' && key.KeyChar <= 'z')
-                            structureIndex = key.KeyChar - 'a' + 10;
+                            structureIndex = key.KeyChar - 'a';
                     }
                     if (structureIndex > -1 && structureIndex < zone.Segments.Count)
                     {
