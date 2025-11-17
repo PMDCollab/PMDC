@@ -84,7 +84,7 @@
                 <StackPanel Grid.Column="0">
                     <Border>
                         <StackPanel>
-                            <TextBlock Text="Pokémon" FontWeight="Bold"></TextBlock>
+                            <TextBlock Text="Pokémon"></TextBlock>
                             <TextBox
                                      GotFocus="SpeciesTextBox_OnGotFocus"
                                      LostFocus="SpeciesTextBox_OnLostFocus"
@@ -97,9 +97,9 @@
                                 </TextBox.KeyBindings>
                             </TextBox>
                             <TextBlock Text="Gender"></TextBlock>
-                            <rviews:SearchComboBox Items="{Binding Genders}" SelectedIndex="{Binding ChosenGender}" VerticalAlignment="Center" Margin="0,0" />
+                            <rviews:SearchComboBox ItemsSource="{Binding Genders}" SelectedIndex="{Binding ChosenGender}" VerticalAlignment="Center" Margin="0,0" />
                             <TextBlock Text="Skin"></TextBlock>
-                            <rviews:SearchComboBox Items="{Binding Skins}" SelectedIndex="{Binding ChosenSkin}" VerticalAlignment="Center" Margin="0,0" />
+                            <rviews:SearchComboBox ItemsSource="{Binding Skins}" SelectedIndex="{Binding ChosenSkin}" VerticalAlignment="Center" Margin="0,0" />
                             <CheckBox IsChecked="{Binding IsWeakMob}">Weak</CheckBox>
                             <CheckBox IsChecked="{Binding Unrecruitable}">Unrecruitable</CheckBox>
                         </StackPanel>
@@ -198,9 +198,9 @@
                                 />
                             </Grid>
                             <TextBlock Text="Tactic"></TextBlock>
-                            <rviews:SearchComboBox Items="{Binding Tactics}" SelectedIndex="{Binding ChosenTactic}" VerticalAlignment="Center" Margin="0,0"/>
+                            <rviews:SearchComboBox ItemsSource="{Binding Tactics}" SelectedIndex="{Binding ChosenTactic}" VerticalAlignment="Center" Margin="0,0"/>
                             <TextBlock Text="Role"></TextBlock>
-                            <rviews:SearchComboBox Items="{Binding Roles}" SelectedIndex="{Binding ChosenRole}" VerticalAlignment="Center" Margin="0,0"/>
+                            <rviews:SearchComboBox ItemsSource="{Binding Roles}" SelectedIndex="{Binding ChosenRole}" VerticalAlignment="Center" Margin="0,0"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -228,7 +228,7 @@
                     <TextBlock Classes="header" >Pokémon</TextBlock>
                 </Border>
                 <DataGrid Grid.Row="2" Name="BaseMonsterDataGrid"
-                  Items="{Binding FilteredMonsterForms}"
+                  ItemsSource="{Binding FilteredMonsterForms}"
                   HorizontalScrollBarVisibility="Disabled"
                   Margin="0" 
                   RowHeight="50"
@@ -309,7 +309,7 @@
                     <TextBlock Classes="header">Moves</TextBlock>
                 </Border>
                 <DataGrid Grid.Row="2" Name="SkillsDataGrid"
-                  Items="{Binding FilteredSkillData}"
+                  ItemsSource="{Binding FilteredSkillData}"
                   CanUserResizeColumns="False"
                   HorizontalScrollBarVisibility="Disabled"
                   Margin="0" 
@@ -363,7 +363,7 @@
                     <TextBlock Classes="header">Abilities</TextBlock>
                 </Border>
                 <DataGrid Grid.Row="2" Name="IntrinsicDataGrid"
-                  Items="{Binding FilteredIntrinsicData}"
+                  ItemsSource="{Binding FilteredIntrinsicData}"
                   HorizontalScrollBarVisibility="Disabled"
                   Margin="0" 
                   RowHeight="50"
