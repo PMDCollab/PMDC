@@ -1436,7 +1436,7 @@ namespace PMDC.Dungeon
         {
             //TODO: this breaks in small wrapped maps
             int diff = ZoneManager.Instance.CurrentMap.GetClosestDist8(context.StrikeStartTile, context.Target.CharLoc);
-            for (int ii = 0; ii < diff; ii++)
+            for (int ii = 1; ii < diff; ii++)
                 context.AddContextStateMult<DmgMult>(false, 2, 1);
             yield break;
         }
