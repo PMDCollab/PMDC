@@ -633,6 +633,15 @@ namespace PMDC.Dungeon
         }
     }
     [Serializable]
+    public class ForceAIEvent : RefreshEvent
+    {
+        public override GameEvent Clone() { return new ForceAIEvent(); }
+        public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            character.ForceAI = true;
+        }
+    }
+    [Serializable]
     public class MovementScrambleEvent : RefreshEvent
     {
         public override GameEvent Clone() { return new MovementScrambleEvent(); }
