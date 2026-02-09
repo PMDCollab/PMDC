@@ -21,7 +21,7 @@ namespace PMDC.LevelGen
 
         }
 
-        protected override void DrawOnLocs(TGenContext map, List<Loc> drawLocs)
+        protected override void DrawOnLocs(TGenContext map, IRoomGen room, List<Loc> drawLocs)
         {
             if (!map.Spawner.CanPick)
                 return;

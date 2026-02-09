@@ -410,15 +410,35 @@ namespace PMDC.Dungeon
     }
 
     /// <summary>
-    /// Event that reduces the target's HP by half
+    /// Event that reduces the target's HP to a fraction of its original amount
     /// </summary>
     [Serializable]
     public class CutHPDamageEvent : FixedDamageEvent
     {
-        public override GameEvent Clone() { return new CutHPDamageEvent(); }
+        public int HPFraction;
+        public CutHPDamageEvent() { }
+        public CutHPDamageEvent(int hpFraction)
+        {
+            HPFraction = hpFraction;
+        }
+        protected CutHPDamageEvent(CutHPDamageEvent other)
+        {
+            HPFraction = other.HPFraction;
+        }
+        public override GameEvent Clone() { return new CutHPDamageEvent(this); }
         protected override int CalculateFixedDamage(GameEventOwner owner, BattleContext context)
         {
-            return Math.Max(1, context.GetContextStateMult<HPDmgMult>().Multiply(context.Target.HP / 2));
+            return Math.Max(1, context.GetContextStateMult<HPDmgMult>().Multiply(context.Target.HP * (HPFraction - 1) / HPFraction));
+        }
+
+        [OnDeserialized]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            //TODO: remove on v1.1
+            if (Serializer.OldVersion < new Version(0, 8, 12) && HPFraction == 0)
+            {
+                HPFraction = 2;
+            }
         }
     }
 

@@ -115,14 +115,15 @@ namespace PMDC.LevelGen
                     //draw the pattern here
                     List<Loc> drawLocs = new List<Loc>();
 
+                    Loc offset = room.Draw.Center - size / 2;
+                    Rect centerRect = new Rect(offset, size);
+
                     //add the locs to the draw list based solely on terrain passable/impassable
                     switch (chosenPattern.Pattern)
                     {
                         case PatternPlan.PatternExtend.Single:
                             {
                                 //center the placeMap on the room, and add the locs that intersect
-                                Loc offset = room.Draw.Center - size / 2;
-                                Rect centerRect = new Rect(offset, size);
                                 for (int xx = room.Draw.X; xx < room.Draw.End.X; xx++)
                                 {
                                     for (int yy = room.Draw.Y; yy < room.Draw.End.Y; yy++)
@@ -142,8 +143,6 @@ namespace PMDC.LevelGen
                             {
                                 //center the placeMap on the room, and add the locs that intersect
                                 //if there is more room, extend the tiles outward
-                                Loc offset = room.Draw.Center - size / 2;
-                                Rect centerRect = new Rect(offset, size);
                                 for (int xx = room.Draw.X; xx < room.Draw.End.X; xx++)
                                 {
                                     for (int yy = room.Draw.Y; yy < room.Draw.End.Y; yy++)
@@ -188,8 +187,6 @@ namespace PMDC.LevelGen
                             {
                                 //tile the pattern horizontally, with centering
                                 //or vertically, if transposed
-                                Loc offset = room.Draw.Center - size / 2;
-                                Rect centerRect = new Rect(offset, size);
                                 for (int xx = room.Draw.X; xx < room.Draw.End.X; xx++)
                                 {
                                     for (int yy = room.Draw.Y; yy < room.Draw.End.Y; yy++)
@@ -214,8 +211,6 @@ namespace PMDC.LevelGen
                         case PatternPlan.PatternExtend.Repeat2D:
                             {
                                 //tile the pattern on the entire room
-                                Loc offset = room.Draw.Center - size / 2;
-                                Rect centerRect = new Rect(offset, size);
                                 for (int xx = room.Draw.X; xx < room.Draw.End.X; xx++)
                                 {
                                     for (int yy = room.Draw.Y; yy < room.Draw.End.Y; yy++)
@@ -231,7 +226,7 @@ namespace PMDC.LevelGen
                     }
 
                     //then send it to the draw call
-                    DrawOnLocs(map, drawLocs);
+                    DrawOnLocs(map, room, drawLocs);
 
                     GenContextDebug.DebugProgress("Draw Pattern");
 
@@ -240,7 +235,7 @@ namespace PMDC.LevelGen
             }
         }
 
-        protected abstract void DrawOnLocs(T map, List<Loc> drawLocs);
+        protected abstract void DrawOnLocs(T map, IRoomGen room, List<Loc> drawLocs);
     }
 
     [Serializable]
