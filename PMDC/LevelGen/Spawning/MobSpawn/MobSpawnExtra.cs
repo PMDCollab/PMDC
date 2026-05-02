@@ -687,11 +687,11 @@ namespace PMDC.LevelGen
 
                 List<string> final_skills = form.RollLatestSkills(newChar.Level, new List<string>());
                 for (int ii = 0; ii < Character.MAX_SKILL_SLOTS; ii++)
+                    newChar.DeleteSkill(0, false);
+                for (int ii = 0; ii < Character.MAX_SKILL_SLOTS; ii++)
                 {
                     if (ii < final_skills.Count)
-                        newChar.BaseSkills[ii] = new SlotSkill(final_skills[ii]);
-                    else
-                        newChar.BaseSkills[ii] = new SlotSkill();
+                        newChar.ReplaceSkill(final_skills[ii], ii, true, false);
                 }
             }
         }
