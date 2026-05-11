@@ -15,6 +15,7 @@ using System.Linq;
 using Newtonsoft.Json;
 using System.Runtime.Serialization;
 using PMDC.LevelGen;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace PMDC.Dungeon
 {
@@ -5900,7 +5901,17 @@ namespace PMDC.Dungeon
             }
             yield return new WaitForFrames(8);
             GameManager.Instance.BattleSE("EVT_Fade_White");
-  
+            {
+                SingleEmitter emitter = new SingleEmitter(new AnimData("Chest_Light", 4));
+                emitter.SetupEmit(baseLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2) + new Loc(-100, 72), baseLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2) + new Loc(-80, 52), Dir8.Left);
+                DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
+            }
+            {
+                SingleEmitter emitter = new SingleEmitter(new AnimData("Chest_Light", 4));
+                emitter.SetupEmit(baseLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2) + new Loc(100, 72), baseLoc * GraphicsManager.TileSize + new Loc(GraphicsManager.TileSize / 2) + new Loc(80, 52), Dir8.Right);
+                DungeonScene.Instance.CreateAnim(emitter, DrawLayer.NoDraw);
+            }
+
             yield return new WaitForFrames(16);
 
             //fade to white

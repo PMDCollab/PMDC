@@ -29,7 +29,7 @@ namespace PMDC.LevelGen
             Terrain = terrain;
         }
 
-        protected override void DrawOnLocs(TGenContext map, List<Loc> drawLocs)
+        protected override void DrawOnLocs(TGenContext map, IRoomGen room, List<Loc> drawLocs)
         {
             ITile tile = Terrain;
             foreach (Loc destLoc in drawLocs)
