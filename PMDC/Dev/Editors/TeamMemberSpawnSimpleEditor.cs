@@ -10,6 +10,7 @@ namespace PMDC.Dev
 {
     public class TeamMemberSpawnSimpleEditor : Editor<TeamMemberSpawn>
     {
+        public TeamMemberSpawnSimpleEditor(EditorContext context) : base(context) { }
         public override bool SimpleEditor => true;
         public override string GetString(TeamMemberSpawn obj, Type type, object[] attributes)
         {

@@ -17,6 +17,7 @@ namespace RogueEssence.Dev
 {
     public class FloorNameDropZoneStepEditor : Editor<FloorNameDropZoneStep>
     {
+        public FloorNameDropZoneStepEditor(EditorContext context) : base(context) { }
         public override string GetString(FloorNameDropZoneStep obj, Type type, object[] attributes)
         {
             return String.Format("{0}: '{1}'", "Show Floor Name", obj.Name);

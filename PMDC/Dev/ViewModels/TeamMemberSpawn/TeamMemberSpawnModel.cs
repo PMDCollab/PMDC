@@ -765,16 +765,17 @@ namespace PMDC.Dev.ViewModels
             InitializeSkins();
             InitializeTactics();
             InitializeRoles();
-            DevForm devForm = (DevForm)DiagManager.Instance.DevEditor;
-            SpawnConditions = new CollectionBoxViewModel(devForm, new StringConv(typeof(MobSpawnCheck), new object[0]));
-            SpawnConditions.OnMemberChanged += SpawnConditionsChanged;
-            SpawnConditions.OnEditItem += SpawnConditionsEditItem;
-            SpawnConditions.LoadFromList(TeamSpawn.Spawn.SpawnConditions);
-            
-            SpawnFeatures = new CollectionBoxViewModel(devForm, new StringConv(typeof(MobSpawnExtra), new object[0]));
-            SpawnFeatures.OnMemberChanged += SpawnFeaturesChanged;
-            SpawnFeatures.OnEditItem += SpawnFeaturesEditItem;
-            SpawnFeatures.LoadFromList(TeamSpawn.Spawn.SpawnFeatures);
+            // TODO NEW EDITOR: RESOLVE THIS
+            // DevForm devForm = (DevForm)DiagManager.Instance.DevEditor;
+            // SpawnConditions = new CollectionBoxViewModel(devForm, new StringConv(typeof(MobSpawnCheck), new object[0]));
+            // SpawnConditions.OnMemberChanged += SpawnConditionsChanged;
+            // SpawnConditions.OnEditItem += SpawnConditionsEditItem;
+            // SpawnConditions.LoadFromList(TeamSpawn.Spawn.SpawnConditions);
+            //
+            // SpawnFeatures = new CollectionBoxViewModel(devForm, new StringConv(typeof(MobSpawnExtra), new object[0]));
+            // SpawnFeatures.OnMemberChanged += SpawnFeaturesChanged;
+            // SpawnFeatures.OnEditItem += SpawnFeaturesEditItem;
+            // SpawnFeatures.LoadFromList(TeamSpawn.Spawn.SpawnFeatures);
         }
 
 
