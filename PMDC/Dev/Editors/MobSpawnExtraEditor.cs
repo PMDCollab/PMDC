@@ -8,6 +8,7 @@ namespace RogueEssence.Dev
 {
     public class MobSpawnWeakEditor : Editor<MobSpawnWeak>
     {
+        public MobSpawnWeakEditor(EditorContext context) : base(context) { }
         public override string GetString(MobSpawnWeak obj, Type type, object[] attributes)
         {
             return "Half PP and 35% belly";
@@ -19,6 +20,7 @@ namespace RogueEssence.Dev
     }
     public class MobSpawnAltColorEditor : Editor<MobSpawnAltColor>
     {
+        public MobSpawnAltColorEditor(EditorContext context) : base(context) { }
         public override string GetString(MobSpawnAltColor obj, Type type, object[] attributes)
         {
             return String.Format("Shiny Chance: {0} in {1}", obj.Chance.Numerator, obj.Chance.Denominator);
@@ -30,6 +32,7 @@ namespace RogueEssence.Dev
     }
     public class MobSpawnMovesOffEditor : Editor<MobSpawnMovesOff>
     {
+        public MobSpawnMovesOffEditor(EditorContext context) : base(context) { }
         public override string GetString(MobSpawnMovesOff obj, Type type, object[] attributes)
         {
             return String.Format("Moves disabled after slot {0}", obj.StartAt);
@@ -41,6 +44,7 @@ namespace RogueEssence.Dev
     }
     public class MobSpawnBoostEditor : Editor<MobSpawnBoost>
     {
+        public MobSpawnBoostEditor(EditorContext context) : base(context) { }
         public override string GetString(MobSpawnBoost obj, Type type, object[] attributes)
         {
             List<Tuple<String, int>> stats = new List<Tuple<String, int>>
@@ -69,6 +73,7 @@ namespace RogueEssence.Dev
     }
     public class MobSpawnScaledBoostEditor : Editor<MobSpawnScaledBoost>
     {
+        public MobSpawnScaledBoostEditor(EditorContext context) : base(context) { }
         public override string GetString(MobSpawnScaledBoost obj, Type type, object[] attributes)
         {
             
@@ -99,6 +104,7 @@ namespace RogueEssence.Dev
     }
     public class MobSpawnItemEditor : Editor<MobSpawnItem>
     {
+        public MobSpawnItemEditor(EditorContext context) : base(context) { }
         public override string GetString(MobSpawnItem obj, Type type, object[] attributes)
         {
             String Item = "";
@@ -119,6 +125,7 @@ namespace RogueEssence.Dev
     }
     public class MobSpawnInvEditor : Editor<MobSpawnInv>
     {
+        public MobSpawnInvEditor(EditorContext context) : base(context) { }
         public override string GetString(MobSpawnInv obj, Type type, object[] attributes)
         {
             List<String> inventory = new List<String>();
@@ -135,6 +142,7 @@ namespace RogueEssence.Dev
     }
     public class MobSpawnLevelScaleEditor : Editor<MobSpawnLevelScale>
     {
+        public MobSpawnLevelScaleEditor(EditorContext context) : base(context) { }
         public override string GetString(MobSpawnLevelScale obj, Type type, object[] attributes)
         {
             return String.Format("Scale level to floor starting at floor {0}", obj.StartFromID + 1);
@@ -146,6 +154,7 @@ namespace RogueEssence.Dev
     }
     public class MobSpawnLocEditor : Editor<MobSpawnLoc>
     {
+        public MobSpawnLocEditor(EditorContext context) : base(context) { }
         public override string GetString(MobSpawnLoc obj, Type type, object[] attributes)
         {
             return String.Format("Spawn at X:{0}, Y:{1}, facing {2}", obj.Loc.X, obj.Loc.Y, obj.Dir);
@@ -157,6 +166,7 @@ namespace RogueEssence.Dev
     }
     public class MobSpawnUnrecruitableEditor : Editor<MobSpawnUnrecruitable>
     {
+        public MobSpawnUnrecruitableEditor(EditorContext context) : base(context) { }
         public override string GetString(MobSpawnUnrecruitable obj, Type type, object[] attributes)
         {
             return "Unrecruitable";
@@ -168,6 +178,7 @@ namespace RogueEssence.Dev
     }
     public class MobSpawnFoeConflictEditor : Editor<MobSpawnFoeConflict>
     {
+        public MobSpawnFoeConflictEditor(EditorContext context) : base(context) { }
         public override string GetString(MobSpawnFoeConflict obj, Type type, object[] attributes)
         {
             return "Attacks Enemies";
@@ -179,6 +190,7 @@ namespace RogueEssence.Dev
     }
     public class MobSpawnInteractableEditor : Editor<MobSpawnInteractable>
     {
+        public MobSpawnInteractableEditor(EditorContext context) : base(context) { }
         public override string GetString(MobSpawnInteractable obj, Type type, object[] attributes)
         {
             List<String> interactionEventNames = new List<String>();
@@ -195,6 +207,7 @@ namespace RogueEssence.Dev
     }
     public class MobSpawnLuaTableEditor : Editor<MobSpawnLuaTable>
     {
+        public MobSpawnLuaTableEditor(EditorContext context) : base(context) { }
         public override string GetString(MobSpawnLuaTable obj, Type type, object[] attributes)
         {
             return "Custom Lua Script";
@@ -206,6 +219,7 @@ namespace RogueEssence.Dev
     }
     public class MobSpawnDiscriminatorEditor : Editor<MobSpawnDiscriminator>
     {
+        public MobSpawnDiscriminatorEditor(EditorContext context) : base(context) { }
         public override string GetString(MobSpawnDiscriminator obj, Type type, object[] attributes)
         {
             return String.Format("Descriminator ID: {0}", obj.Discriminator);
@@ -217,6 +231,7 @@ namespace RogueEssence.Dev
     }
 	public class Intrinsic3ChanceEditor : Editor<Intrinsic3Chance>
     {
+        public Intrinsic3ChanceEditor(EditorContext context) : base(context) { }
         public override string GetString(Intrinsic3Chance obj, Type type, object[] attributes)
         {
             return "Roll for Hidden Ability";

@@ -3,6 +3,8 @@ using PMDC.Data;
 using RogueEssence.Data;
 using RogueEssence.Dev.ViewModels;
 
+using RogueEssence.Dev;
+
 namespace PMDC.Dev.ViewModels
 {
     public class BaseMonsterFormViewModel : ViewModelBase

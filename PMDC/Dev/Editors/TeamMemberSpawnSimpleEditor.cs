@@ -10,6 +10,7 @@ namespace PMDC.Dev
 {
     public class TeamMemberSpawnSimpleEditor : Editor<TeamMemberSpawn>
     {
+        public TeamMemberSpawnSimpleEditor(EditorContext context) : base(context) { }
         public override bool SimpleEditor => true;
         public override string GetString(TeamMemberSpawn obj, Type type, object[] attributes)
         {
@@ -23,11 +24,11 @@ namespace PMDC.Dev
             TeamMemberSpawnView view = new TeamMemberSpawnView();
             if (obj.Spawn != null)
             {
-                view.DataContext = new TeamMemberSpawnModel(new TeamMemberSpawn(obj));
+                view.DataContext = new TeamMemberSpawnModel(_context.DialogService, new TeamMemberSpawn(obj));
             }
             else
             { 
-                view.DataContext = new TeamMemberSpawnModel();
+                view.DataContext = new TeamMemberSpawnModel(_context.DialogService);
             }
             
             control.Children.Add(view);

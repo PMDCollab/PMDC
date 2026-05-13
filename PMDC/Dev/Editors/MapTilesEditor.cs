@@ -16,6 +16,10 @@ namespace RogueEssence.Dev
 {
     public class MapTilesEditor : Editor<ITile[][]>
     {
+        public MapTilesEditor(EditorContext context) : base(context)
+        {
+            
+        }
         public override bool DefaultSubgroup => true;
         public override bool DefaultDecoration => false;
 
