@@ -9,6 +9,7 @@ using ReactiveUI;
 using RogueEssence;
 using RogueEssence.Data;
 using RogueEssence.Dev;
+using RogueEssence.Dev.Services;
 using RogueEssence.Dev.ViewModels;
 using RogueEssence.Dev.Views;
 using RogueEssence.Dungeon;
@@ -765,17 +766,17 @@ namespace PMDC.Dev.ViewModels
             InitializeSkins();
             InitializeTactics();
             InitializeRoles();
-            // TODO NEW EDITOR: RESOLVE THIS
-            // DevForm devForm = (DevForm)DiagManager.Instance.DevEditor;
-            // SpawnConditions = new CollectionBoxViewModel(devForm, new StringConv(typeof(MobSpawnCheck), new object[0]));
-            // SpawnConditions.OnMemberChanged += SpawnConditionsChanged;
-            // SpawnConditions.OnEditItem += SpawnConditionsEditItem;
-            // SpawnConditions.LoadFromList(TeamSpawn.Spawn.SpawnConditions);
-            //
-            // SpawnFeatures = new CollectionBoxViewModel(devForm, new StringConv(typeof(MobSpawnExtra), new object[0]));
-            // SpawnFeatures.OnMemberChanged += SpawnFeaturesChanged;
-            // SpawnFeatures.OnEditItem += SpawnFeaturesEditItem;
-            // SpawnFeatures.LoadFromList(TeamSpawn.Spawn.SpawnFeatures);
+            
+            DevForm devForm = (DevForm)DiagManager.Instance.DevEditor;
+            SpawnConditions = new CollectionBoxViewModel(_dialogService, new StringConv(typeof(MobSpawnCheck), new object[0]));
+            SpawnConditions.OnMemberChanged += SpawnConditionsChanged;
+            SpawnConditions.OnEditItem += SpawnConditionsEditItem;
+            SpawnConditions.LoadFromList(TeamSpawn.Spawn.SpawnConditions);
+            
+            SpawnFeatures = new CollectionBoxViewModel(_dialogService, new StringConv(typeof(MobSpawnExtra), new object[0]));
+            SpawnFeatures.OnMemberChanged += SpawnFeaturesChanged;
+            SpawnFeatures.OnEditItem += SpawnFeaturesEditItem;
+            SpawnFeatures.LoadFromList(TeamSpawn.Spawn.SpawnFeatures);
         }
 
 
@@ -881,8 +882,11 @@ namespace PMDC.Dev.ViewModels
             
             frmData.Show();
         }
-        public TeamMemberSpawnModel()
+
+        private IDialogService _dialogService;
+        public TeamMemberSpawnModel(IDialogService dialogService)
         {
+            _dialogService = dialogService;
             TeamSpawn = new TeamMemberSpawn();
             TeamSpawn.Spawn = new MobSpawn();
             TeamSpawn.Spawn.Level.Min = 1;
@@ -894,9 +898,9 @@ namespace PMDC.Dev.ViewModels
             SearchMonsterFilter = form.FormName.ToLocal();
             SelectedMonsterIndex = findMonsterForm("missingno", 0);
         }
-        public TeamMemberSpawnModel(TeamMemberSpawn spawn)
+        public TeamMemberSpawnModel(IDialogService dialogService, TeamMemberSpawn spawn)
         {
-
+            _dialogService = dialogService;
             string species = spawn.Spawn.BaseForm.Species == "" ? "missingno" : spawn.Spawn.BaseForm.Species;
             MonsterData entry = DataManager.Instance.GetMonster(species);
             BaseMonsterForm form = entry.Forms[spawn.Spawn.BaseForm.Form];

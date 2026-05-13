@@ -24,11 +24,11 @@ namespace PMDC.Dev
             TeamMemberSpawnView view = new TeamMemberSpawnView();
             if (obj.Spawn != null)
             {
-                view.DataContext = new TeamMemberSpawnModel(new TeamMemberSpawn(obj));
+                view.DataContext = new TeamMemberSpawnModel(_context.DialogService, new TeamMemberSpawn(obj));
             }
             else
             { 
-                view.DataContext = new TeamMemberSpawnModel();
+                view.DataContext = new TeamMemberSpawnModel(_context.DialogService);
             }
             
             control.Children.Add(view);
