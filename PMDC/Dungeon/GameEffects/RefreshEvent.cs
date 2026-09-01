@@ -252,6 +252,40 @@ namespace PMDC.Dungeon
         }
     }
     [Serializable]
+    public class SightLimitEvent : RefreshEvent
+    {
+        /// <summary>
+        /// The sight radius. Negative or higher than 7 means treat it as normal.
+        /// </summary>
+        public int Radius;
+        /// <summary>
+        /// If true, areas outside of the sight radius will count as fully dark.
+        /// </summary>
+        public bool DarkTiles;
+
+        public SightLimitEvent()
+        {
+            Radius = -1;
+        }
+        public SightLimitEvent(int radius, bool darkTiles)
+        {
+            Radius = radius;
+            DarkTiles = darkTiles;
+        }
+        protected SightLimitEvent(SightLimitEvent other)
+        {
+            Radius = other.Radius;
+            DarkTiles = other.DarkTiles;
+        }
+        public override GameEvent Clone() { return new SightLimitEvent(this); }
+        public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            character.SightRadius = Radius;
+            if((int)character.GetTileSight() <= (int)Map.SightRange.Clear )
+                character.TileSight = Map.SightRange.Dark;
+        }
+    }
+    [Serializable]
     public class NoNameEvent : RefreshEvent
     {
         public override GameEvent Clone() { return new NoNameEvent(); }
