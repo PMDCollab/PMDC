@@ -105,7 +105,7 @@ namespace PMDC.Dungeon
                     return true;
             }
 
-            Loc seen = Character.GetSightDims();
+            Loc seen = Character.GetSightDims(controlledChar);
             Loc mapStart = controlledChar.CharLoc - seen;
             Loc mapSize = seen * 2 + new Loc(1);
             foreach (MapItem item in ZoneManager.Instance.CurrentMap.Items)
