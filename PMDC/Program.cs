@@ -51,7 +51,6 @@ namespace PMDC
             bool logInput = true;
             bool guideBook = false;
             bool guideCsv = false;
-            bool printWiki = false;
             GraphicsManager.AssetType convertAssets = GraphicsManager.AssetType.None;
             DataManager.DataType convertIndices = DataManager.DataType.None;
             DataManager.DataType reserializeIndices = DataManager.DataType.None;
@@ -117,8 +116,6 @@ namespace PMDC
                         guideBook = true;
                     else if (args[ii].ToLower() == "-csv")
                         guideCsv = true;
-                    else if (args[ii].ToLower() == "-wiki")
-                        printWiki = true;
                     else if (args[ii].ToLower() == "-asset")
                     {
                         PathMod.ASSET_PATH = Path.GetFullPath(args[ii + 1]);
@@ -572,25 +569,6 @@ namespace PMDC
                     StrategyGuide.PrintItemGuide(guideCsv);
                     StrategyGuide.PrintAbilityGuide(guideCsv);
                     StrategyGuide.PrintEncounterGuide(guideCsv);
-                    return;
-                }
-
-                if (printWiki)
-                {
-                    //print the guidebook in the chosen language
-                    //we need the datamanager for this
-                    LuaEngine.InitInstance();
-                    DataManager.InitInstance();
-                    DataManager.Instance.InitData();
-                    LuaEngine.Instance.LoadScripts();
-                    StrategyGuide.DeleteWiki();
-                    //just print a guidebook and exit
-                    StrategyGuide.PrintMoveWiki();
-                    StrategyGuide.PrintItemWiki();
-                    //StrategyGuide.PrintAbilityWiki();
-                    StrategyGuide.PrintMonsterWiki();
-                    StrategyGuide.PrintMonsterFamilyWiki();
-                    //StrategyGuide.PrintDungeonWiki();
                     return;
                 }
 

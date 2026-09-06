@@ -95,6 +95,49 @@ namespace PMDC.Dungeon
     }
 
     [Serializable]
+    public class CharElementNeededElementEvent : ElementEffectEvent
+    {
+        /// <summary>
+        /// The list of element effect events that will be applied if the condition is met 
+        /// </summary>
+        public List<ElementEffectEvent> BaseEvents;
+
+        /// <summary>
+        /// The type the character must be in order to pass the check
+        /// </summary>
+        [JsonConverter(typeof(ElementConverter))]
+        [DataType(0, DataManager.DataType.Element, false)]
+        public string NeededElement;
+
+        public CharElementNeededElementEvent() { BaseEvents = new List<ElementEffectEvent>(); NeededElement = ""; }
+        public CharElementNeededElementEvent(string element, params ElementEffectEvent[] effects)
+            : this()
+        {
+            NeededElement = element;
+            foreach (ElementEffectEvent effect in effects)
+                BaseEvents.Add(effect);
+        }
+        protected CharElementNeededElementEvent(CharElementNeededElementEvent other)
+            : this()
+        {
+            NeededElement = other.NeededElement;
+            foreach (ElementEffectEvent battleEffect in other.BaseEvents)
+                BaseEvents.Add((ElementEffectEvent)battleEffect.Clone());
+        }
+        public override GameEvent Clone() { return new CharElementNeededElementEvent(this); }
+
+
+        public override void Apply(GameEventOwner owner, Character ownerChar, string moveType, string targetType, ref int effectiveness)
+        {
+            if (targetType == NeededElement)
+            {
+                foreach (ElementEffectEvent elementEffect in BaseEvents)
+                    elementEffect.Apply(owner, ownerChar, moveType, targetType, ref effectiveness);
+            }
+        }
+    }
+
+    [Serializable]
     public class RemoveTypeMatchupEvent : ElementEffectEvent
     {
         [JsonConverter(typeof(ElementConverter))]

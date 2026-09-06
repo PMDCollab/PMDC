@@ -2,6 +2,7 @@ using DynamicData;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using PMDC.Data;
 using PMDC.Dungeon;
+using PMDC.LevelGen;
 using RogueElements;
 using RogueEssence;
 using RogueEssence.Content;
@@ -9,49 +10,17 @@ using RogueEssence.Data;
 using RogueEssence.Dungeon;
 using RogueEssence.LevelGen;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 
 namespace PMDC.Dev
 {
     public static class StrategyGuide
     {
         private const int TOTAL_CHUNKS = 60;
-
-
-        public static void DeleteWiki()
-        {
-            if (Directory.Exists(PathMod.APP_PATH + "WIKI/"))
-                Directory.Delete(PathMod.APP_PATH + "WIKI/", true);
-        }
-
-        private static bool WriteToWiki(string name, string content)
-        {
-            if (!Directory.Exists(PathMod.APP_PATH + "WIKI/"))
-                Directory.CreateDirectory(PathMod.APP_PATH + "WIKI/");
-
-            string endPath = Path.Join(PathMod.APP_PATH, "WIKI/", name + ".txt");
-            string endDirectory = Path.GetDirectoryName(endPath);
-
-            if (!Directory.Exists(endDirectory))
-                Directory.CreateDirectory(endDirectory);
-
-            if (File.Exists(endPath))
-            {
-                Console.WriteLine("Path conflict: " + name);
-                return false;
-            }
-
-            using (var fstream = File.CreateText(endPath))
-            {
-                fstream.WriteLine(content);
-
-                fstream.Flush();
-                fstream.Close();
-            }
-            return true;
-        }
 
         private static void writeCSVGuide(string name, List<string[]> stats)
         {
@@ -250,186 +219,6 @@ namespace PMDC.Dev
                 writeHTMLGuide("Items", stats);
         }
 
-        private static bool hasUnown(string input)
-        {
-            bool hasUnown = false;
-            foreach (char c in input)
-            {
-                if (c > '\uE000')
-                {
-                    hasUnown = true;
-                    break;
-                }
-            }
-            return hasUnown;
-        }
-
-        private static string substituteUnown(string input)
-        {
-            string output = "";
-            foreach (char c in input)
-            {
-                if (c > '\uE000')
-                {
-                    output += (char)(c - '\uE000');
-                }
-                else
-                    output += c;
-            }
-            return output;
-        }
-
-        public static void PrintItemWiki()
-        {
-            List<string> itemKeys = DataManager.Instance.DataIndices[DataManager.DataType.Item].GetOrderedKeys(true);
-            for (int ii = 0; ii < itemKeys.Count; ii++)
-            {
-                ProgressBar("Creating item pages...", "Done.", TOTAL_CHUNKS, ii, itemKeys.Count);
-                string key = itemKeys[ii];
-                ItemData entry = DataManager.Instance.GetItem(key);
-                if (entry.Released)
-                {
-                    string localName = entry.Name.ToLocal();
-                    if (hasUnown(localName))
-                        localName = substituteUnown(localName);
-                    string fileContent = "{{{{{1|ItemData}}}" +
-                        "\r\n|item_name=" + localName +
-                        "\r\n|sprite=" + entry.Sprite + ".png" +
-                        "\r\n|item_id=" + key +
-                        "\r\n|is_edible=" + (entry.ItemStates.Contains<EdibleState>() ? "Yes" : "No") +
-                        "\r\n|stack_size=" + Math.Max(1, entry.MaxStack) +
-                        "\r\n|value=" + entry.Price +
-                        "\r\n}}";
-
-                    bool completed = WriteToWiki(localName + "/Data", fileContent);
-                    if (!completed)
-                        completed = WriteToWiki(localName + " (Item)/Data", fileContent);
-                }
-            }
-        }
-
-        public static void PrintMonsterWiki()
-        {
-            List<string> itemKeys = DataManager.Instance.DataIndices[DataManager.DataType.Monster].GetOrderedKeys(true);
-            for (int ii = 0; ii < itemKeys.Count; ii++)
-            {
-                string key = itemKeys[ii];
-                MonsterData entry = DataManager.Instance.GetMonster(key);
-                if (entry.Released && entry.IndexNum > 0)
-                {
-                    // Get the Pokemon name
-                    string localName = entry.Name.ToLocal();
-                    int lastValidForm = 0;
-                    
-                    for (int form = 0; form < entry.Forms.Count; form++)
-                    {
-                        MonsterFormData formData = (MonsterFormData)entry.Forms[form];
-                        // Check if this is a cosmetic form
-                        bool formIsCosmetic = false;
-                        if (form > 0)
-                        {
-                            formIsCosmetic = EvaluateCosmeticForm(entry, form, lastValidForm);
-                        }
-                        // Console.WriteLine(localName + "_" + form + ": " + formIsCosmetic);
-
-                        if (!formIsCosmetic && formData.Released)
-                        {
-                            // Set the last form used for comparison to cosmetic formes
-                            lastValidForm = form;
-
-                            string formName = formData.FormName.DefaultText;
-                            string strippedName = formName.Replace(".", "").Replace(":", "").Replace("?", "Question Mark").Replace("?", "Exclamation Mark").Replace(" ", "_");
-
-
-                            // Get type names
-                            ElementData element1 = DataManager.Instance.GetElement(formData.Element1);
-                            ElementData element2 = DataManager.Instance.GetElement(formData.Element2);
-
-                            // Get ability names
-                            IntrinsicData intrinsic1 = DataManager.Instance.GetIntrinsic(formData.Intrinsic1);
-                            IntrinsicData intrinsic2 = DataManager.Instance.GetIntrinsic(formData.Intrinsic2);
-                            IntrinsicData intrinsic3 = DataManager.Instance.GetIntrinsic(formData.Intrinsic3);
-
-                            // Create main Pokemon data entry
-                            string dataFileContent = "{{{{{1|PokemonData}}}" +
-                                "\r\n|pokemon_name=" + formName +
-                                "\r\n|pokemon_id=" + key +
-                                "\r\n|form_id=" + form +
-                                "\r\n|type1=" + element1.Name.DefaultText +
-                                "\r\n|type2=" + element2.Name.DefaultText +
-                                "\r\n|ability1=" + intrinsic1.Name.DefaultText +
-                                "\r\n|ability2=" + intrinsic2.Name.DefaultText +
-                                "\r\n|ability3=" + intrinsic3.Name.DefaultText +
-                                "\r\n|recruit=" + entry.JoinRate +
-                                "\r\n|portrait=Portrait_" + strippedName + ".png" +
-                                "\r\n}}";
-
-                            // Write main Pokemon data entry
-                            bool completed = WriteToWiki(strippedName + "/Data", dataFileContent);
-                            if (!completed) // Check for duplicate form name and append form number as a fallback
-                                completed = WriteToWiki(strippedName + "_" + form + "/Data", dataFileContent);
-
-
-                            // Write learnset data
-
-                            // Level-up learnset
-                            string learnsetFileContent = "<h6>By level up</h6>\n{|- class=\"wikitable\"\n{{LearnsetHeader}}\r\n";
-                            for (int skill_index = 0; skill_index < formData.LevelSkills.Count; skill_index++)
-                            {
-                                LevelUpSkill level_up_skill = formData.LevelSkills[skill_index];
-                                SkillData current_skill = DataManager.Instance.GetSkill(level_up_skill.Skill);
-                                learnsetFileContent += ("|  " + level_up_skill.Level + " {{:" + current_skill.Name.DefaultText + "/Data|LearnsetRow}}\r\n");
-                            }
-                            // TM learnset
-                            learnsetFileContent += "|}\r\n\r\n<h6>By TM</h6>\r\n{|- class=\"wikitable\"\r\n{{LearnsetHeader}}\r\n";
-                            for (int skill_index = 0; skill_index < formData.TeachSkills.Count; skill_index++)
-                            {
-                                LearnableSkill learnable_skill = formData.TeachSkills[skill_index];
-                                SkillData current_skill = DataManager.Instance.GetSkill(learnable_skill.Skill);
-                                learnsetFileContent += ("| {{:" + current_skill.Name.DefaultText + "/Data|LearnsetRow}}\r\n");
-                            }
-                            // Tutor learnset
-                            learnsetFileContent += "|}\r\n\r\n<h6>By Move Tutor</h6>\r\n{|- class=\"wikitable\"\r\n{{LearnsetHeader}}\r\n";
-                            for (int skill_index = 0; skill_index < formData.SecretSkills.Count; skill_index++)
-                            {
-                                LearnableSkill learnable_skill = formData.SecretSkills[skill_index];
-                                SkillData current_skill = DataManager.Instance.GetSkill(learnable_skill.Skill);
-                                learnsetFileContent += ("| {{:" + current_skill.Name.DefaultText + "/Data|LearnsetRow}}\r\n");
-                            }
-                            // Tutor learnset
-                            learnsetFileContent += "|}\r\n\r\n<h6>Egg Moves</h6>\r\n{|- class=\"wikitable\"\r\n{{LearnsetHeader}}\r\n";
-                            for (int skill_index = 0; skill_index < formData.SharedSkills.Count; skill_index++)
-                            {
-                                LearnableSkill learnable_skill = formData.SharedSkills[skill_index];
-                                SkillData current_skill = DataManager.Instance.GetSkill(learnable_skill.Skill);
-                                learnsetFileContent += ("| {{:" + current_skill.Name.DefaultText + "/Data|LearnsetRow}}\r\n");
-                            }
-                            learnsetFileContent += "|}\r\n\r\n<noinclude>[[Category: Learnsets]]</noinclude>";
-
-                            // Write main Pokemon data entry
-                            bool learnset_completed = WriteToWiki(strippedName + "/Learnset", learnsetFileContent);
-                            if (!learnset_completed) // Check for duplicate form name and append form number as a fallback
-                                learnset_completed = WriteToWiki(strippedName + "_" + form + "/Learnset", learnsetFileContent);
-
-
-                            // Write stats entry
-                            string statsFileContent = "{{StatBars|" +
-                                "\r\n|hp=" + formData.BaseHP +
-                                "\r\n|atk=" + formData.BaseAtk +
-                                "\r\n|def=" + formData.BaseDef +
-                                "\r\n|spa=" + formData.BaseMAtk +
-                                "\r\n|spd=" + formData.BaseMDef +
-                                "\r\n|spe=" + formData.BaseSpeed +
-                                "\r\n}}\n<noinclude>[[Category: Pokémon stat pages]]</noinclude>";
-
-                            bool stats_completed = WriteToWiki(strippedName + "/Stats", statsFileContent);
-                            if (!stats_completed) // Check for duplicate form name and append form number as a fallback
-                                stats_completed = WriteToWiki(strippedName + "_" + form + "/Stats", statsFileContent);
-                        }
-                    }
-                }
-            }
-        }
 
         public static List<MonsterFormData> EvaluateMonsterEvolution(MonsterData startingMonster, int baseForm, List<PromoteBranch> evolutionBranches)
         {
@@ -531,131 +320,6 @@ namespace PMDC.Dev
             return formIsCosmetic;
         }
 
-        public static void PrintMonsterFamilyWiki()
-        {
-            // Get a list of first-form Pokemon to serve as the evolution tree's roots
-            List<string> itemKeys = DataManager.Instance.DataIndices[DataManager.DataType.Monster].GetOrderedKeys(true);
-            List<MonsterData> firstFormMonsters = new List<MonsterData>();
-            for (int ii = 0; ii < itemKeys.Count; ii++)
-            {
-                string key = itemKeys[ii];
-                MonsterData entry = DataManager.Instance.GetMonster(key);
-                if (entry.Released)
-                {
-                    if (entry.PromoteFrom == "")
-                    {
-                        if (entry.IndexNum > 0)
-                        {
-                            firstFormMonsters.Add(entry);
-                        }
-                    }
-                }
-            }
-
-            Console.WriteLine("Begin printing Pokemon families");
-            // For each Pokemon, create lists containing each form's evolution tree
-            for (int ii = 0; ii < firstFormMonsters.Count; ii++)
-            {
-                ProgressBar("Creating monster family pages...", "Done.", TOTAL_CHUNKS, ii, firstFormMonsters.Count);
-                List<List<MonsterFormData>> monsterFamilyData = new List<List<MonsterFormData>>();
-
-                // Get the base form
-                MonsterData startingMonster = firstFormMonsters[ii];
-                bool singleStageFamily = true;
-                int lastValidForm = 0;
-                for (int form = 0; form < startingMonster.Forms.Count; form++)
-                {
-                    bool formIsCosmetic = false;
-                    if (form > 0)
-                    {
-                        formIsCosmetic = EvaluateCosmeticForm(startingMonster, form, lastValidForm);
-                    }
-                    if (!formIsCosmetic)
-                    {
-                        lastValidForm = form;
-                        List<MonsterFormData> currentEvolutionBranch = new List<MonsterFormData>();
-                        currentEvolutionBranch.Add((MonsterFormData)startingMonster.Forms[form]);
-
-                        // Get list of valid evolutions
-                        List<MonsterFormData> validEvolutions = EvaluateMonsterEvolution(startingMonster, form, startingMonster.Promotions);
-                        for (int validEvolutionIndex = 0; validEvolutionIndex < validEvolutions.Count; validEvolutionIndex++)
-                        {
-                            singleStageFamily = false;
-                            MonsterFormData currentEvolution = validEvolutions[validEvolutionIndex];
-                            if (currentEvolution.Released)
-                            {
-                                if (currentEvolutionBranch.IndexOf(currentEvolution) == -1)
-                                {
-                                    currentEvolutionBranch.Add(currentEvolution);
-                                }
-                            }
-                        }
-
-                        // Add this branch of the family tree to the family list
-                        monsterFamilyData.Add(currentEvolutionBranch);
-                    }
-                }
-
-                // Keep track of names that have already been used in the data structure
-                List<String> namesAlreadyUsed = new List<string>();
-                int currentFormNumber = 0;
-
-                // Print the Pokemon family page
-                string fileContent = "__NOTOC__";
-
-                for (int evolutionBranchIndex = 0; evolutionBranchIndex < monsterFamilyData.Count; evolutionBranchIndex++)
-                {
-                    // Create tabs for each evolution branch
-                    fileContent += "\r\n\r\n<tabs>";
-
-                    // For each Pokemon in the branch, add a tab for it
-                    for(int familyMemberIndex = 0; familyMemberIndex < monsterFamilyData[evolutionBranchIndex].Count; familyMemberIndex++)
-                    {
-                        MonsterFormData currentMonsterForm = monsterFamilyData[evolutionBranchIndex][familyMemberIndex];
-
-                        string formName = currentMonsterForm.FormName.DefaultText;
-                        string strippedName = formName.Replace(".", "").Replace(":", "").Replace("?", "Question Mark").Replace("?", "Exclamation Mark").Replace(" ", "_");
-
-                        if (namesAlreadyUsed.Contains(strippedName))
-                        {
-                            currentFormNumber += 1;
-                            strippedName = strippedName + "_" + currentFormNumber.ToString();
-                        }
-                        else
-                        {
-                            currentFormNumber = 0;
-                        }
-
-                        fileContent += String.Format("\r\n<tab name=\"{0}\">{{:{1}/Data|PokemonInfobox}}</tab>", formName, strippedName);
-
-                        namesAlreadyUsed.Add(strippedName);
-                    }
-
-                    // End the tab
-                    fileContent += "\r\n<tabs>";
-                }
-                /*
-                foreach (string nameUsed in namesAlreadyUsed)
-                {
-                    Console.WriteLine(nameUsed);
-                }
-                */
-                fileContent += "\r\n";
-
-                // Write to file
-                string firstFormStrippedName = startingMonster.Name.DefaultText;
-                firstFormStrippedName = firstFormStrippedName.Replace(".", "").Replace(":", "").Replace("?", "Question Mark").Replace("?", "Exclamation Mark").Replace(" ", "_");
-                if (!singleStageFamily)
-                {
-                    firstFormStrippedName += "_family";
-                }
-
-                bool completed = WriteToWiki(firstFormStrippedName, fileContent);
-                if (!completed) // Check for duplicate form name and append form number as a fallback
-                    completed = WriteToWiki(firstFormStrippedName + " (Pokemon)", fileContent);
-            }
-        }
-
         public static void PrintMoveGuide(bool csv)
         {
             List<string[]> stats = new List<string[]>();
@@ -690,95 +354,6 @@ namespace PMDC.Dev
                 writeHTMLGuide("Moves", stats);
         }
 
-        public static void PrintMoveWiki()
-        {
-            List<string> itemKeys = DataManager.Instance.DataIndices[DataManager.DataType.Skill].GetOrderedKeys(true);
-            for (int ii = 0; ii < itemKeys.Count; ii++)
-            {
-                ProgressBar("Creating skill pages...", "Done.", TOTAL_CHUNKS, ii, itemKeys.Count);
-                string key = itemKeys[ii];
-                SkillData entry = DataManager.Instance.GetSkill(key);
-                if (entry.Released)
-                {
-                    string localName = entry.Name.ToLocal();
-                    string localDesc = entry.Desc.ToLocal();
-                    ElementData elementEntry = DataManager.Instance.GetElement(entry.Data.Element);
-                    BasePowerState powerState = entry.Data.SkillStates.GetWithDefault<BasePowerState>();
-                    string target_string = entry.HitboxAction.GetTargetsString(false);
-                    string target_string_plural = entry.HitboxAction.GetTargetsString(true);
-                    string true_target_string = "";
-                    string range_string = entry.HitboxAction.GetDescription();
-                    if (range_string.StartsWith(target_string_plural + " in "))
-                        true_target_string = target_string_plural;
-                    else if (range_string.StartsWith(target_string + " in "))
-                        true_target_string = target_string;
-                    if (true_target_string != "")
-                        range_string = range_string.Substring(true_target_string.Length + 4, range_string.Length - true_target_string.Length - 4);
-                    string power_string = (powerState != null ? powerState.Power.ToString() : "--");
-                    if (entry.Strikes > 1)
-                        power_string += "x" + entry.Strikes;
-                    string hit_string = (entry.Data.HitRate > 0 ? entry.Data.HitRate.ToString() : "--");
-                    List<string> removals = new List<string>();
-                    foreach (BattleEvent battleEvent in entry.Data.OnHitTiles.EnumerateInOrder())
-                    {
-                        if (battleEvent is RemoveItemEvent)
-                            removals.Add("Destroys Items");
-                        else if (battleEvent is RemoveTrapEvent)
-                            removals.Add("Destroys Traps");
-                        else if (battleEvent is RemoveTerrainStateEvent)
-                        {
-                            RemoveTerrainStateEvent removeTerrain = (RemoveTerrainStateEvent)battleEvent;
-                            foreach (FlagType state in removeTerrain.States)
-                            {
-                                if (state.FullType == typeof(WallTerrainState))
-                                    removals.Add("Breaks Walls");
-                                else if (state.FullType == typeof(WaterTerrainState))
-                                    removals.Add("Removes Water");
-                                else if (state.FullType == typeof(LavaTerrainState))
-                                    removals.Add("Removes Lava");
-                                else if (state.FullType == typeof(AbyssTerrainState))
-                                    removals.Add("Removes Pits");
-                                else if (state.FullType == typeof(FoliageTerrainState))
-                                    removals.Add("Removes Grass");
-                            }
-                        }
-                        else if (battleEvent is ShatterTerrainEvent)
-                        {
-                            ShatterTerrainEvent removeTerrain = (ShatterTerrainEvent)battleEvent;
-                            foreach (string state in removeTerrain.TileTypes)
-                            {
-                                if (state == "wall")
-                                    removals.Add("Breaks Walls + Adjacents");
-                            }
-                        }
-                    }
-
-                    string terrain_string = "None";
-                    if (removals.Count > 0)
-                    {
-                        terrain_string = String.Join("\n", removals);
-                    }
-
-                    string fileContent = "{{{{{1|MoveData}}}" +
-                        "\r\n|move_name=" + localName +
-                        "\r\n|move_id=" + key +
-                        "\r\n|type=" + elementEntry.Name.ToLocal() +
-                        "\r\n|category=" + entry.Data.Category.ToLocal() +
-                        "\r\n|power=" + power_string +
-                        "\r\n|accuracy=" + hit_string +
-                        "\r\n|pp=" + entry.BaseCharges +
-                        "\r\n|range=" + range_string +
-                        "\r\n|target=" + true_target_string +
-                        "\r\n|terrain_effects=" + terrain_string +
-                        "\r\n|effects=" + "[TMP] " + localDesc +
-                        "\r\n}}";
-
-                    bool completed = WriteToWiki(localName + "/Data", fileContent);
-                    if (!completed)
-                        completed = WriteToWiki(localName + " (Move)/Data", fileContent);
-                }
-            }
-        }
 
         public static void PrintAbilityGuide(bool csv)
         {
@@ -805,7 +380,7 @@ namespace PMDC.Dev
                 writeHTMLGuide("Abilities", stats);
         }
 
-        private static List<string> combineFloorRanges(HashSet<int> floors)
+        public static List<string> combineFloorRanges(HashSet<int> floors)
         {
             List<string> rangeStrings = new List<string>();
 
