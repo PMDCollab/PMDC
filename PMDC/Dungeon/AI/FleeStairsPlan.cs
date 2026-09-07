@@ -41,7 +41,7 @@ namespace PMDC.Dungeon
 
             Map map = ZoneManager.Instance.CurrentMap;
 
-            Loc seen = Character.GetSightDims(controlledChar);
+            Loc seen = controlledChar.GetSightDims();
 
             Rect sightBounds = new Rect(Loc.Zero, controlledChar.MemberTeam.ContainingMap.Size);
             if (!Omniscient)
@@ -105,7 +105,7 @@ namespace PMDC.Dungeon
 
             Rect sightBounds = new Rect(Loc.Zero, controlledChar.MemberTeam.ContainingMap.Size);
             if (!Omniscient)
-                sightBounds = new Rect(controlledChar.CharLoc - Character.GetSightDims(controlledChar), Character.GetSightDims(controlledChar) * 2 + new Loc(1));
+                sightBounds = new Rect(controlledChar.CharLoc - controlledChar.GetSightDims(), controlledChar.GetSightDims() * 2 + new Loc(1));
             List<Loc>[] paths = Grid.FindNPaths(sightBounds.Start, sightBounds.Size, controlledChar.CharLoc, wrappedEnds, checkBlock, checkDiagBlock, 1, false);
             return paths[0];
         }

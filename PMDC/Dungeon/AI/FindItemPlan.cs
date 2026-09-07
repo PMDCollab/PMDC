@@ -53,7 +53,7 @@ namespace PMDC.Dungeon
         protected override List<Loc> GetDestinations(Character controlledChar)
         {
             //get all tiles that are within the border of sight range, or within the border of the screen
-            Loc seen = Character.GetSightDims(controlledChar);
+            Loc seen = controlledChar.GetSightDims();
             Loc mapStart = controlledChar.CharLoc - seen;
             Loc mapSize = seen * 2 + new Loc(1);
             bool dontWantItem = DontWantItem(controlledChar);

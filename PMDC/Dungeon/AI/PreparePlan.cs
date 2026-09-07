@@ -159,8 +159,8 @@ namespace PMDC.Dungeon
                 return false;
             };
 
-            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims(controlledChar);
-            Loc mapSize = Character.GetSightDims(controlledChar) * 2 + new Loc(1);
+            Loc mapStart = controlledChar.CharLoc - controlledChar.GetSightDims();
+            Loc mapSize = controlledChar.GetSightDims() * 2 + new Loc(1);
             List<Loc> path = Grid.FindPath(mapStart, mapSize, controlledChar.CharLoc, team.Leader.CharLoc, checkBlock, checkDiagBlock);
 
             return (path[0] == team.Leader.CharLoc);

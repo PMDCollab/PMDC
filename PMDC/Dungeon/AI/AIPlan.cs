@@ -423,8 +423,8 @@ namespace PMDC.Dungeon
             bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
             bool teamPartner = (IQ & AIFlags.TeamPartner) != AIFlags.None;
 
-            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims(controlledChar);
-            Loc mapSize = Character.GetSightDims(controlledChar) * 2 + new Loc(1);
+            Loc mapStart = controlledChar.CharLoc - controlledChar.GetSightDims();
+            Loc mapSize = controlledChar.GetSightDims() * 2 + new Loc(1);
             foreach (Character seenChar in seenCharacters)
             {
                 if (playerSense && !playerSensibleToAttack(seenChar))
@@ -513,8 +513,8 @@ namespace PMDC.Dungeon
             };
 
 
-            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims(controlledChar);
-            Loc mapSize = Character.GetSightDims(controlledChar) * 2 + new Loc(1);
+            Loc mapStart = controlledChar.CharLoc - controlledChar.GetSightDims();
+            Loc mapSize = controlledChar.GetSightDims() * 2 + new Loc(1);
             return Grid.FindNPaths(mapStart, mapSize, controlledChar.CharLoc, wrappedEnds, checkBlock, checkDiagBlock, limit, true);
         }
 
@@ -563,8 +563,8 @@ namespace PMDC.Dungeon
                 return false;
             };
 
-            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims(controlledChar);
-            Loc mapSize = Character.GetSightDims(controlledChar) * 2 + new Loc(1);
+            Loc mapStart = controlledChar.CharLoc - controlledChar.GetSightDims();
+            Loc mapSize = controlledChar.GetSightDims() * 2 + new Loc(1);
             return Grid.FindAllPaths(mapStart, mapSize, controlledChar.CharLoc, wrappedEnds, checkBlock, checkDiagBlock);
         }
 
@@ -599,8 +599,8 @@ namespace PMDC.Dungeon
                 return false;
             };
 
-            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims(controlledChar);
-            Loc mapSize = Character.GetSightDims(controlledChar) * 2 + new Loc(1);
+            Loc mapStart = controlledChar.CharLoc - controlledChar.GetSightDims();
+            Loc mapSize = controlledChar.GetSightDims() * 2 + new Loc(1);
             return Grid.FindNPaths(mapStart, mapSize, controlledChar.CharLoc, wrappedEnds, checkBlock, checkDiagBlock, 1, false);
         }
 
@@ -2831,7 +2831,7 @@ namespace PMDC.Dungeon
         protected List<Loc> GetAreaExits(Character controlledChar)
         {
             //get all tiles that are within the border of sight range, or within the border of the screen
-            Loc seen = Character.GetSightDims(controlledChar);
+            Loc seen = controlledChar.GetSightDims();
 
             List<Loc> loc_list = new List<Loc>();
             //currently, CPU sight cheats by knowing tiles up to the bounds, instead of individual tiles at the border of FOV.
