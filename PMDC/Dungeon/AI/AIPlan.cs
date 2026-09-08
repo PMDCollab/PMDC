@@ -423,8 +423,8 @@ namespace PMDC.Dungeon
             bool playerSense = (IQ & AIFlags.PlayerSense) != AIFlags.None;
             bool teamPartner = (IQ & AIFlags.TeamPartner) != AIFlags.None;
 
-            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
-            Loc mapSize = Character.GetSightDims() * 2 + new Loc(1);
+            Loc mapStart = controlledChar.CharLoc - controlledChar.GetCharSightDims();
+            Loc mapSize = controlledChar.GetCharSightDims() * 2 + new Loc(1);
             foreach (Character seenChar in seenCharacters)
             {
                 if (playerSense && !playerSensibleToAttack(seenChar))
@@ -513,8 +513,8 @@ namespace PMDC.Dungeon
             };
 
 
-            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
-            Loc mapSize = Character.GetSightDims() * 2 + new Loc(1);
+            Loc mapStart = controlledChar.CharLoc - controlledChar.GetTileSightDims();
+            Loc mapSize = controlledChar.GetTileSightDims() * 2 + new Loc(1);
             return Grid.FindNPaths(mapStart, mapSize, controlledChar.CharLoc, wrappedEnds, checkBlock, checkDiagBlock, limit, true);
         }
 
@@ -563,8 +563,8 @@ namespace PMDC.Dungeon
                 return false;
             };
 
-            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
-            Loc mapSize = Character.GetSightDims() * 2 + new Loc(1);
+            Loc mapStart = controlledChar.CharLoc - controlledChar.GetTileSightDims();
+            Loc mapSize = controlledChar.GetTileSightDims() * 2 + new Loc(1);
             return Grid.FindAllPaths(mapStart, mapSize, controlledChar.CharLoc, wrappedEnds, checkBlock, checkDiagBlock);
         }
 
@@ -599,8 +599,8 @@ namespace PMDC.Dungeon
                 return false;
             };
 
-            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
-            Loc mapSize = Character.GetSightDims() * 2 + new Loc(1);
+            Loc mapStart = controlledChar.CharLoc - controlledChar.GetTileSightDims();
+            Loc mapSize = controlledChar.GetTileSightDims() * 2 + new Loc(1);
             return Grid.FindNPaths(mapStart, mapSize, controlledChar.CharLoc, wrappedEnds, checkBlock, checkDiagBlock, 1, false);
         }
 
@@ -663,7 +663,7 @@ namespace PMDC.Dungeon
                         //all while still maintaining the better aesthetic of of that FOV
                         //If the FOV were ever to be made symmetric, this check will not be needed.
                         //additionally, we only do this for NPC AI, not ally AI
-                        if (playerSense || controlledChar.CanSeeLocFromLoc(seenChar.CharLoc, controlledChar.CharLoc, controlledChar.GetCharSight()))
+                        if (playerSense || controlledChar.CanSeeCharLocFromLoc(seenChar.CharLoc, controlledChar.CharLoc, controlledChar.GetCharSight()))
                         {
                             threats.Add(seenChar);
                         }
@@ -751,7 +751,7 @@ namespace PMDC.Dungeon
         private void updateDistanceTargetHash(Character controlledChar, Dictionary<Loc, RangeTarget> endHash, Character chara, Loc diff)
         {
             Loc loc = chara.CharLoc + diff;
-            if (!controlledChar.CanSeeLocFromLoc(loc, chara.CharLoc, controlledChar.GetCharSight()))
+            if (!controlledChar.CanSeeCharLocFromLoc(loc, chara.CharLoc, controlledChar.GetCharSight()))
                 return;
 
             //due to all end locations being relative when passed in, this should be consistent with wrapped maps as well.
@@ -2831,7 +2831,7 @@ namespace PMDC.Dungeon
         protected List<Loc> GetAreaExits(Character controlledChar)
         {
             //get all tiles that are within the border of sight range, or within the border of the screen
-            Loc seen = Character.GetSightDims();
+            Loc seen = controlledChar.GetTileSightDims();
 
             List<Loc> loc_list = new List<Loc>();
             //currently, CPU sight cheats by knowing tiles up to the bounds, instead of individual tiles at the border of FOV.

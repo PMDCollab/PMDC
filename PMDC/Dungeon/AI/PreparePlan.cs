@@ -109,7 +109,7 @@ namespace PMDC.Dungeon
                 //no leader found?  don't be preparing.
                 if (testChar == controlledChar)
                     return false;
-                else if (controlledChar.IsInSightBounds(testChar.CharLoc))
+                else if (controlledChar.IsInCharSightBounds(testChar.CharLoc))
                 {
                     //only check the first leader that is within sight
                     //leader found; check if nearby
@@ -159,8 +159,8 @@ namespace PMDC.Dungeon
                 return false;
             };
 
-            Loc mapStart = controlledChar.CharLoc - Character.GetSightDims();
-            Loc mapSize = Character.GetSightDims() * 2 + new Loc(1);
+            Loc mapStart = controlledChar.CharLoc - controlledChar.GetCharSightDims();
+            Loc mapSize = controlledChar.GetCharSightDims() * 2 + new Loc(1);
             List<Loc> path = Grid.FindPath(mapStart, mapSize, controlledChar.CharLoc, team.Leader.CharLoc, checkBlock, checkDiagBlock);
 
             return (path[0] == team.Leader.CharLoc);

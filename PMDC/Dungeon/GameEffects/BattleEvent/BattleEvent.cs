@@ -332,6 +332,8 @@ namespace PMDC.Dungeon
         {
             ZoneManager.Instance.CurrentMap.CharSight = Map.SightRange.Clear;
             ZoneManager.Instance.CurrentMap.TileSight = Map.SightRange.Clear;
+            ZoneManager.Instance.CurrentMap.CharSightRadius = -1;
+            ZoneManager.Instance.CurrentMap.TileSightRadius = -1;
             yield break;
         }
     }
