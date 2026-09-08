@@ -69,7 +69,7 @@ namespace PMDC.Dungeon
 
 
             //remove all locs from the locHistory that are no longer on screen
-            Loc seen = controlledChar.GetSightDims();
+            Loc seen = controlledChar.GetTileSightDims();
             for (int ii = locHistory.Count - 1; ii >= 0; ii--)
             {
                 Loc diff = locHistory[ii] - controlledChar.CharLoc;
