@@ -8,6 +8,9 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
+using System.IO;
+using Avalonia.Media.Imaging;
+
 namespace PMDC.Properties {
     using System;
     

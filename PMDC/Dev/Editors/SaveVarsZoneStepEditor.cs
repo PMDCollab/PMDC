@@ -17,6 +17,7 @@ namespace RogueEssence.Dev
 {
     public class SaveVarsZoneStepEditor : Editor<SaveVarsZoneStep>
     {
+        public SaveVarsZoneStepEditor(EditorContext context) : base(context) { }
         public override string GetString(SaveVarsZoneStep obj, Type type, object[] attributes)
         {
             return "Handle Rescues";
