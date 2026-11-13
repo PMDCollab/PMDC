@@ -37,7 +37,7 @@ namespace PMDC.Dungeon
                 //if we have gotten to this character, we could not find a leader
                 if (testChar == controlledChar)
                     break;
-                else if (controlledChar.IsInSightBounds(testChar.CharLoc))
+                else if (controlledChar.IsInCharSightBounds(testChar.CharLoc))
                 {
                     //if we saw our leader, we wait.
                     return new GameAction(GameAction.ActionType.Wait, Dir8.None);

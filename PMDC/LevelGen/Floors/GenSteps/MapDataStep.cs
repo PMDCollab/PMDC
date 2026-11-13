@@ -39,6 +39,15 @@ namespace PMDC.LevelGen
         /// The darkness level for character viewing.
         /// </summary>
         public Map.SightRange CharSight;
+        
+        /// <summary>
+        /// The view distance for map exploration.
+        /// </summary>
+        public int TileSightRadius;
+        /// <summary>
+        /// The view distance for character viewing.
+        /// </summary>
+        public int CharSightRadius;
 
         /// <summary>
         /// Clamps the map edges so that the camera does not scroll past them.  Does not work on wrapped-around maps.
@@ -48,13 +57,17 @@ namespace PMDC.LevelGen
         public MapDataStep()
         {
             Music = "";
+            TileSightRadius = -1;
+            CharSightRadius = -1;
         }
-        public MapDataStep(string music, int timeLimit, Map.SightRange tileSight, Map.SightRange charSight)
+        public MapDataStep(string music, int timeLimit, Map.SightRange tileSight, Map.SightRange charSight, int tileSightRadius, int charSightRadius)
         {
             Music = music;
             TimeLimit = timeLimit;
             TileSight = tileSight;
             CharSight = charSight;
+            TileSightRadius = tileSightRadius;
+            CharSightRadius = charSightRadius;
         }
 
         public override void Apply(T map)
@@ -73,6 +86,8 @@ namespace PMDC.LevelGen
 
             map.Map.TileSight = TileSight;
             map.Map.CharSight = CharSight;
+            map.Map.TileSightRadius = TileSightRadius;
+            map.Map.CharSightRadius = CharSightRadius;
 
             if (map.Map.EdgeView != BaseMap.ScrollEdge.Wrap)
                 map.Map.EdgeView = ClampCamera ? BaseMap.ScrollEdge.Clamp : BaseMap.ScrollEdge.Blank;

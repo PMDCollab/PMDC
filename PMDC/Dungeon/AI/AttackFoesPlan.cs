@@ -220,7 +220,7 @@ namespace PMDC.Dungeon
                 if (preThink)
                 {
                     // no currently seen target, check if the target loc is in sight to determine if we should keep last seen char
-                    if (!controlledChar.CanSeeLoc(targetLoc.Value, controlledChar.GetCharSight()))
+                    if (!controlledChar.CanSeeCharLoc(targetLoc.Value, controlledChar.GetCharSight()))
                         lastSeenChar = null;
                     if (lastSeenChar != null)
                         targetLoc = lastSeenChar.CharLoc;

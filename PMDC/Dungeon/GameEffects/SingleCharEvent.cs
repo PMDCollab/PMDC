@@ -109,7 +109,7 @@ namespace PMDC.Dungeon
 
                         foreach (Character character in ZoneManager.Instance.CurrentMap.ActiveTeam.Players)
                         {
-                            if (character.IsInSightBounds(testLoc))
+                            if (character.IsInCharSightBounds(testLoc))
                                 return false;
                         }
 
@@ -196,7 +196,7 @@ namespace PMDC.Dungeon
 
                             foreach (Character character in ZoneManager.Instance.CurrentMap.ActiveTeam.Players)
                             {
-                                if (character.IsInSightBounds(testLoc))
+                                if (character.IsInCharSightBounds(testLoc))
                                     return false;
                             }
 

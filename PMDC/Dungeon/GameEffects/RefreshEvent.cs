@@ -252,6 +252,58 @@ namespace PMDC.Dungeon
         }
     }
     [Serializable]
+    public class SightLimitEvent : RefreshEvent
+    {
+        /// <summary>
+        /// The sight radius for map exploration. Negative means treat it as normal. Higher than 7 means full brightness.
+        /// </summary>
+        public int TileRadius;
+        /// <summary>
+        /// The sight radius for character viewing. Negative means treat it as normal. Higher than 7 means full brightness.
+        /// </summary>
+        public int CharRadius;
+
+        /// <summary>
+        /// The darkness level for map exploration.
+        /// </summary>
+        public Map.SightRange TileSight;
+
+        /// <summary>
+        /// The darkness level for character viewing.
+        /// </summary>
+        public Map.SightRange CharSight;
+
+        public SightLimitEvent()
+        {
+            TileRadius = -1;
+            CharRadius = -1;
+            TileSight = Map.SightRange.Any;
+            CharSight = Map.SightRange.Any;
+        }
+        public SightLimitEvent(int tileRadius, int charRadius, Map.SightRange tileSight, Map.SightRange charSight)
+        {
+            TileRadius = tileRadius;
+            CharRadius = charRadius;
+            TileSight = tileSight;
+            CharSight = charSight;
+        }
+        protected SightLimitEvent(SightLimitEvent other)
+        {
+            TileRadius = other.TileRadius;
+            CharRadius = other.CharRadius;
+            TileSight = other.TileSight;
+            CharSight = other.CharSight;
+        }
+        public override GameEvent Clone() { return new SightLimitEvent(this); }
+        public override void Apply(GameEventOwner owner, Character ownerChar, Character character)
+        {
+            character.CharSightRadius = CharRadius;
+            character.TileSightRadius = TileRadius;
+            character.CharSight = CharSight;
+            character.TileSight = TileSight;
+        }
+    }
+    [Serializable]
     public class NoNameEvent : RefreshEvent
     {
         public override GameEvent Clone() { return new NoNameEvent(); }

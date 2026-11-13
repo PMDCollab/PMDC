@@ -38,7 +38,7 @@ namespace PMDC.Dungeon
                             return null;
                     }
                 }
-                else if (controlledChar.IsInSightBounds(testChar.CharLoc))
+                else if (controlledChar.IsInCharSightBounds(testChar.CharLoc))
                 {
                     seenCharacters.Add(testChar);
                     seeLeader = true;

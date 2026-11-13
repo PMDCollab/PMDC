@@ -27,7 +27,7 @@ namespace PMDC.Dungeon
             {
                 if (chara == controlledChar)
                     break;
-                else if (controlledChar.IsInSightBounds(chara.CharLoc))
+                else if (controlledChar.IsInCharSightBounds(chara.CharLoc))
                     targetLoc = chara.CharLoc;
             }
 
