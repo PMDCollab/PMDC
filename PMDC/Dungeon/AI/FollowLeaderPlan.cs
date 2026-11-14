@@ -38,7 +38,9 @@ namespace PMDC.Dungeon
                             return null;
                     }
                 }
-                else if (controlledChar.IsInCharSightBounds(testChar.CharLoc))
+                // A team member should know where its allies are globally,
+                // but we will restrict it to just the screen bounds to save processing
+                else if (controlledChar.CanSeeScreenLoc(testChar.CharLoc))
                 {
                     seenCharacters.Add(testChar);
                     seeLeader = true;

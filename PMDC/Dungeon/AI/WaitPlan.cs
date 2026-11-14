@@ -37,7 +37,9 @@ namespace PMDC.Dungeon
                 //if we have gotten to this character, we could not find a leader
                 if (testChar == controlledChar)
                     break;
-                else if (controlledChar.IsInCharSightBounds(testChar.CharLoc))
+                // A team member should know where its allies are globally,
+                // but we will restrict it to just the screen bounds to save processing
+                if (controlledChar.CanSeeScreenLoc(testChar.CharLoc))
                 {
                     //if we saw our leader, we wait.
                     return new GameAction(GameAction.ActionType.Wait, Dir8.None);

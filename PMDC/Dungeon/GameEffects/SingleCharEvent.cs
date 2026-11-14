@@ -109,7 +109,8 @@ namespace PMDC.Dungeon
 
                         foreach (Character character in ZoneManager.Instance.CurrentMap.ActiveTeam.Players)
                         {
-                            if (character.IsInCharSightBounds(testLoc))
+                            // Do not spawn anything within the screen of any active team member
+                            if (character.CanSeeScreenLoc(testLoc))
                                 return false;
                         }
 
@@ -196,7 +197,8 @@ namespace PMDC.Dungeon
 
                             foreach (Character character in ZoneManager.Instance.CurrentMap.ActiveTeam.Players)
                             {
-                                if (character.IsInCharSightBounds(testLoc))
+                                // Do not spawn anything within the screen of any active team member
+                                if (character.CanSeeScreenLoc(testLoc))
                                     return false;
                             }
 

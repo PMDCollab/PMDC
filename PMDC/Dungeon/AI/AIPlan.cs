@@ -663,7 +663,7 @@ namespace PMDC.Dungeon
                         //all while still maintaining the better aesthetic of of that FOV
                         //If the FOV were ever to be made symmetric, this check will not be needed.
                         //additionally, we only do this for NPC AI, not ally AI
-                        if (playerSense || controlledChar.CanSeeCharLocFromLoc(seenChar.CharLoc, controlledChar.CharLoc, controlledChar.GetCharSight()))
+                        if (playerSense || controlledChar.CanSeeLocFromLoc(seenChar.CharLoc, controlledChar.CharLoc, controlledChar.GetCharSight(), controlledChar.GetCharSightRadius()))
                         {
                             threats.Add(seenChar);
                         }
@@ -751,7 +751,7 @@ namespace PMDC.Dungeon
         private void updateDistanceTargetHash(Character controlledChar, Dictionary<Loc, RangeTarget> endHash, Character chara, Loc diff)
         {
             Loc loc = chara.CharLoc + diff;
-            if (!controlledChar.CanSeeCharLocFromLoc(loc, chara.CharLoc, controlledChar.GetCharSight()))
+            if (!controlledChar.CanSeeLocFromLoc(loc, chara.CharLoc, controlledChar.GetCharSight(), controlledChar.GetCharSightRadius()))
                 return;
 
             //due to all end locations being relative when passed in, this should be consistent with wrapped maps as well.

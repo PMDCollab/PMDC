@@ -27,7 +27,9 @@ namespace PMDC.Dungeon
             {
                 if (chara == controlledChar)
                     break;
-                else if (controlledChar.IsInCharSightBounds(chara.CharLoc))
+                // A team member should know where its allies are globally,
+                // but we will restrict it to just the screen bounds to save processing
+                if (controlledChar.CanSeeScreenLoc(chara.CharLoc))
                     targetLoc = chara.CharLoc;
             }
 

@@ -109,7 +109,9 @@ namespace PMDC.Dungeon
                 //no leader found?  don't be preparing.
                 if (testChar == controlledChar)
                     return false;
-                else if (controlledChar.IsInCharSightBounds(testChar.CharLoc))
+                // A team member should know where its allies are globally,
+                // but we will restrict it to just the screen bounds to save processing
+                if (controlledChar.CanSeeScreenLoc(testChar.CharLoc))
                 {
                     //only check the first leader that is within sight
                     //leader found; check if nearby
