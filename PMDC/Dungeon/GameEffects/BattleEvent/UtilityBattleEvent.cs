@@ -306,6 +306,77 @@ namespace PMDC.Dungeon
     }
 
     /// <summary>
+    /// Event that teaches a skill to the user using the value in SwitchFormContext
+    /// </summary>
+    [Serializable]
+    public class FormSkillEvent : BattleEvent
+    {
+        /// <summary>
+        /// Skill to teach per form
+        /// </summary>
+        [DataType(2, DataManager.DataType.Skill, false)]
+        public Dictionary<int, string> FormSkillPair;
+
+        /// <summary>
+        /// Teach this skill if there are no skills remaining after removing the other form skills
+        /// </summary>
+        [DataType(0, DataManager.DataType.Skill, false)]
+        public string FallbackID;
+
+        public FormSkillEvent()
+        {
+            FormSkillPair = new Dictionary<int, string>();
+            FallbackID = "";
+        }
+        public FormSkillEvent(FormSkillEvent other)
+        {
+            FormSkillPair = new Dictionary<int, string>();
+            foreach (int forme in other.FormSkillPair.Keys)
+                FormSkillPair.Add(forme, other.FormSkillPair[forme]);
+            FallbackID = other.FallbackID;
+        }
+        public override GameEvent Clone() { return new FormSkillEvent(this); }
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            int form = -1;
+            SwitchFormContext change = context.ContextStates.GetWithDefault<SwitchFormContext>();
+            if (change != null)
+                form = change.Form;
+            if (form > -1)
+            {
+                // Delete all instances of moves in the dict
+                for (int ii = context.User.BaseSkills.Count - 1; ii >= 0; ii--)
+                {
+                    if (FormSkillPair.ContainsValue(context.User.BaseSkills[ii].SkillNum))
+                        context.User.DeleteSkill(ii);
+                }
+
+                // Add the move in the dict (if there is one)
+                string skill;
+                if (FormSkillPair.TryGetValue(form, out skill))
+                {
+                    int learn = -1;
+
+                    if (DataManager.Instance.CurrentReplay != null)
+                        learn = DataManager.Instance.CurrentReplay.ReadUI();
+                    else
+                    {
+                        yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.TryLearnSkill(context.User, skill, (int slot) => { learn = slot; }, () => { }));
+                        DataManager.Instance.LogUIPlay(learn);
+                    }
+                    if (learn > -1)
+                        yield return CoroutineManager.Instance.StartCoroutine(DungeonScene.LearnSkillWithFanfare(context.User, skill, learn));
+                }
+
+                // If there are no moves, add the fallback move in the dict.
+                if (String.IsNullOrEmpty(context.User.BaseSkills[0].SkillNum))
+                    context.User.LearnSkill(FallbackID, true);
+            }
+            yield break;
+        }
+    }
+
+    /// <summary>
     /// Event that prompts the user to recall or delete moves and sets up MoveLearnContext and MoveDeleteContext
     /// </summary>
     [Serializable]
