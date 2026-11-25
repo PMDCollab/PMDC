@@ -2,6 +2,7 @@ using RogueEssence;
 using RogueEssence.Data;
 using RogueEssence.Dev.ViewModels;
 using RogueEssence.Dungeon;
+using RogueEssence.Dev;
 
 namespace PMDC.Dev.ViewModels
 {

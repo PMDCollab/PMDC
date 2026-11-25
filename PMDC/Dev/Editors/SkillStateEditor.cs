@@ -17,6 +17,7 @@ namespace RogueEssence.Dev
 {
     public class BasePowerStateEditor : Editor<BasePowerState>
     {
+        public BasePowerStateEditor(EditorContext context) : base(context) { }
         public override string GetString(BasePowerState obj, Type type, object[] attributes)
         {
             return String.Format("Power: {0}", obj.Power);
@@ -28,6 +29,7 @@ namespace RogueEssence.Dev
     }
     public class AdditionalEffectStateEditor : Editor<AdditionalEffectState>
     {
+        public AdditionalEffectStateEditor(EditorContext context) : base(context) { }
         public override string GetString(AdditionalEffectState obj, Type type, object[] attributes)
         {
             return String.Format("Effect Chance: {0}%", obj.EffectChance);

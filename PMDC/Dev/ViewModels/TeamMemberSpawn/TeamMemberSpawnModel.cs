@@ -9,6 +9,8 @@ using ReactiveUI;
 using RogueEssence;
 using RogueEssence.Data;
 using RogueEssence.Dev;
+using RogueEssence.Dev.Services;
+using RogueEssence.Dev.Utility;
 using RogueEssence.Dev.ViewModels;
 using RogueEssence.Dev.Views;
 using RogueEssence.Dungeon;
@@ -268,6 +270,7 @@ namespace PMDC.Dev.ViewModels
             set { this.RaiseAndSetIfChanged(ref TeamSpawn.Spawn.Level.Max, value + 1); }
         }
             
+        
         private DataGridType _gridViewType = DataGridType.Monster; 
         public DataGridType CurrentDataGridView
         {
@@ -765,13 +768,14 @@ namespace PMDC.Dev.ViewModels
             InitializeSkins();
             InitializeTactics();
             InitializeRoles();
+            
             DevForm devForm = (DevForm)DiagManager.Instance.DevEditor;
-            SpawnConditions = new CollectionBoxViewModel(devForm, new StringConv(typeof(MobSpawnCheck), new object[0]));
+            SpawnConditions = new CollectionBoxViewModel(_context.DialogService, new StringConv(typeof(MobSpawnCheck), new object[0]));
             SpawnConditions.OnMemberChanged += SpawnConditionsChanged;
             SpawnConditions.OnEditItem += SpawnConditionsEditItem;
             SpawnConditions.LoadFromList(TeamSpawn.Spawn.SpawnConditions);
             
-            SpawnFeatures = new CollectionBoxViewModel(devForm, new StringConv(typeof(MobSpawnExtra), new object[0]));
+            SpawnFeatures = new CollectionBoxViewModel(_context.DialogService, new StringConv(typeof(MobSpawnExtra), new object[0]));
             SpawnFeatures.OnMemberChanged += SpawnFeaturesChanged;
             SpawnFeatures.OnEditItem += SpawnFeaturesEditItem;
             SpawnFeatures.LoadFromList(TeamSpawn.Spawn.SpawnFeatures);
@@ -846,42 +850,63 @@ namespace PMDC.Dev.ViewModels
         public void SpawnConditionsEditItem(int index, object element, bool advancedEdit, CollectionBoxViewModel.EditElementOp op)
         {
             string elementName = "Spawn Conditions[" + index + "]";
-            DataEditForm frmData = new DataEditRootForm();
-            frmData.Title = DataEditor.GetWindowTitle("Spawn", elementName, element, typeof(MobSpawnCheck), new object[0]);
+        
+            NodeBase node = _context.NodeFactory.CreateReflectedDataNode<ReflectedDataPageViewModel>(elementName, _parentPage.Node, _parentPage.Icon);
+            _parentPage.Node.AddNodeIfNotExists(node);
+            NodeHelper.ExpandParents(node, true);
 
-            DataEditor.LoadClassControls(frmData.ControlPanel, "Spawn", null, elementName, typeof(MobSpawnCheck), new object[0], element, true, new Type[0], advancedEdit);
-            DataEditor.TrackTypeSize(frmData, typeof(MobSpawnCheck));
-            
-            frmData.SelectedOKEvent += async () =>
+            ReflectedDataPageViewModel newEditor = _context.PageFactory.CreatePage<ReflectedDataPageViewModel>(node);
+            newEditor.SetPageTitle(elementName, _parentPage.Node.Icon);
+            newEditor.SetRemoveNode(true);
+
+            newEditor.OnLoadAction = stack =>
             {
-                element = DataEditor.SaveClassControls(frmData.ControlPanel, elementName, typeof(MobSpawnCheck), new object[0], true, new Type[0], advancedEdit);
+                DataEditor.LoadClassControls(stack, "Spawn", null, elementName, typeof(MobSpawnCheck), new object[0], element, true, new Type[0], advancedEdit);
+            };
+
+            newEditor.OnOKAction = async stack =>
+            {
+                element = DataEditor.SaveClassControls(stack, elementName, typeof(MobSpawnCheck), new object[0], true, new Type[0], advancedEdit);
                 op(index, element);
                 return true;
             };
-            
-            frmData.Show();
+
+            _context.TabEvents.AddChildPage(_parentPage, newEditor);
         }
         
         public void SpawnFeaturesEditItem(int index, object element, bool advancedEdit, CollectionBoxViewModel.EditElementOp op)
         {
             string elementName = "Spawn Features[" + index + "]";
-            DataEditForm frmData = new DataEditRootForm();
-            frmData.Title = DataEditor.GetWindowTitle("Spawn", elementName, element, typeof(MobSpawnExtra), new object[0]);
 
-            DataEditor.LoadClassControls(frmData.ControlPanel, "Spawn", null, elementName, typeof(MobSpawnExtra), new object[0], element, true, new Type[0], advancedEdit);
-            DataEditor.TrackTypeSize(frmData, typeof(MobSpawnExtra));
-            
-            frmData.SelectedOKEvent += async () =>
+            NodeBase node = _context.NodeFactory.CreateReflectedDataNode<ReflectedDataPageViewModel>(elementName, _parentPage.Node, _parentPage.Icon);
+            _parentPage.Node.AddNodeIfNotExists(node);
+            NodeHelper.ExpandParents(node, true);
+
+            ReflectedDataPageViewModel newEditor = _context.PageFactory.CreatePage<ReflectedDataPageViewModel>(node);
+            newEditor.SetPageTitle(elementName, _parentPage.Node.Icon);
+            newEditor.SetRemoveNode(true);
+
+            newEditor.OnLoadAction = stack =>
             {
-                element = DataEditor.SaveClassControls(frmData.ControlPanel, elementName, typeof(MobSpawnExtra), new object[0], true, new Type[0], advancedEdit);
+                DataEditor.LoadClassControls(stack, "Spawn", null, elementName, typeof(MobSpawnExtra), new object[0], element, true, new Type[0], advancedEdit);
+            };
+
+            newEditor.OnOKAction = async stack =>
+            {
+                element = DataEditor.SaveClassControls(stack, elementName, typeof(MobSpawnExtra), new object[0], true, new Type[0], advancedEdit);
                 op(index, element);
                 return true;
             };
-            
-            frmData.Show();
+
+            _context.TabEvents.AddChildPage(_parentPage, newEditor);
         }
-        public TeamMemberSpawnModel()
+
+        private EditorContext _context;
+        private EditorPageViewModel _parentPage;
+        public TeamMemberSpawnModel(EditorContext context, EditorPageViewModel parentPage)
         {
+            _context = context;
+            _parentPage = parentPage;
             TeamSpawn = new TeamMemberSpawn();
             TeamSpawn.Spawn = new MobSpawn();
             TeamSpawn.Spawn.Level.Min = 1;
@@ -893,9 +918,10 @@ namespace PMDC.Dev.ViewModels
             SearchMonsterFilter = form.FormName.ToLocal();
             SelectedMonsterIndex = findMonsterForm("missingno", 0);
         }
-        public TeamMemberSpawnModel(TeamMemberSpawn spawn)
+        public TeamMemberSpawnModel(EditorContext context, EditorPageViewModel parentPage, TeamMemberSpawn spawn)
         {
-
+            _parentPage = parentPage;
+            _context = context;
             string species = spawn.Spawn.BaseForm.Species == "" ? "missingno" : spawn.Spawn.BaseForm.Species;
             MonsterData entry = DataManager.Instance.GetMonster(species);
             BaseMonsterForm form = entry.Forms[spawn.Spawn.BaseForm.Form];

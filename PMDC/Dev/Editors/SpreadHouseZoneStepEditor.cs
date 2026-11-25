@@ -17,6 +17,7 @@ namespace RogueEssence.Dev
 {
     public class SpreadHouseZoneStepEditor : Editor<SpreadHouseZoneStep>
     {
+        public SpreadHouseZoneStepEditor(EditorContext context) : base(context) { }
         public override string GetString(SpreadHouseZoneStep obj, Type type, object[] attributes)
         {
             string housePrefix = "";
