@@ -276,6 +276,52 @@ namespace PMDC.Dungeon
     }
 
     /// <summary>
+    /// Event that prevents the character from using specific items
+    /// </summary>
+    [Serializable]
+    public class PreventSpecificItemUseEvent : BattleEvent
+    {
+
+        /// <summary>
+        /// The list of valid ItemState types
+        /// </summary>
+        [DataType(1, DataManager.DataType.Item, false)]
+        public HashSet<string> Items;
+
+        /// <summary>
+        /// The message displayed in the dungeon log if the condition is met 
+        /// </summary>
+        [StringKey(0, true)]
+        public StringKey Message;
+
+        public PreventSpecificItemUseEvent() { Items = new HashSet<string>(); }
+        public PreventSpecificItemUseEvent(StringKey message, params string[] useTypes) : this()
+        {
+            Message = message;
+            foreach (string useType in useTypes)
+                Items.Add(useType);
+        }
+        protected PreventSpecificItemUseEvent(PreventSpecificItemUseEvent other) : this()
+        {
+            Message = other.Message;
+            foreach (string useType in other.Items)
+                Items.Add(useType);
+        }
+        public override GameEvent Clone() { return new PreventSpecificItemUseEvent(this); }
+
+        public override IEnumerator<YieldInstruction> Apply(GameEventOwner owner, Character ownerChar, BattleContext context)
+        {
+            if (context.ActionType == BattleActionType.Item && Items.Contains(context.Item.ID))
+            {
+                if (Message.IsValid())
+                    DungeonScene.Instance.LogMsg(Text.FormatGrammar(Message.ToLocal(), context.User.GetDisplayName(false)));
+                context.CancelState.Cancel = true;
+            }
+            yield break;
+        }
+    }
+
+    /// <summary>
     /// Event that prevents the character from using the item if the item's HiddenValue is set
     /// </summary>
     [Serializable]
